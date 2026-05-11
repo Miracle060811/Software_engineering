@@ -106,13 +106,10 @@
           />
         </el-form-item>
         <el-form-item label="联系姓名">
-          <el-input v-model="bookForm.contactName" placeholder="联系人姓名" />
+          <el-input v-model="bookForm.guestName" placeholder="联系人姓名" />
         </el-form-item>
         <el-form-item label="联系电话">
-          <el-input
-            v-model="bookForm.contactPhone"
-            placeholder="联系人手机号"
-          />
+          <el-input v-model="bookForm.guestPhone" placeholder="联系人手机号" />
         </el-form-item>
         <el-form-item label="应付金额">
           <span class="total-price">¥{{ calcTotalPrice }}</span>
@@ -147,8 +144,8 @@ const selectedRoom = ref(null);
 const bookForm = ref({
   checkIn: "",
   checkOut: "",
-  contactName: "",
-  contactPhone: "",
+  guestName: "",
+  guestPhone: "",
 });
 
 const calcTotalPrice = computed(() => {
@@ -194,8 +191,8 @@ const openBookDialog = (room) => {
   bookForm.value = {
     checkIn: "",
     checkOut: "",
-    contactName: "",
-    contactPhone: "",
+    guestName: "",
+    guestPhone: "",
   };
   bookDialogVisible.value = true;
 };
@@ -205,7 +202,7 @@ const confirmBook = async () => {
     ElMessage.warning("请选择入住和退房日期");
     return;
   }
-  if (!bookForm.value.contactName || !bookForm.value.contactPhone) {
+  if (!bookForm.value.guestName || !bookForm.value.guestPhone) {
     ElMessage.warning("请填写联系人信息");
     return;
   }
@@ -216,10 +213,11 @@ const confirmBook = async () => {
       roomId: selectedRoom.value.id,
       checkInDate: bookForm.value.checkIn,
       checkOutDate: bookForm.value.checkOut,
-      contactName: bookForm.value.contactName,
-      contactPhone: bookForm.value.contactPhone,
+      guestName: bookForm.value.guestName,
+      guestPhone: bookForm.value.guestPhone,
     });
     ElMessage.success("预订成功！请前往【我的订单】完成支付");
+    window.dispatchEvent(new Event("notification-updated"));
     bookDialogVisible.value = false;
   } catch (e) {
   } finally {
@@ -279,7 +277,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px 0;
-  border-bottom: 1px solid #F1F5F9;
+  border-bottom: 1px solid #f1f5f9;
 }
 .room-item:last-child {
   border-bottom: none;
@@ -307,17 +305,17 @@ onMounted(() => {
 .room-price {
   font-size: 22px;
   font-weight: 700;
-  color: #EF4444;
+  color: #ef4444;
   margin-bottom: 8px;
 }
 .room-price span {
   font-size: 13px;
-  color: #94A3B8;
+  color: #94a3b8;
   font-weight: 400;
 }
 .review-item {
   padding: 16px 0;
-  border-bottom: 1px solid #F1F5F9;
+  border-bottom: 1px solid #f1f5f9;
 }
 .review-item:last-child {
   border-bottom: none;
@@ -329,12 +327,12 @@ onMounted(() => {
 }
 .review-user {
   font-weight: 600;
-  color: #1E293B;
+  color: #1e293b;
 }
 .review-date {
   margin-left: auto;
   font-size: 12px;
-  color: #94A3B8;
+  color: #94a3b8;
 }
 .review-content {
   font-size: 14px;
@@ -344,6 +342,6 @@ onMounted(() => {
 .total-price {
   font-size: 22px;
   font-weight: 700;
-  color: #EF4444;
+  color: #ef4444;
 }
 </style>

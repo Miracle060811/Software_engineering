@@ -15,10 +15,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import com.travelmate.annotation.RateLimiter;
+
 /**
  * 成员A负责: 订单核心与防超卖机制
  */
-@CrossOrigin
 @RestController
 @RequestMapping("/api/order")
 public class TrafficOrderController {
@@ -29,6 +30,7 @@ public class TrafficOrderController {
     @Autowired
     private UserMapper userMapper;
 
+    @RateLimiter(maxRequests = 3, timeWindowSeconds = 1)
     @PostMapping("/flight/create")
     public Result<String> createFlightOrder(@RequestBody FlightOrderCreateDTO dto) {
         Long userId = getCurrentUserId();
@@ -41,6 +43,7 @@ public class TrafficOrderController {
         }
     }
 
+    @RateLimiter(maxRequests = 3, timeWindowSeconds = 1)
     @PostMapping("/train/create")
     public Result<String> createTrainOrder(@RequestBody TrainOrderCreateDTO dto) {
         Long userId = getCurrentUserId();
@@ -53,6 +56,7 @@ public class TrafficOrderController {
         }
     }
 
+    @RateLimiter(maxRequests = 5, timeWindowSeconds = 1)
     @PostMapping("/pay/{orderNo}")
     public Result<String> mockPay(@PathVariable String orderNo) {
         Long userId = getCurrentUserId();

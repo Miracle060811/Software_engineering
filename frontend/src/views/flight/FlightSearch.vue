@@ -1,5 +1,15 @@
 <template>
   <div class="flight-search-page">
+    <PageHeader
+      title="机票搜索"
+      subtitle="搜索并预订国内航班机票"
+      icon="✈️"
+      :breadcrumbs="[
+        { label: '首页', to: '/' },
+        { label: '机票搜索' }
+      ]"
+    />
+
     <el-card class="search-box">
       <el-form :inline="true" :model="searchForm">
         <el-form-item label="出发城市">
@@ -7,6 +17,7 @@
             v-model="searchForm.depCity"
             placeholder="如：北京"
             clearable
+            size="large"
           />
         </el-form-item>
         <el-form-item label="到达城市">
@@ -14,6 +25,7 @@
             v-model="searchForm.arrCity"
             placeholder="如：上海"
             clearable
+            size="large"
           />
         </el-form-item>
         <el-form-item label="出发日期">
@@ -22,20 +34,32 @@
             type="date"
             placeholder="选择日期"
             value-format="YYYY-MM-DD"
+            size="large"
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="fetchFlights">搜索航班</el-button>
-          <el-button @click="resetForm">重置</el-button>
+          <el-button type="primary" size="large" @click="fetchFlights">
+            <el-icon><Search /></el-icon>搜索航班
+          </el-button>
+          <el-button size="large" @click="resetForm">重置</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
-    <div v-loading="loading">
-      <el-empty
-        v-if="!loading && flights.length === 0"
-        description="暂无航班信息，请调整搜索条件"
-      />
+    <!-- 骨架屏 -->
+    <div v-if="loading">
+      <SkeletonBox type="list" :count="4" />
+    </div>
+
+    <!-- 空状态 -->
+    <EmptyState
+      v-else-if="flights.length === 0"
+      icon="search"
+      title="暂无航班信息"
+      description="没有找到匹配的航班，请调整搜索条件试试"
+    />
+
+    <template v-else>
       <el-card v-for="flight in flights" :key="flight.id" class="flight-card">
         <div class="flight-row">
           <div class="flight-airline">
@@ -75,7 +99,7 @@
           </div>
         </div>
       </el-card>
-    </div>
+    </template>
 
     <!-- 预订 Dialog -->
     <el-dialog v-model="bookDialogVisible" title="预订机票" width="520px">
@@ -164,7 +188,11 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
+import { Search } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import PageHeader from "@/components/PageHeader.vue";
+import SkeletonBox from "@/components/SkeletonBox.vue";
+import EmptyState from "@/components/EmptyState.vue";
 
 const route = useRoute();
 const flights = ref([]);
@@ -275,10 +303,18 @@ onMounted(() => {
 }
 .search-box {
   margin-bottom: 20px;
+  border-radius: 16px;
+  border: 1px solid #F0F2F5;
 }
 .flight-card {
   margin-bottom: 12px;
-  border-radius: 10px;
+  border-radius: 16px;
+  border: 1px solid #F0F2F5;
+  transition: all 0.3s ease;
+}
+.flight-card:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
 }
 .flight-row {
   display: flex;
@@ -289,13 +325,15 @@ onMounted(() => {
   width: 120px;
 }
 .airline-name {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 16px;
+  color: #1A1A2E;
 }
 .flight-no {
   font-size: 12px;
-  color: #999;
+  color: #A0A0B8;
   margin-top: 2px;
+  font-family: "SF Mono", "Menlo", monospace;
 }
 .flight-time {
   flex: 1;
@@ -303,13 +341,13 @@ onMounted(() => {
 }
 .time-depart,
 .time-arrive {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1A1A2E;
 }
 .flight-route {
   font-size: 13px;
-  color: #999;
+  color: #A0A0B8;
   margin: 4px 0;
 }
 .flight-seats {
@@ -317,36 +355,50 @@ onMounted(() => {
   text-align: center;
 }
 .flight-price-col {
-  width: 140px;
+  width: 150px;
   text-align: right;
 }
 .price-num {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: #EF4444;
 }
 .price-label {
   font-size: 11px;
-  color: #94A3B8;
+  color: #A0A0B8;
   margin-left: 4px;
 }
 .price-num-sm {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   color: #F59E0B;
 }
 .price-business {
   margin-bottom: 8px;
 }
 .book-flight-info {
-  padding: 12px;
-  background: #F0FDFA;
-  border-radius: 8px;
+  padding: 14px;
+  background: #ECFDFA;
+  border-radius: 12px;
   margin-bottom: 4px;
 }
 .total-price {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: #EF4444;
+}
+
+@media (max-width: 768px) {
+  .flight-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .flight-price-col {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 }
 </style>

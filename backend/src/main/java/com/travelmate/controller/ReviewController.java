@@ -16,7 +16,6 @@ import java.util.List;
 /**
  * 评价控制器 (成员B负责)
  */
-@CrossOrigin
 @RestController
 @RequestMapping("/api/review")
 public class ReviewController {

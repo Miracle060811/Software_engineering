@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where mvn *)",
+      "Bash(where mvnw *)",
+      "Bash(./mvnw compile *)",
+      "Bash(./mvnw clean *)",
+      "PowerShell(Get-Command *)",
+      "Bash(java *)",
+      "Bash(mvn *)",
+      "PowerShell(java *)",
+      "PowerShell(mvn *)",
+      "PowerShell(npm *)",
+      "Bash(Select-Object -Last 50)",
+      "Bash(where java *)",
+      "Bash(powershell -NoProfile -Command ' *)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File test_java.ps1)",
+      "Bash(Get-ChildItem -Path \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\frontend\" -Recurse -Depth 0)",
+      "Bash(Select-Object FullName, Mode)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(Select-String -Pattern \"error|✓ built|failed\")"
+    ]
+  }
+}

@@ -1,5 +1,15 @@
 <template>
   <div class="train-search-page">
+    <PageHeader
+      title="火车票搜索"
+      subtitle="搜索并预订全国高铁动车车次"
+      icon="🚆"
+      :breadcrumbs="[
+        { label: '首页', to: '/' },
+        { label: '火车票搜索' }
+      ]"
+    />
+
     <el-card class="search-box">
       <el-form :inline="true" :model="searchForm">
         <el-form-item label="出发站">
@@ -7,6 +17,7 @@
             v-model="searchForm.depStation"
             placeholder="如：北京南"
             clearable
+            size="large"
           />
         </el-form-item>
         <el-form-item label="到达站">
@@ -14,6 +25,7 @@
             v-model="searchForm.arrStation"
             placeholder="如：上海虹桥"
             clearable
+            size="large"
           />
         </el-form-item>
         <el-form-item label="出发日期">
@@ -22,20 +34,32 @@
             type="date"
             placeholder="选择日期"
             value-format="YYYY-MM-DD"
+            size="large"
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="fetchTrains">搜索车次</el-button>
-          <el-button @click="resetForm">重置</el-button>
+          <el-button type="primary" size="large" @click="fetchTrains">
+            <el-icon><Search /></el-icon>搜索车次
+          </el-button>
+          <el-button size="large" @click="resetForm">重置</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
-    <div v-loading="loading">
-      <el-empty
-        v-if="!loading && trains.length === 0"
-        description="暂无车次信息，请调整搜索条件"
-      />
+    <!-- 骨架屏 -->
+    <div v-if="loading">
+      <SkeletonBox type="list" :count="4" />
+    </div>
+
+    <!-- 空状态 -->
+    <EmptyState
+      v-else-if="trains.length === 0"
+      icon="search"
+      title="暂无车次信息"
+      description="没有找到匹配的车次，请调整搜索条件试试"
+    />
+
+    <template v-else>
       <el-card v-for="train in trains" :key="train.id" class="train-card">
         <div class="train-row">
           <div class="train-no-col">
@@ -76,7 +100,7 @@
           </div>
         </div>
       </el-card>
-    </div>
+    </template>
 
     <!-- 预订 Dialog -->
     <el-dialog v-model="bookDialogVisible" title="预订火车票" width="520px">
@@ -166,7 +190,11 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
+import { Search } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import PageHeader from "@/components/PageHeader.vue";
+import SkeletonBox from "@/components/SkeletonBox.vue";
+import EmptyState from "@/components/EmptyState.vue";
 
 const route = useRoute();
 const trains = ref([]);
@@ -300,10 +328,18 @@ onMounted(() => {
 }
 .search-box {
   margin-bottom: 20px;
+  border-radius: 16px;
+  border: 1px solid #F0F2F5;
 }
 .train-card {
   margin-bottom: 12px;
-  border-radius: 10px;
+  border-radius: 16px;
+  border: 1px solid #F0F2F5;
+  transition: all 0.3s ease;
+}
+.train-card:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
 }
 .train-row {
   display: flex;
@@ -315,9 +351,10 @@ onMounted(() => {
 }
 .train-no {
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 800;
   color: #0D9488;
   margin-bottom: 4px;
+  font-family: "SF Mono", "Menlo", monospace;
 }
 .train-time-col {
   flex: 1;
@@ -325,13 +362,13 @@ onMounted(() => {
 }
 .depart-time,
 .arrive-time {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1A1A2E;
 }
 .train-route-info {
   font-size: 13px;
-  color: #999;
+  color: #A0A0B8;
   margin: 4px 0;
 }
 .train-duration-col {
@@ -341,42 +378,56 @@ onMounted(() => {
 .duration {
   font-size: 16px;
   font-weight: 600;
-  color: #666;
+  color: #71718B;
 }
 .duration-label {
   font-size: 12px;
-  color: #999;
+  color: #A0A0B8;
 }
 .train-price-col {
-  width: 140px;
+  width: 150px;
   text-align: right;
 }
 .seat-price {
   margin-bottom: 6px;
 }
 .price-red {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
   color: #EF4444;
 }
 .price-orange {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   color: #F59E0B;
 }
 .seat-label {
   font-size: 11px;
-  color: #94A3B8;
+  color: #A0A0B8;
   margin-left: 4px;
 }
 .book-train-info {
-  padding: 12px;
-  background: #F0FDFA;
-  border-radius: 8px;
+  padding: 14px;
+  background: #ECFDFA;
+  border-radius: 12px;
 }
 .total-price {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: #EF4444;
+}
+
+@media (max-width: 768px) {
+  .train-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .train-price-col {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 }
 </style>

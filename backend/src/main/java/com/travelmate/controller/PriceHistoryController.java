@@ -11,7 +11,6 @@ import java.util.List;
 /**
  * 成员A负责: 历史价格日历波动的折线图接口 (对接 Echarts 的重点加分项)
  */
-@CrossOrigin
 @RestController
 @RequestMapping("/api/price")
 public class PriceHistoryController {

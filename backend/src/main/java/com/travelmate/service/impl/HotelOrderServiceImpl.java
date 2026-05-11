@@ -10,6 +10,8 @@ import com.travelmate.mapper.HotelMapper;
 import com.travelmate.mapper.HotelOrderMapper;
 import com.travelmate.mapper.HotelRoomMapper;
 import com.travelmate.service.HotelOrderService;
+import com.travelmate.service.HotelRoomStockService;
+import com.travelmate.service.NotificationCenterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,12 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
     @Autowired
     private HotelMapper hotelMapper;
 
+    @Autowired
+    private HotelRoomStockService hotelRoomStockService;
+
+    @Autowired
+    private NotificationCenterService notificationCenterService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String createOrder(Long userId, HotelOrderCreateDTO dto) {
@@ -49,42 +57,55 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
             throw new RuntimeException("房型与酒店不匹配");
         }
 
-        // 3. 乐观锁扣减房间库存
-        int updated = hotelRoomMapper.deductRoom(dto.getRoomId());
-        if (updated == 0) {
+        boolean redisPreDeducted = hotelRoomStockService.preDeductRoom(dto.getRoomId(), room.getAvailableRooms());
+        if (!redisPreDeducted) {
             throw new RuntimeException("该房型暂无可用房间，预订失败");
         }
 
-        // 4. 查询酒店信息（用于订单快照）
-        Hotel hotel = hotelMapper.selectById(dto.getHotelId());
+        try {
+            int updated = hotelRoomMapper.deductRoom(dto.getRoomId());
+            if (updated == 0) {
+                throw new RuntimeException("该房型暂无可用房间，预订失败");
+            }
 
-        // 5. 计算住宿晚数与金额
-        long nights = checkOut.toEpochDay() - checkIn.toEpochDay();
-        BigDecimal amount = room.getPrice().multiply(BigDecimal.valueOf(nights));
+            Hotel hotel = hotelMapper.selectById(dto.getHotelId());
+            long nights = checkOut.toEpochDay() - checkIn.toEpochDay();
+            BigDecimal amount = room.getPrice().multiply(BigDecimal.valueOf(nights));
 
-        // 6. 构建并保存订单
-        HotelOrder order = new HotelOrder();
-        String orderNo = "HT" + System.currentTimeMillis()
-                + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
-        order.setOrderNo(orderNo);
-        order.setUserId(userId);
-        order.setHotelId(dto.getHotelId());
-        order.setRoomId(dto.getRoomId());
-        order.setHotelName(hotel != null ? hotel.getName() : "");
-        order.setRoomType(room.getRoomType());
-        order.setCheckInDate(checkIn);
-        order.setCheckOutDate(checkOut);
-        order.setNights((int) nights);
-        order.setGuestName(dto.getGuestName());
-        order.setGuestPhone(dto.getGuestPhone());
-        order.setAmount(amount);
-        order.setStatus(0); // 0 = 待支付
-        order.setCreateTime(LocalDateTime.now());
+            HotelOrder order = new HotelOrder();
+            String orderNo = "HT" + System.currentTimeMillis()
+                    + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+            order.setOrderNo(orderNo);
+            order.setUserId(userId);
+            order.setHotelId(dto.getHotelId());
+            order.setRoomId(dto.getRoomId());
+            order.setHotelName(hotel != null ? hotel.getName() : "");
+            order.setRoomType(room.getRoomType());
+            order.setCheckInDate(checkIn);
+            order.setCheckOutDate(checkOut);
+            order.setNights((int) nights);
+            order.setGuestName(dto.getGuestName());
+            order.setGuestPhone(dto.getGuestPhone());
+            order.setAmount(amount);
+            order.setStatus(0);
+            order.setCreateTime(LocalDateTime.now());
 
-        save(order);
+            if (!save(order)) {
+                throw new RuntimeException("订单创建失败，请稍后重试");
+            }
 
-        System.out.println("====== [HotelOrder] 订单创建成功: " + orderNo + " ======");
-        return orderNo;
+            notificationCenterService.createNotification(
+                    userId,
+                    "hotel_order",
+                    "酒店订单已创建",
+                    String.format("您的酒店订单 %s 已创建，请在15分钟内完成支付。", orderNo));
+
+            System.out.println("====== [HotelOrder] 订单创建成功: " + orderNo + " ======");
+            return orderNo;
+        } catch (Exception e) {
+            hotelRoomStockService.rollbackPreDeduct(dto.getRoomId());
+            throw e;
+        }
     }
 
     @Override
@@ -104,6 +125,14 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
         order.setStatus(1); // 1 = 已支付
         order.setPayTime(LocalDateTime.now());
         boolean success = updateById(order);
+
+        if (success) {
+            notificationCenterService.createNotification(
+                    userId,
+                    "hotel_order",
+                    "酒店订单支付成功",
+                    String.format("订单 %s 已支付成功，祝您旅途愉快。", orderNo));
+        }
 
         System.out.println("====== [HotelOrder] 订单支付成功: " + orderNo + " ======");
         return success;
@@ -129,6 +158,12 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
 
         // 2. 归还房间库存
         hotelRoomMapper.returnRoom(order.getRoomId());
+        hotelRoomStockService.syncWithDatabase(order.getRoomId());
+        notificationCenterService.createNotification(
+                userId,
+                "hotel_order",
+                "酒店订单已取消",
+                String.format("订单 %s 已取消，库存已自动归还。", orderNo));
 
         System.out.println("====== [HotelOrder] 订单已取消，房间已归还: " + orderNo + " ======");
         return true;

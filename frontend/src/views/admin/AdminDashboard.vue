@@ -127,8 +127,8 @@
             <el-table-column prop="createTime" label="注册时间" />
             <el-table-column label="状态" width="80">
               <template #default="scope">
-                <el-tag :type="scope.row.status === 0 ? 'success' : 'info'">
-                  {{ scope.row.status === 0 ? "正常" : "禁用" }}
+                <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
+                  {{ scope.row.status === 1 ? "正常" : "禁用" }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -182,7 +182,7 @@ const fetchStats = async () => {
         { icon: "👥", label: "总用户数", value: data.totalUsers ?? "—" },
         { icon: "📋", label: "总订单数", value: data.totalOrders ?? "—" },
         { icon: "⏳", label: "待审核游记", value: data.pendingPosts ?? "—" },
-        { icon: "🆕", label: "今日新增", value: data.todayNew ?? "—" },
+        { icon: "🆕", label: "今日新增", value: data.todayNewUsers ?? "—" },
       ];
     }
   } catch (e) {
@@ -276,7 +276,7 @@ onMounted(() => {
   min-height: calc(100vh - 60px);
 }
 .admin-aside {
-  background: #0F172A;
+  background: #0f172a;
   min-height: calc(100vh - 60px);
 }
 .admin-logo {
@@ -287,7 +287,7 @@ onMounted(() => {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 .admin-menu {
-  background: #0F172A;
+  background: #0f172a;
   border-right: none;
 }
 .admin-menu :deep(.el-menu-item) {
@@ -295,11 +295,11 @@ onMounted(() => {
 }
 .admin-menu :deep(.el-menu-item:hover),
 .admin-menu :deep(.el-menu-item.is-active) {
-  background: linear-gradient(135deg, #0D9488, #10B981);
+  background: linear-gradient(135deg, #0d9488, #10b981);
   color: #fff;
 }
 .admin-main {
-  background: #F8FAFC;
+  background: #f8fafc;
   padding: 24px;
 }
 .section-title {
@@ -320,7 +320,7 @@ onMounted(() => {
 .stat-value {
   font-size: 32px;
   font-weight: 700;
-  background: linear-gradient(135deg, #0D9488, #10B981);
+  background: linear-gradient(135deg, #0d9488, #10b981);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

@@ -19,10 +19,11 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import com.travelmate.annotation.RateLimiter;
+
 /**
  * 酒店住宿控制器 (成员B负责)
  */
-@CrossOrigin
 @RestController
 @RequestMapping("/api/hotel")
 public class HotelController {
@@ -87,6 +88,7 @@ public class HotelController {
      * 创建酒店订单（需要登录认证）
      * POST /api/hotel/order/create
      */
+    @RateLimiter(maxRequests = 3, timeWindowSeconds = 1)
     @PostMapping("/order/create")
     public Result<String> createOrder(@RequestBody HotelOrderCreateDTO dto) {
         Long userId = getCurrentUserId();
@@ -105,6 +107,7 @@ public class HotelController {
      * 模拟支付订单
      * POST /api/hotel/order/{orderNo}/pay
      */
+    @RateLimiter(maxRequests = 5, timeWindowSeconds = 1)
     @PostMapping("/order/{orderNo}/pay")
     public Result<String> payOrder(@PathVariable String orderNo) {
         Long userId = getCurrentUserId();

@@ -1,7 +1,6 @@
 package com.travelmate.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.travelmate.dto.AiChatDTO;
 import com.travelmate.dto.AiPlanCreateDTO;
 import com.travelmate.entity.AiChat;
@@ -9,8 +8,8 @@ import com.travelmate.entity.AiPlan;
 import com.travelmate.entity.Notification;
 import com.travelmate.mapper.AiChatMapper;
 import com.travelmate.mapper.AiPlanMapper;
-import com.travelmate.mapper.NotificationMapper;
 import com.travelmate.service.AiService;
+import com.travelmate.service.NotificationCenterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class AiServiceImpl implements AiService {
@@ -41,7 +39,7 @@ public class AiServiceImpl implements AiService {
     private AiChatMapper aiChatMapper;
 
     @Autowired
-    private NotificationMapper notificationMapper;
+    private NotificationCenterService notificationCenterService;
 
     private static final String FALLBACK_PLAN = "{\"title\":\"默认推荐行程\",\"summary\":\"AI服务暂时不可用，以下为我们为您准备的精选行程模板\"," +
             "\"days\":[{\"day\":1,\"theme\":\"抵达与初探\",\"activities\":[{\"time\":\"14:00\"," +
@@ -105,6 +103,11 @@ public class AiServiceImpl implements AiService {
         }
 
         aiPlanMapper.insert(plan);
+        notificationCenterService.createNotification(
+                userId,
+                "ai_plan",
+                "AI 行程已生成",
+                String.format("您的 %s %d 天行程已生成，可在行程列表中查看详情。", dto.getDestination(), dto.getDays()));
         return plan;
     }
 
@@ -200,27 +203,17 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public List<Notification> listNotifications(Long userId) {
-        LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Notification::getUserId, userId)
-                .orderByDesc(Notification::getCreateTime);
-        return notificationMapper.selectList(wrapper);
+        return notificationCenterService.listNotifications(userId);
     }
 
     @Override
     public void markRead(Long id, Long userId) {
-        LambdaUpdateWrapper<Notification> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(Notification::getId, id)
-                .eq(Notification::getUserId, userId)
-                .set(Notification::getIsRead, 1);
-        notificationMapper.update(null, wrapper);
+        notificationCenterService.markRead(id, userId);
     }
 
     @Override
     public long unreadCount(Long userId) {
-        LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Notification::getUserId, userId)
-                .eq(Notification::getIsRead, 0);
-        return notificationMapper.selectCount(wrapper);
+        return notificationCenterService.unreadCount(userId);
     }
 
     // ======================== 工具方法 ========================

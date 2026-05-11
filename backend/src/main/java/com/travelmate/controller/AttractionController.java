@@ -17,7 +17,6 @@ import java.util.Map;
 /**
  * 景点门票控制器 (成员B负责)
  */
-@CrossOrigin
 @RestController
 @RequestMapping("/api/attraction")
 public class AttractionController {

@@ -36,13 +36,11 @@ const routes = [
     name: "AttractionList",
     component: () => import("../views/hotel/AttractionList.vue"),
   },
-  /*
   {
     path: "/ai-plan",
     name: "AiPlan",
     component: () => import("../views/ai/AiPlan.vue"),
   },
-  */
   {
     path: "/community",
     name: "Community",
@@ -63,6 +61,12 @@ const routes = [
     path: "/my-orders",
     name: "MyOrders",
     component: () => import("../views/order/MyOrders.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/notifications",
+    name: "NotificationCenter",
+    component: () => import("../views/user/NotificationCenter.vue"),
     meta: { requiresAuth: true },
   },
   {

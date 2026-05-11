@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin
 @RequestMapping("/api/admin")
 public class AdminController {
 

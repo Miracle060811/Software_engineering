@@ -16,8 +16,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import com.travelmate.annotation.RateLimiter;
+
 @RestController
-@CrossOrigin
 public class AiController {
 
     @Autowired
@@ -59,6 +60,7 @@ public class AiController {
     /**
      * POST /api/ai/chat - AI客服对话
      */
+    @RateLimiter(maxRequests = 10, timeWindowSeconds = 1)
     @PostMapping("/api/ai/chat")
     public Result<AiChat> chat(@RequestBody AiChatDTO dto) {
         Long userId = getCurrentUserId();

@@ -1,5 +1,15 @@
 <template>
   <div class="hotel-search-page">
+    <PageHeader
+      title="酒店搜索"
+      subtitle="搜索并预订全国热门酒店"
+      icon="🏨"
+      :breadcrumbs="[
+        { label: '首页', to: '/' },
+        { label: '酒店搜索' }
+      ]"
+    />
+
     <el-card class="search-box">
       <el-form :inline="true" :model="searchForm">
         <el-form-item label="城市">
@@ -7,6 +17,7 @@
             v-model="searchForm.city"
             placeholder="目的城市"
             clearable
+            size="large"
           />
         </el-form-item>
         <el-form-item label="星级">
@@ -15,6 +26,7 @@
             placeholder="不限"
             clearable
             style="width: 120px"
+            size="large"
           >
             <el-option label="五星" :value="5" />
             <el-option label="四星" :value="4" />
@@ -28,6 +40,7 @@
             type="number"
             placeholder="最低价"
             style="width: 100px"
+            size="large"
           />
           <span style="margin: 0 8px; color: #999">~</span>
           <el-input
@@ -35,21 +48,36 @@
             type="number"
             placeholder="最高价"
             style="width: 100px"
+            size="large"
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="fetchHotels">搜索酒店</el-button>
-          <el-button @click="resetForm">重置</el-button>
+          <el-button type="primary" size="large" @click="fetchHotels">
+            <el-icon><Search /></el-icon>搜索酒店
+          </el-button>
+          <el-button size="large" @click="resetForm">重置</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
-    <div v-loading="loading">
-      <el-empty
-        v-if="!loading && hotels.length === 0"
-        description="暂无酒店信息，请调整搜索条件"
-      />
+    <!-- 骨架屏 -->
+    <div v-if="loading">
       <el-row :gutter="20">
+        <el-col :span="8" v-for="i in 6" :key="i" style="margin-bottom: 20px">
+          <SkeletonBox type="card" :count="1" />
+        </el-col>
+      </el-row>
+    </div>
+
+    <!-- 空状态 -->
+    <EmptyState
+      v-else-if="hotels.length === 0"
+      icon="search"
+      title="暂无酒店信息"
+      description="没有找到匹配的酒店，请调整搜索条件试试"
+    />
+
+    <el-row v-else :gutter="20">
         <el-col
           :span="8"
           v-for="hotel in hotels"
@@ -89,14 +117,17 @@
           </el-card>
         </el-col>
       </el-row>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
+import { Search } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import PageHeader from "@/components/PageHeader.vue";
+import SkeletonBox from "@/components/SkeletonBox.vue";
+import EmptyState from "@/components/EmptyState.vue";
 
 const route = useRoute();
 const hotels = ref([]);
@@ -149,42 +180,47 @@ onMounted(() => {
 }
 .search-box {
   margin-bottom: 24px;
+  border-radius: 16px;
+  border: 1px solid #F0F2F5;
 }
 .hotel-card {
   cursor: pointer;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
+  border: 1px solid #F0F2F5;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .hotel-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
 }
 .hotel-img {
   width: 100%;
-  height: 180px;
+  height: 200px;
   object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.hotel-card:hover .hotel-img {
+  transform: scale(1.05);
 }
 .hotel-info {
-  padding: 14px 16px;
+  padding: 16px 18px;
 }
 .hotel-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1E293B;
-  margin-bottom: 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1A1A2E;
+  margin-bottom: 8px;
 }
 .hotel-star {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
 }
 .hotel-location {
   font-size: 13px;
-  color: #94A3B8;
-  margin-bottom: 10px;
+  color: #A0A0B8;
+  margin-bottom: 12px;
 }
 .hotel-price {
   display: flex;
@@ -193,15 +229,15 @@ onMounted(() => {
 }
 .price-from {
   font-size: 12px;
-  color: #94A3B8;
+  color: #A0A0B8;
 }
 .price-value {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: #EF4444;
 }
 .price-unit {
   font-size: 12px;
-  color: #94A3B8;
+  color: #A0A0B8;
 }
 </style>
