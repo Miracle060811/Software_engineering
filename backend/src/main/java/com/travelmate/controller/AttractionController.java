@@ -1,0 +1,102 @@
+package com.travelmate.controller;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.travelmate.backend.entity.User;
+import com.travelmate.backend.mapper.UserMapper;
+import com.travelmate.common.Result;
+import com.travelmate.entity.Attraction;
+import com.travelmate.service.AttractionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 景点门票控制器 (成员B负责)
+ */
+@CrossOrigin
+@RestController
+@RequestMapping("/api/attraction")
+public class AttractionController {
+
+    @Autowired
+    private AttractionService attractionService;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    /**
+     * 搜索景点
+     * GET /api/attraction/search?city=
+     */
+    @GetMapping("/search")
+    public Result<List<Attraction>> searchAttractions(
+            @RequestParam(required = false) String city) {
+        return Result.success(attractionService.searchAttractions(city));
+    }
+
+    /**
+     * 景点详情
+     * GET /api/attraction/{id}
+     */
+    @GetMapping("/{id}")
+    public Result<Attraction> getDetail(@PathVariable Long id) {
+        Attraction attraction = attractionService.getById(id);
+        if (attraction == null || attraction.getStatus() != 1) {
+            return Result.error("景点不存在或已下线");
+        }
+        return Result.success(attraction);
+    }
+
+    /**
+     * 购买门票
+     * POST /api/attraction/{id}/ticket
+     * Body: { "count": 2, "guestName": "张三", "guestPhone": "13800138000" }
+     */
+    @PostMapping("/{id}/ticket")
+    public Result<String> buyTicket(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return Result.error("用户未登录或Token无效");
+        }
+
+        Integer count = body.get("count") != null
+                ? Integer.valueOf(body.get("count").toString())
+                : 1;
+        String guestName = body.get("guestName") != null
+                ? body.get("guestName").toString()
+                : "";
+        String guestPhone = body.get("guestPhone") != null
+                ? body.get("guestPhone").toString()
+                : "";
+
+        try {
+            String orderNo = attractionService.buyTicket(userId, id, count, guestName, guestPhone);
+            return Result.success(orderNo);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    // ===================== 工具方法 =====================
+
+    private Long getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        String username = auth.getName();
+        if (username == null || "anonymousUser".equals(username)) {
+            return null;
+        }
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, username));
+        return user != null ? user.getId() : null;
+    }
+}

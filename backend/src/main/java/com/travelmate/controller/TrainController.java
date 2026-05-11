@@ -11,6 +11,7 @@ import java.util.List;
 /**
  * 成员A负责: 火车票查寻模块
  */
+@CrossOrigin
 @RestController
 @RequestMapping("/api/train")
 public class TrainController {

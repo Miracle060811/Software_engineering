@@ -2,34 +2,35 @@ import axios from "axios";
 import { ElMessage } from "element-plus";
 
 const request = axios.create({
-  baseURL: "/api",
-  timeout: 50000,
+  baseURL: "/",
+  timeout: 30000,
 });
 
-// 请求拦截器
-request.interceptors.request.use(
-  (config) => {
-    // 这里以后可以加上 token: config.headers['Authorization'] = `Bearer ${token}`
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
+request.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers["Authorization"] = `Bearer ${token}`;
+  }
+  return config;
+});
 
-// 响应拦截器
 request.interceptors.response.use(
   (response) => {
     const res = response.data;
     if (res.code === 200) {
       return res.data;
     } else {
-      ElMessage.error(res.msg || "系统异常");
-      return Promise.reject(new Error(res.msg || "Error"));
+      ElMessage.error(res.msg || "请求失败");
+      return Promise.reject(new Error(res.msg));
     }
   },
   (error) => {
-    ElMessage.error("网络请求失败");
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userInfo");
+      window.location.href = "/login";
+    }
+    ElMessage.error(error.response?.data?.msg || "网络请求失败");
     return Promise.reject(error);
   },
 );

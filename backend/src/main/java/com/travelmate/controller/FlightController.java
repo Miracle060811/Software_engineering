@@ -11,6 +11,7 @@ import java.util.List;
 /**
  * 成员A负责: 机票与大交通模块
  */
+@CrossOrigin
 @RestController
 @RequestMapping("/api/flight")
 public class FlightController {

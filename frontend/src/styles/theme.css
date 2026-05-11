@@ -1,0 +1,246 @@
+/* ============================================
+   TravelMate 全局主题 — 旅行探索风格
+   主色调：苍翠 Teal，辅以温暖渐变
+   ============================================ */
+
+/* ---- Element Plus CSS 变量覆盖 ---- */
+:root {
+  /* 主色 — 苍翠 Teal */
+  --el-color-primary: #0D9488;
+  --el-color-primary-light-1: #1DA89C;
+  --el-color-primary-light-2: #2DBCB0;
+  --el-color-primary-light-3: #40C9BE;
+  --el-color-primary-light-4: #5DD5CC;
+  --el-color-primary-light-5: #7DE0D9;
+  --el-color-primary-light-6: #9DE8E4;
+  --el-color-primary-light-7: #BEF0EE;
+  --el-color-primary-light-8: #DEF8F7;
+  --el-color-primary-light-9: #EFFBFA;
+  --el-color-primary-dark-2: #0A7B72;
+
+  /* 功能色 */
+  --el-color-success: #10B981;
+  --el-color-success-light-3: #6EE7B7;
+  --el-color-success-light-5: #A7F3D0;
+  --el-color-success-light-7: #D1FAE5;
+  --el-color-success-light-8: #ECFDF5;
+  --el-color-success-light-9: #F0FDF4;
+  --el-color-success-dark-2: #059669;
+
+  --el-color-warning: #F59E0B;
+  --el-color-warning-light-3: #FCD34D;
+  --el-color-warning-light-5: #FDE68A;
+  --el-color-warning-light-7: #FEF3C7;
+  --el-color-warning-light-8: #FFFBEB;
+  --el-color-warning-light-9: #FFFDF5;
+  --el-color-warning-dark-2: #D97706;
+
+  --el-color-danger: #EF4444;
+  --el-color-danger-light-3: #FCA5A5;
+  --el-color-danger-light-5: #FECACA;
+  --el-color-danger-light-7: #FEE2E2;
+  --el-color-danger-light-8: #FEF2F2;
+  --el-color-danger-light-9: #FFF5F5;
+  --el-color-danger-dark-2: #DC2626;
+
+  --el-color-info: #6366F1;
+  --el-color-info-light-3: #A5B4FC;
+  --el-color-info-light-5: #C7D2FE;
+  --el-color-info-light-7: #E0E7FF;
+  --el-color-info-light-8: #EEF2FF;
+  --el-color-info-light-9: #F5F7FF;
+  --el-color-info-dark-2: #4F46E5;
+
+  /* 背景 & 文字 */
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #F0F4F3;
+  --el-bg-color-overlay: #ffffff;
+  --el-text-color-primary: #1E293B;
+  --el-text-color-regular: #475569;
+  --el-text-color-secondary: #94A3B8;
+  --el-text-color-placeholder: #B0BEC5;
+  --el-text-color-disabled: #CBD5E1;
+
+  /* 边框 */
+  --el-border-color: #E2E8F0;
+  --el-border-color-light: #F1F5F9;
+  --el-border-color-lighter: #F8FAFC;
+  --el-border-color-extra-light: #F8FAFC;
+  --el-border-color-dark: #CBD5E1;
+
+  /* 圆角 — 更圆润 */
+  --el-border-radius-base: 10px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 24px;
+  --el-border-radius-circle: 50%;
+
+  /* 阴影 — 更柔和 */
+  --el-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --el-box-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --el-box-shadow-lighter: 0 1px 4px rgba(0, 0, 0, 0.02);
+  --el-box-shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+  /* 字体 */
+  --el-font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue",
+    Helvetica, Arial, sans-serif;
+  --el-font-size-extra-large: 22px;
+  --el-font-size-large: 18px;
+  --el-font-size-medium: 16px;
+  --el-font-size-base: 14px;
+  --el-font-size-small: 13px;
+  --el-font-size-extra-small: 12px;
+
+  /* 过渡 */
+  --el-transition-duration: 0.25s;
+  --el-transition-duration-fast: 0.15s;
+
+  /* 组件级别 */
+  --el-menu-hover-bg-color: var(--el-color-primary-light-9);
+  --el-menu-active-color: var(--el-color-primary);
+  --el-table-header-bg-color: #F8FAFC;
+  --el-table-row-hover-bg-color: #F0FDFA;
+  --el-tag-border-radius: 6px;
+  --el-button-border-radius: 8px;
+}
+
+/* ---- 全局样式 ---- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Helvetica,
+    Arial, sans-serif;
+  background: #F0F4F3;
+  color: #1E293B;
+  line-height: 1.6;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #BECCC8;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #99A9A5;
+}
+
+/* 选中文字颜色 */
+::selection {
+  background: #0D9488;
+  color: #fff;
+}
+
+/* ---- Element Plus 组件微调 ---- */
+
+/* 按钮 */
+.el-button--primary {
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+.el-button--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+
+/* 卡片 */
+.el-card {
+  border: 1px solid var(--el-border-color);
+  transition: box-shadow 0.3s ease;
+}
+.el-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* 输入框 */
+.el-input__wrapper {
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.el-input__wrapper:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 菜单 */
+.el-menu {
+  border-right: none !important;
+}
+
+/* 表格 */
+.el-table th.el-table__cell {
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+/* 标签 */
+.el-tag {
+  font-weight: 500;
+}
+
+/* Dialog */
+.el-dialog {
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+.el-dialog__header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--el-border-color-light);
+}
+.el-dialog__body {
+  padding: 24px;
+}
+.el-dialog__footer {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--el-border-color-light);
+}
+
+/* Drawer */
+.el-drawer {
+  border-radius: 16px 0 0 16px !important;
+}
+
+/* Tabs */
+.el-tabs__item {
+  font-weight: 500;
+  transition: color 0.25s;
+}
+.el-tabs__active-bar {
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* Menu item */
+.el-menu-item {
+  transition: all 0.2s ease;
+}
+
+/* Dropdown */
+.el-dropdown-menu__item:not(.is-disabled):hover {
+  background-color: var(--el-color-primary-light-9) !important;
+  color: var(--el-color-primary) !important;
+}
+
+/* Pagination */
+.el-pagination .el-pager li.is-active {
+  font-weight: 600;
+}
+
+/* Skeleton */
+.el-skeleton__item {
+  border-radius: 8px;
+}

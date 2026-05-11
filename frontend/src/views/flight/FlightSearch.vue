@@ -1,0 +1,352 @@
+<template>
+  <div class="flight-search-page">
+    <el-card class="search-box">
+      <el-form :inline="true" :model="searchForm">
+        <el-form-item label="出发城市">
+          <el-input
+            v-model="searchForm.depCity"
+            placeholder="如：北京"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="到达城市">
+          <el-input
+            v-model="searchForm.arrCity"
+            placeholder="如：上海"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="出发日期">
+          <el-date-picker
+            v-model="searchForm.date"
+            type="date"
+            placeholder="选择日期"
+            value-format="YYYY-MM-DD"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="fetchFlights">搜索航班</el-button>
+          <el-button @click="resetForm">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <div v-loading="loading">
+      <el-empty
+        v-if="!loading && flights.length === 0"
+        description="暂无航班信息，请调整搜索条件"
+      />
+      <el-card v-for="flight in flights" :key="flight.id" class="flight-card">
+        <div class="flight-row">
+          <div class="flight-airline">
+            <div class="airline-name">{{ flight.airline }}</div>
+            <div class="flight-no">{{ flight.flightNo }}</div>
+          </div>
+          <div class="flight-time">
+            <div class="time-depart">
+              {{ formatTime(flight.departureTime) }}
+            </div>
+            <div class="flight-route">
+              {{ flight.departureCity }} → {{ flight.arrivalCity }}
+            </div>
+            <div class="time-arrive">{{ formatTime(flight.arrivalTime) }}</div>
+          </div>
+          <div class="flight-seats">
+            <el-tag :type="flight.availableSeats > 10 ? 'success' : 'warning'">
+              余票 {{ flight.availableSeats }}
+            </el-tag>
+          </div>
+          <div class="flight-price-col">
+            <div class="price-economy">
+              <span class="price-num">¥{{ flight.economyPrice }}</span>
+              <span class="price-label">经济舱</span>
+            </div>
+            <div class="price-business" v-if="flight.businessPrice">
+              <span class="price-num-sm">¥{{ flight.businessPrice }}</span>
+              <span class="price-label">商务舱</span>
+            </div>
+            <el-button
+              type="primary"
+              size="small"
+              @click="openBookDialog(flight)"
+            >
+              预订
+            </el-button>
+          </div>
+        </div>
+      </el-card>
+    </div>
+
+    <!-- 预订 Dialog -->
+    <el-dialog v-model="bookDialogVisible" title="预订机票" width="520px">
+      <div v-if="selectedFlight" class="book-flight-info">
+        <p>
+          <strong
+            >{{ selectedFlight.airline }} {{ selectedFlight.flightNo }}</strong
+          >
+          {{ selectedFlight.departureCity }} → {{ selectedFlight.arrivalCity }}
+        </p>
+        <p>
+          {{ formatTime(selectedFlight.departureTime) }} ~
+          {{ formatTime(selectedFlight.arrivalTime) }}
+        </p>
+      </div>
+      <el-divider />
+      <el-form :model="bookForm" label-width="80px">
+        <el-form-item label="乘客">
+          <el-select
+            v-model="bookForm.passengerId"
+            placeholder="选择乘客"
+            style="width: 100%"
+            @click="fetchPassengers"
+          >
+            <el-option
+              v-for="p in passengers"
+              :key="p.id"
+              :label="`${p.name}（${p.idCard}）`"
+              :value="p.id"
+            />
+          </el-select>
+          <el-button link type="primary" @click="passengerDrawerVisible = true">
+            + 添加乘客
+          </el-button>
+        </el-form-item>
+        <el-form-item label="舱位">
+          <el-radio-group v-model="bookForm.seatType">
+            <el-radio value="economy"
+              >经济舱 ¥{{ selectedFlight?.economyPrice }}</el-radio
+            >
+            <el-radio
+              value="business"
+              :disabled="!selectedFlight?.businessPrice"
+            >
+              商务舱 ¥{{ selectedFlight?.businessPrice || "暂无" }}
+            </el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="应付金额">
+          <span class="total-price">
+            ¥{{
+              bookForm.seatType === "economy"
+                ? selectedFlight?.economyPrice
+                : selectedFlight?.businessPrice
+            }}
+          </span>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="bookDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="booking" @click="confirmBook"
+          >确认下单</el-button
+        >
+      </template>
+    </el-dialog>
+
+    <!-- 添加乘客 Drawer -->
+    <el-drawer v-model="passengerDrawerVisible" title="添加乘客" size="400px">
+      <el-form :model="newPassenger" label-width="80px">
+        <el-form-item label="姓名">
+          <el-input v-model="newPassenger.name" placeholder="真实姓名" />
+        </el-form-item>
+        <el-form-item label="身份证号">
+          <el-input v-model="newPassenger.idCard" placeholder="18位身份证号" />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="newPassenger.phone" placeholder="联系电话" />
+        </el-form-item>
+        <el-button type="primary" @click="addPassenger">添加</el-button>
+      </el-form>
+    </el-drawer>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { ElMessage } from "element-plus";
+import request from "@/utils/request";
+
+const route = useRoute();
+const flights = ref([]);
+const loading = ref(false);
+const bookDialogVisible = ref(false);
+const passengerDrawerVisible = ref(false);
+const booking = ref(false);
+const selectedFlight = ref(null);
+const passengers = ref([]);
+
+const searchForm = ref({
+  depCity: route.query.depCity || "",
+  arrCity: route.query.arrCity || "",
+  date: "",
+});
+
+const bookForm = ref({ passengerId: null, seatType: "economy" });
+const newPassenger = ref({ name: "", idCard: "", phone: "" });
+
+const fetchFlights = async () => {
+  loading.value = true;
+  try {
+    const data = await request.get("/api/flight/search", {
+      params: searchForm.value,
+    });
+    flights.value = Array.isArray(data) ? data : [];
+  } catch (e) {
+    flights.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
+
+const resetForm = () => {
+  searchForm.value = { depCity: "", arrCity: "", date: "" };
+  fetchFlights();
+};
+
+const formatTime = (iso) => {
+  if (!iso) return "";
+  return new Date(iso).toLocaleString("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const openBookDialog = async (flight) => {
+  selectedFlight.value = flight;
+  bookForm.value = { passengerId: null, seatType: "economy" };
+  bookDialogVisible.value = true;
+  await fetchPassengers();
+};
+
+const fetchPassengers = async () => {
+  try {
+    const data = await request.get("/api/passenger/list");
+    passengers.value = Array.isArray(data) ? data : [];
+  } catch (e) {
+    passengers.value = [];
+  }
+};
+
+const addPassenger = async () => {
+  try {
+    await request.post("/api/passenger/add", newPassenger.value);
+    ElMessage.success("添加乘客成功");
+    newPassenger.value = { name: "", idCard: "", phone: "" };
+    passengerDrawerVisible.value = false;
+    await fetchPassengers();
+  } catch (e) {}
+};
+
+const confirmBook = async () => {
+  if (!bookForm.value.passengerId) {
+    ElMessage.warning("请选择乘客");
+    return;
+  }
+  booking.value = true;
+  try {
+    const passenger = passengers.value.find(
+      (p) => p.id === bookForm.value.passengerId,
+    );
+    await request.post("/api/order/flight/create", {
+      flightId: selectedFlight.value.id,
+      passengerName: passenger?.name,
+      passengerIdCard: passenger?.idCard,
+      seatType: bookForm.value.seatType,
+    });
+    ElMessage.success("下单成功！请前往【我的订单】完成支付");
+    bookDialogVisible.value = false;
+  } catch (e) {
+  } finally {
+    booking.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchFlights();
+});
+</script>
+
+<style scoped>
+.flight-search-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+.search-box {
+  margin-bottom: 20px;
+}
+.flight-card {
+  margin-bottom: 12px;
+  border-radius: 10px;
+}
+.flight-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.flight-airline {
+  width: 120px;
+}
+.airline-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+.flight-no {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+.flight-time {
+  flex: 1;
+  text-align: center;
+}
+.time-depart,
+.time-arrive {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+.flight-route {
+  font-size: 13px;
+  color: #999;
+  margin: 4px 0;
+}
+.flight-seats {
+  width: 80px;
+  text-align: center;
+}
+.flight-price-col {
+  width: 140px;
+  text-align: right;
+}
+.price-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: #EF4444;
+}
+.price-label {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-left: 4px;
+}
+.price-num-sm {
+  font-size: 16px;
+  font-weight: 600;
+  color: #F59E0B;
+}
+.price-business {
+  margin-bottom: 8px;
+}
+.book-flight-info {
+  padding: 12px;
+  background: #F0FDFA;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+.total-price {
+  font-size: 22px;
+  font-weight: 700;
+  color: #EF4444;
+}
+</style>
