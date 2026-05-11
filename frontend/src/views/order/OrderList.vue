@@ -24,7 +24,7 @@
         </el-table-column>
         <el-table-column prop="amount" label="订单金额(元)" width="120">
           <template #default="scope">
-            <span style="color: #ff4d4f; font-weight: bold"
+            <span style="color: #EF4444; font-weight: bold"
               >￥{{ scope.row.amount }}</span
             >
           </template>

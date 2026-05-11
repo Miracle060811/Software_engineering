@@ -279,7 +279,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #F1F5F9;
 }
 .room-item:last-child {
   border-bottom: none;
@@ -307,17 +307,17 @@ onMounted(() => {
 .room-price {
   font-size: 22px;
   font-weight: 700;
-  color: #ff4d4f;
+  color: #EF4444;
   margin-bottom: 8px;
 }
 .room-price span {
   font-size: 13px;
-  color: #999;
+  color: #94A3B8;
   font-weight: 400;
 }
 .review-item {
   padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #F1F5F9;
 }
 .review-item:last-child {
   border-bottom: none;
@@ -329,21 +329,21 @@ onMounted(() => {
 }
 .review-user {
   font-weight: 600;
-  color: #333;
+  color: #1E293B;
 }
 .review-date {
   margin-left: auto;
   font-size: 12px;
-  color: #999;
+  color: #94A3B8;
 }
 .review-content {
   font-size: 14px;
-  color: #666;
+  color: #475569;
   line-height: 1.6;
 }
 .total-price {
   font-size: 22px;
   font-weight: 700;
-  color: #ff4d4f;
+  color: #EF4444;
 }
 </style>

@@ -28,7 +28,7 @@
         <el-table-column prop="airline" label="航司" width="180">
           <template #default="scope">
             <strong>{{ scope.row.airline }}</strong> <br />
-            <span style="color: #999; font-size: 12px">{{
+            <span style="color: #94A3B8; font-size: 12px">{{
               scope.row.flightNo
             }}</span>
           </template>
@@ -47,9 +47,9 @@
         <el-table-column prop="availableSeats" label="余票" width="100" />
         <el-table-column label="价格与预订" width="220" align="right">
           <template #default="scope">
-            <div style="color: #ff4d4f; font-size: 20px; margin-bottom: 5px">
+            <div style="color: #EF4444; font-size: 20px; margin-bottom: 5px">
               ￥{{ scope.row.economyPrice }}
-              <span style="font-size: 12px; color: #999">(经济舱)</span>
+              <span style="font-size: 12px; color: #94A3B8">(经济舱)</span>
             </div>
             <el-button
               type="warning"

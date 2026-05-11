@@ -160,6 +160,6 @@ onMounted(() => {
 .attr-price {
   font-size: 20px;
   font-weight: 700;
-  color: #ff4d4f;
+  color: #EF4444;
 }
 </style>

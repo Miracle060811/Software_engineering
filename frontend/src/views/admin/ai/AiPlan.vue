@@ -323,7 +323,7 @@ onMounted(() => {
   transition: color 0.2s;
 }
 .history-item:hover {
-  color: #409eff;
+  color: #0D9488;
 }
 .history-item:last-child {
   border-bottom: none;
@@ -368,7 +368,7 @@ onMounted(() => {
 .day-num {
   font-size: 16px;
   font-weight: 700;
-  color: #409eff;
+  color: #0D9488;
 }
 .day-theme {
   font-size: 14px;
@@ -390,7 +390,7 @@ onMounted(() => {
 }
 .activity-cost {
   font-size: 12px;
-  color: #ff8c00;
+  color: #F59E0B;
   margin-top: 6px;
 }
 .chat-fab {
@@ -399,19 +399,20 @@ onMounted(() => {
   right: 40px;
   width: 56px;
   height: 56px;
-  background: #409eff;
+  background: linear-gradient(135deg, #0D9488, #10B981);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 26px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.4);
+  box-shadow: 0 4px 20px rgba(13, 148, 136, 0.4);
   z-index: 999;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;
 }
 .chat-fab:hover {
   transform: scale(1.1);
+  box-shadow: 0 6px 28px rgba(13, 148, 136, 0.5);
 }
 .chat-container {
   display: flex;
@@ -443,13 +444,13 @@ onMounted(() => {
   line-height: 1.6;
 }
 .chat-bubble.user .bubble-content {
-  background: #409eff;
+  background: linear-gradient(135deg, #0D9488, #10B981);
   color: #fff;
   border-bottom-right-radius: 4px;
 }
 .chat-bubble.assistant .bubble-content {
-  background: #f5f7fa;
-  color: #333;
+  background: #F1F5F9;
+  color: #1E293B;
   border-bottom-left-radius: 4px;
 }
 .typing {
