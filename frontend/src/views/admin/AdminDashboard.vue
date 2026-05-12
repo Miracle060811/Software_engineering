@@ -40,7 +40,7 @@
           <el-row :gutter="20" v-loading="statsLoading">
             <el-col :span="6" v-for="stat in statCards" :key="stat.label">
               <el-card class="stat-card">
-                <div class="stat-icon">{{ stat.icon }}</div>
+                <el-icon class="stat-icon-el" :size="36"><component :is="stat.icon" /></el-icon>
                 <div class="stat-value">{{ stat.value }}</div>
                 <div class="stat-label">{{ stat.label }}</div>
               </el-card>
@@ -148,6 +148,10 @@ import {
   House,
   Document,
   User,
+  UserFilled,
+  Tickets,
+  Clock,
+  CirclePlus,
 } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 
@@ -157,10 +161,10 @@ const activeMenu = ref("stats");
 const statsLoading = ref(false);
 const statsData = ref({});
 const statCards = ref([
-  { icon: "👥", label: "总用户数", value: "—" },
-  { icon: "📋", label: "总订单数", value: "—" },
-  { icon: "⏳", label: "待审核游记", value: "—" },
-  { icon: "🆕", label: "今日新增", value: "—" },
+  { icon: UserFilled, label: "总用户数", value: "—" },
+  { icon: Tickets, label: "总订单数", value: "—" },
+  { icon: Clock, label: "待审核游记", value: "—" },
+  { icon: CirclePlus, label: "今日新增", value: "—" },
 ]);
 
 // 其他数据
@@ -179,10 +183,10 @@ const fetchStats = async () => {
     const data = await request.get("/api/admin/stats");
     if (data) {
       statCards.value = [
-        { icon: "👥", label: "总用户数", value: data.totalUsers ?? "—" },
-        { icon: "📋", label: "总订单数", value: data.totalOrders ?? "—" },
-        { icon: "⏳", label: "待审核游记", value: data.pendingPosts ?? "—" },
-        { icon: "🆕", label: "今日新增", value: data.todayNewUsers ?? "—" },
+        { icon: UserFilled, label: "总用户数", value: data.totalUsers ?? "—" },
+        { icon: Tickets, label: "总订单数", value: data.totalOrders ?? "—" },
+        { icon: Clock, label: "待审核游记", value: data.pendingPosts ?? "—" },
+        { icon: CirclePlus, label: "今日新增", value: data.todayNewUsers ?? "—" },
       ];
     }
   } catch (e) {
@@ -305,7 +309,7 @@ onMounted(() => {
 .section-title {
   font-size: 20px;
   font-weight: 600;
-  color: #333;
+  color: var(--el-text-color-primary);
   margin-bottom: 20px;
 }
 .stat-card {
@@ -313,8 +317,8 @@ onMounted(() => {
   border-radius: 10px;
   padding: 8px;
 }
-.stat-icon {
-  font-size: 36px;
+.stat-icon-el {
+  color: var(--el-color-primary);
   margin-bottom: 8px;
 }
 .stat-value {
@@ -328,6 +332,6 @@ onMounted(() => {
 }
 .stat-label {
   font-size: 14px;
-  color: #999;
+  color: var(--el-text-color-secondary);
 }
 </style>

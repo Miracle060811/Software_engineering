@@ -3,7 +3,7 @@
     <PageHeader
       title="我的订单"
       subtitle="管理大交通票务和酒店预订订单"
-      icon="📋"
+      :icon="Tickets"
       :breadcrumbs="[
         { label: '首页', to: '/' },
         { label: '我的订单' }
@@ -36,7 +36,7 @@
         >
           <div class="order-header">
             <el-tag :type="order.orderType === 0 ? 'primary' : 'success'" effect="light" round>
-              {{ order.orderType === 0 ? "✈️ 机票" : "🚆 火车票" }}
+              {{ order.orderType === 0 ? "机票" : "火车票" }}
             </el-tag>
             <span class="order-no">{{ order.orderNo }}</span>
             <el-tag :type="getStatusType(order.status)" round size="small">
@@ -94,7 +94,7 @@
           class="order-card"
         >
           <div class="order-header">
-            <el-tag type="warning" effect="light" round>🏨 酒店</el-tag>
+            <el-tag type="warning" effect="light" round><el-icon style="margin-right:4px"><House /></el-icon>酒店</el-tag>
             <span class="order-no">{{ order.orderNo }}</span>
             <el-tag :type="getStatusType(order.status)" round size="small">
               {{ getHotelStatusLabel(order.status) }}
@@ -131,6 +131,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { Promotion, Tickets, House } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
@@ -195,7 +196,7 @@ const payOrder = async (orderNo, type) => {
       await request.post(`/api/hotel/order/${orderNo}/pay`);
     }
     ElMessage({
-      message: "支付成功！🎉",
+      message: "支付成功！",
       type: "success",
       duration: 2000,
     });

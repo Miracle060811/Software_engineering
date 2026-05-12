@@ -5,7 +5,7 @@
       <el-col :span="8">
         <el-card class="input-card">
           <template #header>
-            <span class="card-header-title">🤖 AI 行程规划</span>
+            <span class="card-header-title"><el-icon style="margin-right:6px"><Cpu /></el-icon>AI 行程规划</span>
           </template>
           <el-form :model="planForm" label-position="top" label-width="auto">
             <el-form-item label="目的地">
@@ -62,7 +62,7 @@
               style="width: 100%"
               @click="generatePlan"
             >
-              {{ generating ? "正在生成..." : "✨ 生成行程" }}
+              {{ generating ? "正在生成..." : "生成行程" }}
             </el-button>
           </el-form>
         </el-card>
@@ -70,7 +70,7 @@
         <!-- 历史行程 -->
         <el-card class="history-card" style="margin-top: 20px">
           <template #header>
-            <span class="card-header-title">📋 历史行程</span>
+            <span class="card-header-title"><el-icon style="margin-right:6px"><Tickets /></el-icon>历史行程</span>
           </template>
           <el-empty
             v-if="historyPlans.length === 0"
@@ -146,7 +146,7 @@
     </el-row>
 
     <!-- AI 客服浮窗按钮 -->
-    <div class="chat-fab" @click="chatDrawerVisible = true">💬</div>
+    <div class="chat-fab" @click="chatDrawerVisible = true"><el-icon :size="24"><ChatDotSquare /></el-icon></div>
 
     <!-- AI 客服抽屉 -->
     <el-drawer
@@ -186,6 +186,7 @@
 <script setup>
 import { ref, nextTick, onMounted } from "vue";
 import { ElMessage } from "element-plus";
+import { Cpu, MagicStick, Tickets, ChatDotSquare } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 
 const planForm = ref({
@@ -205,7 +206,7 @@ const chatDrawerVisible = ref(false);
 const chatMessages = ref([
   {
     role: "assistant",
-    content: "你好！我是AI旅行助手，有任何旅行问题都可以问我 ✈️",
+    content: "你好！我是AI旅行助手，有任何旅行问题都可以问我",
   },
 ]);
 const chatInput = ref("");
@@ -319,12 +320,12 @@ onMounted(() => {
 }
 .history-item {
   padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--el-border-color-light);
   cursor: pointer;
   transition: color 0.2s;
 }
 .history-item:hover {
-  color: #0d9488;
+  color: var(--el-color-primary);
 }
 .history-item:last-child {
   border-bottom: none;
@@ -335,7 +336,7 @@ onMounted(() => {
 }
 .history-meta {
   font-size: 12px;
-  color: #999;
+  color: var(--el-text-color-secondary);
   margin-top: 2px;
 }
 .loading-area {
@@ -348,12 +349,12 @@ onMounted(() => {
 .plan-title {
   font-size: 22px;
   font-weight: 700;
-  color: #333;
+  color: var(--el-text-color-primary);
   margin-bottom: 10px;
 }
 .plan-summary {
   font-size: 14px;
-  color: #666;
+  color: var(--el-text-color-regular);
   line-height: 1.7;
   margin-bottom: 12px;
 }
@@ -369,11 +370,11 @@ onMounted(() => {
 .day-num {
   font-size: 16px;
   font-weight: 700;
-  color: #0d9488;
+  color: var(--el-color-primary);
 }
 .day-theme {
   font-size: 14px;
-  color: #666;
+  color: var(--el-text-color-regular);
 }
 .activity-card {
   border: 1px solid #e8e8e8;
@@ -381,12 +382,12 @@ onMounted(() => {
 .activity-name {
   font-size: 15px;
   font-weight: 600;
-  color: #333;
+  color: var(--el-text-color-primary);
   margin-bottom: 6px;
 }
 .activity-desc {
   font-size: 13px;
-  color: #666;
+  color: var(--el-text-color-regular);
   line-height: 1.6;
 }
 .activity-cost {
@@ -405,7 +406,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  color: #fff;
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(13, 148, 136, 0.4);
   z-index: 999;
@@ -455,7 +456,7 @@ onMounted(() => {
   border-bottom-left-radius: 4px;
 }
 .typing {
-  color: #999;
+  color: var(--el-text-color-secondary);
   font-style: italic;
 }
 .chat-input-area {

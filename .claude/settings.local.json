@@ -19,7 +19,9 @@
       "Bash(Select-Object FullName, Mode)",
       "Bash(npm install *)",
       "Bash(npm run *)",
-      "Bash(Select-String -Pattern \"error|✓ built|failed\")"
+      "Bash(Select-String -Pattern \"error|✓ built|failed\")",
+      "Bash(Get-ChildItem *)",
+      "PowerShell(Get-ChildItem -Recurse -File -Path \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\frontend\\\\src\" | Select-Object FullName | ForEach-Object { $_.FullName })"
     ]
   }
 }

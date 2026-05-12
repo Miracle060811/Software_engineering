@@ -3,7 +3,7 @@
     <PageHeader
       title="火车票搜索"
       subtitle="搜索并预订全国高铁动车车次"
-      icon="🚆"
+      :icon="Tickets"
       :breadcrumbs="[
         { label: '首页', to: '/' },
         { label: '火车票搜索' }
@@ -190,7 +190,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
-import { Search } from "@element-plus/icons-vue";
+import { Search, Tickets } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";

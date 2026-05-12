@@ -9,7 +9,7 @@
 
     <div class="login-box">
       <div class="login-brand">
-        <span class="brand-icon">✈️</span>
+        <span class="brand-icon"><el-icon :size="42"><Promotion /></el-icon></span>
         <h1 class="brand-name">伴游 TravelMate</h1>
         <p class="brand-slogan">探索世界，从这里开始</p>
       </div>
@@ -119,7 +119,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { User, Lock } from "@element-plus/icons-vue";
+import { User, Lock, Promotion } from "@element-plus/icons-vue";
 import { useUserStore } from "../stores/user";
 
 const router = useRouter();
@@ -270,15 +270,10 @@ const handleRegister = async () => {
 }
 
 .brand-icon {
-  font-size: 42px;
   display: block;
   margin-bottom: 12px;
+  color: var(--el-color-primary);
   animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
 }
 
 .brand-name {

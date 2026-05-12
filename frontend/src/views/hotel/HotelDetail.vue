@@ -17,12 +17,12 @@
           <el-col :span="14">
             <h1 class="hotel-name">{{ hotel.name }}</h1>
             <div class="hotel-star">
-              <span v-for="i in hotel.starRating" :key="i">⭐</span>
+              <el-icon v-for="i in hotel.starRating" :key="i" class="star-icon"><StarFilled /></el-icon>
               <el-tag type="warning" style="margin-left: 12px; font-size: 16px">
                 {{ hotel.rating || "—" }} 分
               </el-tag>
             </div>
-            <div class="hotel-meta">📍 {{ hotel.address }}</div>
+            <div class="hotel-meta"><el-icon><LocationFilled /></el-icon> {{ hotel.address }}</div>
             <div class="hotel-desc">{{ hotel.description }}</div>
           </el-col>
         </el-row>
@@ -129,6 +129,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
+import { StarFilled, LocationFilled } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 
 const route = useRoute();
@@ -254,6 +255,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   margin-bottom: 12px;
+}
+.star-icon {
+  color: #F59E0B;
+  margin-right: 2px;
 }
 .hotel-meta {
   font-size: 14px;

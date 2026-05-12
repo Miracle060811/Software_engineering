@@ -24,9 +24,15 @@
         <!-- 搜索卡片 -->
         <div class="search-card">
           <el-tabs v-model="searchTab" class="hero-search-tabs">
-            <el-tab-pane label="✈️ 机票" name="flight"></el-tab-pane>
-            <el-tab-pane label="🚆 火车票" name="train"></el-tab-pane>
-            <el-tab-pane label="🏨 酒店" name="hotel"></el-tab-pane>
+            <el-tab-pane name="flight">
+              <template #label><el-icon style="margin-right:4px"><Promotion /></el-icon>机票</template>
+            </el-tab-pane>
+            <el-tab-pane name="train">
+              <template #label><el-icon style="margin-right:4px"><Tickets /></el-icon>火车票</template>
+            </el-tab-pane>
+            <el-tab-pane name="hotel">
+              <template #label><el-icon style="margin-right:4px"><House /></el-icon>酒店</template>
+            </el-tab-pane>
           </el-tabs>
 
           <div class="search-row" v-if="searchTab === 'flight'">
@@ -169,7 +175,7 @@
       <div class="stats-grid">
         <div class="stat-item" v-for="stat in stats" :key="stat.label">
           <div class="stat-icon-wrap" :style="{ background: stat.gradient }">
-            <span class="stat-icon">{{ stat.icon }}</span>
+            <el-icon class="stat-icon-el" :size="24"><component :is="stat.icon" /></el-icon>
           </div>
           <div class="stat-body">
             <CountUp :target="stat.num" class="stat-num" />
@@ -183,7 +189,7 @@
     <section class="dest-section">
       <div class="section-header">
         <div>
-          <h2 class="section-title">🔥 热门目的地</h2>
+          <h2 class="section-title">热门目的地</h2>
           <p class="section-sub">精选热门旅行目的地，发现你的下一站</p>
         </div>
         <el-button text type="primary" @click="$router.push('/hotel-search')">
@@ -230,7 +236,7 @@
     <section class="feature-section">
       <div class="section-header">
         <div>
-          <h2 class="section-title">✨ 发现更多精彩</h2>
+          <h2 class="section-title">发现更多精彩</h2>
           <p class="section-sub">不止出行，还有更多旅行灵感等你探索</p>
         </div>
       </div>
@@ -239,7 +245,7 @@
         <div class="feature-card" @click="$router.push('/ai-plan')">
           <div class="feat-visual feat-visual-ai">
             <div class="feat-illustration">
-              <span class="feat-icon-lg">🤖</span>
+              <el-icon class="feat-icon-lg"><Cpu /></el-icon>
               <div class="feat-rings">
                 <span class="ring ring-1"></span>
                 <span class="ring ring-2"></span>
@@ -256,7 +262,7 @@
         <div class="feature-card" @click="$router.push('/community')">
           <div class="feat-visual feat-visual-community">
             <div class="feat-illustration">
-              <span class="feat-icon-lg">📖</span>
+              <el-icon class="feat-icon-lg"><Notebook /></el-icon>
               <div class="feat-rings">
                 <span class="ring ring-1"></span>
                 <span class="ring ring-2"></span>
@@ -273,7 +279,7 @@
         <div class="feature-card" @click="$router.push('/attractions')">
           <div class="feat-visual feat-visual-attraction">
             <div class="feat-illustration">
-              <span class="feat-icon-lg">🏛️</span>
+              <el-icon class="feat-icon-lg"><OfficeBuilding /></el-icon>
               <div class="feat-rings">
                 <span class="ring ring-1"></span>
                 <span class="ring ring-2"></span>
@@ -296,14 +302,14 @@
           <h2 class="cta-title">准备好开始你的下一次旅行了吗？</h2>
           <p class="cta-sub">加入 <strong>50万+</strong> 旅行者，用 TravelMate 规划完美旅程</p>
           <el-button type="primary" size="large" round @click="$router.push('/ai-plan')">
-            🚀 免费开始规划
+            <el-icon style="margin-right:6px"><MagicStick /></el-icon>免费开始规划
           </el-button>
         </div>
         <div class="cta-decoration">
-          <span class="cta-emoji cta-emoji-1">🏔️</span>
-          <span class="cta-emoji cta-emoji-2">🏖️</span>
-          <span class="cta-emoji cta-emoji-3">🏯</span>
-          <span class="cta-emoji cta-emoji-4">🌋</span>
+          <span class="cta-shape cta-shape-1"></span>
+          <span class="cta-shape cta-shape-2"></span>
+          <span class="cta-shape cta-shape-3"></span>
+          <span class="cta-shape cta-shape-4"></span>
         </div>
       </div>
     </section>
@@ -319,6 +325,16 @@ import {
   LocationFilled,
   Calendar,
   ArrowRight,
+  Promotion,
+  Tickets,
+  House,
+  UserFilled,
+  Aim,
+  ChatDotSquare,
+  Cpu,
+  Notebook,
+  OfficeBuilding,
+  MagicStick,
 } from "@element-plus/icons-vue";
 import CountUp from "../components/CountUp.vue";
 
@@ -333,26 +349,26 @@ const hotSearches = ["北京", "上海", "三亚", "成都", "杭州", "西安"]
 
 const stats = [
   {
-    icon: "✈️",
+    icon: Promotion,
     gradient: "linear-gradient(135deg, #0D9488, #0EA5E9)",
     num: 1280,
     label: "航线覆盖",
   },
   {
-    icon: "👥",
+    icon: UserFilled,
     gradient: "linear-gradient(135deg, #6366F1, #8B5CF6)",
     num: 523600,
     label: "用户信赖",
   },
   {
-    icon: "🎯",
+    icon: Aim,
     gradient: "linear-gradient(135deg, #F59E0B, #F97316)",
     num: 99.9,
     label: "出票成功率 (%)",
     isDecimal: true,
   },
   {
-    icon: "💬",
+    icon: ChatDotSquare,
     gradient: "linear-gradient(135deg, #10B981, #22C55E)",
     num: 24,
     label: "小时客服在线",
@@ -713,8 +729,8 @@ const quickSearch = (hint) => {
   flex-shrink: 0;
 }
 
-.stat-icon {
-  font-size: 24px;
+.stat-icon-el {
+  color: #fff;
 }
 
 .stat-body {
@@ -920,6 +936,7 @@ const quickSearch = (hint) => {
 
 .feat-icon-lg {
   font-size: 56px;
+  color: inherit;
   position: relative;
   z-index: 2;
   display: block;
@@ -1031,14 +1048,19 @@ const quickSearch = (hint) => {
   justify-content: center;
 }
 
-.cta-emoji {
-  font-size: 48px;
+.cta-shape {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.4);
   animation: float 4s ease infinite;
   opacity: 0.9;
 }
-.cta-emoji-2 { animation-delay: -1s; }
-.cta-emoji-3 { animation-delay: -2s; }
-.cta-emoji-4 { animation-delay: -3s; }
+.cta-shape-1 { background: rgba(255, 255, 255, 0.25); }
+.cta-shape-2 { background: rgba(255, 255, 255, 0.2); animation-delay: -1s; }
+.cta-shape-3 { background: rgba(255, 255, 255, 0.15); animation-delay: -2s; }
+.cta-shape-4 { background: rgba(255, 255, 255, 0.1); animation-delay: -3s; }
 
 /* ==================== 响应式 ==================== */
 @media (max-width: 992px) {

@@ -3,7 +3,7 @@
     <PageHeader
       title="旅行社区"
       subtitle="分享旅途故事，发现精彩游记"
-      icon="📖"
+      :icon="Notebook"
       :breadcrumbs="[
         { label: '首页', to: '/' },
         { label: '旅行社区' }
@@ -96,7 +96,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { Plus, UserFilled, StarFilled, LocationFilled } from "@element-plus/icons-vue";
+import { Plus, UserFilled, StarFilled, LocationFilled, Notebook } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";

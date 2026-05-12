@@ -72,7 +72,7 @@
               />
               <div class="post-info">
                 <div class="post-title">{{ post.title }}</div>
-                <div class="post-likes">❤️ {{ post.likeCount || 0 }}</div>
+                <div class="post-likes"><el-icon><StarFilled /></el-icon> {{ post.likeCount || 0 }}</div>
               </div>
             </el-card>
           </el-col>
@@ -112,6 +112,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
+import { StarFilled } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import { useUserStore } from "@/stores/user";
 
@@ -242,7 +243,7 @@ onMounted(() => {
 }
 .profile-bio {
   font-size: 14px;
-  color: #888;
+  color: var(--el-text-color-secondary);
   margin-bottom: 16px;
 }
 .profile-stats {
@@ -255,12 +256,12 @@ onMounted(() => {
 .stat-num {
   font-size: 20px;
   font-weight: 700;
-  color: #333;
+  color: var(--el-text-color-primary);
   display: block;
 }
 .stat-label {
   font-size: 12px;
-  color: #999;
+  color: var(--el-text-color-secondary);
 }
 .posts-card {
   border-radius: 12px;

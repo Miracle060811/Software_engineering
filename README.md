@@ -11,21 +11,49 @@
 
 ### 数据库初始化
 
-```powershell
-Get-Content -Raw .\docs\sql\init.sql | mysql -u root -p
-```
-
-如果你用的是 CMD，而不是 PowerShell，也可以执行：
+不要用 PowerShell 的 `Get-Content | mysql` 管道导入，中文种子数据会被写成 `?`。请直接让 `mysql` 客户端按 `utf8mb4` 读取脚本：
 
 ```bat
-mysql -u root -p < docs\sql\init.sql
+mysql --default-character-set=utf8mb4 -u root -p < docs\sql\init.sql
 ```
 
-如果 PowerShell 提示找不到 `mysql` 命令，可以改用 MySQL 安装目录下的可执行文件，例如：
+如果你当前就在 PowerShell 里，直接执行下面这条命令即可：
 
 ```powershell
-Get-Content -Raw .\docs\sql\init.sql | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p
+cmd /c "mysql --default-character-set=utf8mb4 -u root -p < docs\sql\init.sql"
 ```
+
+如果 PowerShell 提示找不到 `mysql` 命令，可以改用 MySQL 安装目录下的可执行文件：
+
+```powershell
+cmd /c '"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" --default-character-set=utf8mb4 -u root -p < docs\sql\init.sql'
+```
+
+如果页面里已经出现 `????`，说明这些中文已经在导入阶段被写坏，单纯改前后端配置无法恢复，需要删掉 `travelmate` 数据库后按上面的命令重新导入。
+
+### 数据库重建（中文已经变成 ? 时）
+
+先关闭后端服务，然后在**项目根目录**执行下面这组命令。这个流程已经在当前仓库下实际验证过，可以恢复 `tm_user.nickname` 和 `tm_post.title` 里的中文。
+
+如果你使用的是 CMD：
+
+```bat
+cd /d E:\SoftEngneeringHomework\Software_engineering
+mysql --default-character-set=utf8mb4 -u root -p -e "DROP DATABASE IF EXISTS travelmate; CREATE DATABASE travelmate CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql --default-character-set=utf8mb4 -u root -p travelmate -e "SOURCE docs/sql/init.sql;"
+mysql --default-character-set=utf8mb4 -u root -p travelmate -e "SELECT id, nickname FROM tm_user WHERE id IN (1,2,3,4); SELECT id, title FROM tm_post LIMIT 3;"
+```
+
+如果你使用的是 PowerShell，推荐仍然调用 `mysql` 客户端本身，不要再用 `Get-Content | mysql`：
+
+```powershell
+Set-Location -LiteralPath "E:\SoftEngneeringHomework\Software_engineering"
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" --default-character-set=utf8mb4 -u root -p -e "DROP DATABASE IF EXISTS travelmate; CREATE DATABASE travelmate CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" --default-character-set=utf8mb4 -u root -p travelmate -e "SOURCE E:/SoftEngneeringHomework/Software_engineering/docs/sql/init.sql;"
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" --default-character-set=utf8mb4 -u root -p travelmate -e "SELECT id, nickname FROM tm_user WHERE id IN (1,2,3,4); SELECT id, title FROM tm_post LIMIT 3;"
+```
+
+最后一条校验命令如果能看到“超级管理员”“测试用户”“北京三日游｜故宫+长城+颐和园完美攻略”等正常中文，就说明导入成功。
 
 初始化完成后，建议执行一次校验：
 

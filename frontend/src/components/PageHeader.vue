@@ -10,7 +10,10 @@
     <div class="page-header-main">
       <div class="page-header-left">
         <h1 class="page-title">
-          <span class="page-title-icon" v-if="icon">{{ icon }}</span>
+          <span class="page-title-icon" v-if="icon">
+            <el-icon v-if="typeof icon !== 'string'" :size="30"><component :is="icon" /></el-icon>
+            <span v-else>{{ icon }}</span>
+          </span>
           {{ title }}
         </h1>
         <p class="page-subtitle" v-if="subtitle">{{ subtitle }}</p>
@@ -26,7 +29,7 @@
 defineProps({
   title: { type: String, required: true },
   subtitle: { type: String, default: '' },
-  icon: { type: String, default: '' },
+  icon: { type: [String, Object], default: '' },
   breadcrumbs: {
     type: Array,
     default: () => []
@@ -76,7 +79,9 @@ defineProps({
 }
 
 .page-title-icon {
-  font-size: 30px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--el-color-primary);
 }
 
 .page-subtitle {

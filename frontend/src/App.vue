@@ -5,7 +5,9 @@
       <div class="nav-inner">
         <!-- Logo -->
         <div class="nav-logo" @click="$router.push('/')">
-          <span class="logo-icon">✈️</span>
+          <span class="logo-icon"
+            ><el-icon :size="26"><Promotion /></el-icon
+          ></span>
           <span class="logo-text">伴游 <strong>TravelMate</strong></span>
         </div>
 
@@ -22,7 +24,12 @@
           </el-button>
 
           <!-- 全局搜索按钮 -->
-          <el-button text circle class="nav-search-btn" @click="showSearch = true">
+          <el-button
+            text
+            circle
+            class="nav-search-btn"
+            @click="showSearch = true"
+          >
             <el-icon :size="18"><Search /></el-icon>
           </el-button>
 
@@ -36,7 +43,9 @@
                 <el-icon :size="18"><Bell /></el-icon>
               </el-button>
             </el-badge>
-            <el-button text @click="$router.push('/my-orders')">我的订单</el-button>
+            <el-button text @click="$router.push('/my-orders')"
+              >我的订单</el-button
+            >
             <el-dropdown @command="handleCommand" trigger="click">
               <span class="user-chip">
                 <el-avatar
@@ -113,7 +122,10 @@
     >
       <template #header>
         <div class="mobile-drawer-header">
-          <span class="mobile-drawer-brand">✈️ 伴游 TravelMate</span>
+          <span class="mobile-drawer-brand"
+            ><el-icon style="margin-right: 6px"><Promotion /></el-icon>伴游
+            TravelMate</span
+          >
           <el-button text circle @click="showMobileMenu = false">
             <el-icon :size="20"><Close /></el-icon>
           </el-button>
@@ -132,26 +144,28 @@
         <div class="mobile-menu-divider"></div>
         <template v-if="userStore.isLoggedIn">
           <div class="mobile-menu-item" @click="mobileNav('/my-orders')">
-            📋 我的订单
+            <el-icon style="margin-right: 8px"><Tickets /></el-icon>我的订单
           </div>
           <div class="mobile-menu-item" @click="mobileNav('/notifications')">
-            🔔 通知中心
+            <el-icon style="margin-right: 8px"><Bell /></el-icon>通知中心
           </div>
           <div
             class="mobile-menu-item"
             @click="mobileNav(`/profile/${userStore.userInfo?.username}`)"
           >
-            👤 个人主页
+            <el-icon style="margin-right: 8px"><User /></el-icon>个人主页
           </div>
           <div
             v-if="userStore.userInfo?.role === 1"
             class="mobile-menu-item"
             @click="mobileNav('/admin')"
           >
-            ⚙️ 管理后台
+            <el-icon style="margin-right: 8px"><Setting /></el-icon>管理后台
           </div>
           <div class="mobile-menu-divider"></div>
-          <div class="mobile-menu-item logout" @click="handleLogout">退出登录</div>
+          <div class="mobile-menu-item logout" @click="handleLogout">
+            退出登录
+          </div>
         </template>
         <template v-else>
           <div class="mobile-menu-item" @click="mobileNav('/login')">
@@ -172,17 +186,29 @@
     >
       <template #header>
         <div class="search-dialog-header">
-          <el-icon :size="20" color="#0D9488"><Search /></el-icon>
+          <el-icon :size="20" class="search-header-icon"><Search /></el-icon>
           <span class="search-dialog-title">快速搜索</span>
         </div>
       </template>
 
       <el-tabs v-model="searchTab" class="search-tabs">
-        <el-tab-pane label="✈️ 机票" name="flight">
+        <el-tab-pane name="flight">
+          <template #label
+            ><el-icon style="margin-right: 4px"><Promotion /></el-icon
+            >机票</template
+          >
           <div class="search-fields">
-            <el-input v-model="gsFlight.depCity" placeholder="出发城市" size="large" />
+            <el-input
+              v-model="gsFlight.depCity"
+              placeholder="出发城市"
+              size="large"
+            />
             <el-icon class="search-swap-icon"><Right /></el-icon>
-            <el-input v-model="gsFlight.arrCity" placeholder="到达城市" size="large" />
+            <el-input
+              v-model="gsFlight.arrCity"
+              placeholder="到达城市"
+              size="large"
+            />
             <el-date-picker
               v-model="gsFlight.date"
               type="date"
@@ -191,16 +217,33 @@
               value-format="YYYY-MM-DD"
               style="width: 160px"
             />
-            <el-button type="primary" size="large" @click="doSearch('flight')" round>
+            <el-button
+              type="primary"
+              size="large"
+              @click="doSearch('flight')"
+              round
+            >
               搜索机票
             </el-button>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="🚆 火车票" name="train">
+        <el-tab-pane name="train">
+          <template #label
+            ><el-icon style="margin-right: 4px"><Tickets /></el-icon
+            >火车票</template
+          >
           <div class="search-fields">
-            <el-input v-model="gsTrain.depStation" placeholder="出发站" size="large" />
+            <el-input
+              v-model="gsTrain.depStation"
+              placeholder="出发站"
+              size="large"
+            />
             <el-icon class="search-swap-icon"><Right /></el-icon>
-            <el-input v-model="gsTrain.arrStation" placeholder="到达站" size="large" />
+            <el-input
+              v-model="gsTrain.arrStation"
+              placeholder="到达站"
+              size="large"
+            />
             <el-date-picker
               v-model="gsTrain.date"
               type="date"
@@ -209,15 +252,33 @@
               value-format="YYYY-MM-DD"
               style="width: 160px"
             />
-            <el-button type="primary" size="large" @click="doSearch('train')" round>
+            <el-button
+              type="primary"
+              size="large"
+              @click="doSearch('train')"
+              round
+            >
               搜索火车票
             </el-button>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="🏨 酒店" name="hotel">
+        <el-tab-pane name="hotel">
+          <template #label
+            ><el-icon style="margin-right: 4px"><House /></el-icon
+            >酒店</template
+          >
           <div class="search-fields">
-            <el-input v-model="gsHotel.city" placeholder="目的城市" size="large" />
-            <el-button type="primary" size="large" @click="doSearch('hotel')" round>
+            <el-input
+              v-model="gsHotel.city"
+              placeholder="目的城市"
+              size="large"
+            />
+            <el-button
+              type="primary"
+              size="large"
+              @click="doSearch('hotel')"
+              round
+            >
               搜索酒店
             </el-button>
           </div>
@@ -254,7 +315,10 @@
       <div class="footer-inner">
         <div class="footer-grid">
           <div class="footer-col footer-brand">
-            <h3>✈️ 伴游 TravelMate</h3>
+            <h3>
+              <el-icon style="margin-right: 4px"><Promotion /></el-icon>伴游
+              TravelMate
+            </h3>
             <p>一站式智慧出行平台，让你的每次旅行都精彩</p>
             <div class="footer-social">
               <span class="social-dot"></span>
@@ -286,7 +350,9 @@
         </div>
         <div class="footer-bottom">
           <span>&copy; 2026 TravelMate 伴游 — 软件工程课程项目</span>
-          <span class="footer-credit">Made with ❤️ by TravelMate Team</span>
+          <span class="footer-credit"
+            >Made with passion by TravelMate Team</span
+          >
         </div>
       </div>
     </footer>
@@ -306,9 +372,15 @@ import {
   Expand,
   Close,
   Right,
+  Promotion,
+  Notebook,
+  Cpu,
+  Tickets,
+  House,
+  HomeFilled,
 } from "@element-plus/icons-vue";
 import { useUserStore } from "./stores/user";
-import request from "./utils/request";
+import request from "@/utils/request";
 
 const route = useRoute();
 const router = useRouter();
@@ -325,9 +397,9 @@ const gsTrain = ref({ depStation: "", arrStation: "", date: "" });
 const gsHotel = ref({ city: "" });
 
 const navLinks = [
-  { path: "/", label: "🏠 首页" },
-  { path: "/community", label: "📖 社区" },
-  { path: "/ai-plan", label: "🤖 AI规划" },
+  { path: "/", label: "首页" },
+  { path: "/community", label: "社区" },
+  { path: "/ai-plan", label: "AI规划" },
 ];
 
 const isAuthPage = computed(() => route.path === "/login");
@@ -335,35 +407,17 @@ const isAuthPage = computed(() => route.path === "/login");
 // ---------- 面包屑 ----------
 const breadcrumbRouteMap = {
   Home: [{ label: "首页", to: "/" }],
-  FlightSearch: [
-    { label: "首页", to: "/" },
-    { label: "机票搜索" },
-  ],
-  TrainSearch: [
-    { label: "首页", to: "/" },
-    { label: "火车票搜索" },
-  ],
-  HotelSearch: [
-    { label: "首页", to: "/" },
-    { label: "酒店搜索" },
-  ],
+  FlightSearch: [{ label: "首页", to: "/" }, { label: "机票搜索" }],
+  TrainSearch: [{ label: "首页", to: "/" }, { label: "火车票搜索" }],
+  HotelSearch: [{ label: "首页", to: "/" }, { label: "酒店搜索" }],
   HotelDetail: [
     { label: "首页", to: "/" },
     { label: "酒店搜索", to: "/hotel-search" },
     { label: "酒店详情" },
   ],
-  AttractionList: [
-    { label: "首页", to: "/" },
-    { label: "景点列表" },
-  ],
-  AiPlan: [
-    { label: "首页", to: "/" },
-    { label: "AI 行程规划" },
-  ],
-  Community: [
-    { label: "首页", to: "/" },
-    { label: "旅行社区" },
-  ],
+  AttractionList: [{ label: "首页", to: "/" }, { label: "景点列表" }],
+  AiPlan: [{ label: "首页", to: "/" }, { label: "AI 行程规划" }],
+  Community: [{ label: "首页", to: "/" }, { label: "旅行社区" }],
   PostCreate: [
     { label: "首页", to: "/" },
     { label: "旅行社区", to: "/community" },
@@ -374,22 +428,10 @@ const breadcrumbRouteMap = {
     { label: "旅行社区", to: "/community" },
     { label: "游记详情" },
   ],
-  MyOrders: [
-    { label: "首页", to: "/" },
-    { label: "我的订单" },
-  ],
-  NotificationCenter: [
-    { label: "首页", to: "/" },
-    { label: "通知中心" },
-  ],
-  UserProfile: [
-    { label: "首页", to: "/" },
-    { label: "用户主页" },
-  ],
-  AdminDashboard: [
-    { label: "首页", to: "/" },
-    { label: "管理后台" },
-  ],
+  MyOrders: [{ label: "首页", to: "/" }, { label: "我的订单" }],
+  NotificationCenter: [{ label: "首页", to: "/" }, { label: "通知中心" }],
+  UserProfile: [{ label: "首页", to: "/" }, { label: "用户主页" }],
+  AdminDashboard: [{ label: "首页", to: "/" }, { label: "管理后台" }],
 };
 
 const breadcrumbItems = computed(() => {
@@ -472,6 +514,8 @@ const doSearch = (type) => {
 
 // ---------- 生命周期 ----------
 onMounted(() => {
+  document.documentElement.classList.remove("dark");
+  localStorage.removeItem("theme");
   window.addEventListener("notification-updated", handleNotificationUpdated);
   if (userStore.isLoggedIn) {
     userStore.fetchUserInfo();
@@ -492,14 +536,14 @@ watch(
     } else {
       unreadCount.value = 0;
     }
-  }
+  },
 );
 
 watch(
   () => route.fullPath,
   () => {
     if (userStore.isLoggedIn) fetchUnreadCount();
-  }
+  },
 );
 </script>
 
@@ -508,7 +552,7 @@ watch(
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #F7F8FA;
+  background: var(--el-bg-color-page);
 }
 
 /* ==================== 导航栏 ==================== */
@@ -545,7 +589,9 @@ watch(
 }
 
 .logo-icon {
-  font-size: 26px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--el-color-primary);
   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .nav-logo:hover .logo-icon {
@@ -554,7 +600,7 @@ watch(
 
 .logo-text {
   font-size: 20px;
-  color: #1A1A2E;
+  color: var(--el-text-color-primary);
   letter-spacing: 0.2px;
 }
 .logo-text strong {
@@ -580,7 +626,7 @@ watch(
 
 .nav-search-btn {
   margin: 0 6px;
-  color: #71718B;
+  color: var(--el-text-color-secondary);
   transition: all 0.3s ease;
 }
 .nav-search-btn:hover {
@@ -601,12 +647,12 @@ watch(
   margin-left: 4px;
 }
 .user-chip:hover {
-  background: #ECFDFA;
-  border-color: #D7FBF7;
+  background: var(--el-color-primary-light-9);
+  border-color: var(--el-color-primary-light-8);
 }
 
 .user-avatar {
-  background: linear-gradient(135deg, #0D9488, #0EA5E9);
+  background: linear-gradient(135deg, #0d9488, #0ea5e9);
   color: #fff;
   font-weight: 700;
   font-size: 14px;
@@ -624,7 +670,7 @@ watch(
 
 .user-arrow {
   font-size: 12px;
-  color: #94A3B8;
+  color: var(--el-text-color-placeholder);
   transition: transform 0.3s ease;
 }
 .user-chip:hover .user-arrow {
@@ -632,12 +678,20 @@ watch(
 }
 
 /* ==================== 移动端 ==================== */
-.mobile-only { display: none; }
-.desktop-only { display: flex; }
+.mobile-only {
+  display: none;
+}
+.desktop-only {
+  display: flex;
+}
 
 @media (max-width: 768px) {
-  .mobile-only { display: flex; }
-  .desktop-only { display: none; }
+  .mobile-only {
+    display: flex;
+  }
+  .desktop-only {
+    display: none;
+  }
 
   .nav-inner {
     height: 56px;
@@ -646,9 +700,6 @@ watch(
 
   .logo-text {
     font-size: 16px;
-  }
-  .logo-icon {
-    font-size: 22px;
   }
 
   .mobile-nav-actions {
@@ -666,7 +717,7 @@ watch(
 .mobile-drawer-brand {
   font-size: 18px;
   font-weight: 700;
-  color: #1A1A2E;
+  color: var(--el-text-color-primary);
 }
 
 .mobile-menu {
@@ -677,28 +728,28 @@ watch(
   padding: 14px 20px;
   font-size: 16px;
   font-weight: 500;
-  color: #3D3D5C;
+  color: var(--el-text-color-regular);
   cursor: pointer;
   transition: all 0.2s ease;
   border-radius: 10px;
   margin: 2px 12px;
 }
 .mobile-menu-item:hover {
-  background: #F0FDFA;
-  color: #0D9488;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
 }
 .mobile-menu-item.active {
-  background: #ECFDFA;
-  color: #0D9488;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
   font-weight: 700;
 }
 .mobile-menu-item.logout {
-  color: #EF4444;
+  color: var(--el-color-danger);
 }
 
 .mobile-menu-divider {
   height: 1px;
-  background: #F0F2F5;
+  background: var(--el-border-color-light);
   margin: 8px 20px;
 }
 
@@ -717,10 +768,14 @@ watch(
   gap: 10px;
 }
 
+.search-header-icon {
+  color: var(--el-color-primary);
+}
+
 .search-dialog-title {
   font-size: 18px;
   font-weight: 700;
-  color: #1A1A2E;
+  color: var(--el-text-color-primary);
 }
 
 .search-fields {
@@ -736,7 +791,7 @@ watch(
 }
 
 .search-swap-icon {
-  color: #A0A0B8;
+  color: var(--el-text-color-placeholder);
   flex-shrink: 0;
 }
 
@@ -746,7 +801,7 @@ watch(
 
 /* ==================== 面包屑 ==================== */
 .breadcrumb-bar {
-  border-bottom: 1px solid #F0F2F5;
+  border-bottom: 1px solid var(--el-border-color-light);
   background: #fff;
 }
 
@@ -783,26 +838,10 @@ watch(
   animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) reverse;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 /* ==================== Footer ==================== */
 .app-footer {
   background: #fff;
-  border-top: 1px solid #F0F2F5;
+  border-top: 1px solid var(--el-border-color-light);
   margin-top: auto;
 }
 
@@ -822,14 +861,14 @@ watch(
 .footer-col h3 {
   font-size: 18px;
   font-weight: 700;
-  color: #1A1A2E;
+  color: var(--el-text-color-primary);
   margin-bottom: 12px;
 }
 
 .footer-col h4 {
   font-size: 14px;
   font-weight: 700;
-  color: #1A1A2E;
+  color: var(--el-text-color-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 16px;
@@ -837,7 +876,7 @@ watch(
 
 .footer-col p {
   font-size: 14px;
-  color: #71718B;
+  color: var(--el-text-color-secondary);
   line-height: 1.7;
   margin-bottom: 16px;
 }
@@ -845,13 +884,13 @@ watch(
 .footer-col a {
   display: block;
   font-size: 14px;
-  color: #71718B;
+  color: var(--el-text-color-secondary);
   padding: 5px 0;
   cursor: pointer;
   transition: color 0.2s ease;
 }
 .footer-col a:hover {
-  color: #0D9488;
+  color: var(--el-color-primary);
 }
 
 .footer-social {
@@ -863,8 +902,8 @@ watch(
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #F7F8FA;
-  border: 1px solid #F0F2F5;
+  background: var(--el-bg-color-page);
+  border: 1px solid #f0f2f5;
   transition: all 0.3s ease;
   cursor: pointer;
 }
@@ -878,9 +917,9 @@ watch(
   justify-content: space-between;
   align-items: center;
   padding-top: 20px;
-  border-top: 1px solid #F0F2F5;
+  border-top: 1px solid var(--el-border-color-light);
   font-size: 13px;
-  color: #A0A0B8;
+  color: var(--el-text-color-placeholder);
 }
 
 .footer-credit {

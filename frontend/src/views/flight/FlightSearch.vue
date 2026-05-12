@@ -3,7 +3,7 @@
     <PageHeader
       title="机票搜索"
       subtitle="搜索并预订国内航班机票"
-      icon="✈️"
+      :icon="Promotion"
       :breadcrumbs="[
         { label: '首页', to: '/' },
         { label: '机票搜索' }
@@ -188,7 +188,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
-import { Search } from "@element-plus/icons-vue";
+import { Search, Promotion } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";

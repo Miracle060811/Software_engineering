@@ -39,7 +39,7 @@
         </div>
 
         <div class="post-destination" v-if="post.destination">
-          📍 {{ post.destination }}
+          <el-icon><LocationFilled /></el-icon> {{ post.destination }}
         </div>
       </el-card>
 
@@ -65,11 +65,12 @@
       <div class="action-bar">
         <el-button
           :type="isLiked ? 'danger' : ''"
-          :icon="isLiked ? 'HeartFilled' : 'Heart'"
           circle
           size="large"
           @click="toggleLike"
-        />
+        >
+          <el-icon size="18"><component :is="isLiked ? StarFilled : Star" /></el-icon>
+        </el-button>
         <span class="like-count">{{ likeCount }}</span>
       </div>
 
@@ -163,6 +164,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { LocationFilled, StarFilled, Star } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import { useUserStore } from "@/stores/user";
 

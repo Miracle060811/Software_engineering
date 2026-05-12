@@ -1,3 +1,6 @@
+-- 请使用 mysql --default-character-set=utf8mb4 导入，避免中文被写成问号
+SET NAMES utf8mb4;
+
 -- 数据库创建
 CREATE DATABASE IF NOT EXISTS `travelmate` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `travelmate`;

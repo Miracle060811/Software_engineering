@@ -126,6 +126,17 @@
   /* 页面最大宽度 */
   --tm-page-max-width: 1400px;
   --tm-page-padding: 40px;
+
+  /* 页面内容宽度标准 */
+  --tm-content-wide: 1200px;
+  --tm-content-normal: 960px;
+  --tm-content-narrow: 860px;
+  --tm-content-detail: 1100px;
+
+  /* 卡片圆角标准 */
+  --tm-card-radius: 16px;
+  --tm-card-radius-sm: 12px;
+  --tm-card-radius-lg: 20px;
 }
 
 /* ---- 全局重置 ---- */
@@ -420,4 +431,108 @@ img {
     width: 92% !important;
     border-radius: 16px !important;
   }
+}
+
+/* ========== 深色模式 ========== */
+html.dark {
+  --el-color-primary: #2DD4C0;
+  --el-color-primary-light-1: #14A89A;
+  --el-color-primary-light-2: #1DBCAE;
+  --el-color-primary-light-3: #2DD4C0;
+  --el-color-primary-light-4: #47E0D0;
+  --el-color-primary-light-5: #6BE8DC;
+  --el-color-primary-light-6: #8FEFE5;
+  --el-color-primary-light-7: #B3F6EF;
+  --el-color-primary-light-8: #134E4A;
+  --el-color-primary-light-9: #0F2F2D;
+  --el-color-primary-dark-2: #5EEADB;
+
+  --el-color-success: #34D399;
+  --el-color-success-light-3: #6EE7B7;
+  --el-color-success-light-5: #34D399;
+  --el-color-success-light-7: #065F46;
+  --el-color-success-light-8: #064E3B;
+  --el-color-success-light-9: #022C22;
+  --el-color-success-dark-2: #6EE7B7;
+
+  --el-color-warning: #FBBF24;
+  --el-color-warning-light-3: #FCD34D;
+  --el-color-warning-light-5: #FBBF24;
+  --el-color-warning-light-7: #78350F;
+  --el-color-warning-light-8: #451A03;
+  --el-color-warning-light-9: #2E1100;
+  --el-color-warning-dark-2: #FDE68A;
+
+  --el-color-danger: #F87171;
+  --el-color-danger-light-3: #FCA5A5;
+  --el-color-danger-light-5: #F87171;
+  --el-color-danger-light-7: #7F1D1D;
+  --el-color-danger-light-8: #450A0A;
+  --el-color-danger-light-9: #200505;
+  --el-color-danger-dark-2: #FCA5A5;
+
+  --el-color-info: #818CF8;
+  --el-color-info-light-3: #A5B4FC;
+  --el-color-info-light-5: #818CF8;
+  --el-color-info-light-7: #1E1B4B;
+  --el-color-info-light-8: #0F0D2E;
+  --el-color-info-light-9: #06051A;
+  --el-color-info-dark-2: #A5B4FC;
+
+  --el-bg-color: #1E293B;
+  --el-bg-color-page: #0F172A;
+  --el-bg-color-overlay: #1E293B;
+  --el-text-color-primary: #F1F5F9;
+  --el-text-color-regular: #CBD5E1;
+  --el-text-color-secondary: #94A3B8;
+  --el-text-color-placeholder: #64748B;
+  --el-text-color-disabled: #475569;
+
+  --el-border-color: #334155;
+  --el-border-color-light: #1E293B;
+  --el-border-color-lighter: #1A2332;
+  --el-border-color-extra-light: #0F1A2A;
+  --el-border-color-dark: #475569;
+
+  --el-box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --el-box-shadow-light: 0 2px 10px rgba(0, 0, 0, 0.2);
+  --el-box-shadow-lighter: 0 1px 5px rgba(0, 0, 0, 0.15);
+  --el-box-shadow-dark: 0 8px 40px rgba(0, 0, 0, 0.5);
+
+  --el-fill-color-blank: #1E293B;
+  --el-fill-color-light: #334155;
+
+  --tm-shadow-card: 0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.2);
+  --tm-shadow-card-hover: 0 1px 3px rgba(0,0,0,0.3), 0 12px 36px rgba(0,0,0,0.4);
+
+  --el-menu-hover-bg-color: var(--el-color-primary-light-9);
+  --el-table-header-bg-color: #1E293B;
+  --el-table-row-hover-bg-color: #0F2F2D;
+
+  color-scheme: dark;
+}
+
+html.dark body {
+  background: var(--el-bg-color-page);
+  color: var(--el-text-color-primary);
+}
+
+html.dark .el-card {
+  background: var(--el-bg-color);
+  border-color: var(--el-border-color-light);
+}
+
+html.dark .el-dialog {
+  background: var(--el-bg-color);
+}
+
+html.dark .el-drawer {
+  background: var(--el-bg-color);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748B;
 }

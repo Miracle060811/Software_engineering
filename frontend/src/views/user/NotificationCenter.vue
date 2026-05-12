@@ -3,7 +3,7 @@
     <PageHeader
       title="通知中心"
       subtitle="查看 AI 行程、酒店订单和系统提醒"
-      icon="🔔"
+      :icon="Bell"
       :breadcrumbs="[
         { label: '首页', to: '/' },
         { label: '通知中心' }
@@ -86,7 +86,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { ElMessage } from "element-plus";
-import { Refresh } from "@element-plus/icons-vue";
+import { Refresh, Bell } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";

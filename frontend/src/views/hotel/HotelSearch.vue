@@ -3,7 +3,7 @@
     <PageHeader
       title="酒店搜索"
       subtitle="搜索并预订全国热门酒店"
-      icon="🏨"
+      :icon="House"
       :breadcrumbs="[
         { label: '首页', to: '/' },
         { label: '酒店搜索' }
@@ -100,12 +100,12 @@
             <div class="hotel-info">
               <div class="hotel-name">{{ hotel.name }}</div>
               <div class="hotel-star">
-                <span v-for="i in hotel.starRating" :key="i">⭐</span>
+                <el-icon v-for="i in hotel.starRating" :key="i" class="star-icon"><StarFilled /></el-icon>
                 <el-tag size="small" type="warning" style="margin-left: 8px">
                   {{ hotel.rating || "暂无" }} 分
                 </el-tag>
               </div>
-              <div class="hotel-location">📍 {{ hotel.address }}</div>
+              <div class="hotel-location"><el-icon><LocationFilled /></el-icon> {{ hotel.address }}</div>
               <div class="hotel-price">
                 <span class="price-from">起价</span>
                 <span class="price-value"
@@ -123,7 +123,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { Search } from "@element-plus/icons-vue";
+import { Search, House, StarFilled, LocationFilled } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
@@ -216,6 +216,10 @@ onMounted(() => {
   margin-bottom: 8px;
   display: flex;
   align-items: center;
+}
+.star-icon {
+  color: #F59E0B;
+  margin-right: 2px;
 }
 .hotel-location {
   font-size: 13px;

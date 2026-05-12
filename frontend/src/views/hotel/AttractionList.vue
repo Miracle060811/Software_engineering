@@ -43,7 +43,7 @@
               <div class="attr-desc">{{ attr.description }}</div>
               <div class="attr-meta">
                 <span class="attr-hours" v-if="attr.openingHours">
-                  🕐 {{ attr.openingHours }}
+                  <el-icon><Clock /></el-icon> {{ attr.openingHours }}
                 </span>
                 <span class="attr-stock" v-if="attr.availableTickets != null">
                   余票 {{ attr.availableTickets }}
@@ -73,6 +73,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { ElMessage } from "element-plus";
+import { Clock } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 
 const attractions = ref([]);
