@@ -67,6 +67,9 @@
               <el-tag v-else-if="order.status === 3 || order.status === 4" type="info" round>
                 {{ getTrafficStatusLabel(order.status) }}
               </el-tag>
+              <el-button v-if="order.status === 1 || order.status === 2" size="small" round @click="downloadReceipt(order, 'traffic')">
+                下载行程单
+              </el-button>
             </div>
           </div>
         </el-card>
@@ -120,11 +123,30 @@
                   取消
                 </el-button>
               </template>
+              <el-button v-if="order.status === 1 || order.status === 2" size="small" round @click="showQrCode(order)">
+                出示校验码
+              </el-button>
             </div>
           </div>
         </el-card>
       </el-tab-pane>
     </el-tabs>
+
+    <!-- 校验码弹窗 -->
+    <el-dialog v-model="qrVisible" title="扫码核销" width="360px" center>
+      <div class="qr-code-box">
+        <img
+          v-if="qrOrderNo"
+          :src="`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrOrderNo)}`"
+          alt="核销二维码"
+          class="qr-img"
+        />
+        <p class="qr-label">向酒店前台出示此二维码核销</p>
+        <el-tag type="success" size="large" effect="dark" style="font-size:18px;padding:8px 20px;letter-spacing:4px">
+          {{ qrOrderNo ? qrOrderNo.slice(-8) : "" }}
+        </el-tag>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -142,6 +164,8 @@ const trafficOrders = ref([]);
 const hotelOrders = ref([]);
 const trafficLoading = ref(false);
 const hotelLoading = ref(false);
+const qrVisible = ref(false);
+const qrOrderNo = ref("");
 
 const getTrafficStatusLabel = (status) => {
   const map = { 0: "待支付", 1: "出票中", 2: "已出票", 3: "已取消", 4: "已退票" };
@@ -203,6 +227,61 @@ const payOrder = async (orderNo, type) => {
     window.dispatchEvent(new Event("notification-updated"));
     type === "traffic" ? fetchTrafficOrders() : fetchHotelOrders();
   } catch (e) {}
+};
+
+const downloadReceipt = async (order, type) => {
+  const url = type === "traffic"
+    ? `/api/order/${order.orderNo}/receipt`
+    : `/api/hotel/order/${order.orderNo}/receipt`;
+  try {
+    const data = await request.get(url);
+    const content = [
+      `========================================`,
+      `          TravelMate 行程单`,
+      `========================================`,
+      `订单编号：${data.orderNo || order.orderNo}`,
+      `订单类型：${type === "traffic" ? (order.orderType === 0 ? "机票" : "火车票") : "酒店"}`,
+      type === "traffic"
+        ? `路线：${data.departureCity || data.departureStation || order.departureCity || order.departureStation} → ${data.arrivalCity || data.arrivalStation || order.arrivalCity || order.arrivalStation}`
+        : `酒店：${data.hotelName || order.hotelName}`,
+      `乘客/住客：${data.passengerName || data.guestName || order.passengerName || order.guestName}`,
+      `金额：¥${data.amount || order.amount}`,
+      `========================================`,
+      `        TravelMate 伴游平台`,
+      `========================================`,
+    ].join("\n");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const el = document.createElement("a");
+    el.href = URL.createObjectURL(blob);
+    el.download = `TravelMate_${order.orderNo}.txt`;
+    el.click();
+    URL.revokeObjectURL(el.href);
+    ElMessage.success("行程单已下载");
+  } catch (e) {
+    // fallback: download from local order data
+    const content = [
+      `========================================`,
+      `          TravelMate 行程单`,
+      `========================================`,
+      `订单编号：${order.orderNo}`,
+      `金额：¥${order.amount}`,
+      `========================================`,
+      `        TravelMate 伴游平台`,
+      `========================================`,
+    ].join("\n");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const el = document.createElement("a");
+    el.href = URL.createObjectURL(blob);
+    el.download = `TravelMate_${order.orderNo}.txt`;
+    el.click();
+    URL.revokeObjectURL(el.href);
+    ElMessage.success("行程单已下载");
+  }
+};
+
+const showQrCode = (order) => {
+  qrOrderNo.value = order.orderNo;
+  qrVisible.value = true;
 };
 
 const cancelOrder = async (orderNo, type) => {
@@ -315,5 +394,20 @@ onMounted(() => {
 .order-actions {
   display: flex;
   gap: 8px;
+}
+.qr-code-box {
+  text-align: center;
+  padding: 20px 0;
+}
+.qr-img {
+  width: 200px;
+  height: 200px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+}
+.qr-label {
+  font-size: 13px;
+  color: #A0A0B8;
+  margin-bottom: 16px;
 }
 </style>

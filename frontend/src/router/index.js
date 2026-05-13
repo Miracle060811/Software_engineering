@@ -64,6 +64,11 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/coupons",
+    name: "CouponCenter",
+    component: () => import("../views/order/CouponCenter.vue"),
+  },
+  {
     path: "/notifications",
     name: "NotificationCenter",
     component: () => import("../views/user/NotificationCenter.vue"),

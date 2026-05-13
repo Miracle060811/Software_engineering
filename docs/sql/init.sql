@@ -250,7 +250,8 @@ CREATE TABLE IF NOT EXISTS `tm_post` (
   `comment_count` INT DEFAULT '0' COMMENT '评论数',
   `collect_count` INT DEFAULT '0' COMMENT '收藏数',
   `view_count` INT DEFAULT '0' COMMENT '浏览数',
-  `status` TINYINT(1) DEFAULT '1' COMMENT '0-审核中, 1-已发布, 2-违规下架',
+  `status` TINYINT(1) DEFAULT '1' COMMENT '0-审核中, 1-已发布, 2-违规下架, 3-草稿',
+  `visibility` TINYINT(1) DEFAULT '0' COMMENT '0-公开, 1-仅关注者可见, 2-私密',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted` TINYINT(1) DEFAULT '0',
@@ -479,8 +480,97 @@ INSERT IGNORE INTO `sys_sensitive_word` (`word`, `level`) VALUES
 ('赌博', 3), ('诈骗', 3), ('色情', 3), ('暴力', 2),
 ('广告', 1), ('代购', 1), ('刷单', 2);
 
+-- 一日游/周边游产品表
+CREATE TABLE IF NOT EXISTS `tm_tour_product` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL COMMENT '产品名称',
+  `description` VARCHAR(500) DEFAULT NULL COMMENT '描述',
+  `tour_type` TINYINT(1) DEFAULT '0' COMMENT '0=一日游, 1=周边游',
+  `departure_city` VARCHAR(50) DEFAULT NULL COMMENT '出发城市',
+  `destination` VARCHAR(100) DEFAULT NULL COMMENT '目的地',
+  `duration` VARCHAR(20) DEFAULT NULL COMMENT '行程时长',
+  `price` DECIMAL(10,2) DEFAULT '0.00' COMMENT '价格',
+  `cover_img` VARCHAR(255) DEFAULT NULL COMMENT '封面图',
+  `status` TINYINT(1) DEFAULT '1' COMMENT '0=下线, 1=上线',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='一日游/周边游产品表';
+
+INSERT IGNORE INTO `tm_tour_product` (`name`, `description`, `tour_type`, `departure_city`, `destination`, `duration`, `price`) VALUES
+('北京故宫一日游', '含故宫门票+专业讲解，领略皇家风范', 0, '北京', '故宫博物院', '1天', 268.00),
+('杭州西湖精品一日游', '西湖十景+龙井茶文化体验', 0, '杭州', '西湖景区', '1天', 198.00),
+('成都大熊猫基地一日游', '近距离接触国宝大熊猫+锦里古街', 0, '成都', '大熊猫繁育基地', '1天', 228.00),
+('上海周边乌镇两日游', '江南水乡乌镇+西塘古镇，含住宿一晚', 1, '上海', '乌镇', '2天1晚', 598.00),
+('北京周边承德避暑山庄两日游', '皇家避暑山庄+外八庙，感受帝王避暑胜境', 1, '北京', '承德', '2天1晚', 688.00),
+('广州周边清远漂流两日游', '清远漂流+温泉度假，刺激与放松之旅', 1, '广州', '清远', '2天1晚', 528.00);
+
 -- 测试乘客数据
 INSERT IGNORE INTO `tm_passenger` (`user_id`, `name`, `id_card`, `phone`, `type`) VALUES
 (2, '张三', '110101199001011234', '13800138001', 0),
 (2, '李四', '110101199002022345', '13800138002', 0),
 (3, 'Alice', '440101199003033456', '13800138003', 0);
+
+-- 优惠券表
+CREATE TABLE IF NOT EXISTS `tm_coupon` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL COMMENT '优惠券名称',
+  `description` VARCHAR(200) DEFAULT NULL COMMENT '描述',
+  `discount_type` TINYINT(1) DEFAULT '0' COMMENT '0=满减, 1=折扣',
+  `discount_value` DECIMAL(10,2) DEFAULT '0.00' COMMENT '减免金额或折扣比例',
+  `min_amount` DECIMAL(10,2) DEFAULT '0.00' COMMENT '最低消费金额',
+  `expire_date` DATETIME DEFAULT NULL COMMENT '过期时间',
+  `stock` INT DEFAULT '100' COMMENT '可领取数量',
+  `status` TINYINT(1) DEFAULT '0' COMMENT '0=有效, 1=已过期',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券表';
+
+-- 示例优惠券数据
+INSERT IGNORE INTO `tm_coupon` (`name`, `description`, `discount_type`, `discount_value`, `min_amount`, `expire_date`, `stock`, `status`) VALUES
+('新用户专享', '新用户首单立减50元', 0, 50.00, 200.00, '2026-12-31 23:59:59', 200, 0),
+('机票满减券', '机票订单满500减30', 0, 30.00, 500.00, '2026-12-31 23:59:59', 150, 0),
+('酒店9折券', '酒店订单享9折优惠', 1, 0.90, 0.00, '2026-12-31 23:59:59', 100, 0),
+('火车票85折', '火车票订单享85折', 1, 0.85, 100.00, '2026-12-31 23:59:59', 80, 0);
+
+-- ============================================================
+-- 用户已领取优惠券表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `tm_user_coupon` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL COMMENT '用户ID',
+  `coupon_id` BIGINT NOT NULL COMMENT '优惠券ID',
+  `status` TINYINT(1) DEFAULT '0' COMMENT '0=未使用, 1=已使用, 2=已过期',
+  `received_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `used_time` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_user_id` (`user_id`),
+  INDEX `idx_coupon_id` (`coupon_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户优惠券关联表';
+
+-- ============================================================
+-- 评价回复表（商家回复）
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `tm_reply` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `review_id` BIGINT NOT NULL COMMENT '评价ID',
+  `user_id` BIGINT NOT NULL COMMENT '回复者ID',
+  `content` VARCHAR(1000) NOT NULL COMMENT '回复内容',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `deleted` TINYINT(1) DEFAULT '0' COMMENT '0=正常, 1=已删除',
+  PRIMARY KEY (`id`),
+  INDEX `idx_review_id` (`review_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评价回复表';
+
+-- ============================================================
+-- 评价举报表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `tm_review_report` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `review_id` BIGINT NOT NULL COMMENT '评价ID',
+  `reporter_id` BIGINT NOT NULL COMMENT '举报者ID',
+  `reason` VARCHAR(200) DEFAULT NULL COMMENT '举报原因',
+  `status` TINYINT(1) DEFAULT '0' COMMENT '0=待处理, 1=已处理',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `idx_review_id` (`review_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评价举报表';

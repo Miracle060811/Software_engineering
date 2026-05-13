@@ -2,12 +2,29 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 技术栈版本
+
+- 后端：Spring Boot 3.5.13 + Java 21 + MyBatis-Plus 3.5.7 + MySQL + Redis
+- 前端：Vue 3 + Vite + Element Plus + Pinia + Axios
+- 认证：Spring Security + jjwt 0.11.5（HS256 对称密钥，24h 过期）
+
 ## 常用命令
+
+### 一键启动（推荐）
+
+```powershell
+# Windows: 加载环境变量 + 初始化数据库 + 启动后端
+.\setup.ps1 -InitDb -StartBackend
+```
 
 ### 后端
 
 ```bash
 cd backend
+
+# 手动加载环境变量（从根目录 .env 文件）
+# Windows: .\setup.ps1
+# Linux/Mac: source ../.env
 
 # 启动（需要 DB_PASSWORD 和可选的 DEEPSEEK_API_KEY 环境变量）
 mvn spring-boot:run
@@ -34,8 +51,10 @@ npm run build      # 生产构建
 ### 数据库
 
 ```bash
-mysql -u root -p < docs/sql/init.sql
+mysql --default-character-set=utf8mb4 -u root -p < docs/sql/init.sql
 ```
+
+不要使用 PowerShell 的 `Get-Content | mysql` 管道导入；这会把中文种子数据写成 `?`。
 
 ## 架构概览
 
@@ -46,27 +65,66 @@ mysql -u root -p < docs/sql/init.sql
 ### 包结构
 
 - `com.travelmate.backend` — 用户认证系统（User 实体、JWT、Spring Security）
-- `com.travelmate.common` — 统一响应体 `Result<T>`（code/msg/data）+ 全局异常处理
+- `com.travelmate.common` — 统一响应体 `Result<T>`（code/msg/data）+ `GlobalExceptionHandler` + `UserContext`
 - `com.travelmate.controller` — 所有业务接口（Flight/Train/Hotel/AI/Post/Comment/Like/Follow/Admin 等）
 - `com.travelmate.entity` — 实体类，使用 MyBatis-Plus 注解，表名前缀 `tm_`
 - `com.travelmate.mapper` — MyBatis-Plus Mapper 接口
 - `com.travelmate.service` — 业务接口 + `impl/` 实现类
 - `com.travelmate.dto` — 请求 DTO（如 `FlightOrderCreateDTO`、`AiChatDTO`）
+- `com.travelmate.config` — WebConfig、RedisConfig
+- `com.travelmate.interceptor` — RateLimiterInterceptor（基于 Redis 的接口限流）
+- `com.travelmate.aspect` — SysLogAspect（AOP 自动记录 Controller 调用日志）
+- `com.travelmate.annotation` — RateLimiter 注解定义
+
+### 密钥与密码配置
+
+所有敏感配置集中放在根目录 `.env` 文件中（已在 `.gitignore` 中忽略）：
+
+```
+DB_PASSWORD=你的数据库密码
+DEEPSEEK_API_KEY=你的DeepSeek密钥
+```
+
+**加载 .env 到环境变量:**
+
+```powershell
+# Windows PowerShell（一键）
+.\setup.ps1
+
+# 或手动加载后启动
+.\setup.ps1 -InitDb -StartBackend
+```
+
+`application.yml` 通过占位符读取环境变量，优先级：`SPRING_DATASOURCE_PASSWORD` > `DB_PASSWORD`。本地开发时也可以继续使用 `backend/application-local.yml`（已在 `.gitignore` 中）。
 
 ### 认证流程
 
 1. `/user/register` 和 `/user/login` 公开访问，注册时 BCrypt 加密密码
-2. 登录返回 JWT token（jjwt 0.11.5），前端存入 localStorage
+2. 登录返回 JWT token（jjwt 0.11.5，每次重启生成新密钥，旧 token 全部失效），前端存入 localStorage
 3. 前端 `utils/request.js` 的 Axios 拦截器自动注入 `Authorization: Bearer <token>`
 4. `JwtFilter` 从 Header 提取 token 并设置 `SecurityContext`
 5. `SecurityConfig` 放行 `/user/**`、`/api/flight/**`、`/api/train/**`、`/api/hotel/**`、`/api/attraction/**`、`/api/post/list`、`/api/review/list`，其余需要登录
 6. 需要登录但未带 token 的请求返回 403
 
-### 前端路由守卫
+### UserContext 工具
 
-Vue Router 通过 `meta.requiresAuth` 和 `meta.requiresAdmin` 控制访问：
-- `requiresAuth`：检查 localStorage 中的 token，无 token 跳转 `/login`
-- `requiresAdmin`：检查 `userInfo.role === 1`，非管理员跳转首页
+在 Controller/Service 中通过 `UserContext.getCurrentUserId()` 获取当前登录用户 ID，通过 `UserContext.getCurrentUser()` 获取完整 User 对象。内部从 `SecurityContextHolder` 取 username 再查库。
+
+### 接口限流（RateLimiter）
+
+`@RateLimiter(maxRequests = 5, timeWindowSeconds = 1)` 注解用于 Controller 方法，基于 Redis 计数器 + IP 实现。`RateLimiterInterceptor` 拦截后超限返回 429。常用于下单接口（FlightController、TrafficOrderController 等）。
+
+### 操作日志（SysLogAspect）
+
+AOP 环绕通知自动拦截 `com.travelmate.controller..*.*` 所有方法，记录方法名、参数、耗时、操作用户、IP、成功/失败状态到 `tm_sys_log` 表。日志落库失败不影响业务。
+
+### 全局异常处理
+
+`GlobalExceptionHandler` 统一捕获异常并返回 `Result.error()`。特殊处理：
+
+- 数据库连接失败 → 提示检查 `application-local.yml` 或 `DB_PASSWORD`
+- 表不存在 → 提示执行 `docs/sql/init.sql`
+- 其他异常 → 返回根因 message
 
 ### 防超卖机制
 
@@ -75,6 +133,31 @@ Vue Router 通过 `meta.requiresAuth` 和 `meta.requiresAdmin` 控制访问：
 ### AI 降级
 
 AI 行程规划和客服调用 DeepSeek API（OpenAI 兼容协议），API 超时或失败时自动降级为预设模板，不会报错。
+
+### 敏感词过滤
+
+`SensitiveWordService` 提供敏感词检测，用于社区发帖/评论的审核。
+
+### 前端关键模式
+
+#### Axios 响应拦截器行为
+
+`utils/request.js` 中，`response.data.code === 200` 时只返回 `data` 字段（调用方直接拿到业务数据）；非 200 抛出 Error（调用方需 catch）。401/403 时自动清除 token 并跳转 `/login`。
+
+#### 路由守卫
+
+Vue Router 通过 `meta.requiresAuth` 和 `meta.requiresAdmin` 控制访问：
+
+- `requiresAuth`：检查 localStorage 中的 token，无 token 跳转 `/login`
+- `requiresAdmin`：检查 `userInfo.role === 1`，非管理员跳转首页
+
+#### Pinia Store
+
+`stores/user.js` 的 `useUserStore` 管理登录状态：`login()` 获取 token 后自动调 `fetchUserInfo()` 拉取用户详情并存入 localStorage。
+
+#### 公共组件
+
+`skeletonBox`（骨架屏）、`EmptyState`（空状态占位）、`CountUp`（数字滚动动画）、`PageHeader`（页面标题栏）。
 
 ### 前端代理
 
@@ -86,10 +169,24 @@ Vite dev server 将 `/api` 和 `/user` 代理到 `http://localhost:8080`，开�
 
 ### 各子系统对应关系
 
-| 子系统 | 负责同学 | 关键 Controller |
-|--------|----------|-----------------|
-| 大交通票务 | 邹林利 | FlightController, TrainController, TrafficOrderController, PassengerController |
-| 住宿与本地生活 | 莫谨瑞 | HotelController, AttractionController, ReviewController |
-| AI 智能规划 | 陈一鸿 | AiController |
-| 社区与用户中心 | 杜新诚 | PostController, CommentController, LikeController, FollowController, UserProfileController, UserController |
-| 管理后台 | 李科 | AdminController |
+| 子系统         | 负责同学 | 关键 Controller                                                                                                            |
+| -------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 大交通票务     | 邹林利   | FlightController, TrainController, TrafficOrderController, PassengerController, PriceHistoryController, CouponController   |
+| 住宿与本地生活 | 莫谨瑞   | HotelController, AttractionController, ReviewController, TourProductController, ReplyController, ReviewReportController    |
+| AI 智能规划    | 陈一鸿   | AiController                                                                                                               |
+| 社区与用户中心 | 杜新诚   | PostController, CommentController, LikeController, FollowController, UserProfileController, UserController, FileController |
+| 管理后台       | 李科     | AdminController                                                                                                            |
+
+### 新增实体和表
+
+- `Coupon` / `tm_coupon` — 优惠券表（满减/折扣、限量领取）
+- `UserCoupon` / `tm_user_coupon` — 用户已领优惠券关联表
+- `Reply` / `tm_reply` — 评价商家回复表
+- `ReviewReport` / `tm_review_report` — 评价举报表
+- `TourProduct` / `tm_tour_product` — 一日游/周边游产品表
+- `Review` 新增 `tags` 字段（评价标签，逗号分隔）
+
+### 新增前端页面/组件
+
+- `views/order/CouponCenter.vue` — 优惠券中心（可领取 + 我的优惠券）
+- `components/PriceTrend.vue` — ECharts 价格趋势图弹窗组件

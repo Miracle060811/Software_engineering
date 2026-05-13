@@ -40,6 +40,9 @@ public class Review {
     /** 图片 (JSON数组字符串) */
     private String images;
 
+    /** 评价标签（逗号分隔，如"干净卫生,性价比高"） */
+    private String tags;
+
     /** 创建时间 */
     private LocalDateTime createTime;
 

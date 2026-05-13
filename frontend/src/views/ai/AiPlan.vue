@@ -5,7 +5,10 @@
       <el-col :span="8">
         <el-card class="input-card">
           <template #header>
-            <span class="card-header-title"><el-icon style="margin-right:6px"><Cpu /></el-icon>AI 行程规划</span>
+            <span class="card-header-title"
+              ><el-icon style="margin-right: 6px"><Cpu /></el-icon>AI
+              行程规划</span
+            >
           </template>
           <el-form :model="planForm" label-position="top" label-width="auto">
             <el-form-item label="目的地">
@@ -70,7 +73,10 @@
         <!-- 历史行程 -->
         <el-card class="history-card" style="margin-top: 20px">
           <template #header>
-            <span class="card-header-title"><el-icon style="margin-right:6px"><Tickets /></el-icon>历史行程</span>
+            <span class="card-header-title"
+              ><el-icon style="margin-right: 6px"><Tickets /></el-icon
+              >历史行程</span
+            >
           </template>
           <el-empty
             v-if="historyPlans.length === 0"
@@ -88,6 +94,9 @@
             </div>
             <div class="history-meta">
               {{ plan.days }}天 · {{ plan.createTime }}
+              <span v-if="plan.startDate" class="countdown">
+                {{ getCountdown(plan.startDate) }}
+              </span>
             </div>
           </div>
         </el-card>
@@ -110,6 +119,18 @@
             <el-tag type="success" size="large">
               总预估费用：¥{{ currentPlan.totalEstimatedCost }}
             </el-tag>
+            <div style="margin-top: 12px; display: flex; gap: 8px">
+              <el-button type="primary" size="small" plain @click="exportPlan"
+                ><el-icon><Download /></el-icon>导出行程</el-button
+              >
+              <el-button
+                type="info"
+                size="small"
+                plain
+                @click="$router.push('/my-orders')"
+                ><el-icon><Tickets /></el-icon>查看关联订单</el-button
+              >
+            </div>
           </el-card>
 
           <el-card
@@ -146,7 +167,9 @@
     </el-row>
 
     <!-- AI 客服浮窗按钮 -->
-    <div class="chat-fab" @click="chatDrawerVisible = true"><el-icon :size="24"><ChatDotSquare /></el-icon></div>
+    <div class="chat-fab" @click="chatDrawerVisible = true">
+      <el-icon :size="24"><ChatDotSquare /></el-icon>
+    </div>
 
     <!-- AI 客服抽屉 -->
     <el-drawer
@@ -165,7 +188,7 @@
             <div class="bubble-content">{{ msg.content }}</div>
           </div>
           <div v-if="chatLoading" class="chat-bubble assistant">
-            <div class="bubble-content typing">正在思考...</div>
+            <div class="bubble-content typing">正在生成回复...</div>
           </div>
         </div>
         <div class="chat-input-area">
@@ -186,7 +209,13 @@
 <script setup>
 import { ref, nextTick, onMounted } from "vue";
 import { ElMessage } from "element-plus";
-import { Cpu, MagicStick, Tickets, ChatDotSquare } from "@element-plus/icons-vue";
+import {
+  Cpu,
+  MagicStick,
+  Tickets,
+  ChatDotSquare,
+  Download,
+} from "@element-plus/icons-vue";
 import request from "@/utils/request";
 
 const planForm = ref({
@@ -256,6 +285,52 @@ const fetchHistoryPlans = async () => {
   } catch (e) {
     historyPlans.value = [];
   }
+};
+
+const getCountdown = (startDate) => {
+  if (!startDate) return "";
+  const now = new Date();
+  const target = new Date(startDate);
+  const diff = target.getTime() - now.getTime();
+  if (diff <= 0) return "已出发";
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days === 0) return "今天出发!";
+  return `倒计时${days}天`;
+};
+
+const exportPlan = () => {
+  if (!currentPlan.value) return;
+  let text = "========================================\n";
+  text += `  ${currentPlan.value.title || "行程计划"}\n`;
+  text += `  ${currentPlan.value.summary || ""}\n`;
+  text += `  总预估费用：¥${currentPlan.value.totalEstimatedCost || 0}\n`;
+  text += "========================================\n\n";
+  if (currentPlan.value.days) {
+    for (const day of currentPlan.value.days) {
+      text += `第 ${day.day} 天 · ${day.theme || ""}\n`;
+      text += `${"-".repeat(40)}\n`;
+      if (day.activities) {
+        for (const act of day.activities) {
+          text += `  ${act.time || ""} | ${act.name || ""} [${
+            act.type || ""
+          }]\n`;
+          text += `  ${act.description || ""}\n`;
+          if (act.cost) text += `  费用：¥${act.cost}\n`;
+          text += "\n";
+        }
+      }
+    }
+  }
+  text += "========================================\n";
+  text += "      由 TravelMate 伴游平台生成\n";
+  text += "========================================\n";
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const el = document.createElement("a");
+  el.href = URL.createObjectURL(blob);
+  el.download = `TravelMate_行程_${Date.now()}.txt`;
+  el.click();
+  URL.revokeObjectURL(el.href);
+  ElMessage.success("行程已导出");
 };
 
 const viewHistoryPlan = (plan) => {

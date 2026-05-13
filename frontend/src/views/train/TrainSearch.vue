@@ -97,6 +97,15 @@
             >
               预订
             </el-button>
+            <el-button
+              link
+              type="info"
+              size="small"
+              @click="openPriceTrend(train)"
+              style="margin-left:4px"
+            >
+              价格趋势
+            </el-button>
           </div>
         </div>
       </el-card>
@@ -160,6 +169,15 @@
           <span class="total-price">¥{{ currentSeatPrice }}</span>
         </el-form-item>
       </el-form>
+      <el-collapse style="margin-top:12px">
+        <el-collapse-item title="退改签规则">
+          <el-descriptions :column="1" size="small" border>
+            <el-descriptions-item label="二等座">出发前24小时退票手续费5%，2小时内20%，出票后不可退</el-descriptions-item>
+            <el-descriptions-item label="一等座/商务座">出发前24小时退票手续费3%，2小时内15%，出票后不可退</el-descriptions-item>
+            <el-descriptions-item label="改签">出发前2小时以上免费改签一次，之后不可改签</el-descriptions-item>
+          </el-descriptions>
+        </el-collapse-item>
+      </el-collapse>
       <template #footer>
         <el-button @click="bookDialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="booking" @click="confirmBook"
@@ -167,6 +185,14 @@
         >
       </template>
     </el-dialog>
+
+    <!-- 价格趋势 Dialog -->
+    <PriceTrend
+      v-model="priceTrendVisible"
+      :ticket-id="priceTrendTicket?.id"
+      :ticket-type="1"
+      :ticket-name="priceTrendTicket?.trainNo"
+    />
 
     <!-- 添加乘客 Drawer -->
     <el-drawer v-model="passengerDrawerVisible" title="添加乘客" size="400px">
@@ -195,6 +221,7 @@ import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
+import PriceTrend from "@/components/PriceTrend.vue";
 
 const route = useRoute();
 const trains = ref([]);
@@ -204,6 +231,8 @@ const passengerDrawerVisible = ref(false);
 const booking = ref(false);
 const selectedTrain = ref(null);
 const passengers = ref([]);
+const priceTrendVisible = ref(false);
+const priceTrendTicket = ref(null);
 
 const searchForm = ref({
   depStation: route.query.depStation || "",
@@ -264,6 +293,11 @@ const calcDuration = (dep, arr) => {
 const getTrainTypeColor = (type) => {
   const map = { G: "danger", D: "warning", Z: "success", T: "info", K: "" };
   return map[type?.[0]] || "";
+};
+
+const openPriceTrend = (train) => {
+  priceTrendTicket.value = train;
+  priceTrendVisible.value = true;
 };
 
 const openBookDialog = async (train) => {

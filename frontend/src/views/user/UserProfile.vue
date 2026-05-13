@@ -34,6 +34,7 @@
               <el-button type="primary" @click="editDialogVisible = true"
                 >编辑资料</el-button
               >
+              <el-button @click="pwdDialogVisible = true">修改密码</el-button>
             </template>
             <template v-else>
               <el-button
@@ -105,6 +106,25 @@
         >
       </template>
     </el-dialog>
+
+    <!-- 修改密码 Dialog -->
+    <el-dialog v-model="pwdDialogVisible" title="修改密码" width="420px">
+      <el-form :model="pwdForm" label-width="80px">
+        <el-form-item label="旧密码">
+          <el-input v-model="pwdForm.oldPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item label="新密码">
+          <el-input v-model="pwdForm.newPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item label="确认密码">
+          <el-input v-model="pwdForm.confirmPassword" type="password" show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="pwdDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="changingPwd" @click="changePassword">确认修改</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -127,9 +147,12 @@ const fansCount = ref(0);
 const followingCount = ref(0);
 const isFollowing = ref(false);
 const editDialogVisible = ref(false);
+const pwdDialogVisible = ref(false);
 const saving = ref(false);
+const changingPwd = ref(false);
 
 const editForm = ref({ nickname: "", avatar: "", bio: "" });
+const pwdForm = ref({ oldPassword: "", newPassword: "", confirmPassword: "" });
 
 const isSelf = computed(() => {
   return userStore.userInfo?.username === username;
@@ -198,6 +221,37 @@ const saveProfile = async () => {
   } catch (e) {
   } finally {
     saving.value = false;
+  }
+};
+
+const changePassword = async () => {
+  if (!pwdForm.value.oldPassword || !pwdForm.value.newPassword) {
+    ElMessage.warning("请填写旧密码和新密码");
+    return;
+  }
+  if (pwdForm.value.newPassword !== pwdForm.value.confirmPassword) {
+    ElMessage.warning("两次输入的新密码不一致");
+    return;
+  }
+  if (pwdForm.value.newPassword.length < 6) {
+    ElMessage.warning("新密码长度至少6位");
+    return;
+  }
+  changingPwd.value = true;
+  try {
+    await request.post("/user/password", null, {
+      params: {
+        oldPassword: pwdForm.value.oldPassword,
+        newPassword: pwdForm.value.newPassword,
+      },
+    });
+    ElMessage.success("密码修改成功，请重新登录");
+    pwdDialogVisible.value = false;
+    pwdForm.value = { oldPassword: "", newPassword: "", confirmPassword: "" };
+    userStore.logout();
+  } catch (e) {
+  } finally {
+    changingPwd.value = false;
   }
 };
 

@@ -29,6 +29,43 @@ function Quote-PowerShellLiteral {
     return $Value -replace "'", "''"
 }
 
+function Import-EnvFile {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    $loadedKeys = @()
+
+    if (-not (Test-Path $Path)) {
+        return $loadedKeys
+    }
+
+    foreach ($line in Get-Content -LiteralPath $Path) {
+        $trimmed = $line.Trim()
+
+        if (-not $trimmed -or $trimmed.StartsWith("#")) {
+            continue
+        }
+
+        if ($trimmed -match '^([A-Z_][A-Z0-9_]*)\s*=\s*(.+)$') {
+            $key = $Matches[1]
+            $value = $Matches[2].Trim()
+
+            if ((($value.StartsWith('"')) -and ($value.EndsWith('"'))) -or (($value.StartsWith("'")) -and ($value.EndsWith("'")))) {
+                $value = $value.Substring(1, $value.Length - 2)
+            }
+
+            if (-not [Environment]::GetEnvironmentVariable($key, "Process")) {
+                [Environment]::SetEnvironmentVariable($key, $value, "Process")
+                $loadedKeys += $key
+            }
+        }
+    }
+
+    return $loadedKeys
+}
+
 function Get-BackendWaitCommand {
     param(
         [Parameter(Mandatory = $true)]
@@ -136,6 +173,8 @@ $repoRoot = $PSScriptRoot
 $backendDir = Join-Path $repoRoot "backend"
 $frontendDir = Join-Path $repoRoot "frontend"
 $backendLocalConfig = Join-Path $backendDir "application-local.yml"
+$envFile = Join-Path $repoRoot ".env"
+$loadedEnvKeys = Import-EnvFile -Path $envFile
 
 $runBackend = -not $FrontendOnly
 $runFrontend = -not $BackendOnly
@@ -150,7 +189,7 @@ if ($DbPassword) {
     $dbPasswordSource = "当前 PowerShell 环境变量 SPRING_DATASOURCE_PASSWORD"
 } elseif ($env:DB_PASSWORD) {
     $resolvedDbPassword = $env:DB_PASSWORD
-    $dbPasswordSource = "当前 PowerShell 环境变量 DB_PASSWORD"
+    $dbPasswordSource = if ($loadedEnvKeys -contains "DB_PASSWORD") { ".env 文件" } else { "当前 PowerShell 环境变量 DB_PASSWORD" }
 } elseif (Test-Path $backendLocalConfig) {
     $localDbPassword = Get-DbPasswordFromLocalConfig -Path $backendLocalConfig
 
@@ -202,7 +241,7 @@ $backendLauncher = if (Test-Path (Join-Path $backendDir "mvnw.cmd")) {
     "mvn"
 }
 
-$backendCommand = "$backendLauncher spring-boot:run"
+$backendCommand = "$backendLauncher clean spring-boot:run"
 
 $frontendNeedsInstall = -not (Test-Path (Join-Path $frontendDir "node_modules"))
 
@@ -232,6 +271,13 @@ if ($runFrontend -and $frontendNeedsInstall -and $SkipFrontendInstall) {
 if ($runBackend) {
     if ($dbPasswordSource) {
         Write-Host "Backend DB password source: $dbPasswordSource"
+    }
+
+    if ($DeepseekApiKey) {
+        Write-Host "DeepSeek API key source: -DeepseekApiKey 参数"
+    } elseif ($env:DEEPSEEK_API_KEY) {
+        $deepseekKeySource = if ($loadedEnvKeys -contains "DEEPSEEK_API_KEY") { ".env 文件" } else { "当前 PowerShell 环境变量 DEEPSEEK_API_KEY" }
+        Write-Host "DeepSeek API key source: $deepseekKeySource"
     }
 
     Start-ServiceWindow -Title "TravelMate Backend" -WorkingDirectory $backendDir -Command $backendCommand -DryRun:$DryRun

@@ -2,9 +2,7 @@ import axios from "axios";
 import { ElMessage } from "element-plus";
 
 const AUTH_REDIRECT_FLAG = "travelmate-auth-redirecting";
-const apiBaseURL =
-  import.meta.env.VITE_API_BASE_URL?.trim() ||
-  (import.meta.env.DEV ? "/" : "http://127.0.0.1:8080");
+const apiBaseURL = import.meta.env.VITE_API_BASE_URL?.trim() || "/";
 
 const clearAuthState = () => {
   localStorage.removeItem("token");

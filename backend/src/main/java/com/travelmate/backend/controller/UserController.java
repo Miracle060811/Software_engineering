@@ -33,6 +33,19 @@ public class UserController {
         return token != null ? Result.success(token) : Result.error("用户名或密码错误");
     }
 
+    @PostMapping("/password")
+    public Result<String> changePassword(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam String oldPassword,
+            @RequestParam String newPassword) {
+        String token = authHeader.substring(7);
+        String username = jwtUtil.extractUsername(token);
+        User user = userService.getUserByUsername(username);
+        if (user == null) return Result.error("用户不存在");
+        boolean ok = userService.changePassword(user.getId(), oldPassword, newPassword);
+        return ok ? Result.success("密码修改成功") : Result.error("旧密码错误");
+    }
+
     @GetMapping("/me")
     public Result<User> getMe(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.substring(7);

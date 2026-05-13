@@ -43,4 +43,13 @@ public class UserService {
         return userMapper.selectOne(new QueryWrapper<User>().eq("username", username));
     }
 
+    public boolean changePassword(Long userId, String oldPassword, String newPassword) {
+        User user = userMapper.selectById(userId);
+        if (user == null) return false;
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) return false;
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userMapper.updateById(user);
+        return true;
+    }
+
 }

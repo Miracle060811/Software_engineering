@@ -7,4 +7,6 @@ public interface LikeService {
     Map<String, Object> toggleLike(Long userId, Map<String, Object> body);
 
     int likeStatus(Long userId, Long targetId, Integer targetType);
+
+    java.util.List<java.util.Map<String, Object>> getMyCollects(Long userId);
 }

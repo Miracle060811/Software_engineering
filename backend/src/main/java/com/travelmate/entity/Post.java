@@ -25,8 +25,11 @@ public class Post {
     private Integer commentCount;
     private Integer collectCount;
     private Integer viewCount;
-    /** 0-审核中, 1-已发布, 2-下架 */
+    /** 0-审核中, 1-已发布, 2-下架, 3-草稿 */
     private Integer status;
+
+    /** 0-公开, 1-仅关注者可见, 2-私密 */
+    private Integer visibility;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     @TableLogic

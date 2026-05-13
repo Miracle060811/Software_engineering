@@ -16,4 +16,6 @@ public interface PostService {
     void deletePost(Long id, Long userId);
 
     List<Post> myPosts(Long userId);
+
+    List<Map<String, Object>> getFollowingPosts(Long userId, int page, int size);
 }

@@ -26,6 +26,11 @@
       </template>
     </PageHeader>
 
+    <el-tabs v-model="activeTab" @tab-change="onTabChange" class="feed-tabs">
+      <el-tab-pane label="推荐" name="recommend" />
+      <el-tab-pane label="关注" name="following" />
+    </el-tabs>
+
     <!-- 骨架屏 -->
     <div v-if="loading" class="post-grid">
       <SkeletonBox type="card" :count="4" />
@@ -35,9 +40,9 @@
     <EmptyState
       v-else-if="posts.length === 0"
       icon="document"
-      title="暂无游记"
-      description="还没有人分享游记，快来发布第一篇吧"
-      action-text="发布游记"
+      :title="activeTab === 'following' ? '暂无关注的游记' : '暂无游记'"
+      :description="activeTab === 'following' ? '关注更多用户，查看他们的旅行分享' : '还没有人分享游记，快来发布第一篇吧'"
+      :action-text="activeTab === 'following' ? '' : '发布游记'"
       @action="$router.push('/post/create')"
     />
 
@@ -109,12 +114,14 @@ const keyword = ref("");
 const page = ref(1);
 const size = 10;
 const hasMore = ref(true);
+const activeTab = ref("recommend");
 
 const fetchPosts = async () => {
   loading.value = true;
   page.value = 1;
   try {
-    const data = await request.get("/api/post/list", {
+    const url = activeTab.value === "following" ? "/api/post/following" : "/api/post/list";
+    const data = await request.get(url, {
       params: { page: 1, size, keyword: keyword.value },
     });
     const list = Array.isArray(data) ? data : data?.records || [];
@@ -127,11 +134,18 @@ const fetchPosts = async () => {
   }
 };
 
+const onTabChange = (tab) => {
+  activeTab.value = tab;
+  posts.value = [];
+  fetchPosts();
+};
+
 const loadMore = async () => {
   loadingMore.value = true;
   page.value += 1;
   try {
-    const data = await request.get("/api/post/list", {
+    const url = activeTab.value === "following" ? "/api/post/following" : "/api/post/list";
+    const data = await request.get(url, {
       params: { page: page.value, size, keyword: keyword.value },
     });
     const list = Array.isArray(data) ? data : data?.records || [];
@@ -158,6 +172,13 @@ onMounted(() => {
 .community-page {
   max-width: 1200px;
   margin: 0 auto;
+}
+.feed-tabs {
+  margin-bottom: 16px;
+}
+.feed-tabs :deep(.el-tabs__item) {
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .header-actions {

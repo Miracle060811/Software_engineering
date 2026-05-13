@@ -1,86 +1,82 @@
 <template>
   <div class="post-create-page">
+    <PageHeader
+      title="发布游记"
+      subtitle="分享你的旅行故事与精彩瞬间"
+      :icon="Edit"
+      :breadcrumbs="[
+        { label: '首页', to: '/' },
+        { label: '社区', to: '/community' },
+        { label: '发布游记' }
+      ]"
+    />
+
     <el-card class="create-card">
-      <template #header>
-        <span class="card-title">发布游记</span>
-      </template>
       <el-form :model="form" label-width="80px" :rules="rules" ref="formRef">
         <el-form-item label="标题" prop="title">
-          <el-input
-            v-model="form.title"
-            placeholder="给你的游记起个吸引人的标题..."
-            maxlength="100"
-            show-word-limit
-          />
+          <el-input v-model="form.title" placeholder="给你的游记起个吸引人的标题..." maxlength="100" show-word-limit size="large" />
         </el-form-item>
 
         <el-form-item label="目的地">
-          <el-input v-model="form.destination" placeholder="如：云南大理" />
+          <el-input v-model="form.destination" placeholder="如：云南大理" size="large" />
         </el-form-item>
 
         <el-form-item label="标签">
           <div class="tags-input">
-            <el-tag
-              v-for="tag in form.tags"
-              :key="tag"
-              closable
-              @close="removeTag(tag)"
-              style="margin-right: 8px; margin-bottom: 4px"
-            >
+            <el-tag v-for="tag in form.tags" :key="tag" closable @close="removeTag(tag)" style="margin-right:8px;margin-bottom:4px">
               {{ tag }}
             </el-tag>
-            <el-input
-              v-if="tagInputVisible"
-              ref="tagInputRef"
-              v-model="tagInputValue"
-              size="small"
-              style="width: 100px"
-              @keyup.enter="confirmTag"
-              @blur="confirmTag"
-            />
-            <el-button v-else size="small" @click="showTagInput"
-              >+ 添加标签</el-button
-            >
+            <el-input v-if="tagInputVisible" ref="tagInputRef" v-model="tagInputValue" size="small" style="width:100px"
+              @keyup.enter="confirmTag" @blur="confirmTag" />
+            <el-button v-else size="small" @click="showTagInput">+ 添加标签</el-button>
           </div>
         </el-form-item>
 
-        <el-form-item label="图片链接">
-          <el-input
-            v-model="form.imagesInput"
-            type="textarea"
-            :rows="3"
-            placeholder="填写图片URL，多张图片用逗号分隔（可选）&#10;如：https://example.com/img1.jpg,https://example.com/img2.jpg"
-          />
-          <div class="image-preview" v-if="previewImages.length">
-            <img
-              v-for="(img, idx) in previewImages"
-              :key="idx"
-              :src="img"
-              class="preview-img"
-              :alt="`预览${idx + 1}`"
-            />
-          </div>
-          <el-button link type="primary" @click="previewImgs"
-            >预览图片</el-button
+        <el-form-item label="图片">
+          <el-upload
+            ref="uploadRef"
+            :action="uploadUrl"
+            :headers="uploadHeaders"
+            list-type="picture-card"
+            :on-success="handleUploadSuccess"
+            :on-remove="handleUploadRemove"
+            :before-upload="beforeUpload"
+            multiple
+            accept="image/*"
           >
+            <el-icon><Plus /></el-icon>
+          </el-upload>
+          <div class="upload-tip">支持 JPG/PNG，每张不超过 10MB</div>
         </el-form-item>
 
         <el-form-item label="内容" prop="content">
           <el-input
             v-model="form.content"
             type="textarea"
-            :rows="12"
-            placeholder="分享你的旅行故事、景点感受、美食推荐..."
+            :rows="14"
+            placeholder="分享你的旅行故事、景点感受、美食推荐...&#10;&#10;支持 Markdown 格式：&#10;**粗体**  *斜体*  ## 标题  - 列表"
             maxlength="10000"
             show-word-limit
           />
+          <div class="format-hints">
+            <el-tag size="small" type="info" v-for="hint in ['**粗体**','*斜体*','## 标题','- 列表','> 引用']" :key="hint" style="margin:2px;cursor:pointer" @click="insertFormat(hint)">
+              {{ hint }}
+            </el-tag>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="可见范围">
+          <el-radio-group v-model="form.visibility">
+            <el-radio :value="0">公开</el-radio>
+            <el-radio :value="1">仅关注者可见</el-radio>
+            <el-radio :value="2">私密</el-radio>
+          </el-radio-group>
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" :loading="submitting" @click="submitPost"
-            >发布游记</el-button
-          >
-          <el-button @click="$router.back()">取消</el-button>
+          <el-button type="primary" :loading="submitting" size="large" @click="submitPost">发布游记</el-button>
+          <el-button :loading="submitting" size="large" @click="saveDraft">保存草稿</el-button>
+          <el-button size="large" @click="$router.back()">取消</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -88,24 +84,28 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from "vue";
+import { ref, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
+import { Edit, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import PageHeader from "@/components/PageHeader.vue";
 
 const router = useRouter();
 const formRef = ref(null);
+const uploadRef = ref(null);
 const tagInputRef = ref(null);
 const tagInputVisible = ref(false);
 const tagInputValue = ref("");
 const submitting = ref(false);
+const uploadedImages = ref([]);
 
 const form = ref({
   title: "",
   content: "",
   destination: "",
-  imagesInput: "",
   tags: [],
+  visibility: 0,
 });
 
 const rules = {
@@ -113,13 +113,42 @@ const rules = {
   content: [{ required: true, message: "请输入游记内容", trigger: "blur" }],
 };
 
-const previewImages = ref([]);
+const uploadUrl = import.meta.env.VITE_API_BASE_URL
+  ? import.meta.env.VITE_API_BASE_URL + "/api/file/upload"
+  : "/api/file/upload";
 
-const previewImgs = () => {
-  previewImages.value = form.value.imagesInput
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+const uploadHeaders = {};
+if (localStorage.getItem("token")) {
+  uploadHeaders["Authorization"] = "Bearer " + localStorage.getItem("token");
+}
+
+const beforeUpload = (file) => {
+  const isImage = file.type.startsWith("image/");
+  if (!isImage) {
+    ElMessage.error("只能上传图片文件");
+    return false;
+  }
+  const isLt10M = file.size / 1024 / 1024 < 10;
+  if (!isLt10M) {
+    ElMessage.error("图片大小不能超过 10MB");
+    return false;
+  }
+  return true;
+};
+
+const handleUploadSuccess = (res) => {
+  if (res && res.url) {
+    uploadedImages.value.push(res.url);
+  }
+};
+
+const handleUploadRemove = (file) => {
+  const url = file.response?.url || file.url;
+  uploadedImages.value = uploadedImages.value.filter((u) => u !== url);
+};
+
+const insertFormat = (hint) => {
+  form.value.content += " " + hint + " ";
 };
 
 const showTagInput = async () => {
@@ -141,24 +170,38 @@ const removeTag = (tag) => {
   form.value.tags = form.value.tags.filter((t) => t !== tag);
 };
 
+const buildPostData = () => ({
+  title: form.value.title,
+  content: form.value.content,
+  destination: form.value.destination,
+  images: uploadedImages.value.join(","),
+  tags: form.value.tags.join(","),
+  visibility: form.value.visibility,
+});
+
 const submitPost = async () => {
   const valid = await formRef.value?.validate().catch(() => false);
   if (!valid) return;
   submitting.value = true;
   try {
-    const images = form.value.imagesInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .join(",");
-    await request.post("/api/post/create", {
-      title: form.value.title,
-      content: form.value.content,
-      destination: form.value.destination,
-      images,
-      tags: form.value.tags.join(","),
-    });
-    ElMessage.success("游记发布成功，等待审核");
+    await request.post("/api/post/create", buildPostData());
+    ElMessage.success("游记发布成功");
+    router.push("/community");
+  } catch (e) {
+  } finally {
+    submitting.value = false;
+  }
+};
+
+const saveDraft = async () => {
+  if (!form.value.title && !form.value.content) {
+    ElMessage.warning("请至少输入标题或内容");
+    return;
+  }
+  submitting.value = true;
+  try {
+    await request.post("/api/post/create", { ...buildPostData(), status: 3 });
+    ElMessage.success("草稿已保存");
     router.push("/community");
   } catch (e) {
   } finally {
@@ -168,34 +211,9 @@ const submitPost = async () => {
 </script>
 
 <style scoped>
-.post-create-page {
-  max-width: 860px;
-  margin: 0 auto;
-}
-.create-card {
-  border-radius: 12px;
-}
-.card-title {
-  font-size: 18px;
-  font-weight: 600;
-}
-.tags-input {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.image-preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-  margin-bottom: 4px;
-}
-.preview-img {
-  width: 100px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid #e8e8e8;
-}
+.post-create-page { max-width: 860px; margin: 0 auto; }
+.create-card { border-radius: 16px; border: 1px solid #F0F2F5; }
+.tags-input { display: flex; flex-wrap: wrap; align-items: center; }
+.upload-tip { font-size: 12px; color: #A0A0B8; margin-top: 4px; }
+.format-hints { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
 </style>

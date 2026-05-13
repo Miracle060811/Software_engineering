@@ -49,4 +49,11 @@ public class PostController {
     public Result<List<Post>> myPosts() {
         return Result.success(postService.myPosts(userContext.getCurrentUserId()));
     }
+
+    @GetMapping("/following")
+    public Result<List<Map<String, Object>>> followingPosts(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return Result.success(postService.getFollowingPosts(userContext.getCurrentUserId(), page, size));
+    }
 }

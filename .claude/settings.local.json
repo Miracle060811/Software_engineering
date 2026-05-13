@@ -21,7 +21,20 @@
       "Bash(npm run *)",
       "Bash(Select-String -Pattern \"error|✓ built|failed\")",
       "Bash(Get-ChildItem *)",
-      "PowerShell(Get-ChildItem -Recurse -File -Path \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\frontend\\\\src\" | Select-Object FullName | ForEach-Object { $_.FullName })"
+      "PowerShell(Get-ChildItem -Recurse -File -Path \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\frontend\\\\src\" | Select-Object FullName | ForEach-Object { $_.FullName })",
+      "PowerShell(pip install *)",
+      "PowerShell(Start-Process \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\TravelMate-课程答辩.pptx\")",
+      "Bash(dir /B /S \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\frontend\")",
+      "Bash(dir *)",
+      "Bash(Select-Object -Last 10)",
+      "Bash(Get-Content *)",
+      "Bash(Test-Path *)",
+      "PowerShell($deadline = \\(Get-Date\\).AddSeconds\\(120\\); while \\(\\(Get-Date\\) -lt $deadline\\) { try { $null = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/post/list?page=1&size=1&keyword=' -Method Get -TimeoutSec 3 -ErrorAction Stop; Write-Host \"后端已就绪\"; break } catch { Write-Host \".\" -NoNewline; Start-Sleep -Seconds 3 } })",
+      "PowerShell(Get-Process *)",
+      "PowerShell($deadline = \\(Get-Date\\).AddSeconds\\(120\\); while \\(\\(Get-Date\\) -lt $deadline\\) { try { $null = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/post/list?page=1&size=1&keyword=' -Method Get -TimeoutSec 3 -ErrorAction Stop; Write-Host \"后端就绪\"; break } catch { Write-Host \".\" -NoNewline; Start-Sleep -Seconds 3 } })",
+      "Bash(Select-Object FullName)",
+      "Bash(Select-Object Name)",
+      "PowerShell($key = \"sk-51cdd801fff7432c83562b77a69bbde2\"; $body = '{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"user\",\"content\":\"回复1即可\"}],\"max_tokens\":10}'; try { $r = Invoke-RestMethod -Uri \"https://api.deepseek.com/v1/chat/completions\" -Method Post -Headers @{\"Authorization\"=\"Bearer $key\";\"Content-Type\"=\"application/json\"} -Body $body -TimeoutSec 15; Write-Host \"SUCCESS:\" $r.choices[0].message.content } catch { Write-Host \"FAILED:\" $_.Exception.Message; Write-Host \"StatusCode:\" $_.Exception.Response.StatusCode.value__ })"
     ]
   }
 }

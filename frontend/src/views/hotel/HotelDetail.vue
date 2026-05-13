@@ -64,19 +64,69 @@
       <el-card class="section-card">
         <template #header>
           <span class="section-header">用户评价</span>
+          <el-button type="primary" link size="small" style="float:right" @click="showReviewForm = !showReviewForm">
+            {{ showReviewForm ? '收起' : '写评价' }}
+          </el-button>
         </template>
+
+        <!-- 写评价表单 -->
+        <el-form v-if="showReviewForm" :model="newReview" label-width="80px" class="review-form">
+          <el-form-item label="评分">
+            <el-rate v-model="newReview.rating" />
+          </el-form-item>
+          <el-form-item label="内容">
+            <el-input v-model="newReview.content" type="textarea" :rows="3" placeholder="分享您的入住体验..." />
+          </el-form-item>
+          <el-form-item label="标签">
+            <el-checkbox-group v-model="newReview.tags">
+              <el-checkbox v-for="t in reviewTagOptions" :key="t" :label="t" :value="t" />
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item label="图片">
+            <el-upload
+              :action="uploadUrl"
+              :headers="uploadHeaders"
+              list-type="picture-card"
+              :on-success="onUploadSuccess"
+              :on-remove="onUploadRemove"
+              :file-list="uploadFiles"
+              :limit="6"
+            >
+              <el-icon><Plus /></el-icon>
+            </el-upload>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="submittingReview" @click="submitReview">提交评价</el-button>
+          </el-form-item>
+        </el-form>
+
         <el-empty v-if="reviews.length === 0" description="暂无评价" />
         <div v-for="review in reviews" :key="review.id" class="review-item">
           <div class="review-header">
-            <span class="review-user">{{ review.username }}</span>
-            <el-rate
-              :model-value="review.rating"
-              disabled
-              style="margin-left: 12px"
-            />
+            <span class="review-user">{{ review.username || '匿名用户' }}</span>
+            <el-rate :model-value="review.rating" disabled style="margin-left: 12px" />
             <span class="review-date">{{ review.createTime }}</span>
+            <el-button link type="danger" size="small" style="margin-left:auto" @click="reportReview(review.id)">举报</el-button>
           </div>
           <div class="review-content">{{ review.content }}</div>
+          <div v-if="review.tags" class="review-tags">
+            <el-tag v-for="t in review.tags.split(',')" :key="t" size="small" round effect="plain" style="margin-right:6px">
+              {{ t }}
+            </el-tag>
+          </div>
+          <div v-if="review.images" class="review-images">
+            <el-image
+              v-for="(img, i) in JSON.parse(review.images)"
+              :key="i"
+              :src="img"
+              :preview-src-list="JSON.parse(review.images)"
+              style="width:80px;height:80px;border-radius:8px;margin-right:8px;object-fit:cover"
+            />
+          </div>
+          <el-divider v-if="review.replies && review.replies.length" style="margin:10px 0" />
+          <div v-for="reply in review.replies" :key="reply.id" class="reply-item">
+            <span class="reply-label">商家回复：</span>{{ reply.content }}
+          </div>
         </div>
       </el-card>
     </div>
@@ -129,7 +179,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
-import { StarFilled, LocationFilled } from "@element-plus/icons-vue";
+import { StarFilled, LocationFilled, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 
 const route = useRoute();
@@ -141,6 +191,19 @@ const loading = ref(false);
 const bookDialogVisible = ref(false);
 const booking = ref(false);
 const selectedRoom = ref(null);
+const showReviewForm = ref(false);
+const submittingReview = ref(false);
+
+const reviewTagOptions = ["干净卫生", "性价比高", "服务好", "位置便利", "设施齐全", "环境安静", "早餐丰富", "景观好"];
+
+const newReview = ref({ rating: 5, content: "", tags: [] });
+const uploadFiles = ref([]);
+const uploadedImageUrls = ref([]);
+
+const uploadUrl = "/api/file/upload";
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
+}));
 
 const bookForm = ref({
   checkIn: "",
@@ -226,8 +289,74 @@ const confirmBook = async () => {
   }
 };
 
+const onUploadSuccess = (res, file) => {
+  if (res.url) uploadedImageUrls.value.push(res.url);
+};
+
+const onUploadRemove = (file) => {
+  const url = file.response?.url || file.url;
+  uploadedImageUrls.value = uploadedImageUrls.value.filter((u) => u !== url);
+};
+
+const submitReview = async () => {
+  if (!newReview.value.content.trim()) {
+    ElMessage.warning("请输入评价内容");
+    return;
+  }
+  submittingReview.value = true;
+  try {
+    const body = {
+      targetId: hotelId,
+      targetType: "hotel",
+      rating: newReview.value.rating,
+      content: newReview.value.content,
+      tags: newReview.value.tags.join(","),
+      images: uploadedImageUrls.value.length > 0 ? JSON.stringify(uploadedImageUrls.value) : null,
+    };
+    await request.post("/api/review/add", body);
+    ElMessage.success("评价发表成功");
+    newReview.value = { rating: 5, content: "", tags: [] };
+    uploadFiles.value = [];
+    uploadedImageUrls.value = [];
+    showReviewForm.value = false;
+    await fetchReviews();
+  } catch (e) {
+  } finally {
+    submittingReview.value = false;
+  }
+};
+
+const reportReview = async (reviewId) => {
+  try {
+    await request.post("/api/review/report", { reviewId, reason: "内容不当" });
+    ElMessage.success("举报已提交");
+  } catch (e) {
+  }
+};
+
+const fetchReviews = async () => {
+  try {
+    const data = await request.get("/api/review/list", {
+      params: { targetId: hotelId, targetType: "hotel" },
+    });
+    const revs = Array.isArray(data) ? data : [];
+    for (const rev of revs) {
+      try {
+        const replies = await request.get("/api/reply/list", { params: { reviewId: rev.id } });
+        rev.replies = Array.isArray(replies) ? replies : [];
+      } catch (e) {
+        rev.replies = [];
+      }
+    }
+    reviews.value = revs;
+  } catch (e) {
+    reviews.value = [];
+  }
+};
+
 onMounted(() => {
   fetchHotelDetail();
+  fetchReviews();
 });
 </script>
 
@@ -343,6 +472,31 @@ onMounted(() => {
   font-size: 14px;
   color: #475569;
   line-height: 1.6;
+}
+.review-tags {
+  margin-top: 8px;
+}
+.review-images {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+}
+.review-form {
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.reply-item {
+  padding: 8px 14px;
+  background: #FFF7ED;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #71718B;
+}
+.reply-label {
+  color: #F59E0B;
+  font-weight: 600;
 }
 .total-price {
   font-size: 22px;

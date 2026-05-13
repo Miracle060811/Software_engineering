@@ -30,4 +30,9 @@ public class LikeController {
         int liked = likeService.likeStatus(userContext.getCurrentUserId(), targetId, targetType);
         return Result.success(liked > 0);
     }
+
+    @GetMapping("/my/collects")
+    public Result<java.util.List<java.util.Map<String, Object>>> myCollects() {
+        return Result.success(likeService.getMyCollects(userContext.getCurrentUserId()));
+    }
 }

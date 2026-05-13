@@ -10,8 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class LikeServiceImpl implements LikeService {
@@ -92,6 +91,34 @@ public class LikeServiceImpl implements LikeService {
             post.setCollectCount((post.getCollectCount() != null ? post.getCollectCount() : 0) + 1);
             postMapper.updateById(post);
         }
+    }
+
+    @Override
+    public List<Map<String, Object>> getMyCollects(Long userId) {
+        LambdaQueryWrapper<Like> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Like::getUserId, userId)
+                .eq(Like::getTargetType, 2)
+                .orderByDesc(Like::getCreateTime);
+        List<Like> likes = likeMapper.selectList(wrapper);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Like like : likes) {
+            Post post = postMapper.selectById(like.getTargetId());
+            if (post != null && post.getStatus() == 1) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("id", post.getId());
+                m.put("title", post.getTitle());
+                m.put("content", post.getContent());
+                m.put("images", post.getImages());
+                m.put("destination", post.getDestination());
+                m.put("tags", post.getTags());
+                m.put("likeCount", post.getLikeCount());
+                m.put("commentCount", post.getCommentCount());
+                m.put("viewCount", post.getViewCount());
+                m.put("createTime", post.getCreateTime());
+                result.add(m);
+            }
+        }
+        return result;
     }
 
     private void decrementPostCollectCount(Long postId) {

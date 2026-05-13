@@ -91,6 +91,24 @@ public class TrafficOrderController {
         return Result.success(trafficOrderService.getUserOrders(userId));
     }
 
+    /**
+     * 获取单个订单详情（行程单/收据基础数据）
+     */
+    @GetMapping("/{orderNo}/receipt")
+    public Result<TrafficOrder> getReceipt(@PathVariable String orderNo) {
+        Long userId = getCurrentUserId();
+        if (userId == null)
+            return Result.error("用户未登录");
+        List<TrafficOrder> orders = trafficOrderService.getUserOrders(userId);
+        TrafficOrder order = orders.stream()
+                .filter(o -> o.getOrderNo().equals(orderNo))
+                .findFirst()
+                .orElse(null);
+        if (order == null)
+            return Result.error("订单不存在或无权查看");
+        return Result.success(order);
+    }
+
     private Long getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated())

@@ -46,6 +46,9 @@
             <el-button text @click="$router.push('/my-orders')"
               >我的订单</el-button
             >
+            <el-button text @click="$router.push('/coupons')"
+              >优惠券</el-button
+            >
             <el-dropdown @command="handleCommand" trigger="click">
               <span class="user-chip">
                 <el-avatar
@@ -400,6 +403,7 @@ const navLinks = [
   { path: "/", label: "首页" },
   { path: "/community", label: "社区" },
   { path: "/ai-plan", label: "AI规划" },
+  { path: "/coupons", label: "优惠券" },
 ];
 
 const isAuthPage = computed(() => route.path === "/login");

@@ -2,7 +2,9 @@ package com.travelmate.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.travelmate.entity.Follow;
 import com.travelmate.entity.Post;
+import com.travelmate.mapper.FollowMapper;
 import com.travelmate.mapper.PostMapper;
 import com.travelmate.service.PostService;
 import com.travelmate.service.SensitiveWordService;
@@ -10,8 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class PostServiceImpl implements PostService {
@@ -20,11 +21,15 @@ public class PostServiceImpl implements PostService {
     private PostMapper postMapper;
 
     @Autowired
+    private FollowMapper followMapper;
+
+    @Autowired
     private SensitiveWordService sensitiveWordService;
 
     @Override
     public List<Map<String, Object>> listPosts(int page, int size) {
         int offset = (page - 1) * size;
+        // 只返回已发布且公开的帖子
         return postMapper.selectPostsWithUser(offset, size);
     }
 
@@ -59,7 +64,12 @@ public class PostServiceImpl implements PostService {
         post.setImages((String) body.get("images"));
         post.setDestination((String) body.get("destination"));
         post.setTags((String) body.get("tags"));
-        post.setStatus(0);
+        // 支持指定 status: 0=审核中, 1=直接发布, 3=草稿
+        Integer reqStatus = body.get("status") != null ? Integer.valueOf(body.get("status").toString()) : 1;
+        post.setStatus(reqStatus == 3 ? 3 : 1);
+        // 可见范围: 0=公开, 1=仅关注者, 2=私密 (默认公开)
+        Integer visibility = body.get("visibility") != null ? Integer.valueOf(body.get("visibility").toString()) : 0;
+        post.setVisibility(visibility);
         post.setLikeCount(0);
         post.setCommentCount(0);
         post.setCollectCount(0);
@@ -87,7 +97,23 @@ public class PostServiceImpl implements PostService {
     @Override
     public List<Post> myPosts(Long userId) {
         LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Post::getUserId, userId).orderByDesc(Post::getCreateTime);
+        wrapper.eq(Post::getUserId, userId)
+                .ne(Post::getStatus, 3)  // 排除草稿
+                .orderByDesc(Post::getCreateTime);
         return postMapper.selectList(wrapper);
+    }
+
+    @Override
+    public List<Map<String, Object>> getFollowingPosts(Long userId, int page, int size) {
+        // 获取用户关注的人列表
+        LambdaQueryWrapper<Follow> followWrapper = new LambdaQueryWrapper<>();
+        followWrapper.eq(Follow::getFollowerId, userId);
+        List<Follow> follows = followMapper.selectList(followWrapper);
+        if (follows.isEmpty()) return Collections.emptyList();
+
+        List<Long> followeeIds = follows.stream().map(Follow::getFolloweeId).toList();
+
+        int offset = (page - 1) * size;
+        return postMapper.selectPostsByUserIds(followeeIds, offset, size);
     }
 }
