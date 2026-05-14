@@ -13,6 +13,12 @@
 
 不要用 PowerShell 的 `Get-Content | mysql` 管道导入，中文种子数据会被写成 `?`。请直接让 `mysql` 客户端按 `utf8mb4` 读取脚本：
 
+Windows 下优先推荐直接使用仓库脚本，脚本会自动加载 `.env`、查找 `mysql.exe` 并用 `SOURCE` 导入：
+
+```powershell
+.\setup.ps1 -InitDb
+```
+
 ```bat
 mysql --default-character-set=utf8mb4 -u root -p < docs\sql\init.sql
 ```
@@ -23,7 +29,7 @@ mysql --default-character-set=utf8mb4 -u root -p < docs\sql\init.sql
 cmd /c "mysql --default-character-set=utf8mb4 -u root -p < docs\sql\init.sql"
 ```
 
-如果 PowerShell 提示找不到 `mysql` 命令，可以改用 MySQL 安装目录下的可执行文件：
+如果你不想使用脚本，或者需要手工排查导入问题，PowerShell 提示找不到 `mysql` 命令时可以改用 MySQL 安装目录下的可执行文件：
 
 ```powershell
 cmd /c '"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" --default-character-set=utf8mb4 -u root -p < docs\sql\init.sql'
@@ -31,7 +37,7 @@ cmd /c '"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" --default-charac
 
 如果页面里已经出现 `????`，说明这些中文已经在导入阶段被写坏，单纯改前后端配置无法恢复，需要删掉 `travelmate` 数据库后按上面的命令重新导入。
 
-现在也可以直接使用脚本重建：
+如果中文已经被导成 `?`，推荐直接使用脚本重建（已在当前仓库实测恢复中文）：
 
 ```powershell
 .\setup.ps1 -InitDb -ResetDb
@@ -89,6 +95,8 @@ start.bat
 .\start.ps1 -DbPassword 你的MySQL密码
 .\start.ps1 -BackendOnly
 .\start.ps1 -FrontendOnly
+.\start.ps1 -SkipFrontendInstall
+.\start.ps1 -DryRun
 ```
 
 ### 后端启动
@@ -142,15 +150,15 @@ npm run dev
 当前仓库已经完成基础业务主链路，但整体仍处于“可运行 + 持续联调完善”阶段，不应再按早期文档理解为“酒店/AI/社区/后台尚未开始”。
 
 - 后端已具备：用户认证、航班/火车、交通订单、酒店/景点、AI 行程、AI 聊天、社区、管理后台等基础接口。
-- 前端已具备：[frontend/src/views/Home.vue](frontend/src/views/Home.vue)、[frontend/src/views/Login.vue](frontend/src/views/Login.vue)、[frontend/src/views/flight/FlightSearch.vue](frontend/src/views/flight/FlightSearch.vue)、[frontend/src/views/train/TrainSearch.vue](frontend/src/views/train/TrainSearch.vue)、[frontend/src/views/hotel/HotelSearch.vue](frontend/src/views/hotel/HotelSearch.vue)、[frontend/src/views/hotel/HotelDetail.vue](frontend/src/views/hotel/HotelDetail.vue)、[frontend/src/views/hotel/AttractionList.vue](frontend/src/views/hotel/AttractionList.vue)、[frontend/src/views/ai/AiPlan.vue](frontend/src/views/ai/AiPlan.vue)、[frontend/src/views/community/Community.vue](frontend/src/views/community/Community.vue)、[frontend/src/views/community/PostCreate.vue](frontend/src/views/community/PostCreate.vue)、[frontend/src/views/community/PostDetail.vue](frontend/src/views/community/PostDetail.vue)、[frontend/src/views/order/MyOrders.vue](frontend/src/views/order/MyOrders.vue)、[frontend/src/views/user/UserProfile.vue](frontend/src/views/user/UserProfile.vue)、[frontend/src/views/admin/AdminDashboard.vue](frontend/src/views/admin/AdminDashboard.vue) 等基础页面。
+- 前端已具备：[frontend/src/views/Home.vue](frontend/src/views/Home.vue)、[frontend/src/views/Login.vue](frontend/src/views/Login.vue)、[frontend/src/views/flight/FlightSearch.vue](frontend/src/views/flight/FlightSearch.vue)、[frontend/src/views/train/TrainSearch.vue](frontend/src/views/train/TrainSearch.vue)、[frontend/src/views/hotel/HotelSearch.vue](frontend/src/views/hotel/HotelSearch.vue)、[frontend/src/views/hotel/HotelDetail.vue](frontend/src/views/hotel/HotelDetail.vue)、[frontend/src/views/hotel/AttractionList.vue](frontend/src/views/hotel/AttractionList.vue)、[frontend/src/views/ai/AiPlan.vue](frontend/src/views/ai/AiPlan.vue)、[frontend/src/views/community/Community.vue](frontend/src/views/community/Community.vue)、[frontend/src/views/community/PostCreate.vue](frontend/src/views/community/PostCreate.vue)、[frontend/src/views/community/PostDetail.vue](frontend/src/views/community/PostDetail.vue)、[frontend/src/views/order/CouponCenter.vue](frontend/src/views/order/CouponCenter.vue)、[frontend/src/views/order/MyOrders.vue](frontend/src/views/order/MyOrders.vue)、[frontend/src/views/user/NotificationCenter.vue](frontend/src/views/user/NotificationCenter.vue)、[frontend/src/views/user/UserProfile.vue](frontend/src/views/user/UserProfile.vue)、[frontend/src/views/admin/AdminDashboard.vue](frontend/src/views/admin/AdminDashboard.vue) 等基础页面。
 - Windows 根目录已提供一键启动脚本：[start.ps1](start.ps1) 和 [start.bat](start.bat)。
 
 ## 当前待完善项
 
-- Redis 限流已覆盖大部分写接口，但部分非关键接口尚未加限流注解。
-- AI 行程”一键转购物车”、”同行人共享行程”等扩展功能待后续补充。
-- 社区位置打卡、瀑布流按热度/时间排序增强待完善。
-- 更深层的并发压力测试（JMeter 脚本）待补充。
+- Redis 限流已覆盖大部分关键写接口，仍有少量非核心接口待补齐。
+- 管理后台中的 QPS、延迟和告警目前为轻量模拟指标，尚未接入真实 APM / 链路追踪系统。
+- AI 行程与订单的更深度联动、同行人共享行程等扩展能力待后续补充。
+- 更深层的并发压测与端到端自动化回归仍需继续完善。
 
 ---
 
@@ -213,11 +221,12 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 ### 管理后台与可观测性（成员 E - 李科）
 
 - RBAC 权限控制（role=1 管理员专属）
-- ECharts 可观测仪表盘（订单趋势、类型分布、热门目的地、用户增长）
-- 游记内容审核（通过/拒绝）
-- 用户管理（启用/禁用）
-- 资源管理（航班、酒店 CRUD + 库存直接干预）
-- 全平台订单流水（按类型筛选、分页查看、退款审批）
+- ECharts 可观测仪表盘（订单趋势、类型分布、热门目的地、用户增长、今日订单、QPS、接口延迟、告警）
+- 资源管理（航班 CRUD、酒店 CRUD、房型库存/价格/上下架干预）
+- 优惠券配置（满减券/折扣券新增、编辑、删除）
+- 内容审核（游记通过/拒绝、评价举报工单处理）
+- 用户管理（启用/禁用、用户画像侧边查看）
+- 全平台订单流水（按类型筛选、分页查看、交通订单退款审批）
 - 系统操作日志（AOP 自动记录 Controller 调用）
 - 敏感词管理
 

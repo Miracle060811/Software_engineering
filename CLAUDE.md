@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding assistants when working with code in this repository.
 
 ## 技术栈版本
 
@@ -13,8 +13,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 一键启动（推荐）
 
 ```powershell
-# Windows: 加载环境变量 + 初始化数据库 + 启动后端
-.\setup.ps1 -InitDb -StartBackend
+# Windows: 启动前后端（推荐）
+.\start.ps1
+
+# 首次初始化数据库
+.\setup.ps1 -InitDb
+
+# 中文种子数据已被导成 ? 时重建数据库
+.\setup.ps1 -InitDb -ResetDb
 ```
 
 ### 后端
@@ -27,16 +33,16 @@ cd backend
 # Linux/Mac: source ../.env
 
 # 启动（需要 DB_PASSWORD 和可选的 DEEPSEEK_API_KEY 环境变量）
-mvn spring-boot:run
+.\mvnw.cmd clean spring-boot:run
 
 # 编译
-mvn compile
+.\mvnw.cmd clean compile
 
 # 运行测试
-mvn test
+.\mvnw.cmd test
 
 # 运行单个测试
-mvn test -Dtest="BackendApplicationTests"
+.\mvnw.cmd test -Dtest="BackendApplicationTests"
 ```
 
 ### 前端
@@ -50,11 +56,21 @@ npm run build      # 生产构建
 
 ### 数据库
 
+```powershell
+# 首次导库
+.\setup.ps1 -InitDb
+
+# 中文已被导成 ? 时重建数据库
+.\setup.ps1 -InitDb -ResetDb
+```
+
 ```bash
+# 手动导入
 mysql --default-character-set=utf8mb4 -u root -p < docs/sql/init.sql
 ```
 
 不要使用 PowerShell 的 `Get-Content | mysql` 管道导入；这会把中文种子数据写成 `?`。
+`setup.ps1` 会自动查找 `mysql.exe` 并直接执行 `SOURCE` 导入，不依赖 `cmd.exe`。
 
 ## 架构概览
 
@@ -88,11 +104,14 @@ DEEPSEEK_API_KEY=你的DeepSeek密钥
 **加载 .env 到环境变量:**
 
 ```powershell
-# Windows PowerShell（一键）
+# Windows PowerShell：只加载 .env
 .\setup.ps1
 
-# 或手动加载后启动
-.\setup.ps1 -InitDb -StartBackend
+# 初始化数据库
+.\setup.ps1 -InitDb
+
+# 启动前后端
+.\start.ps1
 ```
 
 `application.yml` 通过占位符读取环境变量，优先级：`SPRING_DATASOURCE_PASSWORD` > `DB_PASSWORD`。本地开发时也可以继续使用 `backend/application-local.yml`（已在 `.gitignore` 中）。
@@ -103,7 +122,7 @@ DEEPSEEK_API_KEY=你的DeepSeek密钥
 2. 登录返回 JWT token（jjwt 0.11.5，每次重启生成新密钥，旧 token 全部失效），前端存入 localStorage
 3. 前端 `utils/request.js` 的 Axios 拦截器自动注入 `Authorization: Bearer <token>`
 4. `JwtFilter` 从 Header 提取 token 并设置 `SecurityContext`
-5. `SecurityConfig` 放行 `/user/**`、`/api/flight/**`、`/api/train/**`、`/api/hotel/**`、`/api/attraction/**`、`/api/post/list`、`/api/review/list`，其余需要登录
+5. `SecurityConfig` 仅公开 `/user/register`、`/user/login`，以及航班/火车搜索、酒店搜索/详情/房型、景点搜索/详情、游记列表/详情、评价列表等只读 GET 接口；社区写接口、酒店订单、我的内容和其他私有接口都需要登录
 6. 需要登录但未带 token 的请求返回 403
 
 ### UserContext 工具
@@ -132,7 +151,7 @@ AOP 环绕通知自动拦截 `com.travelmate.controller..*.*` 所有方法，记
 
 ### AI 降级
 
-AI 行程规划和客服调用 DeepSeek API（OpenAI 兼容协议），API 超时或失败时自动降级为预设模板，不会报错。
+AI 行程规划和客服调用 DeepSeek API（OpenAI 兼容协议，默认模型为 `deepseek-v4-flash`），API 超时或失败时自动降级为预设模板/兜底回复，不会报错。
 
 ### 敏感词过滤
 
@@ -189,4 +208,5 @@ Vite dev server 将 `/api` 和 `/user` 代理到 `http://localhost:8080`，开�
 ### 新增前端页面/组件
 
 - `views/order/CouponCenter.vue` — 优惠券中心（可领取 + 我的优惠券）
+- `views/admin/AdminDashboard.vue` — 管理后台（仪表盘、房态库存、优惠券、订单流水、举报工单、敏感词、日志、用户管理）
 - `components/PriceTrend.vue` — ECharts 价格趋势图弹窗组件
