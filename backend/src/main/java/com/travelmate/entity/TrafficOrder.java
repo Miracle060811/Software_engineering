@@ -1,6 +1,7 @@
 package com.travelmate.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -44,4 +45,19 @@ public class TrafficOrder {
 
     @TableLogic
     private Integer deleted;
+
+    @TableField(exist = false)
+    private String departureCity;
+
+    @TableField(exist = false)
+    private String arrivalCity;
+
+    @TableField(exist = false)
+    private String departureStation;
+
+    @TableField(exist = false)
+    private String arrivalStation;
+
+    @TableField(exist = false)
+    private String ticketNo;
 }

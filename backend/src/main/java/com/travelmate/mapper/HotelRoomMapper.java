@@ -16,7 +16,7 @@ public interface HotelRoomMapper extends BaseMapper<HotelRoom> {
      * @param roomId 房型ID
      * @return 影响行数, 0 表示房间不足
      */
-    @Update("UPDATE tm_hotel_room SET available_rooms = available_rooms - 1 WHERE id = #{roomId} AND available_rooms > 0")
+    @Update("UPDATE tm_hotel_room SET available_rooms = available_rooms - 1 WHERE id = #{roomId} AND status = 1 AND available_rooms > 0")
     int deductRoom(@Param("roomId") Long roomId);
 
     /**
@@ -24,6 +24,6 @@ public interface HotelRoomMapper extends BaseMapper<HotelRoom> {
      *
      * @param roomId 房型ID
      */
-    @Update("UPDATE tm_hotel_room SET available_rooms = available_rooms + 1 WHERE id = #{roomId}")
+    @Update("UPDATE tm_hotel_room SET available_rooms = available_rooms + 1 WHERE id = #{roomId} AND available_rooms < total_rooms")
     int returnRoom(@Param("roomId") Long roomId);
 }

@@ -70,6 +70,12 @@ public class TrafficOrderController {
         }
     }
 
+    @RateLimiter(maxRequests = 5, timeWindowSeconds = 1)
+    @PostMapping("/{orderNo}/pay")
+    public Result<String> mockPayCompat(@PathVariable String orderNo) {
+        return mockPay(orderNo);
+    }
+
     @PostMapping("/cancel/{orderNo}")
     public Result<String> cancelOrder(@PathVariable String orderNo) {
         Long userId = getCurrentUserId();
@@ -81,6 +87,11 @@ public class TrafficOrderController {
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }
+    }
+
+    @PostMapping("/{orderNo}/cancel")
+    public Result<String> cancelOrderCompat(@PathVariable String orderNo) {
+        return cancelOrder(orderNo);
     }
 
     @GetMapping("/list")

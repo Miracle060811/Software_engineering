@@ -153,6 +153,24 @@ public class HotelController {
         return Result.success(hotelOrderService.getUserOrders(userId));
     }
 
+    /**
+     * 酒店订单详情/核销凭证
+     * GET /api/hotel/order/{orderNo}/receipt
+     */
+    @GetMapping("/order/{orderNo}/receipt")
+    public Result<HotelOrder> getReceipt(@PathVariable String orderNo) {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return Result.error("用户未登录或Token无效");
+        }
+
+        return hotelOrderService.getUserOrders(userId).stream()
+                .filter(order -> order.getOrderNo().equals(orderNo))
+                .findFirst()
+                .map(Result::success)
+                .orElseGet(() -> Result.error("订单不存在或无权查看"));
+    }
+
     // ===================== 工具方法 =====================
 
     /**

@@ -573,16 +573,25 @@ public class AdminController {
                             .eq(com.travelmate.entity.HotelOrder::getOrderNo, orderNo));
             if (order == null)
                 return Result.error("订单不存在");
-            order.setStatus(4);
-            hotelOrderMapper.updateById(order);
+            if (order.getStatus() != null && order.getStatus() != 4) {
+                order.setStatus(4);
+                hotelOrderMapper.updateById(order);
+                hotelRoomMapper.returnRoom(order.getRoomId());
+            }
         } else {
             com.travelmate.entity.TrafficOrder order = trafficOrderMapper.selectOne(
                     new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.travelmate.entity.TrafficOrder>()
                             .eq(com.travelmate.entity.TrafficOrder::getOrderNo, orderNo));
             if (order == null)
                 return Result.error("订单不存在");
-            order.setStatus(4);
-            trafficOrderMapper.updateById(order);
+            if (order.getStatus() != null && order.getStatus() == 3) {
+                return Result.success("订单已取消，无需重复退款");
+            }
+            if (order.getStatus() != null && order.getStatus() != 4) {
+                order.setStatus(4);
+                trafficOrderMapper.updateById(order);
+                returnTrafficStock(order);
+            }
         }
         return Result.success("退款审批已通过");
     }
@@ -594,6 +603,23 @@ public class AdminController {
     public Result<String> rejectRefund(@PathVariable String orderNo) {
         checkAdmin();
         return Result.success("退款申请已拒绝");
+    }
+
+    private void returnTrafficStock(com.travelmate.entity.TrafficOrder order) {
+        if (order.getOrderType() == null) {
+            return;
+        }
+        if (order.getOrderType() == 0) {
+            flightMapper.returnSeat(order.getTicketId());
+            return;
+        }
+        if (order.getOrderType() == 1) {
+            if ("FirstClass".equalsIgnoreCase(order.getSeatType())) {
+                trainMapper.returnFirstClassSeat(order.getTicketId());
+            } else {
+                trainMapper.returnSecondClassSeat(order.getTicketId());
+            }
+        }
     }
 
     // ======================== 促销券管理 ========================

@@ -16,6 +16,7 @@ import com.travelmate.service.TrafficOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -40,11 +41,17 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String createFlightOrder(Long userId, FlightOrderCreateDTO dto) {
+        validateFlightOrder(dto);
 
         // 1. 查询乘车人信息
         Passenger passenger = passengerMapper.selectById(dto.getPassengerId());
         if (passenger == null || !passenger.getUserId().equals(userId)) {
             throw new RuntimeException("乘车人选错或不存在");
+        }
+
+        Flight flight = flightMapper.selectById(dto.getFlightId());
+        if (flight == null || flight.getStatus() == null || flight.getStatus() != 1) {
+            throw new RuntimeException("航班不存在或已取消");
         }
 
         // 2. 扣减航班库存 (乐观扣减, 利用 MySQL 行级锁和 where available_seats > 0)
@@ -55,10 +62,13 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         }
 
         // 3. 获取航班信息用于计算金额
-        Flight flight = flightMapper.selectById(dto.getFlightId());
-        BigDecimal price = "Business".equalsIgnoreCase(dto.getSeatType())
+        String seatType = normalizeFlightSeatType(dto.getSeatType());
+        BigDecimal price = "Business".equals(seatType)
                 ? flight.getBusinessPrice()
                 : flight.getEconomyPrice();
+        if (price == null) {
+            throw new RuntimeException("该舱位暂不可售");
+        }
 
         // 4. 构建订单对象并落表生成
         TrafficOrder order = new TrafficOrder();
@@ -68,14 +78,13 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         order.setUserId(userId);
         order.setOrderType(0); // 0 代表航班机票
         order.setTicketId(dto.getFlightId());
-        order.setSeatType(dto.getSeatType());
+        order.setSeatType(seatType);
         order.setPassengerName(passenger.getName());
         order.setPassengerIdCard(passenger.getIdCard());
         order.setAmount(price);
         order.setStatus(0); // 0 = 待支付
         order.setCreateTime(LocalDateTime.now());
 
-        System.out.println("====== [Order DEBUG] 成功扣减库存, 正在生成订单: " + orderNo + " ======");
         save(order); // insert 插入数据
 
         return order.getOrderNo();
@@ -84,44 +93,51 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String createTrainOrder(Long userId, TrainOrderCreateDTO dto) {
+        validateTrainOrder(dto);
+
         Passenger passenger = passengerMapper.selectById(dto.getPassengerId());
         if (passenger == null || !passenger.getUserId().equals(userId)) {
             throw new RuntimeException("乘车人选错或不存在");
         }
 
+        Train train = trainMapper.selectById(dto.getTrainId());
+        if (train == null || train.getStatus() == null || train.getStatus() != 1) {
+            throw new RuntimeException("车次不存在或已停运");
+        }
+
         // 判断席位并进行并发防超卖扣减
-        int updated = 0;
-        if ("FirstClass".equalsIgnoreCase(dto.getSeatType())) {
+        String seatType = normalizeTrainSeatType(dto.getSeatType());
+        int updated;
+        if ("FirstClass".equals(seatType)) {
             updated = trainMapper.deductFirstClassSeat(dto.getTrainId());
-        } else if ("SecondClass".equalsIgnoreCase(dto.getSeatType())) {
-            updated = trainMapper.deductSecondClassSeat(dto.getTrainId());
         } else {
-            throw new RuntimeException("未知的席别");
+            updated = trainMapper.deductSecondClassSeat(dto.getTrainId());
         }
 
         if (updated == 0) {
             throw new RuntimeException("所选席位已售罄或车次停运");
         }
 
-        Train train = trainMapper.selectById(dto.getTrainId());
-        BigDecimal price = "FirstClass".equalsIgnoreCase(dto.getSeatType())
+        BigDecimal price = "FirstClass".equals(seatType)
                 ? train.getFirstClassPrice()
                 : train.getSecondClassPrice();
+        if (price == null) {
+            throw new RuntimeException("该席别暂不可售");
+        }
 
         TrafficOrder order = new TrafficOrder();
-        String orderNo = "H" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+        String orderNo = "TR" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
         order.setOrderNo(orderNo);
         order.setUserId(userId);
         order.setOrderType(1); // 1 = 火车票
         order.setTicketId(dto.getTrainId());
-        order.setSeatType(dto.getSeatType());
+        order.setSeatType(seatType);
         order.setPassengerName(passenger.getName());
         order.setPassengerIdCard(passenger.getIdCard());
         order.setAmount(price);
         order.setStatus(0);
         order.setCreateTime(LocalDateTime.now());
 
-        System.out.println("====== [Order DEBUG] 成功扣减火车票库存, 生成订单: " + orderNo + " ======");
         save(order);
 
         return order.getOrderNo();
@@ -140,12 +156,12 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         if (order.getStatus() != 0)
             throw new RuntimeException("订单已处理过, 无法再次支付");
 
-        // 模拟支付完成, 改为 1-出票中 (有些会直接跳 2-已出票, 这里模拟先出票中)
-        order.setStatus(1);
-        order.setPayTime(LocalDateTime.now());
-        boolean success = updateById(order);
-        System.out.println("====== [Order DEBUG] 订单 " + orderNo + " 模拟支付成功, 开始出票... ======");
-        return success;
+        // 模拟支付完成, 原子改为 1-出票中，避免并发重复支付。
+        int updated = baseMapper.markPaid(userId, orderNo);
+        if (updated == 0) {
+            throw new RuntimeException("订单状态已变化，请刷新后重试");
+        }
+        return true;
     }
 
     @Override
@@ -161,9 +177,11 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         if (order.getStatus() != 0)
             throw new RuntimeException("非待支付订单无法直接取消");
 
-        // 1. 修改订单状态为已取消 (3)
-        order.setStatus(3);
-        updateById(order);
+        // 1. 原子修改订单状态为已取消 (3)，防止重复取消多次归还库存。
+        int updated = baseMapper.markCancelledFromPending(userId, orderNo);
+        if (updated == 0) {
+            throw new RuntimeException("订单状态已变化，请刷新后重试");
+        }
 
         // 2. 归还被锁定的库存(余票 + 1)
         if (order.getOrderType() == 0) {
@@ -176,15 +194,86 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
             }
         }
 
-        System.out.println("====== [Order DEBUG] 订单 " + orderNo + " 已取消，成功归还座位！ ======");
-
         return true;
     }
 
     @Override
     public java.util.List<TrafficOrder> getUserOrders(Long userId) {
-        return this.list(new LambdaQueryWrapper<TrafficOrder>()
+        java.util.List<TrafficOrder> orders = this.list(new LambdaQueryWrapper<TrafficOrder>()
                 .eq(TrafficOrder::getUserId, userId)
                 .orderByDesc(TrafficOrder::getCreateTime));
+        orders.forEach(this::fillTicketSnapshot);
+        return orders;
+    }
+
+    private void fillTicketSnapshot(TrafficOrder order) {
+        if (order.getOrderType() == null || order.getTicketId() == null) {
+            return;
+        }
+
+        if (order.getOrderType() == 0) {
+            Flight flight = flightMapper.selectById(order.getTicketId());
+            if (flight != null) {
+                order.setTicketNo(flight.getFlightNo());
+                order.setDepartureCity(flight.getDepartureCity());
+                order.setArrivalCity(flight.getArrivalCity());
+            }
+            return;
+        }
+
+        if (order.getOrderType() == 1) {
+            Train train = trainMapper.selectById(order.getTicketId());
+            if (train != null) {
+                order.setTicketNo(train.getTrainNo());
+                order.setDepartureStation(train.getDepartureStation());
+                order.setArrivalStation(train.getArrivalStation());
+            }
+        }
+    }
+
+    private void validateFlightOrder(FlightOrderCreateDTO dto) {
+        if (dto == null || dto.getFlightId() == null) {
+            throw new RuntimeException("请选择航班");
+        }
+        if (dto.getPassengerId() == null) {
+            throw new RuntimeException("请选择乘车人");
+        }
+        normalizeFlightSeatType(dto.getSeatType());
+    }
+
+    private void validateTrainOrder(TrainOrderCreateDTO dto) {
+        if (dto == null || dto.getTrainId() == null) {
+            throw new RuntimeException("请选择车次");
+        }
+        if (dto.getPassengerId() == null) {
+            throw new RuntimeException("请选择乘车人");
+        }
+        normalizeTrainSeatType(dto.getSeatType());
+    }
+
+    private String normalizeFlightSeatType(String seatType) {
+        if (!StringUtils.hasText(seatType)) {
+            throw new RuntimeException("请选择舱位");
+        }
+        if ("Economy".equalsIgnoreCase(seatType)) {
+            return "Economy";
+        }
+        if ("Business".equalsIgnoreCase(seatType)) {
+            return "Business";
+        }
+        throw new RuntimeException("未知的舱位类型");
+    }
+
+    private String normalizeTrainSeatType(String seatType) {
+        if (!StringUtils.hasText(seatType)) {
+            throw new RuntimeException("请选择席别");
+        }
+        if ("FirstClass".equalsIgnoreCase(seatType)) {
+            return "FirstClass";
+        }
+        if ("SecondClass".equalsIgnoreCase(seatType)) {
+            return "SecondClass";
+        }
+        throw new RuntimeException("未知的席别");
     }
 }

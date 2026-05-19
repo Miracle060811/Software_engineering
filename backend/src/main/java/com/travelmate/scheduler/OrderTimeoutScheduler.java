@@ -3,9 +3,11 @@ package com.travelmate.scheduler;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.travelmate.entity.HotelOrder;
 import com.travelmate.entity.TrafficOrder;
+import com.travelmate.mapper.FlightMapper;
 import com.travelmate.mapper.HotelOrderMapper;
 import com.travelmate.mapper.HotelRoomMapper;
 import com.travelmate.mapper.TrafficOrderMapper;
+import com.travelmate.mapper.TrainMapper;
 import com.travelmate.service.HotelRoomStockService;
 import com.travelmate.service.NotificationCenterService;
 import org.slf4j.Logger;
@@ -30,6 +32,12 @@ public class OrderTimeoutScheduler {
     private TrafficOrderMapper trafficOrderMapper;
 
     @Autowired
+    private FlightMapper flightMapper;
+
+    @Autowired
+    private TrainMapper trainMapper;
+
+    @Autowired
     private HotelOrderMapper hotelOrderMapper;
 
     @Autowired
@@ -52,9 +60,17 @@ public class OrderTimeoutScheduler {
                     .lt(TrafficOrder::getCreateTime, deadline);
             List<TrafficOrder> timeoutTrafficOrders = trafficOrderMapper.selectList(trafficQuery);
             for (TrafficOrder order : timeoutTrafficOrders) {
-                order.setStatus(3); // 3 = 已取消
-                trafficOrderMapper.updateById(order);
-                log.info("[Timeout] 大交通订单超时取消: {}", order.getOrderNo());
+                int updated = trafficOrderMapper.markCancelledFromPending(order.getUserId(), order.getOrderNo());
+                if (updated == 0) {
+                    continue;
+                }
+                returnTrafficStock(order);
+                notificationCenterService.createNotification(
+                        order.getUserId(),
+                        "traffic_order",
+                        "票务订单超时取消",
+                        String.format("订单 %s 超过15分钟未支付，系统已自动取消并释放库存。", order.getOrderNo()));
+                log.info("[Timeout] 大交通订单超时取消并归还库存: {}", order.getOrderNo());
             }
 
             // 处理酒店超时订单
@@ -63,8 +79,10 @@ public class OrderTimeoutScheduler {
                     .lt(HotelOrder::getCreateTime, deadline);
             List<HotelOrder> timeoutHotelOrders = hotelOrderMapper.selectList(hotelQuery);
             for (HotelOrder order : timeoutHotelOrders) {
-                order.setStatus(4); // 4 = 已取消
-                hotelOrderMapper.updateById(order);
+                int updated = hotelOrderMapper.markCancelledFromPending(order.getUserId(), order.getOrderNo());
+                if (updated == 0) {
+                    continue;
+                }
                 // 归还房间库存
                 hotelRoomMapper.returnRoom(order.getRoomId());
                 hotelRoomStockService.syncWithDatabase(order.getRoomId());
@@ -81,6 +99,25 @@ public class OrderTimeoutScheduler {
                 return;
             }
             throw e;
+        }
+    }
+
+    private void returnTrafficStock(TrafficOrder order) {
+        if (order.getOrderType() == null) {
+            return;
+        }
+
+        if (order.getOrderType() == 0) {
+            flightMapper.returnSeat(order.getTicketId());
+            return;
+        }
+
+        if (order.getOrderType() == 1) {
+            if ("FirstClass".equalsIgnoreCase(order.getSeatType())) {
+                trainMapper.returnFirstClassSeat(order.getTicketId());
+            } else {
+                trainMapper.returnSecondClassSeat(order.getTicketId());
+            }
         }
     }
 

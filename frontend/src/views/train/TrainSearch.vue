@@ -338,9 +338,8 @@ const confirmBook = async () => {
     );
     await request.post("/api/order/train/create", {
       trainId: selectedTrain.value.id,
-      passengerName: passenger?.name,
-      passengerIdCard: passenger?.idCard,
-      seatType: bookForm.value.seatType,
+      passengerId: passenger?.id,
+      seatType: bookForm.value.seatType === "firstClass" ? "FirstClass" : "SecondClass",
     });
     ElMessage.success("下单成功！请前往【我的订单】完成支付");
     bookDialogVisible.value = false;
