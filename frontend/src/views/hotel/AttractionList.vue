@@ -43,7 +43,7 @@
       <el-row v-else :gutter="20">
         <el-col :span="8" v-for="attr in attractions" :key="attr.id" style="margin-bottom:20px">
           <el-card class="attr-card" :body-style="{ padding: 0 }">
-            <img :src="attr.coverImg || `https://picsum.photos/seed/attr${attr.id}/400/220`" class="attr-img" :alt="attr.name" />
+            <img :src="attr.coverImg || `https://picsum.photos/seed/attr${attr.id}/400/220`" class="attr-img" :alt="attr.name" referrerpolicy="no-referrer" />
             <div class="attr-info">
               <div class="attr-name">{{ attr.name }}</div>
               <div class="attr-desc">{{ attr.description }}</div>
