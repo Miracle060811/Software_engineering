@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * 景点门票实体
@@ -54,4 +55,13 @@ public class Attraction {
 
     /** 状态: 0-下线, 1-正常 */
     private Integer status;
+
+    /** 官方/政府来源URL */
+    private String officialUrl;
+
+    /** 数据来源名称 */
+    private String sourceName;
+
+    /** 数据核验日期 */
+    private LocalDate dataCheckedDate;
 }

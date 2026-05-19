@@ -175,8 +175,19 @@ CREATE TABLE IF NOT EXISTS `tm_attraction` (
   `lat` DECIMAL(10,6) COMMENT '纬度',
   `lng` DECIMAL(10,6) COMMENT '经度',
   `status` TINYINT(1) DEFAULT '1' COMMENT '1-正常 0-暂停开放',
+  `official_url` VARCHAR(500) DEFAULT NULL COMMENT '官方/政府来源URL',
+  `source_name` VARCHAR(100) DEFAULT NULL COMMENT '数据来源名称',
+  `data_checked_date` DATE DEFAULT NULL COMMENT '数据核验日期',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='景点门票表';
+
+-- 兼容已初始化过的旧库：补充景点数据来源字段
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction` ADD COLUMN `official_url` VARCHAR(500) DEFAULT NULL COMMENT ''官方/政府来源URL'' AFTER `status`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction' AND COLUMN_NAME = 'official_url');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction` ADD COLUMN `source_name` VARCHAR(100) DEFAULT NULL COMMENT ''数据来源名称'' AFTER `official_url`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction' AND COLUMN_NAME = 'source_name');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction` ADD COLUMN `data_checked_date` DATE DEFAULT NULL COMMENT ''数据核验日期'' AFTER `source_name`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction' AND COLUMN_NAME = 'data_checked_date');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- 11. 评价表 (Review) 成员B负责
 CREATE TABLE IF NOT EXISTS `tm_review` (
@@ -414,16 +425,31 @@ INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`,
 (8, '豪华套房', '2m大床', 110, 3880.00, 3, 1, 'WiFi,空调,客厅,西湖全景,管家服务');
 
 -- 景点数据
-INSERT IGNORE INTO `tm_attraction` (`name`, `city`, `address`, `description`, `cover_img`, `adult_price`, `child_price`, `total_tickets`, `available_tickets`, `open_time`) VALUES
-('故宫博物院', '北京', '东城区景山前街4号', '中国古代宫廷建筑之精华，世界文化遗产，馆藏文物逾180万件。', 'https://picsum.photos/400/300?random=20', 60.00, 0.00, 1000, 456, '08:30-17:00（周一闭馆）'),
-('颐和园', '北京', '海淀区新建宫门路19号', '中国现存规模最大的皇家园林，世界文化遗产，山水交融的园林艺术典范。', 'https://picsum.photos/400/300?random=21', 30.00, 0.00, 2000, 1234, '06:30-18:00'),
-('外滩', '上海', '黄浦区中山东一路', '上海最具代表性的历史建筑群，沿江23座风格各异的历史建筑彰显百年沧桑。', 'https://picsum.photos/400/300?random=22', 0.00, 0.00, 9999, 9999, '全天开放'),
-('西湖', '杭州', '西湖区龙井路1号', '中国历史上著名的风景名胜，西湖十景美不胜收，白娘子传说发源地。', 'https://picsum.photos/400/300?random=23', 0.00, 0.00, 9999, 9999, '全天开放'),
-('张家界国家森林公园', '张家界', '武陵源区国家森林公园内', '阿凡达取景地，举世无双的石英砂岩峰林地貌，集奇峰、异石、幽谷、秀水于一体。', 'https://picsum.photos/400/300?random=24', 245.00, 123.00, 500, 234, '07:00-18:00'),
-('秦始皇兵马俑博物馆', '西安', '临潼区秦陵北路', '世界第八大奇迹，出土兵马俑逾8000件，被誉为20世纪最伟大的考古发现。', 'https://picsum.photos/400/300?random=25', 120.00, 0.00, 800, 356, '08:30-18:00'),
-('九寨沟风景区', '阿坝', '阿坝藏族羌族自治州九寨沟县', '以翠海、叠瀑、彩林、雪峰、藏情"五绝"著称，世界自然遗产。', 'https://picsum.photos/400/300?random=26', 169.00, 85.00, 1000, 445, '07:00-17:00'),
-('黄山风景区', '黄山', '黄山市汤口镇', '天下第一奇山，以奇松、怪石、云海、温泉"四绝"驰名中外，世界文化与自然遗产。', 'https://picsum.photos/400/300?random=27', 190.00, 95.00, 1500, 678, '06:00-17:30'),
-('桂林漓江', '桂林', '漓江旅游区象鼻山码头', '漓江山水甲天下，泛舟漓江，欣赏喀斯特地貌风光，人民币20元背面取景地。', 'https://picsum.photos/400/300?random=28', 210.00, 105.00, 600, 289, '08:00-12:00（游船）');
+-- 票价与开放时间来自官方/政府页面核验；余票为演示库存，不代表实时可售库存。
+INSERT INTO `tm_attraction` (`id`, `name`, `city`, `address`, `description`, `cover_img`, `adult_price`, `child_price`, `total_tickets`, `available_tickets`, `open_time`, `lat`, `lng`, `official_url`, `source_name`, `data_checked_date`) VALUES
+(1, '故宫博物院', '北京', '东城区景山前街4号', '明清两代皇家宫殿，世界文化遗产，馆藏体系覆盖古代宫廷建筑、书画、器物等。', NULL, 60.00, 0.00, 1000, 456, '08:30-17:00（旺季，周一闭馆，法定节假日除外）', 39.916345, 116.397155, 'https://www.dpm.org.cn/Visit.html', '故宫博物院官网', '2026-05-19'),
+(2, '颐和园', '北京', '海淀区新建宫门路19号', '以昆明湖、万寿山为主体的大型皇家园林，1998年列入世界遗产名录。', NULL, 30.00, 0.00, 2000, 1234, '06:00-20:00（旺季，停止入园19:00）', 39.999946, 116.275481, 'https://www.summerpalace.net.cn/visit.html', '颐和园官网', '2026-05-19'),
+(3, '外滩', '上海', '黄浦区中山东一路', '上海近代城市景观代表区域，沿黄浦江分布多座历史建筑，是城市公共开放空间。', NULL, 0.00, 0.00, 9999, 9999, '全天开放', 31.239706, 121.490317, 'https://www.shhuangpu.gov.cn/', '上海市黄浦区人民政府', '2026-05-19'),
+(4, '西湖', '杭州', '西湖区龙井路1号', '杭州西湖文化景观为世界文化遗产，核心湖区与沿湖开放空间面向公众开放。', NULL, 0.00, 0.00, 9999, 9999, '全天开放（部分收费景点另行开放）', 30.242703, 120.150269, 'https://westlake.hangzhou.gov.cn/', '杭州西湖风景名胜区管委会', '2026-05-19'),
+(5, '张家界国家森林公园', '张家界', '武陵源区国家森林公园内', '中国第一个国家森林公园，武陵源世界自然遗产核心景区之一，以石英砂岩峰林地貌著称。', NULL, 227.00, 113.00, 500, 234, '07:30-18:00（以景区当日公告为准）', 29.327001, 110.475704, 'https://wly.hunan.gov.cn/', '湖南省文化和旅游厅/武陵源景区公开信息', '2026-05-19'),
+(6, '秦始皇帝陵博物院', '西安', '临潼区秦陵北路', '以秦始皇兵马俑坑和秦始皇陵相关遗址为核心的遗址类博物馆。', NULL, 120.00, 0.00, 800, 356, '08:30-18:30（旺季，停止检票17:00）', 34.384018, 109.278491, 'https://www.bmy.com.cn/', '秦始皇帝陵博物院官网', '2026-05-19'),
+(7, '九寨沟风景名胜区', '阿坝', '阿坝藏族羌族自治州九寨沟县漳扎镇', '以高山湖泊、瀑布群、彩林和雪峰景观闻名的世界自然遗产。', NULL, 190.00, 95.00, 1000, 445, '07:30-17:00（旺季，具体以景区公告为准）', 33.260772, 103.918599, 'https://www.jiuzhai.com/intelligent-service/tickets', '九寨沟风景名胜区官网', '2026-05-19'),
+(8, '黄山风景区', '黄山', '黄山市黄山区汤口镇', '世界文化与自然双重遗产，以奇松、怪石、云海、温泉等景观著称。', NULL, 190.00, 95.00, 1500, 678, '06:00-17:30（旺季，具体以景区公告为准）', 30.130130, 118.168498, 'https://hsgwh.huangshan.gov.cn/', '黄山风景区管委会', '2026-05-19'),
+(9, '漓江风景名胜区', '桂林', '桂林市灵川县至阳朔县漓江沿线', '桂林山水代表性景区，游船线路以漓江喀斯特峰林、江湾和田园景观为核心。', NULL, 210.00, 105.00, 600, 289, '08:00-12:00（游船班次以当日公告为准）', 25.166667, 110.416667, 'https://wglj.guilin.gov.cn/', '桂林市文化广电和旅游局', '2026-05-19')
+ON DUPLICATE KEY UPDATE
+  `name` = VALUES(`name`),
+  `city` = VALUES(`city`),
+  `address` = VALUES(`address`),
+  `description` = VALUES(`description`),
+  `cover_img` = VALUES(`cover_img`),
+  `adult_price` = VALUES(`adult_price`),
+  `child_price` = VALUES(`child_price`),
+  `open_time` = VALUES(`open_time`),
+  `lat` = VALUES(`lat`),
+  `lng` = VALUES(`lng`),
+  `official_url` = VALUES(`official_url`),
+  `source_name` = VALUES(`source_name`),
+  `data_checked_date` = VALUES(`data_checked_date`);
 
 -- 社区游记数据
 INSERT IGNORE INTO `tm_post` (`user_id`, `title`, `content`, `images`, `destination`, `tags`, `like_count`, `comment_count`, `view_count`, `status`) VALUES
