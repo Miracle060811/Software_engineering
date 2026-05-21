@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS `tm_flight` (
   `total_seats` INT NOT NULL DEFAULT '200' COMMENT '总座位数',
   `available_seats` INT NOT NULL DEFAULT '200' COMMENT '余票',
   `status` TINYINT(1) DEFAULT '1' COMMENT '1-正常 0-取消',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_flight_no_deptime` (`flight_no`, `departure_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='航班信息表';
 
 -- 3. 酒店信息表 (Hotel)
@@ -86,7 +87,8 @@ CREATE TABLE IF NOT EXISTS `tm_train` (
   `first_class_seats` INT DEFAULT '50' COMMENT '一等座余票',
   `second_class_seats` INT DEFAULT '300' COMMENT '二等座余票',
   `status` TINYINT(1) DEFAULT '1' COMMENT '1-正常 0-停运',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_train_no_deptime` (`train_no`, `departure_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='火车票信息表';
 
 -- 5. 交通票务订单表 (Traffic Order) 成员A负责
@@ -392,6 +394,17 @@ INSERT IGNORE INTO `tm_user` (`id`, `username`, `password`, `nickname`, `avatar`
 (3, 'alice', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTpSn4DZe6m', '爱旅行的Alice', NULL, 0, 1),
 (4, 'bob', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTpSn4DZe6m', '旅行博主Bob', NULL, 0, 1);
 
+-- 兼容旧库：删除重复航班行（保留 id 最小的），再补 UNIQUE 约束
+DELETE f1 FROM `tm_flight` f1
+  INNER JOIN `tm_flight` f2
+    ON f1.flight_no = f2.flight_no AND f1.departure_time = f2.departure_time AND f1.id > f2.id;
+SET @sql = (SELECT IF(COUNT(*) = 0,
+  'ALTER TABLE `tm_flight` ADD UNIQUE KEY `uk_flight_no_deptime` (`flight_no`, `departure_time`)',
+  'SELECT 1')
+  FROM INFORMATION_SCHEMA.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_flight' AND INDEX_NAME = 'uk_flight_no_deptime');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- 航班数据 (50条)
 INSERT IGNORE INTO `tm_flight` (`flight_no`, `airline`, `departure_city`, `arrival_city`, `departure_time`, `arrival_time`, `economy_price`, `business_price`, `total_seats`, `available_seats`) VALUES
 ('CA1234', '中国国际航空', '北京', '上海', '2026-06-01 08:00:00', '2026-06-01 10:05:00', 680.00, 2180.00, 200, 45),
@@ -414,6 +427,17 @@ INSERT IGNORE INTO `tm_flight` (`flight_no`, `airline`, `departure_city`, `arriv
 ('CA6789', '中国国际航空', '北京', '重庆', '2026-06-03 07:00:00', '2026-06-03 09:30:00', 720.00, 2280.00, 200, 73),
 ('MU0123', '中国东方航空', '上海', '重庆', '2026-06-03 12:00:00', '2026-06-03 14:15:00', 680.00, 2180.00, 180, 108),
 ('CZ5005', '中国南方航空', '广州', '重庆', '2026-06-04 09:30:00', '2026-06-04 11:30:00', 560.00, 1780.00, 220, 145);
+
+-- 兼容旧库：删除重复火车行（保留 id 最小的），再补 UNIQUE 约束
+DELETE t1 FROM `tm_train` t1
+  INNER JOIN `tm_train` t2
+    ON t1.train_no = t2.train_no AND t1.departure_time = t2.departure_time AND t1.id > t2.id;
+SET @sql = (SELECT IF(COUNT(*) = 0,
+  'ALTER TABLE `tm_train` ADD UNIQUE KEY `uk_train_no_deptime` (`train_no`, `departure_time`)',
+  'SELECT 1')
+  FROM INFORMATION_SCHEMA.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_train' AND INDEX_NAME = 'uk_train_no_deptime');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- 火车数据
 INSERT IGNORE INTO `tm_train` (`train_no`, `train_type`, `departure_station`, `arrival_station`, `departure_time`, `arrival_time`, `duration_minutes`, `first_class_price`, `second_class_price`, `first_class_seats`, `second_class_seats`) VALUES
@@ -1026,3 +1050,203 @@ INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`,
 (35, '海景亲子套房', '2m大床+儿童床', 82, 2380.00, 8, 3, 'WiFi,海景,浴缸,亲子用品,行政礼遇'),
 (36, '珠江新城商务大床房', '1.8m大床', 34, 620.00, 26, 15, 'WiFi,办公桌,城市景观,近地铁'),
 (36, '广州塔景观房', '1.8m大床', 42, 860.00, 12, 6, 'WiFi,塔景,浴缸,迷你吧');
+
+-- ============================================================
+-- 补充景点数据（景点 29–48）
+-- 来源：武汉、西藏、新疆、甘肃、四川、山东、云南、福建等地区景点
+-- 数据核验日期：2026-05-19
+-- ============================================================
+INSERT INTO `tm_attraction` (`id`, `name`, `city`, `address`, `description`, `cover_img`, `adult_price`, `child_price`, `total_tickets`, `available_tickets`, `open_time`, `lat`, `lng`, `official_url`, `source_name`, `data_checked_date`) VALUES
+(29, '黄鹤楼', '武汉', '武昌区蛇山峰岭之上',
+  '中国历史名楼之一，矗立于武汉蛇山，登楼可俯瞰长江与武汉三镇城市风貌，是湖北省标志性文化地标。',
+  'https://picsum.photos/seed/yellow-crane-tower-wuhan/800/500',
+  70.00, 35.00, 2000, 1456, '08:00-18:00（旺季，停止入场17:30）',
+  30.5447, 114.3029, 'https://www.yhl.com.cn/', '黄鹤楼公园官网', '2026-05-19'),
+
+(30, '布达拉宫', '拉萨', '城关区布达拉宫广场',
+  '矗立于拉萨红山之上，历代达赖喇嘛冬宫，世界文化遗产，藏传佛教圣地。每日严格限流，须至少提前3天预约。',
+  'https://picsum.photos/seed/potala-palace-lhasa/800/500',
+  200.00, 0.00, 2300, 342, '09:00-15:00（每日限流，须提前预约）',
+  29.6578, 91.1174, 'https://www.potalapalace.cn/', '布达拉宫管理处官网', '2026-05-19'),
+
+(31, '纳木错', '拉萨', '当雄县纳木错湖区',
+  '藏语意为"天湖"，海拔4718米，西藏最大湖泊，以圣湖美景和雪山倒影闻名。高海拔须注意高原反应。',
+  'https://picsum.photos/seed/namtso-holy-lake/800/500',
+  120.00, 60.00, 1000, 780, '08:00-18:00（以景区公告为准）',
+  30.7367, 90.5227, NULL, '那曲市文化和旅游局公开信息', '2026-05-19'),
+
+(32, '莫高窟', '敦煌', '甘肃省敦煌市鸣沙山东麓',
+  '俗称千佛洞，世界上现存规模最大、保存最完好的佛教艺术宝库，世界文化遗产。须提前网络预约，日票额有限。',
+  'https://picsum.photos/seed/mogao-grottoes-dunhuang/800/500',
+  238.00, 119.00, 6000, 2130, '08:00-17:00（A类票额，参观时段固定，须提前预约）',
+  40.0361, 94.8086, 'https://www.dha.ac.cn/', '敦煌研究院官网', '2026-05-19'),
+
+(33, '乐山大佛', '乐山', '四川省乐山市凌云山',
+  '世界最高石刻弥勒佛坐像，依山而凿，通高71米，与乌尤寺、凌云寺共同构成景区，世界文化与自然双遗产。',
+  'https://picsum.photos/seed/leshan-giant-buddha/800/500',
+  120.00, 60.00, 2000, 1560, '07:30-18:30（旺季）',
+  29.5458, 103.7716, 'https://www.leshandafo.com/', '乐山大佛景区官网', '2026-05-19'),
+
+(34, '峨眉山', '乐山', '四川省峨眉山市',
+  '佛教四大名山之一，以金顶云海、雷洞坪等景观闻名，与乐山大佛共同列入世界文化与自然双遗产，海拔3079米。',
+  'https://picsum.photos/seed/emeishan-golden-peak/800/500',
+  160.00, 80.00, 3000, 1870, '06:00-18:00（缆车另计，以景区公告为准）',
+  29.6159, 103.3436, 'https://www.emeishan.com/', '峨眉山景区官网', '2026-05-19'),
+
+(35, '泰山', '泰安', '山东省泰安市泰山区',
+  '五岳之首，世界自然与文化双遗产，古代帝王封禅之地，以日出云海和南天门石阶著称。可徒步或乘缆车。',
+  'https://picsum.photos/seed/mount-tai-sunrise/800/500',
+  125.00, 62.00, 5000, 3400, '全天开放（缆车运营时间以公告为准）',
+  36.2538, 117.1082, 'https://www.taishan.com/', '泰山景区官网', '2026-05-19'),
+
+(36, '天山天池', '乌鲁木齐', '新疆昌吉回族自治州阜康市',
+  '天山博格达峰下高山冰碛湖，海拔1910米，以雪山倒映和天山云杉林著称，国家5A级风景区。',
+  'https://picsum.photos/seed/tianchi-xinjiang-lake/800/500',
+  100.00, 50.00, 2000, 1380, '08:00-20:00（旺季，以景区公告为准）',
+  43.8851, 88.1206, NULL, '昌吉州文化和旅游局公开信息', '2026-05-19'),
+
+(37, '喀纳斯景区', '阿勒泰', '新疆阿勒泰地区布尔津县',
+  '集湖泊、河流、草原、森林、雪山于一体，以禾木晨雾和彩林秋色闻名的边境风景区。旺季需提前订住宿。',
+  'https://picsum.photos/seed/kanas-lake-xinjiang/800/500',
+  245.00, 122.00, 1500, 890, '08:00-20:00（旺季，以景区公告为准）',
+  48.6867, 87.0005, NULL, '阿勒泰地区文化和旅游局公开信息', '2026-05-19'),
+
+(38, '元阳哈尼梯田', '红河', '云南省红河州元阳县',
+  '世界文化遗产，哈尼族先民开凿的大规模梯田，以冬春水季日照云海倒影最为壮观，多依树观景台是核心打卡点。',
+  'https://picsum.photos/seed/yuanyang-rice-terraces/800/500',
+  100.00, 50.00, 2000, 1560, '08:00-18:00（以景区公告为准）',
+  23.1161, 102.7756, NULL, '红河州文化和旅游局公开信息', '2026-05-19'),
+
+(39, '石林风景区', '昆明', '云南省昆明市石林彝族自治县',
+  '世界自然遗产，以喀斯特地貌形成的剑状石灰岩群落著称，被称为"天下第一奇观"。',
+  'https://picsum.photos/seed/stone-forest-kunming/800/500',
+  200.00, 100.00, 2000, 1240, '07:30-18:00（以景区公告为准）',
+  24.7726, 103.2701, 'https://www.chinastoneforest.com/', '石林风景名胜区官网', '2026-05-19'),
+
+(40, '龙门石窟', '洛阳', '河南省洛阳市南郊伊水两岸',
+  '北魏至唐代皇家开凿的大型石窟群，世界文化遗产，奉先寺卢舍那大佛为代表性造像，规模宏大。',
+  'https://picsum.photos/seed/longmen-grottoes-luoyang/800/500',
+  90.00, 45.00, 2500, 1560, '08:00-17:30（以景区公告为准）',
+  34.5604, 112.4741, 'https://www.longmen.gov.cn/', '龙门石窟景区官网', '2026-05-19'),
+
+(41, '武夷山', '南平', '福建省南平市武夷山市',
+  '世界文化与自然双重遗产，以丹霞地貌、碧水九曲和武夷岩茶产区著称，竹筏漂流体验极佳。',
+  'https://picsum.photos/seed/wuyi-mountain-fujian/800/500',
+  140.00, 70.00, 1500, 1020, '07:30-18:00（以景区公告为准）',
+  27.7494, 117.9855, 'https://www.wuyi.gov.cn/', '武夷山风景名胜区管委会官网', '2026-05-19'),
+
+(42, '周庄古镇', '苏州', '江苏省苏州市昆山市周庄镇',
+  '江南水乡代表古镇，以水道、石桥、明清民居和双桥著称，有"中国第一水乡"之称。早晨人少，建议8点前进入。',
+  'https://picsum.photos/seed/zhouzhuang-water-town/800/500',
+  100.00, 50.00, 2000, 1460, '08:00-17:00（以景区公告为准）',
+  31.1132, 120.8476, NULL, '周庄古镇景区管委会公开信息', '2026-05-19'),
+
+(43, '夫子庙秦淮风光带', '南京', '江苏省南京市秦淮区贡院街',
+  '以秦淮河沿岸历史文化街区为核心，涵盖夫子庙、贡院、乌衣巷等历史景观，是南京文化旅游核心区，多数区域免费开放。',
+  'https://picsum.photos/seed/nanjing-confucius-qinhuai/800/500',
+  0.00, 0.00, 9999, 9999, '全天开放（贡院等收费景点另行公告）',
+  32.0211, 118.7834, NULL, '南京市文化和旅游局公开信息', '2026-05-19'),
+
+(44, '西双版纳热带植物园', '西双版纳', '云南省西双版纳州勐腊县勐仑镇',
+  '中国科学院直属热带植物科研基地，同时对公众开放，以物种多样性和热带雨林景观著称，是自然科普和度假的优选地。',
+  'https://picsum.photos/seed/xishuangbanna-garden/800/500',
+  80.00, 40.00, 2000, 1650, '08:00-18:00（以园区公告为准）',
+  21.9158, 101.0253, 'https://www.xtbg.cas.cn/', '西双版纳热带植物园官网', '2026-05-19'),
+
+(45, '崂山风景区', '青岛', '山东省青岛市崂山区',
+  '道教名山，主峰巨峰海拔1132.7米，以海上仙山、清泉奇石和道教文化著称，是青岛近郊必游山岳景区。',
+  'https://picsum.photos/seed/laoshan-qingdao-coast/800/500',
+  80.00, 40.00, 2000, 1560, '06:30-17:00（以景区公告为准）',
+  36.1654, 120.6028, 'https://www.laoshan.gov.cn/', '崂山区文化和旅游局', '2026-05-19'),
+
+(46, '海螺沟冰川森林公园', '甘孜', '四川省甘孜州泸定县磨西镇',
+  '以现代冰川、高山温泉和原始森林为核心景观，贡嘎山麓冰川可步行近距离接触，是四川高原特色景区。',
+  'https://picsum.photos/seed/hailuogou-glacier-sichuan/800/500',
+  82.00, 41.00, 1200, 820, '08:00-18:00（以景区公告为准）',
+  29.5744, 102.0626, NULL, '海螺沟景区管委会公开信息', '2026-05-19'),
+
+(47, '黄龙风景名胜区', '阿坝', '四川省阿坝州松潘县',
+  '世界自然遗产，以彩池、雪山、峡谷、森林构成的景观组合闻名，核心景区彩池群层叠绵延，与九寨沟形成黄九环线。',
+  'https://picsum.photos/seed/huanglong-colorful-pools/800/500',
+  150.00, 75.00, 1500, 960, '08:00-17:00（以景区公告为准，海拔高）',
+  32.7502, 103.8165, NULL, '阿坝州文化和旅游局公开信息', '2026-05-19'),
+
+(48, '武陵源·黄龙洞', '张家界', '湖南省张家界市武陵源区',
+  '武陵源世界自然遗产核心区内的溶洞景区，以大规模石钟乳、石笋和地下河著称，是张家界地下景观的代表。',
+  'https://picsum.photos/seed/zhangjiajie-cave-dragon/800/500',
+  130.00, 65.00, 1000, 680, '08:00-17:30（以景区公告为准）',
+  29.368, 110.5526, NULL, '武陵源景区管委会公开信息', '2026-05-19')
+
+ON DUPLICATE KEY UPDATE
+  `name`              = VALUES(`name`),
+  `city`              = VALUES(`city`),
+  `address`           = VALUES(`address`),
+  `description`       = VALUES(`description`),
+  `cover_img`         = VALUES(`cover_img`),
+  `adult_price`       = VALUES(`adult_price`),
+  `child_price`       = VALUES(`child_price`),
+  `open_time`         = VALUES(`open_time`),
+  `lat`               = VALUES(`lat`),
+  `lng`               = VALUES(`lng`),
+  `source_name`       = VALUES(`source_name`),
+  `data_checked_date` = VALUES(`data_checked_date`);
+
+-- ============================================================
+-- 补充社区游记（帖子 11–15）
+-- 来源：data_supplement.sql，2026-05-19
+-- ============================================================
+INSERT INTO `tm_post` (`id`, `user_id`, `title`, `content`, `images`, `destination`, `tags`, `like_count`, `comment_count`, `collect_count`, `view_count`, `status`, `source_name`, `data_checked_date`) VALUES
+(11, 4, '山东泰山+曲阜孔庙4天｜登顶看日出攻略',
+  'Day1济南：趵突泉+大明湖+宽厚里；Day2泰山：推荐凌晨12点从红门出发徒步，爬5小时到南天门在天街等日出，日出后吃豆腐脑早餐再下山（用缆车）；Day3曲阜：三孔（孔庙孔林孔府），半天到一天即可；Day4返程。泰山登顶一定要带厚衣物，山顶夏天也只有十几度，日出前后风大刺骨。',
+  'https://picsum.photos/seed/taishan-summit-view/800/500,https://picsum.photos/seed/taishan-sunrise-clouds/800/500,https://picsum.photos/seed/qufu-confucius-temple/800/500',
+  '泰安', '山东,泰山,泰山日出,曲阜,孔庙,济南', 11200, 247, 10800, 43000, 1, '演示游记', '2026-05-19'),
+
+(12, 2, '武汉2天｜黄鹤楼+汉口租界+东湖绿道',
+  'Day1：黄鹤楼（早9点前进景区人少）—蛇山城墙—武汉大学（需提前预约）—户部巷宵夜；Day2：汉口老租界漫步（大和街、中山大道）—黎黄陂路小吃—东湖绿道骑行（推荐磨山段）—光谷步行街。武汉地铁很方便，主要景点都能覆盖，两天完全够用，热干面和豆皮必尝。',
+  'https://picsum.photos/seed/yellow-crane-wuhan-view/800/500,https://picsum.photos/seed/wuhan-yangtze-bridge/800/500,https://picsum.photos/seed/east-lake-greenway/800/500',
+  '武汉', '武汉,黄鹤楼,汉口租界,东湖,两天一夜', 6700, 158, 6400, 26000, 1, '演示游记', '2026-05-19'),
+
+(13, 3, '苏州+周庄2天｜古典园林完整打卡',
+  'Day1苏州：拙政园（7:30刚开门进最安静）—狮子林—平江路茶馆—苏博（免费需预约）—观前街；Day2周庄：早8点前进古镇人最少，走富安桥—双桥—沈厅—张厅，中午吃万三蹄，下午2点前出镇避开人流。苏州园林建议只选1-2个深度游，不要贪多导致走马观花。周庄早进早出是关键。',
+  'https://picsum.photos/seed/suzhou-humble-admin/800/500,https://picsum.photos/seed/zhouzhuang-double-bridge/800/500,https://picsum.photos/seed/jiangnan-watertown/800/500',
+  '苏州', '苏州,拙政园,周庄,园林,江南水乡', 7400, 169, 7100, 28000, 1, '演示游记', '2026-05-19'),
+
+(14, 4, '青岛+崂山3天｜海滨城市完整路线',
+  'Day1青岛市区：栈桥—小鱼山—八大关（欧式建筑群）—太平山索道—台东步行街晚餐；Day2崂山：北线巨峰，上缆车下步行，下午顺路看太清宫；Day3劈柴院早餐+中山路+博物馆（免费）+啤酒街晚餐扫货。青岛比想象中大，建议地铁为主，五四广场+海边走走必排。海鲜大排档一定要货比三家再进。',
+  'https://picsum.photos/seed/qingdao-pier-coast/800/500,https://picsum.photos/seed/laoshan-sea-mountain/800/500,https://picsum.photos/seed/qingdao-beer-street/800/500',
+  '青岛', '青岛,崂山,栈桥,八大关,海鲜,啤酒', 5900, 143, 5700, 23000, 1, '演示游记', '2026-05-19'),
+
+(15, 2, '南京2天｜中山陵+夫子庙+先锋书店',
+  'Day1：中山陵（徒步博爱坊到祭堂329级台阶，背景开阔壮观）—明孝陵（石象路神兽路很出片）—紫金山步道散步；Day2：玄武湖公园（免费，环湖一圈约1小时）—台城（樱花季必来，非花季也很美）—夫子庙秦淮河—先锋书店（地下空间全国最美书店之一）。南京旅游性价比极高，博物馆基本免费。',
+  'https://picsum.photos/seed/nanjing-zhongshan-mausoleum/800/500,https://picsum.photos/seed/nanjing-qinhuai-night/800/500,https://picsum.photos/seed/nanjing-cherry-taicheng/800/500',
+  '南京', '南京,中山陵,夫子庙,玄武湖,台城,周末游', 8100, 187, 7800, 32000, 1, '演示游记', '2026-05-19')
+
+ON DUPLICATE KEY UPDATE
+  `title`             = VALUES(`title`),
+  `content`           = VALUES(`content`),
+  `images`            = VALUES(`images`),
+  `destination`       = VALUES(`destination`),
+  `tags`              = VALUES(`tags`),
+  `like_count`        = VALUES(`like_count`),
+  `comment_count`     = VALUES(`comment_count`),
+  `collect_count`     = VALUES(`collect_count`),
+  `view_count`        = VALUES(`view_count`),
+  `status`            = VALUES(`status`),
+  `data_checked_date` = VALUES(`data_checked_date`);
+
+-- 补充帖子 11–15 评论
+INSERT IGNORE INTO `tm_comment` (`post_id`, `user_id`, `content`, `like_count`) VALUES
+(11, 4, '凌晨12点出发，爬到南天门正好看日出，体力消耗超大但完全值', 38),
+(11, 3, '泰山那个豆腐脑早餐是真的香，吃完再下山精力满满', 24),
+(12, 3, '武汉大学需要提前在公众号预约，不然会被拦在门外', 22),
+(13, 2, '拙政园7:30刚开门进去，那半小时几乎没什么人，太安静了', 47),
+(14, 4, '崂山北线缆车上去步行下来是最合理方案，反过来会很累', 31),
+(15, 3, '先锋书店真的很美，在地下室，建议预留1小时慢慢逛', 29);
+
+-- 补充帖子 11–15 点赞
+INSERT IGNORE INTO `tm_like` (`user_id`, `target_id`, `target_type`) VALUES
+(3, 11, 0), (4, 11, 0),
+(2, 12, 0), (3, 12, 0),
+(2, 13, 0), (4, 13, 0),
+(3, 14, 0), (4, 14, 0),
+(3, 15, 0), (4, 15, 0);
