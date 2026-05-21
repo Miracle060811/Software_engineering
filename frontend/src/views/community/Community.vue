@@ -61,6 +61,8 @@
               :src="getFirstImage(post.images)"
               class="post-cover"
               :alt="post.title"
+              referrerpolicy="no-referrer"
+              @error="onImageError($event, post)"
             />
             <div class="post-img-overlay"></div>
           </div>
@@ -69,11 +71,11 @@
             <div class="post-meta">
               <span class="post-author">
                 <el-icon :size="14"><UserFilled /></el-icon>
-                {{ post.authorNickname || post.authorUsername }}
+                {{ getAuthorName(post) }}
               </span>
               <span class="post-likes">
                 <el-icon :size="14"><StarFilled /></el-icon>
-                {{ post.likeCount || 0 }}
+                {{ getLikeCount(post) }}
               </span>
             </div>
             <div class="post-location" v-if="post.destination">
@@ -161,6 +163,15 @@ const getFirstImage = (images) => {
   if (!images) return `https://picsum.photos/seed/${Math.random()}/400/260`;
   const arr = typeof images === "string" ? images.split(",") : images;
   return arr[0]?.trim() || `https://picsum.photos/seed/community/400/260`;
+};
+
+const getAuthorName = (post) =>
+  post.authorNickname || post.authorUsername || post.nickname || post.username || "旅行用户";
+
+const getLikeCount = (post) => post.likeCount ?? post.like_count ?? 0;
+
+const onImageError = (event, post) => {
+  event.target.src = `https://picsum.photos/seed/community-${post.id || post.destination || "fallback"}/600/360`;
 };
 
 onMounted(() => {

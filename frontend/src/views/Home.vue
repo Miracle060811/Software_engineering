@@ -382,7 +382,7 @@ const hotDestinations = [
     desc: "古都风韵与现代繁华完美交融，探索千年历史遗迹",
     tag: "文化古都",
     keywords: ["故宫", "长城", "胡同"],
-    img: "https://picsum.photos/seed/beijing2024/600/400",
+    img: "https://upload.wikimedia.org/wikipedia/commons/e/ef/The_Forbidden_City_-_View_from_Coal_Hill.jpg",
   },
   {
     name: "上海",
@@ -390,7 +390,7 @@ const hotDestinations = [
     desc: "东方明珠，感受魔都的摩登魅力与海派风情",
     tag: "魔都风情",
     keywords: ["外滩", "迪士尼", "田子坊"],
-    img: "https://picsum.photos/seed/shanghai2024/600/400",
+    img: "https://upload.wikimedia.org/wikipedia/commons/2/2b/Shanghai_Bund-20150516-RM-173803.jpg",
   },
   {
     name: "三亚",
@@ -398,7 +398,7 @@ const hotDestinations = [
     desc: "碧海蓝天、椰风树影，你的热带度假天堂",
     tag: "海岛度假",
     keywords: ["海滩", "潜水", "海鲜"],
-    img: "https://picsum.photos/seed/sanya2024/600/400",
+    img: "https://upload.wikimedia.org/wikipedia/commons/4/44/Yalong_Bay_01.jpg",
   },
   {
     name: "成都",
@@ -406,7 +406,7 @@ const hotDestinations = [
     desc: "慢生活与美食的天堂，来了就不想走的城市",
     tag: "美食天堂",
     keywords: ["熊猫", "火锅", "茶馆"],
-    img: "https://picsum.photos/seed/chengdu2024/600/400",
+    img: "https://upload.wikimedia.org/wikipedia/commons/2/20/Chengdu_skyline_June_2017.jpg",
   },
   {
     name: "杭州",
@@ -414,7 +414,7 @@ const hotDestinations = [
     desc: "江南水乡的诗意栖居，西湖美景冠绝天下",
     tag: "江南水乡",
     keywords: ["西湖", "灵隐寺", "龙井"],
-    img: "https://picsum.photos/seed/hangzhou2024/600/400",
+    img: "https://upload.wikimedia.org/wikipedia/commons/d/d8/West_Lake%2C_Hangzhou_%28Nine-turn_bridge%29.jpg",
   },
   {
     name: "西安",
@@ -422,7 +422,7 @@ const hotDestinations = [
     desc: "十三朝古都，触摸中华文明的厚重历史",
     tag: "历史名城",
     keywords: ["兵马俑", "古城墙", "回民街"],
-    img: "https://picsum.photos/seed/xian2024/600/400",
+    img: "https://upload.wikimedia.org/wikipedia/commons/8/8e/Xi-an_city_wall_side.jpg",
   },
 ];
 
