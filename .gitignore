@@ -1,2 +1,21 @@
 # 敏感配置文件
 .env
+backend/application-local.yml
+
+# 构建产物
+target/
+backend/target/
+frontend/dist/
+
+# 前端依赖与缓存
+node_modules/
+frontend/node_modules/
+.vite/
+frontend/node_modules/.vite/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

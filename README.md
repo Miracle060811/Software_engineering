@@ -126,6 +126,13 @@ $env:DEEPSEEK_API_KEY="你的DeepSeek密钥"  # 可选，不设置则AI功能降
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.arguments=--spring.datasource.password=你的MySQL密码"
 ```
 
+后端启动时也会自动读取项目根目录 `.env`（兼容 `DB_PASSWORD="..."`），所以根目录已有 `.env` 时可以直接运行：
+
+```powershell
+cd backend
+.\mvnw.cmd clean spring-boot:run
+```
+
 如果你用的是 CMD：
 
 ```bat
