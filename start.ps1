@@ -4,6 +4,7 @@ param(
     [string]$DeepseekApiKey,
     [switch]$BackendOnly,
     [switch]$FrontendOnly,
+    [switch]$SkipRedis,
     [switch]$SkipFrontendInstall,
     [switch]$DryRun
 )
@@ -18,6 +19,47 @@ function Test-CommandExists {
     )
 
     return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
+}
+
+function Test-TcpPort {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$HostName,
+        [Parameter(Mandatory = $true)]
+        [int]$Port
+    )
+
+    try {
+        $client = [System.Net.Sockets.TcpClient]::new()
+        $connectTask = $client.ConnectAsync($HostName, $Port)
+        $connected = $connectTask.Wait(1000) -and $client.Connected
+        $client.Dispose()
+        return $connected
+    } catch {
+        return $false
+    }
+}
+
+function Get-RedisServerPath {
+    $command = Get-Command "redis-server" -ErrorAction SilentlyContinue
+    if ($command) {
+        return $command.Source
+    }
+
+    $candidatePaths = @(
+        (Join-Path $repoRoot "redis\redis-server.exe"),
+        (Join-Path $repoRoot "tools\redis\redis-server.exe"),
+        "C:\Program Files\Redis\redis-server.exe",
+        "C:\Redis\redis-server.exe"
+    )
+
+    foreach ($candidate in $candidatePaths) {
+        if (Test-Path -LiteralPath $candidate) {
+            return $candidate
+        }
+    }
+
+    return $null
 }
 
 function Quote-PowerShellLiteral {
@@ -165,6 +207,61 @@ function Start-ServiceWindow {
     Write-Host "Started $Title"
 }
 
+function Start-RedisDependency {
+    param(
+        [switch]$DryRun
+    )
+
+    if (Test-TcpPort -HostName "127.0.0.1" -Port 6379) {
+        Write-Host "Redis is already listening on 127.0.0.1:6379"
+        return
+    }
+
+    $redisServices = Get-Service -Name "Redis", "Redis-x64-3.0", "redis" -ErrorAction SilentlyContinue
+    $redisService = $redisServices | Select-Object -First 1
+    if ($redisService) {
+        if ($DryRun) {
+            Write-Host "[Redis] Start-Service -Name $($redisService.Name)"
+            return
+        }
+
+        if ($redisService.Status -ne "Running") {
+            try {
+                Start-Service -Name $redisService.Name
+                Start-Sleep -Seconds 2
+            } catch {
+                Write-Warning "Redis service '$($redisService.Name)' was found but could not be started: $($_.Exception.Message)"
+            }
+        }
+
+        if (Test-TcpPort -HostName "127.0.0.1" -Port 6379) {
+            Write-Host "Started Redis service: $($redisService.Name)"
+        } else {
+            Write-Warning "Redis service '$($redisService.Name)' is not listening on 127.0.0.1:6379."
+        }
+        return
+    }
+
+    $redisServerPath = Get-RedisServerPath
+    if ($redisServerPath) {
+        $redisDir = Split-Path -Parent $redisServerPath
+        $redisCommand = "& '$redisServerPath'"
+        Start-ServiceWindow -Title "TravelMate Redis" -WorkingDirectory $redisDir -Command $redisCommand -DryRun:$DryRun
+
+        if (-not $DryRun) {
+            Start-Sleep -Seconds 2
+            if (Test-TcpPort -HostName "127.0.0.1" -Port 6379) {
+                Write-Host "Redis URL   : redis://127.0.0.1:6379"
+            } else {
+                Write-Warning "redis-server was started, but 127.0.0.1:6379 is still not reachable."
+            }
+        }
+        return
+    }
+
+    Write-Warning "Redis is not running and redis-server was not found. Install Redis or start it manually on 127.0.0.1:6379. Use -SkipRedis to suppress this check."
+}
+
 if ($BackendOnly -and $FrontendOnly) {
     throw "BackendOnly and FrontendOnly cannot be used together."
 }
@@ -266,6 +363,10 @@ if ($runBackend -and (Test-Path $backendLocalConfig) -and -not $resolvedDbPasswo
 
 if ($runFrontend -and $frontendNeedsInstall -and $SkipFrontendInstall) {
     Write-Warning "frontend/node_modules was not found. The frontend may fail because -SkipFrontendInstall was used."
+}
+
+if ($runBackend -and -not $SkipRedis) {
+    Start-RedisDependency -DryRun:$DryRun
 }
 
 if ($runBackend) {

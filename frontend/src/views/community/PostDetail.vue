@@ -157,6 +157,7 @@
         </div>
       </el-card>
     </div>
+    <el-empty v-else-if="!loading" description="游记不存在或暂时无法打开" />
   </div>
 </template>
 
@@ -215,6 +216,7 @@ const fetchPost = async () => {
     likeCount.value = data.likeCount || 0;
     await Promise.allSettled([fetchComments(), fetchLikeStatus()]);
   } catch (e) {
+    ElMessage.error(e.message || "游记详情加载失败");
   } finally {
     loading.value = false;
   }

@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 @Component
 public class DatabaseStartupValidator implements ApplicationRunner {
@@ -34,6 +35,7 @@ public class DatabaseStartupValidator implements ApplicationRunner {
 
         try (Connection connection = dataSource.getConnection()) {
             log.info("Database connection verified: {}", connection.getMetaData().getURL());
+            applyCompatibleSchemaPatches(connection);
         } catch (CannotGetJdbcConnectionException e) {
             logConnectionFailure(url, username, password, e);
             throw new IllegalStateException("数据库连接失败，请检查 backend/application-local.yml 或 DB_PASSWORD 配置", e);
@@ -44,6 +46,26 @@ public class DatabaseStartupValidator implements ApplicationRunner {
                 throw new IllegalStateException("数据库连接失败，请检查 backend/application-local.yml 或 DB_PASSWORD 配置", e);
             }
             throw e;
+        }
+    }
+
+    private void applyCompatibleSchemaPatches(Connection connection) {
+        executeQuietly(connection,
+                "ALTER TABLE tm_post ADD COLUMN reject_reason VARCHAR(300) DEFAULT NULL COMMENT '审核拒绝原因' AFTER status");
+        executeQuietly(connection,
+                "ALTER TABLE tm_review_report ADD COLUMN handle_remark VARCHAR(300) DEFAULT NULL COMMENT '处理备注' AFTER status");
+        executeQuietly(connection,
+                "ALTER TABLE tm_review_report ADD COLUMN handle_time DATETIME DEFAULT NULL COMMENT '处理时间' AFTER handle_remark");
+    }
+
+    private void executeQuietly(Connection connection, String sql) {
+        try (Statement statement = connection.createStatement()) {
+            statement.execute(sql);
+            log.info("Applied compatible schema patch: {}", sql);
+        } catch (SQLException e) {
+            if (!contains(e.getMessage(), "Duplicate column name")) {
+                log.warn("Compatible schema patch skipped: {}", e.getMessage());
+            }
         }
     }
 

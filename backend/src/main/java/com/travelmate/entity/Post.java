@@ -27,6 +27,7 @@ public class Post {
     private Integer viewCount;
     /** 0-审核中, 1-已发布, 2-下架, 3-草稿 */
     private Integer status;
+    private String rejectReason;
 
     /** 0-公开, 1-仅关注者可见, 2-私密 */
     private Integer visibility;

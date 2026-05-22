@@ -6,8 +6,11 @@ import com.travelmate.common.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.lang.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -17,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class RateLimiterInterceptor implements HandlerInterceptor {
+
+    private static final Logger log = LoggerFactory.getLogger(RateLimiterInterceptor.class);
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
@@ -37,9 +42,15 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
         String uri = request.getRequestURI();
         String key = "rate_limit:" + ip + ":" + uri;
 
-        Long count = redisTemplate.opsForValue().increment(key);
-        if (count != null && count == 1) {
-            redisTemplate.expire(key, annotation.timeWindowSeconds(), TimeUnit.SECONDS);
+        Long count;
+        try {
+            count = redisTemplate.opsForValue().increment(key);
+            if (count != null && count == 1) {
+                redisTemplate.expire(key, annotation.timeWindowSeconds(), TimeUnit.SECONDS);
+            }
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis unavailable, skipping rate limit for {}", uri);
+            return true;
         }
 
         if (count != null && count > annotation.maxRequests()) {

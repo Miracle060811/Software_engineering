@@ -50,4 +50,10 @@ class SecurityConfigTests {
         mockMvc.perform(get("/api/hotel/orders"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void unauthenticatedAdminRequestIsRejectedBySecurityLayer() throws Exception {
+        mockMvc.perform(get("/api/admin/dashboard/data"))
+                .andExpect(status().isForbidden());
+    }
 }

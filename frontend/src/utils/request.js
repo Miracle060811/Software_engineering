@@ -45,6 +45,7 @@ request.interceptors.response.use(
         return res.data;
       }
 
+      ElMessage.error(res.msg || "请求失败");
       const businessError = new Error(res.msg || "请求失败");
       businessError.response = {
         status: response.status,

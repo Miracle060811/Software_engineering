@@ -299,6 +299,7 @@ CREATE TABLE IF NOT EXISTS `tm_post` (
   `collect_count` INT DEFAULT '0' COMMENT '收藏数',
   `view_count` INT DEFAULT '0' COMMENT '浏览数',
   `status` TINYINT(1) DEFAULT '1' COMMENT '0-审核中, 1-已发布, 2-违规下架, 3-草稿',
+  `reject_reason` VARCHAR(300) DEFAULT NULL COMMENT '审核拒绝原因',
   `visibility` TINYINT(1) DEFAULT '0' COMMENT '0-公开, 1-仅关注者可见, 2-私密',
   `source_name` VARCHAR(100) DEFAULT NULL COMMENT '灵感/素材来源名称',
   `source_url` VARCHAR(500) DEFAULT NULL COMMENT '灵感/素材来源URL',
@@ -317,6 +318,8 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_post` ADD COLUMN `source_url` VARCHAR(500) DEFAULT NULL COMMENT ''灵感/素材来源URL'' AFTER `source_name`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_post' AND COLUMN_NAME = 'source_url');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_post` ADD COLUMN `data_checked_date` DATE DEFAULT NULL COMMENT ''数据核验日期'' AFTER `source_url`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_post' AND COLUMN_NAME = 'data_checked_date');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_post` ADD COLUMN `reject_reason` VARCHAR(300) DEFAULT NULL COMMENT ''审核拒绝原因'' AFTER `status`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_post' AND COLUMN_NAME = 'reject_reason');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- 16. 评论表 (Comment) 成员D负责
@@ -784,10 +787,17 @@ CREATE TABLE IF NOT EXISTS `tm_review_report` (
   `reporter_id` BIGINT NOT NULL COMMENT '举报者ID',
   `reason` VARCHAR(200) DEFAULT NULL COMMENT '举报原因',
   `status` TINYINT(1) DEFAULT '0' COMMENT '0=待处理, 1=已处理',
+  `handle_remark` VARCHAR(300) DEFAULT NULL COMMENT '处理备注',
+  `handle_time` DATETIME DEFAULT NULL COMMENT '处理时间',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   INDEX `idx_review_id` (`review_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评价举报表';
+
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_review_report` ADD COLUMN `handle_remark` VARCHAR(300) DEFAULT NULL COMMENT ''处理备注'' AFTER `status`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_review_report' AND COLUMN_NAME = 'handle_remark');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_review_report` ADD COLUMN `handle_time` DATETIME DEFAULT NULL COMMENT ''处理时间'' AFTER `handle_remark`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_review_report' AND COLUMN_NAME = 'handle_time');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- ============================================================
 -- 补充演示数据（2026-05-21 检索整理）

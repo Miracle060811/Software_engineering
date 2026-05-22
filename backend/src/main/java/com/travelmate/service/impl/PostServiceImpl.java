@@ -64,9 +64,9 @@ public class PostServiceImpl implements PostService {
         post.setImages((String) body.get("images"));
         post.setDestination((String) body.get("destination"));
         post.setTags((String) body.get("tags"));
-        // 支持指定 status: 0=审核中, 1=直接发布, 3=草稿
+        // 普通发布默认进入后台审核；草稿仍保留为草稿。
         Integer reqStatus = body.get("status") != null ? Integer.valueOf(body.get("status").toString()) : 1;
-        post.setStatus(reqStatus == 3 ? 3 : 1);
+        post.setStatus(reqStatus == 3 ? 3 : 0);
         // 可见范围: 0=公开, 1=仅关注者, 2=私密 (默认公开)
         Integer visibility = body.get("visibility") != null ? Integer.valueOf(body.get("visibility").toString()) : 0;
         post.setVisibility(visibility);

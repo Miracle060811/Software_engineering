@@ -8,6 +8,7 @@
             <img
               :src="
                 hotel.coverImage ||
+                hotel.coverImg ||
                 `https://picsum.photos/seed/hotel${hotel.id}/600/360`
               "
               class="hotel-cover"
@@ -177,12 +178,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { StarFilled, LocationFilled, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 
 const route = useRoute();
+const router = useRouter();
 const hotelId = route.params.id;
 const hotel = ref(null);
 const rooms = ref([]);
@@ -236,10 +238,13 @@ const fetchHotelDetail = async () => {
         params: { targetId: hotelId, targetType: "hotel" },
       }),
     ]);
-    hotel.value = hotelData.status === "fulfilled" ? hotelData.value : null;
+    const detail = hotelData.status === "fulfilled" ? hotelData.value : null;
+    hotel.value = detail?.hotel || detail || null;
     rooms.value =
       roomData.status === "fulfilled" && Array.isArray(roomData.value)
         ? roomData.value
+        : Array.isArray(detail?.rooms)
+          ? detail.rooms
         : [];
     reviews.value =
       reviewData.status === "fulfilled" && Array.isArray(reviewData.value)
@@ -283,6 +288,7 @@ const confirmBook = async () => {
     ElMessage.success("预订成功！请前往【我的订单】完成支付");
     window.dispatchEvent(new Event("notification-updated"));
     bookDialogVisible.value = false;
+    router.push({ path: "/my-orders", query: { tab: "hotel" } });
   } catch (e) {
   } finally {
     booking.value = false;

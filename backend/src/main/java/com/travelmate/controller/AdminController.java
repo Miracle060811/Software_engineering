@@ -9,15 +9,18 @@ import com.travelmate.common.Result;
 import com.travelmate.entity.Coupon;
 import com.travelmate.entity.Flight;
 import com.travelmate.entity.Hotel;
+import com.travelmate.entity.HotelOrder;
 import com.travelmate.entity.HotelRoom;
 import com.travelmate.entity.Post;
 import com.travelmate.entity.ReviewReport;
 import com.travelmate.entity.SysLog;
 import com.travelmate.entity.SysSensitiveWord;
+import com.travelmate.entity.TrafficOrder;
 import com.travelmate.entity.Train;
 import com.travelmate.mapper.CouponMapper;
 import com.travelmate.mapper.FlightMapper;
 import com.travelmate.mapper.HotelMapper;
+import com.travelmate.mapper.HotelOrderMapper;
 import com.travelmate.mapper.HotelRoomMapper;
 import com.travelmate.mapper.PostMapper;
 import com.travelmate.mapper.ReviewReportMapper;
@@ -29,11 +32,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -73,35 +83,86 @@ public class AdminController {
     private TrainMapper trainMapper;
 
     @Autowired
-    private com.travelmate.mapper.HotelOrderMapper hotelOrderMapper;
+    private HotelOrderMapper hotelOrderMapper;
 
-    // ======================== 权限检查 ========================
+    private static final int STATUS_REFUND_REJECTED = 5;
 
     private User checkAdmin() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(User::getUsername, username);
-        User user = userMapper.selectOne(wrapper);
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
         if (user == null || user.getRole() == null || user.getRole() != 1) {
             throw new RuntimeException("无管理员权限");
         }
         return user;
     }
 
-    private String buildTrafficRoute(com.travelmate.entity.TrafficOrder order) {
-        if (order.getOrderType() != null && order.getOrderType() == 0) {
-            Flight flight = flightMapper.selectById(order.getTicketId());
-            if (flight != null) {
-                return flight.getDepartureCity() + "→" + flight.getArrivalCity();
-            }
+    private void requireText(String value, String fieldName) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new RuntimeException(fieldName + "不能为空");
         }
-        if (order.getOrderType() != null && order.getOrderType() == 1) {
-            Train train = trainMapper.selectById(order.getTicketId());
-            if (train != null) {
-                return train.getDepartureStation() + "→" + train.getArrivalStation();
-            }
+    }
+
+    private void requireNonNegative(Number value, String fieldName) {
+        if (value == null) {
+            throw new RuntimeException(fieldName + "不能为空");
         }
-        return "未知路线";
+        if (value instanceof BigDecimal decimal && decimal.compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException(fieldName + "不能为负数");
+        }
+        if (!(value instanceof BigDecimal) && value.longValue() < 0) {
+            throw new RuntimeException(fieldName + "不能为负数");
+        }
+    }
+
+    private void requireTimeRange(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null) {
+            throw new RuntimeException("出发/到达时间不能为空");
+        }
+        if (!end.isAfter(start)) {
+            throw new RuntimeException("到达时间必须晚于出发时间");
+        }
+    }
+
+    private void validateFlight(Flight flight) {
+        requireText(flight.getFlightNo(), "航班号");
+        requireText(flight.getAirline(), "航司");
+        requireText(flight.getDepartureCity(), "出发城市");
+        requireText(flight.getArrivalCity(), "到达城市");
+        requireTimeRange(flight.getDepartureTime(), flight.getArrivalTime());
+        requireNonNegative(flight.getEconomyPrice(), "经济舱价格");
+        requireNonNegative(flight.getBusinessPrice(), "公务舱价格");
+        requireNonNegative(flight.getTotalSeats(), "总座位数");
+        requireNonNegative(flight.getAvailableSeats(), "可售座位数");
+    }
+
+    private void validateTrain(Train train) {
+        requireText(train.getTrainNo(), "车次");
+        requireText(train.getTrainType(), "车型");
+        requireText(train.getDepartureStation(), "出发站");
+        requireText(train.getArrivalStation(), "到达站");
+        requireTimeRange(train.getDepartureTime(), train.getArrivalTime());
+        requireNonNegative(train.getFirstClassPrice(), "一等座价格");
+        requireNonNegative(train.getSecondClassPrice(), "二等座价格");
+        requireNonNegative(train.getFirstClassSeats(), "一等座余票");
+        requireNonNegative(train.getSecondClassSeats(), "二等座余票");
+    }
+
+    private void validateHotel(Hotel hotel) {
+        requireText(hotel.getName(), "酒店名称");
+        requireText(hotel.getCity(), "城市");
+        requireText(hotel.getAddress(), "地址");
+        requireNonNegative(hotel.getAvgPrice(), "均价");
+        if (hotel.getStarRating() == null || hotel.getStarRating() < 1 || hotel.getStarRating() > 5) {
+            throw new RuntimeException("星级必须在 1-5 之间");
+        }
+    }
+
+    private void validateHotelRoom(HotelRoom room) {
+        requireText(room.getRoomType(), "房型");
+        requireText(room.getBedType(), "床型");
+        requireNonNegative(room.getPrice(), "房型价格");
+        requireNonNegative(room.getTotalRooms(), "总房量");
+        requireNonNegative(room.getAvailableRooms(), "可售房量");
     }
 
     private long countTotalOrders() {
@@ -110,310 +171,360 @@ public class AdminController {
 
     private long countTodayOrders() {
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
-
-        LambdaQueryWrapper<com.travelmate.entity.TrafficOrder> trafficQuery = new LambdaQueryWrapper<>();
-        trafficQuery.ge(com.travelmate.entity.TrafficOrder::getCreateTime, todayStart);
-
-        LambdaQueryWrapper<com.travelmate.entity.HotelOrder> hotelQuery = new LambdaQueryWrapper<>();
-        hotelQuery.ge(com.travelmate.entity.HotelOrder::getCreateTime, todayStart);
-
-        return trafficOrderMapper.selectCount(trafficQuery) + hotelOrderMapper.selectCount(hotelQuery);
+        return trafficOrderMapper.selectCount(new LambdaQueryWrapper<TrafficOrder>()
+                .ge(TrafficOrder::getCreateTime, todayStart))
+                + hotelOrderMapper.selectCount(new LambdaQueryWrapper<HotelOrder>()
+                        .ge(HotelOrder::getCreateTime, todayStart));
     }
 
-    private List<Map<String, Object>> buildPerformanceTrend(String metric) {
-        java.util.List<Map<String, Object>> trend = new java.util.ArrayList<>();
-        String[] timeLabels = { "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00",
-                "17:00", "18:00", "19:00" };
-
-        for (int i = 0; i < timeLabels.length; i++) {
-            Map<String, Object> point = new HashMap<>();
-            point.put("time", timeLabels[i]);
-            if ("qps".equals(metric)) {
-                point.put("value", 18 + i * 3 + (int) (Math.random() * 8));
-            } else {
-                point.put("value", 80 + (i % 4) * 15 + (int) (Math.random() * 20));
+    private String buildTrafficRoute(TrafficOrder order) {
+        if (Objects.equals(order.getOrderType(), 0)) {
+            Flight flight = flightMapper.selectById(order.getTicketId());
+            if (flight != null) {
+                return flight.getDepartureCity() + "→" + flight.getArrivalCity();
             }
-            trend.add(point);
         }
+        if (Objects.equals(order.getOrderType(), 1)) {
+            Train train = trainMapper.selectById(order.getTicketId());
+            if (train != null) {
+                return train.getDepartureStation() + "→" + train.getArrivalStation();
+            }
+        }
+        return "未知路线";
+    }
 
+    private List<LocalDate> lastSevenDays() {
+        List<LocalDate> days = new ArrayList<>();
+        for (int i = 6; i >= 0; i--) {
+            days.add(LocalDate.now().minusDays(i));
+        }
+        return days;
+    }
+
+    private List<Map<String, Object>> buildDailyOrderTrend() {
+        Map<LocalDate, Long> trafficCounts = trafficOrderMapper.selectList(new LambdaQueryWrapper<TrafficOrder>()
+                .ge(TrafficOrder::getCreateTime, LocalDate.now().minusDays(6).atStartOfDay()))
+                .stream()
+                .filter(o -> o.getCreateTime() != null)
+                .collect(Collectors.groupingBy(o -> o.getCreateTime().toLocalDate(), Collectors.counting()));
+        Map<LocalDate, Long> hotelCounts = hotelOrderMapper.selectList(new LambdaQueryWrapper<HotelOrder>()
+                .ge(HotelOrder::getCreateTime, LocalDate.now().minusDays(6).atStartOfDay()))
+                .stream()
+                .filter(o -> o.getCreateTime() != null)
+                .collect(Collectors.groupingBy(o -> o.getCreateTime().toLocalDate(), Collectors.counting()));
+
+        return lastSevenDays().stream().map(day -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("day", day.format(DateTimeFormatter.ofPattern("MM-dd")));
+            row.put("count", trafficCounts.getOrDefault(day, 0L) + hotelCounts.getOrDefault(day, 0L));
+            return row;
+        }).toList();
+    }
+
+    private List<Map<String, Object>> buildUserGrowthTrend() {
+        Map<LocalDate, Long> counts = userMapper.selectList(new LambdaQueryWrapper<User>()
+                .ge(User::getCreateTime, LocalDate.now().minusDays(6).atStartOfDay()))
+                .stream()
+                .filter(u -> u.getCreateTime() != null)
+                .collect(Collectors.groupingBy(u -> u.getCreateTime().toLocalDate(), Collectors.counting()));
+        return lastSevenDays().stream().map(day -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("day", day.format(DateTimeFormatter.ofPattern("MM-dd")));
+            row.put("count", counts.getOrDefault(day, 0L));
+            return row;
+        }).toList();
+    }
+
+    private List<Map<String, Object>> buildOrderTypeDist() {
+        long flightCount = trafficOrderMapper.selectCount(new LambdaQueryWrapper<TrafficOrder>()
+                .eq(TrafficOrder::getOrderType, 0));
+        long trainCount = trafficOrderMapper.selectCount(new LambdaQueryWrapper<TrafficOrder>()
+                .eq(TrafficOrder::getOrderType, 1));
+        long hotelCount = hotelOrderMapper.selectCount(null);
+        return List.of(
+                Map.of("name", "机票", "value", flightCount),
+                Map.of("name", "火车票", "value", trainCount),
+                Map.of("name", "酒店", "value", hotelCount));
+    }
+
+    private List<Map<String, Object>> buildHotDestinations() {
+        Map<String, Long> counts = new HashMap<>();
+        trafficOrderMapper.selectList(null).forEach(order -> {
+            String destination = null;
+            if (Objects.equals(order.getOrderType(), 0)) {
+                Flight flight = flightMapper.selectById(order.getTicketId());
+                destination = flight == null ? null : flight.getArrivalCity();
+            } else if (Objects.equals(order.getOrderType(), 1)) {
+                Train train = trainMapper.selectById(order.getTicketId());
+                destination = train == null ? null : train.getArrivalStation();
+            }
+            if (destination != null && !destination.isBlank()) {
+                counts.merge(destination, 1L, Long::sum);
+            }
+        });
+        hotelOrderMapper.selectList(null).forEach(order -> {
+            Hotel hotel = hotelMapper.selectById(order.getHotelId());
+            String city = hotel == null ? null : hotel.getCity();
+            if (city != null && !city.isBlank()) {
+                counts.merge(city, 1L, Long::sum);
+            }
+        });
+        return counts.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(10)
+                .map(e -> Map.<String, Object>of("name", e.getKey(), "count", e.getValue()))
+                .toList();
+    }
+
+    private List<Map<String, Object>> buildLogTrend(boolean latency) {
+        LocalDateTime start = LocalDateTime.now().minusMinutes(11).withSecond(0).withNano(0);
+        Map<LocalDateTime, List<SysLog>> grouped = sysLogMapper.selectList(new LambdaQueryWrapper<SysLog>()
+                .ge(SysLog::getCreateTime, start))
+                .stream()
+                .filter(log -> log.getCreateTime() != null)
+                .collect(Collectors.groupingBy(log -> log.getCreateTime().withSecond(0).withNano(0)));
+
+        List<Map<String, Object>> trend = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            LocalDateTime minute = start.plusMinutes(i);
+            List<SysLog> logs = grouped.getOrDefault(minute, List.of());
+            long value;
+            if (latency) {
+                value = logs.stream()
+                        .filter(log -> log.getTimeMs() != null)
+                        .mapToLong(SysLog::getTimeMs)
+                        .average()
+                        .stream()
+                        .mapToLong(Math::round)
+                        .findFirst()
+                        .orElse(0L);
+            } else {
+                value = logs.size();
+            }
+            trend.add(Map.of("time", minute.format(DateTimeFormatter.ofPattern("HH:mm")), "value", value));
+        }
         return trend;
     }
 
+    private List<Map<String, Object>> buildRecentErrorLogs() {
+        return sysLogMapper.selectList(new LambdaQueryWrapper<SysLog>()
+                .eq(SysLog::getStatus, 0)
+                .orderByDesc(SysLog::getCreateTime)
+                .last("LIMIT 10"))
+                .stream()
+                .map(log -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("method", log.getMethod());
+                    row.put("errorMsg", log.getErrorMsg());
+                    row.put("timeMs", log.getTimeMs());
+                    row.put("createTime", log.getCreateTime());
+                    return row;
+                }).toList();
+    }
+
     private List<Map<String, Object>> buildAlerts(long pendingPosts) {
-        java.util.List<Map<String, Object>> alerts = new java.util.ArrayList<>();
+        List<Map<String, Object>> alerts = new ArrayList<>();
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
-
-        LambdaQueryWrapper<SysLog> errorLogQuery = new LambdaQueryWrapper<>();
-        errorLogQuery.eq(SysLog::getStatus, 0).ge(SysLog::getCreateTime, todayStart);
-        long errorLogs = sysLogMapper.selectCount(errorLogQuery);
+        long errorLogs = sysLogMapper.selectCount(new LambdaQueryWrapper<SysLog>()
+                .eq(SysLog::getStatus, 0).ge(SysLog::getCreateTime, todayStart));
         if (errorLogs > 0) {
-            alerts.add(Map.of(
-                    "level", "danger",
-                    "title", "系统异常日志告警",
-                    "message", "今日检测到 " + errorLogs + " 条失败操作日志，请尽快排查接口和数据库状态。"));
+            alerts.add(Map.of("level", "danger", "title", "系统异常日志告警",
+                    "message", "今日检测到 " + errorLogs + " 条失败操作日志，请尽快排查。"));
         }
-
-        LambdaQueryWrapper<HotelRoom> lowStockQuery = new LambdaQueryWrapper<>();
-        lowStockQuery.eq(HotelRoom::getStatus, 1).le(HotelRoom::getAvailableRooms, 2);
-        long lowStockRooms = hotelRoomMapper.selectCount(lowStockQuery);
+        long lowStockRooms = hotelRoomMapper.selectCount(new LambdaQueryWrapper<HotelRoom>()
+                .eq(HotelRoom::getStatus, 1).le(HotelRoom::getAvailableRooms, 2));
         if (lowStockRooms > 0) {
-            alerts.add(Map.of(
-                    "level", "warning",
-                    "title", "房态库存预警",
-                    "message", "当前有 " + lowStockRooms + " 个房型库存低于等于 2，建议及时补库存或下架。"));
+            alerts.add(Map.of("level", "warning", "title", "房态库存预警",
+                    "message", "当前有 " + lowStockRooms + " 个房型库存低于等于 2。"));
         }
-
         if (pendingPosts > 0) {
-            alerts.add(Map.of(
-                    "level", "info",
-                    "title", "内容审核待处理",
-                    "message", "待审核游记还有 " + pendingPosts + " 篇，建议运营尽快完成审核。"));
+            alerts.add(Map.of("level", "info", "title", "内容审核待处理",
+                    "message", "待审核游记还有 " + pendingPosts + " 篇。"));
         }
-
         if (alerts.isEmpty()) {
-            alerts.add(Map.of(
-                    "level", "success",
-                    "title", "系统运行稳定",
-                    "message", "当前未发现高优先级异常，核心服务状态正常。"));
+            alerts.add(Map.of("level", "success", "title", "系统运行稳定",
+                    "message", "当前未发现高优先级异常。"));
         }
-
         return alerts;
     }
 
-    // ======================== 数据统计 ========================
-
-    /**
-     * GET /api/admin/stats - 返回总用户数、总订单数、待审核游记数、今日新增用户
-     */
     @GetMapping("/stats")
     public Result<Map<String, Object>> stats() {
         checkAdmin();
-
-        long totalUsers = userMapper.selectCount(null);
-
-        long totalOrders = countTotalOrders();
-
-        LambdaQueryWrapper<Post> pendingQuery = new LambdaQueryWrapper<>();
-        pendingQuery.eq(Post::getStatus, 0);
-        long pendingPosts = postMapper.selectCount(pendingQuery);
-
-        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
-        LambdaQueryWrapper<User> todayQuery = new LambdaQueryWrapper<>();
-        todayQuery.ge(User::getCreateTime, todayStart);
-        long todayNewUsers = userMapper.selectCount(todayQuery);
-
+        long pendingPosts = postMapper.selectCount(new LambdaQueryWrapper<Post>().eq(Post::getStatus, 0));
+        long todayNewUsers = userMapper.selectCount(new LambdaQueryWrapper<User>()
+                .ge(User::getCreateTime, LocalDate.now().atStartOfDay()));
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalUsers", totalUsers);
-        stats.put("totalOrders", totalOrders);
+        stats.put("totalUsers", userMapper.selectCount(null));
+        stats.put("totalOrders", countTotalOrders());
         stats.put("todayOrders", countTodayOrders());
         stats.put("pendingPosts", pendingPosts);
         stats.put("todayNewUsers", todayNewUsers);
-
         return Result.success(stats);
     }
 
-    /**
-     * 仪表盘图表数据聚合（ECharts 加分项）
-     */
     @GetMapping("/dashboard/data")
     public Result<Map<String, Object>> dashboardData() {
         checkAdmin();
-
+        long pendingPosts = postMapper.selectCount(new LambdaQueryWrapper<Post>().eq(Post::getStatus, 0));
         Map<String, Object> data = new HashMap<>();
-        long totalUsers = userMapper.selectCount(null);
-        long totalOrders = countTotalOrders();
-        long todayOrders = countTodayOrders();
-
-        data.put("totalUsers", totalUsers);
-        data.put("totalOrders", totalOrders);
-        data.put("todayOrders", todayOrders);
-
-        // 最近7天每日订单趋势（模拟+真实混合）
-        java.util.List<Map<String, Object>> dailyTrend = new java.util.ArrayList<>();
-        String[] dayNames = { "周一", "周二", "周三", "周四", "周五", "周六", "周日" };
-        for (int i = 6; i >= 0; i--) {
-            Map<String, Object> dayData = new HashMap<>();
-            dayData.put("day", dayNames[(7 - i) % 7]);
-            dayData.put("count", 15 + (int) (Math.random() * 40));
-            dailyTrend.add(dayData);
-        }
-        data.put("dailyTrend", dailyTrend);
-
-        // 热门目的地 Top10
-        java.util.List<Map<String, Object>> hotDestinations = java.util.Arrays.asList(
-                Map.of("name", "北京", "count", 85),
-                Map.of("name", "上海", "count", 78),
-                Map.of("name", "杭州", "count", 65),
-                Map.of("name", "成都", "count", 58),
-                Map.of("name", "三亚", "count", 52),
-                Map.of("name", "西安", "count", 47),
-                Map.of("name", "大理", "count", 42),
-                Map.of("name", "重庆", "count", 38),
-                Map.of("name", "厦门", "count", 33),
-                Map.of("name", "桂林", "count", 28));
-        data.put("hotDestinations", hotDestinations);
-
-        // 订单类型分布（模拟：机票/火车/酒店/景点）
-        java.util.List<Map<String, Object>> orderTypeDist = java.util.Arrays.asList(
-                Map.of("name", "机票", "value", 120),
-                Map.of("name", "火车票", "value", 85),
-                Map.of("name", "酒店", "value", 95),
-                Map.of("name", "景点", "value", 45));
-        data.put("orderTypeDist", orderTypeDist);
-
-        // 最近7天用户增长
-        java.util.List<Map<String, Object>> userGrowth = new java.util.ArrayList<>();
-        for (int i = 6; i >= 0; i--) {
-            Map<String, Object> dayData = new HashMap<>();
-            dayData.put("day", dayNames[(7 - i) % 7]);
-            dayData.put("count", 3 + (int) (Math.random() * 12));
-            userGrowth.add(dayData);
-        }
-        data.put("userGrowth", userGrowth);
-
-        LambdaQueryWrapper<Post> pendingQuery = new LambdaQueryWrapper<>();
-        pendingQuery.eq(Post::getStatus, 0);
-        long pendingPosts = postMapper.selectCount(pendingQuery);
+        data.put("totalUsers", userMapper.selectCount(null));
+        data.put("totalOrders", countTotalOrders());
+        data.put("todayOrders", countTodayOrders());
         data.put("pendingPosts", pendingPosts);
-        data.put("qpsTrend", buildPerformanceTrend("qps"));
-        data.put("latencyTrend", buildPerformanceTrend("latency"));
+        data.put("dailyTrend", buildDailyOrderTrend());
+        data.put("hotDestinations", buildHotDestinations());
+        data.put("orderTypeDist", buildOrderTypeDist());
+        data.put("userGrowth", buildUserGrowthTrend());
+        data.put("qpsTrend", buildLogTrend(false));
+        data.put("latencyTrend", buildLogTrend(true));
+        data.put("recentErrors", buildRecentErrorLogs());
         data.put("alerts", buildAlerts(pendingPosts));
-
         return Result.success(data);
     }
 
-    // ======================== 航班管理 ========================
-
-    /**
-     * GET /api/admin/flights - 所有航班列表
-     */
     @GetMapping("/flights")
     public Result<List<Flight>> listFlights() {
         checkAdmin();
         return Result.success(flightMapper.selectList(null));
     }
 
-    /**
-     * POST /api/admin/flights - 新增航班
-     */
     @PostMapping("/flights")
     public Result<Flight> addFlight(@RequestBody Flight flight) {
         checkAdmin();
+        validateFlight(flight);
         flightMapper.insert(flight);
         return Result.success(flight);
     }
 
-    /**
-     * PUT /api/admin/flights/{id} - 编辑航班
-     */
     @PutMapping("/flights/{id}")
     public Result<Void> updateFlight(@PathVariable Long id, @RequestBody Flight flight) {
         checkAdmin();
+        validateFlight(flight);
         flight.setId(id);
         flightMapper.updateById(flight);
         return Result.success();
     }
 
-    /**
-     * DELETE /api/admin/flights/{id} - 删除航班
-     */
     @DeleteMapping("/flights/{id}")
     public Result<Void> deleteFlight(@PathVariable Long id) {
         checkAdmin();
+        long orderCount = trafficOrderMapper.selectCount(new LambdaQueryWrapper<TrafficOrder>()
+                .eq(TrafficOrder::getOrderType, 0).eq(TrafficOrder::getTicketId, id));
+        if (orderCount > 0) {
+            return Result.error("该航班已有订单，不能删除");
+        }
         flightMapper.deleteById(id);
         return Result.success();
     }
 
-    // ======================== 酒店管理 ========================
+    @GetMapping("/trains")
+    public Result<List<Train>> listTrains() {
+        checkAdmin();
+        return Result.success(trainMapper.selectList(null));
+    }
 
-    /**
-     * GET /api/admin/hotels - 所有酒店列表
-     */
+    @PostMapping("/trains")
+    public Result<Train> addTrain(@RequestBody Train train) {
+        checkAdmin();
+        validateTrain(train);
+        trainMapper.insert(train);
+        return Result.success(train);
+    }
+
+    @PutMapping("/trains/{id}")
+    public Result<Void> updateTrain(@PathVariable Long id, @RequestBody Train train) {
+        checkAdmin();
+        validateTrain(train);
+        train.setId(id);
+        trainMapper.updateById(train);
+        return Result.success();
+    }
+
+    @DeleteMapping("/trains/{id}")
+    public Result<Void> deleteTrain(@PathVariable Long id) {
+        checkAdmin();
+        long orderCount = trafficOrderMapper.selectCount(new LambdaQueryWrapper<TrafficOrder>()
+                .eq(TrafficOrder::getOrderType, 1).eq(TrafficOrder::getTicketId, id));
+        if (orderCount > 0) {
+            return Result.error("该车次已有订单，不能删除");
+        }
+        trainMapper.deleteById(id);
+        return Result.success();
+    }
+
     @GetMapping("/hotels")
     public Result<List<Hotel>> listHotels() {
         checkAdmin();
         return Result.success(hotelMapper.selectList(null));
     }
 
-    /**
-     * POST /api/admin/hotels - 新增酒店
-     */
     @PostMapping("/hotels")
     public Result<Hotel> addHotel(@RequestBody Hotel hotel) {
         checkAdmin();
+        validateHotel(hotel);
         hotelMapper.insert(hotel);
         return Result.success(hotel);
     }
 
-    /**
-     * PUT /api/admin/hotels/{id} - 编辑酒店
-     */
     @PutMapping("/hotels/{id}")
     public Result<Void> updateHotel(@PathVariable Long id, @RequestBody Hotel hotel) {
         checkAdmin();
+        validateHotel(hotel);
         hotel.setId(id);
         hotelMapper.updateById(hotel);
         return Result.success();
     }
 
-    /**
-     * DELETE /api/admin/hotels/{id} - 删除酒店
-     */
     @DeleteMapping("/hotels/{id}")
     public Result<Void> deleteHotel(@PathVariable Long id) {
         checkAdmin();
+        long orderCount = hotelOrderMapper.selectCount(new LambdaQueryWrapper<HotelOrder>()
+                .eq(HotelOrder::getHotelId, id));
+        if (orderCount > 0) {
+            return Result.error("该酒店已有订单，不能删除");
+        }
         hotelMapper.deleteById(id);
         return Result.success();
     }
 
-    /**
-     * GET /api/admin/hotels/{hotelId}/rooms - 查看酒店房型库存
-     */
     @GetMapping("/hotels/{hotelId}/rooms")
     public Result<List<HotelRoom>> listHotelRooms(@PathVariable Long hotelId) {
         checkAdmin();
-        LambdaQueryWrapper<HotelRoom> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(HotelRoom::getHotelId, hotelId).orderByAsc(HotelRoom::getId);
-        return Result.success(hotelRoomMapper.selectList(wrapper));
+        return Result.success(hotelRoomMapper.selectList(new LambdaQueryWrapper<HotelRoom>()
+                .eq(HotelRoom::getHotelId, hotelId).orderByAsc(HotelRoom::getId)));
     }
 
-    /**
-     * POST /api/admin/hotels/{hotelId}/rooms - 新增房型
-     */
     @PostMapping("/hotels/{hotelId}/rooms")
     public Result<HotelRoom> addHotelRoom(@PathVariable Long hotelId, @RequestBody HotelRoom room) {
         checkAdmin();
+        validateHotelRoom(room);
         room.setHotelId(hotelId);
         hotelRoomMapper.insert(room);
         return Result.success(room);
     }
 
-    /**
-     * PUT /api/admin/hotel-rooms/{id} - 更新房态、库存和价格
-     */
     @PutMapping("/hotel-rooms/{id}")
     public Result<Void> updateHotelRoom(@PathVariable Long id, @RequestBody HotelRoom room) {
         checkAdmin();
+        validateHotelRoom(room);
         room.setId(id);
         hotelRoomMapper.updateById(room);
         return Result.success();
     }
 
-    /**
-     * DELETE /api/admin/hotel-rooms/{id} - 删除房型
-     */
     @DeleteMapping("/hotel-rooms/{id}")
     public Result<Void> deleteHotelRoom(@PathVariable Long id) {
         checkAdmin();
+        long orderCount = hotelOrderMapper.selectCount(new LambdaQueryWrapper<HotelOrder>()
+                .eq(HotelOrder::getRoomId, id));
+        if (orderCount > 0) {
+            return Result.error("该房型已有订单，不能删除");
+        }
         hotelRoomMapper.deleteById(id);
         return Result.success();
     }
 
-    // ======================== 内容审核（游记） ========================
-
-    /**
-     * GET /api/admin/posts?status=0 - 游记列表（按状态过滤）
-     */
     @GetMapping("/posts")
     public Result<List<Post>> listPosts(@RequestParam(required = false) Integer status) {
         checkAdmin();
@@ -425,93 +536,71 @@ public class AdminController {
         return Result.success(postMapper.selectList(wrapper));
     }
 
-    /**
-     * POST /api/admin/posts/{id}/approve - 审核通过（status→1）
-     */
     @PostMapping("/posts/{id}/approve")
     public Result<Void> approvePost(@PathVariable Long id) {
         checkAdmin();
-        LambdaUpdateWrapper<Post> upd = new LambdaUpdateWrapper<>();
-        upd.eq(Post::getId, id).set(Post::getStatus, 1);
-        postMapper.update(null, upd);
+        postMapper.update(null, new LambdaUpdateWrapper<Post>()
+                .eq(Post::getId, id)
+                .set(Post::getStatus, 1)
+                .set(Post::getRejectReason, null));
         return Result.success();
     }
 
-    /**
-     * POST /api/admin/posts/{id}/reject - 审核拒绝（status→2）
-     */
     @PostMapping("/posts/{id}/reject")
-    public Result<Void> rejectPost(@PathVariable Long id) {
+    public Result<Void> rejectPost(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
         checkAdmin();
-        LambdaUpdateWrapper<Post> upd = new LambdaUpdateWrapper<>();
-        upd.eq(Post::getId, id).set(Post::getStatus, 2);
-        postMapper.update(null, upd);
+        String reason = body == null || body.get("reason") == null ? "内容不符合社区规范" : body.get("reason").toString();
+        postMapper.update(null, new LambdaUpdateWrapper<Post>()
+                .eq(Post::getId, id)
+                .set(Post::getStatus, 2)
+                .set(Post::getRejectReason, reason));
         return Result.success();
     }
 
-    // ======================== 用户管理 ========================
-
-    /**
-     * GET /api/admin/users - 用户列表
-     */
     @GetMapping("/users")
     public Result<List<User>> listUsers() {
         checkAdmin();
         return Result.success(userMapper.selectList(null));
     }
 
-    /**
-     * POST /api/admin/users/{id}/disable - 禁用用户（status→0）
-     */
     @PostMapping("/users/{id}/disable")
     public Result<Void> disableUser(@PathVariable Long id) {
         checkAdmin();
-        LambdaUpdateWrapper<User> upd = new LambdaUpdateWrapper<>();
-        upd.eq(User::getId, id).set(User::getStatus, 0);
-        userMapper.update(null, upd);
+        userMapper.update(null, new LambdaUpdateWrapper<User>().eq(User::getId, id).set(User::getStatus, 0));
         return Result.success();
     }
 
-    /**
-     * POST /api/admin/users/{id}/enable - 启用用户（status→1）
-     */
     @PostMapping("/users/{id}/enable")
     public Result<Void> enableUser(@PathVariable Long id) {
         checkAdmin();
-        LambdaUpdateWrapper<User> upd = new LambdaUpdateWrapper<>();
-        upd.eq(User::getId, id).set(User::getStatus, 1);
-        userMapper.update(null, upd);
+        userMapper.update(null, new LambdaUpdateWrapper<User>().eq(User::getId, id).set(User::getStatus, 1));
         return Result.success();
     }
 
-    // ======================== 订单流水 & 退款审批 ========================
-
-    /**
-     * GET /api/admin/orders?type=&status=&page=&size=
-     * 聚合查询所有订单（交通+酒店）
-     */
     @GetMapping("/orders")
     public Result<Map<String, Object>> listOrders(
             @RequestParam(required = false) String type,
+            @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
         checkAdmin();
-
-        java.util.List<Map<String, Object>> allOrders = new java.util.ArrayList<>();
+        List<Map<String, Object>> allOrders = new ArrayList<>();
 
         if (type == null || type.equals("all") || type.equals("flight") || type.equals("train")) {
-            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.travelmate.entity.TrafficOrder> tw;
-            tw = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
-            if ("flight".equals(type))
-                tw.eq(com.travelmate.entity.TrafficOrder::getOrderType, 0);
-            if ("train".equals(type))
-                tw.eq(com.travelmate.entity.TrafficOrder::getOrderType, 1);
-            tw.orderByDesc(com.travelmate.entity.TrafficOrder::getCreateTime);
-            java.util.List<com.travelmate.entity.TrafficOrder> trafficOrders = trafficOrderMapper.selectList(tw);
-            for (com.travelmate.entity.TrafficOrder o : trafficOrders) {
+            LambdaQueryWrapper<TrafficOrder> tw = new LambdaQueryWrapper<>();
+            if ("flight".equals(type)) {
+                tw.eq(TrafficOrder::getOrderType, 0);
+            }
+            if ("train".equals(type)) {
+                tw.eq(TrafficOrder::getOrderType, 1);
+            }
+            if (status != null) {
+                tw.eq(TrafficOrder::getStatus, status);
+            }
+            trafficOrderMapper.selectList(tw).forEach(o -> {
                 Map<String, Object> m = new HashMap<>();
                 m.put("orderNo", o.getOrderNo());
-                m.put("type", o.getOrderType() == 0 ? "机票" : "火车票");
+                m.put("type", Objects.equals(o.getOrderType(), 0) ? "机票" : "火车票");
                 m.put("route", buildTrafficRoute(o));
                 m.put("passenger", o.getPassengerName());
                 m.put("seatType", o.getSeatType());
@@ -519,15 +608,15 @@ public class AdminController {
                 m.put("status", o.getStatus());
                 m.put("createTime", o.getCreateTime());
                 allOrders.add(m);
-            }
+            });
         }
 
         if (type == null || type.equals("all") || type.equals("hotel")) {
-            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.travelmate.entity.HotelOrder> hw;
-            hw = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
-            hw.orderByDesc(com.travelmate.entity.HotelOrder::getCreateTime);
-            java.util.List<com.travelmate.entity.HotelOrder> hotelOrders = hotelOrderMapper.selectList(hw);
-            for (com.travelmate.entity.HotelOrder o : hotelOrders) {
+            LambdaQueryWrapper<HotelOrder> hw = new LambdaQueryWrapper<>();
+            if (status != null) {
+                hw.eq(HotelOrder::getStatus, status);
+            }
+            hotelOrderMapper.selectList(hw).forEach(o -> {
                 Map<String, Object> m = new HashMap<>();
                 m.put("orderNo", o.getOrderNo());
                 m.put("type", "酒店");
@@ -537,57 +626,42 @@ public class AdminController {
                 m.put("status", o.getStatus());
                 m.put("createTime", o.getCreateTime());
                 allOrders.add(m);
-            }
+            });
         }
 
-        allOrders.sort((a, b) -> {
-            Object ta = a.get("createTime"), tb = b.get("createTime");
-            if (ta == null || tb == null)
-                return 0;
-            return tb.toString().compareTo(ta.toString());
-        });
-
+        allOrders.sort(Comparator.comparing(o -> String.valueOf(o.get("createTime")), Comparator.reverseOrder()));
         int total = allOrders.size();
-        int start = (page - 1) * size;
+        int start = Math.max(0, (page - 1) * size);
         int end = Math.min(start + size, total);
-        java.util.List<Map<String, Object>> paged = start < total ? allOrders.subList(start, end)
-                : new java.util.ArrayList<>();
-
         Map<String, Object> result = new HashMap<>();
-        result.put("records", paged);
+        result.put("records", start < total ? allOrders.subList(start, end) : List.of());
         result.put("total", total);
         result.put("page", page);
         result.put("size", size);
         return Result.success(result);
     }
 
-    /**
-     * POST /api/admin/orders/{orderNo}/refund/approve - 退款审批通过
-     */
     @PostMapping("/orders/{orderNo}/refund/approve")
     public Result<String> approveRefund(@PathVariable String orderNo) {
         checkAdmin();
         if (orderNo.startsWith("HT")) {
-            com.travelmate.entity.HotelOrder order = hotelOrderMapper.selectOne(
-                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.travelmate.entity.HotelOrder>()
-                            .eq(com.travelmate.entity.HotelOrder::getOrderNo, orderNo));
-            if (order == null)
+            HotelOrder order = hotelOrderMapper.selectOne(new LambdaQueryWrapper<HotelOrder>()
+                    .eq(HotelOrder::getOrderNo, orderNo));
+            if (order == null) {
                 return Result.error("订单不存在");
-            if (order.getStatus() != null && order.getStatus() != 4) {
+            }
+            if (!Objects.equals(order.getStatus(), 4)) {
                 order.setStatus(4);
                 hotelOrderMapper.updateById(order);
                 hotelRoomMapper.returnRoom(order.getRoomId());
             }
         } else {
-            com.travelmate.entity.TrafficOrder order = trafficOrderMapper.selectOne(
-                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.travelmate.entity.TrafficOrder>()
-                            .eq(com.travelmate.entity.TrafficOrder::getOrderNo, orderNo));
-            if (order == null)
+            TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper<TrafficOrder>()
+                    .eq(TrafficOrder::getOrderNo, orderNo));
+            if (order == null) {
                 return Result.error("订单不存在");
-            if (order.getStatus() != null && order.getStatus() == 3) {
-                return Result.success("订单已取消，无需重复退款");
             }
-            if (order.getStatus() != null && order.getStatus() != 4) {
+            if (!Objects.equals(order.getStatus(), 4)) {
                 order.setStatus(4);
                 trafficOrderMapper.updateById(order);
                 returnTrafficStock(order);
@@ -596,16 +670,30 @@ public class AdminController {
         return Result.success("退款审批已通过");
     }
 
-    /**
-     * POST /api/admin/orders/{orderNo}/refund/reject - 拒绝退款
-     */
     @PostMapping("/orders/{orderNo}/refund/reject")
     public Result<String> rejectRefund(@PathVariable String orderNo) {
         checkAdmin();
+        if (orderNo.startsWith("HT")) {
+            HotelOrder order = hotelOrderMapper.selectOne(new LambdaQueryWrapper<HotelOrder>()
+                    .eq(HotelOrder::getOrderNo, orderNo));
+            if (order == null) {
+                return Result.error("订单不存在");
+            }
+            order.setStatus(STATUS_REFUND_REJECTED);
+            hotelOrderMapper.updateById(order);
+        } else {
+            TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper<TrafficOrder>()
+                    .eq(TrafficOrder::getOrderNo, orderNo));
+            if (order == null) {
+                return Result.error("订单不存在");
+            }
+            order.setStatus(STATUS_REFUND_REJECTED);
+            trafficOrderMapper.updateById(order);
+        }
         return Result.success("退款申请已拒绝");
     }
 
-    private void returnTrafficStock(com.travelmate.entity.TrafficOrder order) {
+    private void returnTrafficStock(TrafficOrder order) {
         if (order.getOrderType() == null) {
             return;
         }
@@ -622,22 +710,13 @@ public class AdminController {
         }
     }
 
-    // ======================== 促销券管理 ========================
-
-    /**
-     * GET /api/admin/coupons - 促销券列表
-     */
     @GetMapping("/coupons")
     public Result<List<Coupon>> listCoupons() {
         checkAdmin();
-        LambdaQueryWrapper<Coupon> wrapper = new LambdaQueryWrapper<>();
-        wrapper.orderByDesc(Coupon::getCreateTime).orderByDesc(Coupon::getId);
-        return Result.success(couponMapper.selectList(wrapper));
+        return Result.success(couponMapper.selectList(new LambdaQueryWrapper<Coupon>()
+                .orderByDesc(Coupon::getCreateTime).orderByDesc(Coupon::getId)));
     }
 
-    /**
-     * POST /api/admin/coupons - 新增促销券
-     */
     @PostMapping("/coupons")
     public Result<Coupon> addCoupon(@RequestBody Coupon coupon) {
         checkAdmin();
@@ -648,9 +727,6 @@ public class AdminController {
         return Result.success(coupon);
     }
 
-    /**
-     * PUT /api/admin/coupons/{id} - 编辑促销券
-     */
     @PutMapping("/coupons/{id}")
     public Result<Void> updateCoupon(@PathVariable Long id, @RequestBody Coupon coupon) {
         checkAdmin();
@@ -659,9 +735,6 @@ public class AdminController {
         return Result.success();
     }
 
-    /**
-     * DELETE /api/admin/coupons/{id} - 删除促销券
-     */
     @DeleteMapping("/coupons/{id}")
     public Result<Void> deleteCoupon(@PathVariable Long id) {
         checkAdmin();
@@ -669,11 +742,6 @@ public class AdminController {
         return Result.success();
     }
 
-    // ======================== 举报工单处理 ========================
-
-    /**
-     * GET /api/admin/review-reports?status=0 - 评价举报工单
-     */
     @GetMapping("/review-reports")
     public Result<List<ReviewReport>> listReviewReports(@RequestParam(required = false) Integer status) {
         checkAdmin();
@@ -685,43 +753,33 @@ public class AdminController {
         return Result.success(reviewReportMapper.selectList(wrapper));
     }
 
-    /**
-     * POST /api/admin/review-reports/{id}/resolve - 处理完成举报工单
-     */
     @PostMapping("/review-reports/{id}/resolve")
-    public Result<Void> resolveReviewReport(@PathVariable Long id) {
+    public Result<Void> resolveReviewReport(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
         checkAdmin();
-        LambdaUpdateWrapper<ReviewReport> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(ReviewReport::getId, id).set(ReviewReport::getStatus, 1);
-        reviewReportMapper.update(null, wrapper);
+        String remark = body == null || body.get("remark") == null ? "已人工复核" : body.get("remark").toString();
+        reviewReportMapper.update(null, new LambdaUpdateWrapper<ReviewReport>()
+                .eq(ReviewReport::getId, id)
+                .set(ReviewReport::getStatus, 1)
+                .set(ReviewReport::getHandleRemark, remark)
+                .set(ReviewReport::getHandleTime, LocalDateTime.now()));
         return Result.success();
     }
 
-    // ======================== 敏感词管理 ========================
-
-    /**
-     * GET /api/admin/sensitive-words - 敏感词列表
-     */
     @GetMapping("/sensitive-words")
     public Result<List<SysSensitiveWord>> listSensitiveWords() {
         checkAdmin();
         return Result.success(sensitiveWordMapper.selectList(null));
     }
 
-    /**
-     * POST /api/admin/sensitive-words - 添加敏感词
-     */
     @PostMapping("/sensitive-words")
     public Result<SysSensitiveWord> addSensitiveWord(@RequestBody SysSensitiveWord word) {
         checkAdmin();
+        requireText(word.getWord(), "敏感词");
         word.setCreateTime(LocalDateTime.now());
         sensitiveWordMapper.insert(word);
         return Result.success(word);
     }
 
-    /**
-     * DELETE /api/admin/sensitive-words/{id} - 删除敏感词
-     */
     @DeleteMapping("/sensitive-words/{id}")
     public Result<Void> deleteSensitiveWord(@PathVariable Long id) {
         checkAdmin();
@@ -729,21 +787,14 @@ public class AdminController {
         return Result.success();
     }
 
-    // ======================== 系统日志 ========================
-
-    /**
-     * GET /api/admin/logs?page=1&size=20 - 操作日志列表
-     */
     @GetMapping("/logs")
     public Result<Map<String, Object>> listLogs(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
         checkAdmin();
         Page<SysLog> pageObj = new Page<>(page, size);
-        LambdaQueryWrapper<SysLog> wrapper = new LambdaQueryWrapper<>();
-        wrapper.orderByDesc(SysLog::getCreateTime);
-        Page<SysLog> result = sysLogMapper.selectPage(pageObj, wrapper);
-
+        Page<SysLog> result = sysLogMapper.selectPage(pageObj,
+                new LambdaQueryWrapper<SysLog>().orderByDesc(SysLog::getCreateTime));
         Map<String, Object> data = new HashMap<>();
         data.put("records", result.getRecords());
         data.put("total", result.getTotal());

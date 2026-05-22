@@ -17,5 +17,7 @@ public class ReviewReport {
     private Long reporterId;
     private String reason;
     private Integer status; // 0=待处理 1=已处理
+    private String handleRemark;
     private LocalDateTime createTime;
+    private LocalDateTime handleTime;
 }

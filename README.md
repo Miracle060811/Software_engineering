@@ -95,9 +95,12 @@ start.bat
 .\start.ps1 -DbPassword 你的MySQL密码
 .\start.ps1 -BackendOnly
 .\start.ps1 -FrontendOnly
+.\start.ps1 -SkipRedis
 .\start.ps1 -SkipFrontendInstall
 .\start.ps1 -DryRun
 ```
+
+`start.ps1` 会先检查 `127.0.0.1:6379`。如果 Redis 已运行则直接复用；如果检测到 Windows Redis 服务或 `redis-server.exe`，会尝试自动启动。若本机未安装 Redis，会给出警告，后端仍会启动，但 Redis 限流/酒店房态缓存会降级。
 
 ### 后端启动
 
@@ -156,7 +159,7 @@ npm run dev
 ## 当前待完善项
 
 - Redis 限流已覆盖大部分关键写接口，仍有少量非核心接口待补齐。
-- 管理后台中的 QPS、延迟和告警目前为轻量模拟指标，尚未接入真实 APM / 链路追踪系统。
+- 管理后台中的 QPS、延迟和告警已基于本地 `sys_log` 做轻量统计，尚未接入真实 APM / 链路追踪系统。
 - AI 行程与订单的更深度联动、同行人共享行程等扩展能力待后续补充。
 - 更深层的并发压测与端到端自动化回归仍需继续完善。
 
@@ -220,13 +223,13 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 
 ### 管理后台与可观测性（成员 E - 李科）
 
-- RBAC 权限控制（role=1 管理员专属）
-- ECharts 可观测仪表盘（订单趋势、类型分布、热门目的地、用户增长、今日订单、QPS、接口延迟、告警）
-- 资源管理（航班 CRUD、酒店 CRUD、房型库存/价格/上下架干预）
+- RBAC 权限控制（后端 `/api/admin/**` 要求 `ROLE_ADMIN`，前端 `requiresAdmin` 二次拦截）
+- ECharts 可观测仪表盘（真实订单趋势、类型分布、热门目的地、用户增长、今日订单、本地请求量、接口延迟、报错日志告警）
+- 资源管理（航班 CRUD、火车 CRUD、酒店 CRUD、房型库存/价格/上下架干预）
 - 优惠券配置（满减券/折扣券新增、编辑、删除）
-- 内容审核（游记通过/拒绝、评价举报工单处理）
+- 内容审核（游记默认进入待审核、通过/拒绝原因记录、评价举报工单处理备注）
 - 用户管理（启用/禁用、用户画像侧边查看）
-- 全平台订单流水（按类型筛选、分页查看、交通订单退款审批）
+- 全平台订单流水（按类型/状态筛选、分页查看、交通与酒店退款审批闭环）
 - 系统操作日志（AOP 自动记录 Controller 调用）
 - 敏感词管理
 

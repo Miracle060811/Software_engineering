@@ -212,7 +212,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Search, Promotion } from "@element-plus/icons-vue";
 import request from "@/utils/request";
@@ -222,6 +222,7 @@ import EmptyState from "@/components/EmptyState.vue";
 import PriceTrend from "@/components/PriceTrend.vue";
 
 const route = useRoute();
+const router = useRouter();
 const flights = ref([]);
 const loading = ref(false);
 const bookDialogVisible = ref(false);
@@ -318,6 +319,7 @@ const confirmBook = async () => {
     });
     ElMessage.success("下单成功！请前往【我的订单】完成支付");
     bookDialogVisible.value = false;
+    router.push({ path: "/my-orders", query: { tab: "traffic" } });
   } catch (e) {
   } finally {
     booking.value = false;

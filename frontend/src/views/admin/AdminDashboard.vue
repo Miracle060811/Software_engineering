@@ -15,6 +15,9 @@
           <el-menu-item index="flights"
             ><el-icon><Promotion /></el-icon><span>航班资源</span></el-menu-item
           >
+          <el-menu-item index="trains"
+            ><el-icon><Promotion /></el-icon><span>火车资源</span></el-menu-item
+          >
           <el-menu-item index="hotels"
             ><el-icon><House /></el-icon><span>酒店与房态</span></el-menu-item
           >
@@ -78,13 +81,13 @@
             <el-col :span="4"
               ><el-card class="stat-card"
                 ><div class="stat-value">{{ latestQps }}</div>
-                <div class="stat-label">当前 QPS（模拟）</div></el-card
+                <div class="stat-label">近分钟请求量</div></el-card
               ></el-col
             >
             <el-col :span="4"
               ><el-card class="stat-card"
                 ><div class="stat-value">{{ latestLatency }}ms</div>
-                <div class="stat-label">当前延迟（模拟）</div></el-card
+                <div class="stat-label">近分钟平均延迟</div></el-card
               ></el-col
             >
           </el-row>
@@ -207,6 +210,63 @@
           </el-table>
         </section>
 
+        <section v-else-if="activeMenu === 'trains'">
+          <div class="toolbar">
+            <h2 class="section-title">火车资源管理</h2>
+            <el-button type="primary" @click="openTrainDialog()"
+              >新增车次</el-button
+            >
+          </div>
+          <el-table :data="trains" v-loading="trainLoading" stripe>
+            <el-table-column prop="trainNo" label="车次" width="120" />
+            <el-table-column prop="trainType" label="车型" width="100" />
+            <el-table-column label="线路" min-width="180">
+              <template #default="scope"
+                >{{ scope.row.departureStation }} →
+                {{ scope.row.arrivalStation }}</template
+              >
+            </el-table-column>
+            <el-table-column
+              prop="departureTime"
+              label="出发时间"
+              width="180"
+            />
+            <el-table-column label="票价" width="150">
+              <template #default="scope"
+                >¥{{ scope.row.firstClassPrice }} / ¥{{
+                  scope.row.secondClassPrice
+                }}</template
+              >
+            </el-table-column>
+            <el-table-column label="余票" width="140">
+              <template #default="scope"
+                >一等 {{ scope.row.firstClassSeats }} / 二等
+                {{ scope.row.secondClassSeats }}</template
+              >
+            </el-table-column>
+            <el-table-column label="状态" width="90">
+              <template #default="scope"
+                ><el-tag :type="scope.row.status === 1 ? 'success' : 'info'">{{
+                  scope.row.status === 1 ? "正常" : "停运"
+                }}</el-tag></template
+              >
+            </el-table-column>
+            <el-table-column label="操作" width="160" fixed="right">
+              <template #default="scope">
+                <el-button size="small" @click="openTrainDialog(scope.row)"
+                  >编辑</el-button
+                >
+                <el-button
+                  size="small"
+                  type="danger"
+                  @click="removeTrain(scope.row)"
+                  >删除</el-button
+                >
+              </template>
+            </el-table-column>
+          </el-table>
+        </section>
+
         <section v-else-if="activeMenu === 'hotels'">
           <div class="toolbar">
             <h2 class="section-title">酒店与房态管理</h2>
@@ -314,6 +374,23 @@
             <el-tab-pane label="火车票" name="train" />
             <el-tab-pane label="酒店" name="hotel" />
           </el-tabs>
+          <div class="toolbar toolbar-inline">
+            <div class="muted-text">按订单状态筛选退款和流水。</div>
+            <el-select
+              v-model="orderStatusFilter"
+              placeholder="全部状态"
+              clearable
+              style="width: 180px"
+              @change="handleOrderTypeChange"
+            >
+              <el-option label="待支付" :value="0" />
+              <el-option label="已支付/出票中" :value="1" />
+              <el-option label="已出票/入住中" :value="2" />
+              <el-option label="已取消/申请退款" :value="3" />
+              <el-option label="已退款" :value="4" />
+              <el-option label="拒绝退款" :value="5" />
+            </el-select>
+          </div>
           <el-table :data="orders" v-loading="orderLoading" stripe>
             <el-table-column prop="orderNo" label="订单号" width="260" />
             <el-table-column prop="type" label="类型" width="80" />
@@ -380,6 +457,12 @@
               <el-table :data="reviewPosts" v-loading="postLoading" stripe>
                 <el-table-column prop="title" label="标题" min-width="180" />
                 <el-table-column
+                  prop="content"
+                  label="正文预览"
+                  min-width="220"
+                  show-overflow-tooltip
+                />
+                <el-table-column
                   prop="authorUsername"
                   label="作者"
                   width="120"
@@ -438,6 +521,12 @@
                   prop="reason"
                   label="举报原因"
                   min-width="220"
+                  show-overflow-tooltip
+                />
+                <el-table-column
+                  prop="handleRemark"
+                  label="处理备注"
+                  min-width="160"
                   show-overflow-tooltip
                 />
                 <el-table-column label="状态" width="100">
@@ -657,6 +746,90 @@
       <template #footer>
         <el-button @click="flightDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="saveFlight">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="trainDialogVisible"
+      :title="trainForm.id ? '编辑车次' : '新增车次'"
+      width="760px"
+    >
+      <el-form :model="trainForm" label-width="100px" class="entity-form">
+        <el-row :gutter="16">
+          <el-col :span="12"
+            ><el-form-item label="车次"
+              ><el-input v-model="trainForm.trainNo" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="车型"
+              ><el-input v-model="trainForm.trainType" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="出发站"
+              ><el-input v-model="trainForm.departureStation" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="到达站"
+              ><el-input v-model="trainForm.arrivalStation" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="出发时间"
+              ><el-date-picker
+                v-model="trainForm.departureTime"
+                type="datetime"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="到达时间"
+              ><el-date-picker
+                v-model="trainForm.arrivalTime"
+                type="datetime"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="一等座票价"
+              ><el-input-number
+                v-model="trainForm.firstClassPrice"
+                :min="0"
+                :precision="2"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="二等座票价"
+              ><el-input-number
+                v-model="trainForm.secondClassPrice"
+                :min="0"
+                :precision="2"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="一等座余票"
+              ><el-input-number
+                v-model="trainForm.firstClassSeats"
+                :min="0"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="二等座余票"
+              ><el-input-number
+                v-model="trainForm.secondClassSeats"
+                :min="0"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="状态"
+              ><el-select v-model="trainForm.status" style="width: 100%"
+                ><el-option label="正常" :value="1" /><el-option
+                  label="停运"
+                  :value="0" /></el-select></el-form-item
+          ></el-col>
+        </el-row>
+      </el-form>
+      <template #footer>
+        <el-button @click="trainDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveTrain">保存</el-button>
       </template>
     </el-dialog>
 
@@ -985,6 +1158,7 @@ const qpsChartRef = ref(null);
 const latencyChartRef = ref(null);
 
 const flights = ref([]);
+const trains = ref([]);
 const hotels = ref([]);
 const hotelRooms = ref([]);
 const coupons = ref([]);
@@ -996,6 +1170,7 @@ const logs = ref([]);
 const users = ref([]);
 
 const flightLoading = ref(false);
+const trainLoading = ref(false);
 const hotelLoading = ref(false);
 const roomLoading = ref(false);
 const couponLoading = ref(false);
@@ -1007,6 +1182,7 @@ const logLoading = ref(false);
 const userLoading = ref(false);
 
 const orderTypeFilter = ref("all");
+const orderStatusFilter = ref(null);
 const orderPage = ref(1);
 const orderSize = ref(20);
 const orderTotal = ref(0);
@@ -1019,6 +1195,7 @@ const logSize = ref(10);
 const logTotal = ref(0);
 
 const flightDialogVisible = ref(false);
+const trainDialogVisible = ref(false);
 const hotelDialogVisible = ref(false);
 const roomDrawerVisible = ref(false);
 const roomDialogVisible = ref(false);
@@ -1041,6 +1218,21 @@ const createFlightForm = () => ({
   businessPrice: 0,
   totalSeats: 200,
   availableSeats: 200,
+  status: 1,
+});
+
+const createTrainForm = () => ({
+  id: null,
+  trainNo: "",
+  trainType: "G",
+  departureStation: "",
+  arrivalStation: "",
+  departureTime: "",
+  arrivalTime: "",
+  firstClassPrice: 0,
+  secondClassPrice: 0,
+  firstClassSeats: 100,
+  secondClassSeats: 300,
   status: 1,
 });
 
@@ -1085,6 +1277,7 @@ const createSensitiveForm = () => ({
 });
 
 const flightForm = ref(createFlightForm());
+const trainForm = ref(createTrainForm());
 const hotelForm = ref(createHotelForm());
 const roomForm = ref(createRoomForm());
 const couponForm = ref(createCouponForm());
@@ -1105,6 +1298,16 @@ const normalizeFlight = (row = {}) => ({
   businessPrice: parseNumberish(row.businessPrice, 0),
   totalSeats: parseNumberish(row.totalSeats, 200),
   availableSeats: parseNumberish(row.availableSeats, 200),
+  status: parseNumberish(row.status, 1),
+});
+
+const normalizeTrain = (row = {}) => ({
+  ...createTrainForm(),
+  ...row,
+  firstClassPrice: parseNumberish(row.firstClassPrice, 0),
+  secondClassPrice: parseNumberish(row.secondClassPrice, 0),
+  firstClassSeats: parseNumberish(row.firstClassSeats, 100),
+  secondClassSeats: parseNumberish(row.secondClassSeats, 300),
   status: parseNumberish(row.status, 1),
 });
 
@@ -1283,7 +1486,7 @@ const renderCharts = () => {
 
   setChartOption(qpsChartRef.value, {
     title: {
-      text: "系统 QPS 监控（模拟）",
+              text: "本地请求量监控",
       left: "center",
       textStyle: { fontSize: 14 },
     },
@@ -1308,7 +1511,7 @@ const renderCharts = () => {
 
   setChartOption(latencyChartRef.value, {
     title: {
-      text: "接口延迟监控（模拟）",
+              text: "接口平均延迟监控",
       left: "center",
       textStyle: { fontSize: 14 },
     },
@@ -1363,6 +1566,18 @@ const fetchFlights = async () => {
   }
 };
 
+const fetchTrains = async () => {
+  trainLoading.value = true;
+  try {
+    const data = await request.get("/api/admin/trains");
+    trains.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    trains.value = [];
+  } finally {
+    trainLoading.value = false;
+  }
+};
+
 const fetchHotels = async () => {
   hotelLoading.value = true;
   try {
@@ -1409,6 +1624,7 @@ const fetchOrders = async () => {
     const data = await request.get("/api/admin/orders", {
       params: {
         type: orderTypeFilter.value,
+        status: orderStatusFilter.value,
         page: orderPage.value,
         size: orderSize.value,
       },
@@ -1520,6 +1736,37 @@ const removeFlight = async (row) => {
     await request.delete(`/api/admin/flights/${row.id}`);
     ElMessage.success("航班已删除");
     await fetchFlights();
+  } catch (error) {}
+};
+
+const openTrainDialog = (row = null) => {
+  trainForm.value = normalizeTrain(row || {});
+  trainDialogVisible.value = true;
+};
+
+const saveTrain = async () => {
+  const payload = { ...trainForm.value };
+  try {
+    if (payload.id) {
+      await request.put(`/api/admin/trains/${payload.id}`, payload);
+      ElMessage.success("车次已更新");
+    } else {
+      await request.post("/api/admin/trains", payload);
+      ElMessage.success("车次已新增");
+    }
+    trainDialogVisible.value = false;
+    await fetchTrains();
+  } catch (error) {}
+};
+
+const removeTrain = async (row) => {
+  await ElMessageBox.confirm(`确认删除车次 ${row.trainNo} 吗？`, "删除确认", {
+    type: "warning",
+  });
+  try {
+    await request.delete(`/api/admin/trains/${row.id}`);
+    ElMessage.success("车次已删除");
+    await fetchTrains();
   } catch (error) {}
 };
 
@@ -1662,7 +1909,16 @@ const approvePost = async (id) => {
 
 const rejectPost = async (id) => {
   try {
-    await request.post(`/api/admin/posts/${id}/reject`);
+    const { value } = await ElMessageBox.prompt(
+      "请输入拒绝原因",
+      "审核拒绝",
+      {
+        inputValue: "内容不符合社区规范",
+        inputPattern: /\S+/,
+        inputErrorMessage: "拒绝原因不能为空",
+      },
+    );
+    await request.post(`/api/admin/posts/${id}/reject`, { reason: value });
     ElMessage.success("审核已拒绝");
     await fetchPosts();
     if (activeMenu.value === "stats") {
@@ -1673,7 +1929,18 @@ const rejectPost = async (id) => {
 
 const resolveReviewReport = async (id) => {
   try {
-    await request.post(`/api/admin/review-reports/${id}/resolve`);
+    const { value } = await ElMessageBox.prompt(
+      "请输入处理备注",
+      "举报处理",
+      {
+        inputValue: "已人工复核",
+        inputPattern: /\S+/,
+        inputErrorMessage: "处理备注不能为空",
+      },
+    );
+    await request.post(`/api/admin/review-reports/${id}/resolve`, {
+      remark: value,
+    });
     ElMessage.success("举报工单已处理");
     await fetchReviewReports();
   } catch (error) {}
@@ -1716,17 +1983,17 @@ const rejectRefund = async (orderNo) => {
   } catch (error) {}
 };
 
-const canReviewRefund = (row) => row.type !== "酒店" && row.status === 3;
+const canReviewRefund = (row) => row.status === 3;
 
 const orderStatusLabel = (row) => {
   if (row.type === "酒店") {
     return (
-      ["待支付", "已支付", "入住中", "已完成", "已取消"][row.status] ||
+      ["待支付", "已支付", "入住中", "已完成", "已退款/已取消", "拒绝退款"][row.status] ||
       `状态${row.status}`
     );
   }
   return (
-    ["待支付", "出票中", "已出票", "已取消", "已退票"][row.status] ||
+    ["待支付", "出票中", "已出票", "已取消/申请退款", "已退票", "拒绝退款"][row.status] ||
     `状态${row.status}`
   );
 };
@@ -1737,6 +2004,9 @@ const orderStatusType = (row) => {
   }
   if (row.status === 1 || row.status === 2 || row.status === 4) {
     return "success";
+  }
+  if (row.status === 5) {
+    return "danger";
   }
   return "info";
 };
@@ -1769,6 +2039,8 @@ const handleMenuSelect = (menu) => {
     fetchDashboard();
   } else if (menu === "flights") {
     fetchFlights();
+  } else if (menu === "trains") {
+    fetchTrains();
   } else if (menu === "hotels") {
     fetchHotels();
   } else if (menu === "coupons") {

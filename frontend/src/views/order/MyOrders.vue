@@ -152,6 +152,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Promotion, Tickets, House } from "@element-plus/icons-vue";
 import request from "@/utils/request";
@@ -159,7 +160,9 @@ import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 
-const activeTab = ref("traffic");
+const route = useRoute();
+const initialTab = route.query.tab === "hotel" ? "hotel" : "traffic";
+const activeTab = ref(initialTab);
 const trafficOrders = ref([]);
 const hotelOrders = ref([]);
 const trafficLoading = ref(false);
@@ -299,7 +302,11 @@ const cancelOrder = async (orderNo, type) => {
 };
 
 onMounted(() => {
-  fetchTrafficOrders();
+  if (activeTab.value === "hotel") {
+    fetchHotelOrders();
+  } else {
+    fetchTrafficOrders();
+  }
 });
 </script>
 

@@ -4,9 +4,12 @@ import com.travelmate.entity.HotelRoom;
 import com.travelmate.mapper.HotelRoomMapper;
 import com.travelmate.service.HotelRoomStockService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.lang.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -15,6 +18,8 @@ import java.util.Objects;
 
 @Service
 public class HotelRoomStockServiceImpl implements HotelRoomStockService {
+
+    private static final Logger log = LoggerFactory.getLogger(HotelRoomStockServiceImpl.class);
 
     private static final long STOCK_NOT_INITIALIZED = -2L;
 
@@ -46,39 +51,52 @@ public class HotelRoomStockServiceImpl implements HotelRoomStockService {
         }
 
         String stockKey = Objects.requireNonNull(buildStockKey(roomId));
-        initializeStockIfAbsent(stockKey, dbAvailableRooms);
-
-        Long result = executePreDeduct(stockKey);
-        if (result != null && result == STOCK_NOT_INITIALIZED) {
+        try {
             initializeStockIfAbsent(stockKey, dbAvailableRooms);
-            result = executePreDeduct(stockKey);
-        }
 
-        if (result == null) {
-            throw new RuntimeException("Redis库存服务异常");
-        }
+            Long result = executePreDeduct(stockKey);
+            if (result != null && result == STOCK_NOT_INITIALIZED) {
+                initializeStockIfAbsent(stockKey, dbAvailableRooms);
+                result = executePreDeduct(stockKey);
+            }
 
-        return result >= 0;
+            if (result == null) {
+                throw new RuntimeException("Redis库存服务异常");
+            }
+
+            return result >= 0;
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis unavailable, falling back to database stock deduction for room {}", roomId);
+            return true;
+        }
     }
 
     @Override
     public void rollbackPreDeduct(Long roomId) {
         String stockKey = Objects.requireNonNull(buildStockKey(roomId));
-        redisTemplate.opsForValue().increment(stockKey);
+        try {
+            redisTemplate.opsForValue().increment(stockKey);
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis unavailable, skip rollback stock cache for room {}", roomId);
+        }
     }
 
     @Override
     public void syncWithDatabase(Long roomId) {
         HotelRoom room = hotelRoomMapper.selectById(roomId);
         String stockKey = Objects.requireNonNull(buildStockKey(roomId));
-        if (room == null) {
-            redisTemplate.delete(stockKey);
-            return;
-        }
+        try {
+            if (room == null) {
+                redisTemplate.delete(stockKey);
+                return;
+            }
 
-        int availableRooms = room.getAvailableRooms() == null ? 0 : Math.max(room.getAvailableRooms(), 0);
-        String stockValue = Objects.requireNonNull(String.valueOf(availableRooms));
-        redisTemplate.opsForValue().set(stockKey, stockValue);
+            int availableRooms = room.getAvailableRooms() == null ? 0 : Math.max(room.getAvailableRooms(), 0);
+            String stockValue = Objects.requireNonNull(String.valueOf(availableRooms));
+            redisTemplate.opsForValue().set(stockKey, stockValue);
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis unavailable, skip syncing stock cache for room {}", roomId);
+        }
     }
 
     @SuppressWarnings("null")

@@ -47,6 +47,8 @@ public class SecurityConfig {
                                                 .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET,
                                                                 "^/api/post/\\d+$"))
                                                 .permitAll()
+                                                .requestMatchers("/api/admin/**")
+                                                .hasRole("ADMIN")
                                                 .requestMatchers("/api/post/**")
                                                 .authenticated()
                                                 .anyRequest().authenticated())
