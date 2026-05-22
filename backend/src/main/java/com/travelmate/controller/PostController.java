@@ -24,19 +24,25 @@ public class PostController {
     @GetMapping("/list")
     public Result<List<Map<String, Object>>> listPosts(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return Result.success(postService.listPosts(page, size));
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword) {
+        return Result.success(postService.listPosts(page, size, keyword));
     }
 
     @GetMapping("/{id}")
     public Result<Post> getPost(@PathVariable Long id) {
-        return Result.success(postService.getPostDetail(id));
+        return Result.success(postService.getPostDetail(id, userContext.getCurrentUserIdOrNull()));
     }
 
     @RateLimiter(maxRequests = 2, timeWindowSeconds = 1)
     @PostMapping("/create")
     public Result<Post> createPost(@RequestBody Map<String, Object> body) {
         return Result.success(postService.createPost(body, userContext.getCurrentUserId()));
+    }
+
+    @PutMapping("/{id}")
+    public Result<Post> updatePost(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return Result.success(postService.updatePost(id, body, userContext.getCurrentUserId()));
     }
 
     @DeleteMapping("/{id}")
@@ -53,7 +59,8 @@ public class PostController {
     @GetMapping("/following")
     public Result<List<Map<String, Object>>> followingPosts(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return Result.success(postService.getFollowingPosts(userContext.getCurrentUserId(), page, size));
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword) {
+        return Result.success(postService.getFollowingPosts(userContext.getCurrentUserId(), page, size, keyword));
     }
 }

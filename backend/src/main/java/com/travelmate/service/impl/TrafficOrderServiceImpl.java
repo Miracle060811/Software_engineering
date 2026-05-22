@@ -12,6 +12,7 @@ import com.travelmate.mapper.FlightMapper;
 import com.travelmate.mapper.PassengerMapper;
 import com.travelmate.mapper.TrafficOrderMapper;
 import com.travelmate.mapper.TrainMapper;
+import com.travelmate.service.CouponService;
 import com.travelmate.service.TrafficOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,9 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
 
     @Autowired
     private PassengerMapper passengerMapper;
+
+    @Autowired
+    private CouponService couponService;
 
     /**
      * 核心难点：防超卖事务拦截、减库存并生成订单
@@ -69,6 +73,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         if (price == null) {
             throw new RuntimeException("该舱位暂不可售");
         }
+        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), price);
 
         // 4. 构建订单对象并落表生成
         TrafficOrder order = new TrafficOrder();
@@ -81,7 +86,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         order.setSeatType(seatType);
         order.setPassengerName(passenger.getName());
         order.setPassengerIdCard(passenger.getIdCard());
-        order.setAmount(price);
+        order.setAmount(payableAmount);
         order.setStatus(0); // 0 = 待支付
         order.setCreateTime(LocalDateTime.now());
 
@@ -124,6 +129,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         if (price == null) {
             throw new RuntimeException("该席别暂不可售");
         }
+        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), price);
 
         TrafficOrder order = new TrafficOrder();
         String orderNo = "TR" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
@@ -134,7 +140,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         order.setSeatType(seatType);
         order.setPassengerName(passenger.getName());
         order.setPassengerIdCard(passenger.getIdCard());
-        order.setAmount(price);
+        order.setAmount(payableAmount);
         order.setStatus(0);
         order.setCreateTime(LocalDateTime.now());
 

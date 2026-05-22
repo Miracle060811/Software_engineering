@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -64,6 +65,22 @@ public class UserProfileController {
         profile.put("fansCount", fansCount);
 
         return Result.success(profile);
+    }
+
+    @GetMapping("/profile/{username}/posts")
+    public Result<List<Post>> getUserPosts(@PathVariable String username) {
+        LambdaQueryWrapper<User> userQuery = new LambdaQueryWrapper<>();
+        userQuery.eq(User::getUsername, username);
+        User user = userMapper.selectOne(userQuery);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+
+        LambdaQueryWrapper<Post> postQuery = new LambdaQueryWrapper<>();
+        postQuery.eq(Post::getUserId, user.getId())
+                .eq(Post::getStatus, 1)
+                .orderByDesc(Post::getCreateTime);
+        return Result.success(postMapper.selectList(postQuery));
     }
 
     @PutMapping("/profile/update")

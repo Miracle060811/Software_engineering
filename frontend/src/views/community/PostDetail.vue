@@ -7,24 +7,40 @@
         <div class="post-meta-row">
           <div
             class="author-info"
-            @click="$router.push(`/profile/${post.authorUsername}`)"
+            @click="goAuthorProfile(post)"
           >
-            <el-avatar :size="40" :src="post.authorAvatar" />
+            <el-avatar :size="40" :src="post.authorAvatar || ''" class="fallback-avatar">
+              {{ avatarInitial(post) }}
+            </el-avatar>
             <div class="author-text">
               <div class="author-name">
-                {{ post.authorNickname || post.authorUsername }}
+                {{ displayName(post) }}
               </div>
               <div class="post-date">{{ post.createTime }}</div>
             </div>
           </div>
-          <el-button
-            v-if="!isSelf"
-            :type="isFollowing ? '' : 'primary'"
-            size="small"
-            @click="toggleFollow"
-          >
-            {{ isFollowing ? "已关注" : "+ 关注" }}
-          </el-button>
+          <div class="header-actions">
+            <template v-if="isSelf">
+              <el-button
+                v-if="post.status === 3"
+                size="small"
+                @click="router.push(`/post/create?draftId=${post.id}`)"
+              >
+                继续编辑
+              </el-button>
+              <el-button size="small" type="danger" @click="deletePost">
+                删除
+              </el-button>
+            </template>
+            <el-button
+              v-else
+              :type="isFollowing ? '' : 'primary'"
+              size="small"
+              @click="toggleFollow"
+            >
+              {{ isFollowing ? "已关注" : "+ 关注" }}
+            </el-button>
+          </div>
         </div>
 
         <div class="post-tags" v-if="post.tags">
@@ -77,7 +93,7 @@
       <!-- 评论区 -->
       <el-card class="comment-card">
         <template #header>
-          <span class="section-header">评论 ({{ comments.length }})</span>
+          <span class="section-header">评论 ({{ commentTotal }})</span>
         </template>
 
         <!-- 发表评论 -->
@@ -105,10 +121,12 @@
           description="暂无评论，快来发表第一条吧"
         />
         <div v-for="comment in comments" :key="comment.id" class="comment-item">
-          <el-avatar :size="36" :src="comment.authorAvatar" />
+          <el-avatar :size="36" :src="comment.authorAvatar || ''" class="fallback-avatar">
+            {{ avatarInitial(comment) }}
+          </el-avatar>
           <div class="comment-body">
             <div class="comment-author">
-              {{ comment.authorNickname || comment.authorUsername }}
+              {{ displayName(comment) }}
             </div>
             <div class="comment-content">{{ comment.content }}</div>
             <div class="comment-footer">
@@ -133,9 +151,10 @@
                 :key="sub.id"
                 class="sub-comment-item"
               >
-                <span class="sub-author">{{
-                  sub.authorNickname || sub.authorUsername
-                }}</span>
+                <span class="sub-author">{{ displayName(sub) }}</span>
+                <span v-if="replyTargetName(sub)" class="reply-target">
+                  回复 @{{ replyTargetName(sub) }}
+                </span>
                 <span class="sub-content">{{ sub.content }}</span>
               </div>
             </div>
@@ -163,13 +182,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { LocationFilled, StarFilled, Star } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import { useUserStore } from "@/stores/user";
 
 const route = useRoute();
+const router = useRouter();
 const postId = route.params.id;
 const userStore = useUserStore();
 const post = ref(null);
@@ -181,9 +201,17 @@ const replyingTo = ref(null);
 const isLiked = ref(false);
 const likeCount = ref(0);
 const isFollowing = ref(false);
+const POST_LIKE_TARGET_TYPE = 0;
 
 const isSelf = computed(() => {
-  return userStore.userInfo?.username === post.value?.authorUsername;
+  const current = userStore.userInfo;
+  const authorId = post.value?.authorId || post.value?.userId;
+  return !!current && (current.username === post.value?.authorUsername || current.id === authorId || current.userId === authorId);
+});
+
+const commentTotal = computed(() => {
+  if (post.value?.commentCount != null) return post.value.commentCount;
+  return countComments(comments.value);
 });
 
 const parseImages = (images) => {
@@ -204,6 +232,22 @@ const parseTags = (tags) => {
     .filter(Boolean);
 };
 
+const displayName = (item) => {
+  return item?.authorNickname || item?.authorUsername || item?.nickname || item?.username || "匿名用户";
+};
+
+const avatarInitial = (item) => {
+  const name = displayName(item);
+  return name.trim().charAt(0).toUpperCase() || "旅";
+};
+
+const goAuthorProfile = (item) => {
+  const username = item?.authorUsername || item?.username;
+  if (username) {
+    router.push(`/profile/${username}`);
+  }
+};
+
 const isMyComment = (comment) => {
   return userStore.userInfo?.username === comment.authorUsername;
 };
@@ -214,7 +258,7 @@ const fetchPost = async () => {
     const data = await request.get(`/api/post/${postId}`);
     post.value = data;
     likeCount.value = data.likeCount || 0;
-    await Promise.allSettled([fetchComments(), fetchLikeStatus()]);
+    await Promise.allSettled([fetchComments(), fetchLikeStatus(), fetchFollowStatus()]);
   } catch (e) {
     ElMessage.error(e.message || "游记详情加载失败");
   } finally {
@@ -226,16 +270,23 @@ const fetchComments = async () => {
   try {
     const data = await request.get("/api/comment/list", { params: { postId } });
     comments.value = Array.isArray(data) ? data : [];
+    if (post.value) {
+      post.value.commentCount = countComments(comments.value);
+    }
   } catch (e) {
     comments.value = [];
   }
+};
+
+const countComments = (list) => {
+  return (list || []).reduce((sum, item) => sum + 1 + countComments(item.children || []), 0);
 };
 
 const fetchLikeStatus = async () => {
   if (!userStore.isLoggedIn) return;
   try {
     const data = await request.get("/api/like/status", {
-      params: { targetId: postId, targetType: "post" },
+      params: { targetId: postId, targetType: POST_LIKE_TARGET_TYPE },
     });
     isLiked.value = !!data;
   } catch (e) {}
@@ -247,12 +298,22 @@ const toggleLike = async () => {
     return;
   }
   try {
-    await request.post("/api/like/toggle", {
+    const data = await request.post("/api/like/toggle", {
       targetId: postId,
-      targetType: "post",
+      targetType: POST_LIKE_TARGET_TYPE,
     });
-    isLiked.value = !isLiked.value;
-    likeCount.value += isLiked.value ? 1 : -1;
+    isLiked.value = !!data?.liked;
+    likeCount.value = data?.count ?? Math.max(0, likeCount.value + (isLiked.value ? 1 : -1));
+  } catch (e) {}
+};
+
+const fetchFollowStatus = async () => {
+  if (!userStore.isLoggedIn || isSelf.value) return;
+  const authorId = post.value?.authorId || post.value?.userId;
+  if (!authorId) return;
+  try {
+    const data = await request.get(`/api/follow/status/${authorId}`);
+    isFollowing.value = !!data;
   } catch (e) {}
 };
 
@@ -262,8 +323,13 @@ const toggleFollow = async () => {
     return;
   }
   try {
-    await request.post(`/api/follow/${post.value.authorId}`);
-    isFollowing.value = !isFollowing.value;
+    const authorId = post.value?.authorId || post.value?.userId;
+    if (!authorId) {
+      ElMessage.error("无法获取作者信息，请刷新后重试");
+      return;
+    }
+    const data = await request.post(`/api/follow/${authorId}`);
+    isFollowing.value = !!data?.followed;
     ElMessage.success(isFollowing.value ? "关注成功" : "已取消关注");
   } catch (e) {}
 };
@@ -293,6 +359,10 @@ const replyTo = (comment) => {
   replyContent.value = "";
 };
 
+const replyTargetName = (comment) => {
+  return comment?.replyNickname || comment?.replyUsername || "";
+};
+
 const submitReply = async (parentId) => {
   if (!replyContent.value.trim()) {
     ElMessage.warning("请输入回复内容");
@@ -303,6 +373,7 @@ const submitReply = async (parentId) => {
       postId,
       content: replyContent.value,
       parentId,
+      replyUserId: replyingTo.value?.userId,
     });
     replyingTo.value = null;
     replyContent.value = "";
@@ -317,6 +388,15 @@ const deleteComment = async (commentId) => {
     await request.delete(`/api/comment/${commentId}`);
     ElMessage.success("删除成功");
     await fetchComments();
+  } catch (e) {}
+};
+
+const deletePost = async () => {
+  try {
+    await ElMessageBox.confirm("确认删除这篇游记吗？", "删除游记", { type: "warning" });
+    await request.delete(`/api/post/${postId}`);
+    ElMessage.success("删除成功");
+    router.push("/community");
   } catch (e) {}
 };
 
@@ -354,6 +434,16 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   cursor: pointer;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fallback-avatar {
+  background: linear-gradient(135deg, #0d9488, #0ea5e9);
+  color: #fff;
+  font-weight: 700;
 }
 .author-name {
   font-size: 15px;
@@ -449,6 +539,10 @@ onMounted(() => {
 .sub-author {
   font-weight: 600;
   color: #0D9488;
+  margin-right: 6px;
+}
+.reply-target {
+  color: #71718B;
   margin-right: 6px;
 }
 .reply-input {

@@ -16,8 +16,9 @@
           <el-button
             v-for="link in navLinks"
             :key="link.path"
-            :type="$route.path === link.path ? 'primary' : ''"
-            :text="$route.path !== link.path"
+            :type="isNavActive(link) ? 'primary' : ''"
+            :text="!isNavActive(link)"
+            class="nav-link-btn"
             @click="$router.push(link.path)"
           >
             {{ link.label }}
@@ -43,11 +44,11 @@
                 <el-icon :size="18"><Bell /></el-icon>
               </el-button>
             </el-badge>
-            <el-button text @click="$router.push('/my-orders')"
+            <el-button
+              text
+              :type="$route.path === '/my-orders' ? 'primary' : ''"
+              @click="$router.push('/my-orders')"
               >我的订单</el-button
-            >
-            <el-button text @click="$router.push('/coupons')"
-              >优惠券</el-button
             >
             <el-dropdown @command="handleCommand" trigger="click">
               <span class="user-chip">
@@ -139,7 +140,7 @@
           class="mobile-menu-item"
           v-for="link in navLinks"
           :key="link.path"
-          :class="{ active: $route.path === link.path }"
+          :class="{ active: isNavActive(link) }"
           @click="mobileNav(link.path)"
         >
           {{ link.label }}
@@ -324,10 +325,23 @@
             </h3>
             <p>一站式智慧出行平台，让你的每次旅行都精彩</p>
             <div class="footer-social">
-              <span class="social-dot"></span>
-              <span class="social-dot"></span>
-              <span class="social-dot"></span>
-              <span class="social-dot"></span>
+              <button
+                v-for="member in teamMembers"
+                :key="member.name"
+                class="team-avatar-btn"
+                type="button"
+                :title="`${member.name} · ${member.moduleCode}模块`"
+                @click="selectedTeamMember = member"
+              >
+                <el-avatar
+                  :size="36"
+                  :src="member.avatar"
+                  class="team-avatar"
+                  :style="{ background: member.gradient }"
+                >
+                  {{ member.initial }}
+                </el-avatar>
+              </button>
             </div>
           </div>
           <div class="footer-col">
@@ -359,6 +373,46 @@
         </div>
       </div>
     </footer>
+
+    <el-dialog
+      v-model="teamDialogVisible"
+      width="420px"
+      class="team-dialog"
+      :show-close="true"
+    >
+      <template #header>
+        <div class="team-dialog-header" v-if="selectedTeamMember">
+          <el-avatar
+            :size="56"
+            :src="selectedTeamMember.avatar"
+            class="team-dialog-avatar"
+            :style="{ background: selectedTeamMember.gradient }"
+          >
+            {{ selectedTeamMember.initial }}
+          </el-avatar>
+          <div>
+            <div class="team-dialog-name">{{ selectedTeamMember.name }}</div>
+            <div class="team-dialog-role">
+              {{ selectedTeamMember.moduleCode }} · {{ selectedTeamMember.module }}
+            </div>
+          </div>
+        </div>
+      </template>
+      <div v-if="selectedTeamMember" class="team-dialog-body">
+        <div class="team-info-row">
+          <span class="team-info-label">负责模块</span>
+          <span>{{ selectedTeamMember.module }}</span>
+        </div>
+        <div class="team-info-row">
+          <span class="team-info-label">个人简介</span>
+          <span>{{ selectedTeamMember.bio }}</span>
+        </div>
+        <div class="team-info-row">
+          <span class="team-info-label">联系方式</span>
+          <span>{{ selectedTeamMember.contact }}</span>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -381,9 +435,15 @@ import {
   Tickets,
   House,
   HomeFilled,
+  Present,
 } from "@element-plus/icons-vue";
 import { useUserStore } from "./stores/user";
 import request from "@/utils/request";
+import yfanAvatar from "@/assets/team/YFan.jpg";
+import yangYouthAvatar from "@/assets/team/YangYouth.jpg";
+import sylphiraAvatar from "@/assets/team/Sylphira.jpg";
+import mojireeAvatar from "@/assets/team/Mojiree.jpg";
+import dxcAvatar from "@/assets/team/DXC.jpg";
 
 const route = useRoute();
 const router = useRouter();
@@ -393,6 +453,67 @@ const showSearch = ref(false);
 const showMobileMenu = ref(false);
 const searchTab = ref("flight");
 const searchInputRef = ref(null);
+const selectedTeamMember = ref(null);
+
+const teamMembers = [
+  {
+    name: "YFan",
+    initial: "Y",
+    moduleCode: "E",
+    module: "管理后台与可观测性",
+    bio: "负责后台运营管理、内容审核、系统日志与数据看板相关设计。",
+    contact: "微信号待补充",
+    avatar: yfanAvatar,
+    gradient: "linear-gradient(135deg, #0f766e, #2563eb)",
+  },
+  {
+    name: "YangYouth",
+    initial: "Y",
+    moduleCode: "A",
+    module: "大交通票务 / 订单库存",
+    bio: "负责机票、火车票、库存防超卖和订单预占流程相关设计。",
+    contact: "微信号待补充",
+    avatar: yangYouthAvatar,
+    gradient: "linear-gradient(135deg, #dc2626, #f59e0b)",
+  },
+  {
+    name: "Sylphira",
+    initial: "S",
+    moduleCode: "C",
+    module: "AI 智能规划",
+    bio: "负责 AI 行程生成、智能客服、Prompt 设计和工具调用相关能力。",
+    contact: "微信号待补充",
+    avatar: sylphiraAvatar,
+    gradient: "linear-gradient(135deg, #7c3aed, #db2777)",
+  },
+  {
+    name: "Mojiree",
+    initial: "M",
+    moduleCode: "B",
+    module: "住宿与本地生活",
+    bio: "负责酒店、房型、景点、本地玩乐和评价体系相关设计。",
+    contact: "微信号待补充",
+    avatar: mojireeAvatar,
+    gradient: "linear-gradient(135deg, #16a34a, #0ea5e9)",
+  },
+  {
+    name: "DXC",
+    initial: "D",
+    moduleCode: "D",
+    module: "社区与用户中心",
+    bio: "负责旅行社区、互动关系、评论收藏和用户中心相关设计。",
+    contact: "微信号待补充",
+    avatar: dxcAvatar,
+    gradient: "linear-gradient(135deg, #334155, #0891b2)",
+  },
+];
+
+const teamDialogVisible = computed({
+  get: () => !!selectedTeamMember.value,
+  set: (visible) => {
+    if (!visible) selectedTeamMember.value = null;
+  },
+});
 
 // ---------- 全局搜索表单 ----------
 const gsFlight = ref({ depCity: "", arrCity: "", date: "" });
@@ -401,7 +522,10 @@ const gsHotel = ref({ city: "" });
 
 const navLinks = [
   { path: "/", label: "首页" },
-  { path: "/community", label: "社区" },
+  { path: "/flight-search", label: "机票" },
+  { path: "/train-search", label: "火车票" },
+  { path: "/hotel-search", label: "酒店" },
+  { path: "/community", label: "社区", activePaths: ["/community", "/post"] },
   { path: "/ai-plan", label: "AI规划" },
   { path: "/coupons", label: "优惠券" },
 ];
@@ -481,6 +605,14 @@ const handleLogout = () => {
 const mobileNav = (path) => {
   router.push(path);
   showMobileMenu.value = false;
+};
+
+const isNavActive = (link) => {
+  if (link.path === "/") return route.path === "/";
+  if (link.activePaths) {
+    return link.activePaths.some((path) => route.path.startsWith(path));
+  }
+  return route.path === link.path;
 };
 
 const footerNav = (path) => {
@@ -622,6 +754,11 @@ watch(
   display: flex;
   align-items: center;
   gap: 2px;
+}
+
+.nav-link-btn {
+  min-width: 64px;
+  font-weight: 700;
 }
 
 .nav-badge {
@@ -899,21 +1036,85 @@ watch(
 
 .footer-social {
   display: flex;
+  align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
-.social-dot {
-  width: 32px;
-  height: 32px;
+.team-avatar-btn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
   border-radius: 50%;
-  background: var(--el-bg-color-page);
   border: 1px solid #f0f2f5;
-  transition: all 0.3s ease;
+  background: #fff;
   cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
-.social-dot:hover {
-  background: var(--el-color-primary-light-9);
+
+.team-avatar-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
   border-color: var(--el-color-primary-light-5);
+}
+
+.team-avatar {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.72);
+}
+
+.team-dialog :deep(.el-dialog) {
+  border-radius: 16px;
+}
+
+.team-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.team-dialog-avatar {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.team-dialog-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--el-text-color-primary);
+}
+
+.team-dialog-role {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.team-dialog-body {
+  display: grid;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.team-info-row {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 12px;
+  align-items: start;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--el-text-color-regular);
+}
+
+.team-info-label {
+  color: var(--el-text-color-secondary);
+  font-weight: 700;
 }
 
 .footer-bottom {

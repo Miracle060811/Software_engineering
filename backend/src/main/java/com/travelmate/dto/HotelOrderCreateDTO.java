@@ -26,4 +26,7 @@ public class HotelOrderCreateDTO {
 
     /** 入住人手机号 */
     private String guestPhone;
+
+    /** 用户优惠券ID，不使用时为空 */
+    private Long userCouponId;
 }

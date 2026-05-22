@@ -84,14 +84,15 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from "vue";
-import { useRouter } from "vue-router";
+import { ref, nextTick, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Edit, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
 
 const router = useRouter();
+const route = useRoute();
 const formRef = ref(null);
 const uploadRef = ref(null);
 const tagInputRef = ref(null);
@@ -99,6 +100,7 @@ const tagInputVisible = ref(false);
 const tagInputValue = ref("");
 const submitting = ref(false);
 const uploadedImages = ref([]);
+const editingPostId = computed(() => route.query.draftId || route.query.postId || "");
 
 const form = ref({
   title: "",
@@ -117,10 +119,10 @@ const uploadUrl = import.meta.env.VITE_API_BASE_URL
   ? import.meta.env.VITE_API_BASE_URL + "/api/file/upload"
   : "/api/file/upload";
 
-const uploadHeaders = {};
-if (localStorage.getItem("token")) {
-  uploadHeaders["Authorization"] = "Bearer " + localStorage.getItem("token");
-}
+const uploadHeaders = computed(() => {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: "Bearer " + token } : {};
+});
 
 const beforeUpload = (file) => {
   const isImage = file.type.startsWith("image/");
@@ -137,14 +139,24 @@ const beforeUpload = (file) => {
 };
 
 const handleUploadSuccess = (res) => {
-  if (res && res.url) {
-    uploadedImages.value.push(res.url);
+  const url = res?.url || res?.data?.url || (typeof res?.data === "string" ? res.data : "");
+  if (url) {
+    uploadedImages.value.push(url);
+  } else {
+    ElMessage.error("图片上传结果异常");
   }
 };
 
 const handleUploadRemove = (file) => {
-  const url = file.response?.url || file.url;
+  const url = file.response?.url || file.response?.data?.url || file.response?.data || file.url;
   uploadedImages.value = uploadedImages.value.filter((u) => u !== url);
+};
+
+const parseImages = (images) => {
+  if (!images) return [];
+  return Array.isArray(images)
+    ? images
+    : images.split(",").map((item) => item.trim()).filter(Boolean);
 };
 
 const insertFormat = (hint) => {
@@ -171,9 +183,9 @@ const removeTag = (tag) => {
 };
 
 const buildPostData = () => ({
-  title: form.value.title,
-  content: form.value.content,
-  destination: form.value.destination,
+  title: form.value.title.trim(),
+  content: form.value.content.trim(),
+  destination: form.value.destination.trim(),
   images: uploadedImages.value.join(","),
   tags: form.value.tags.join(","),
   visibility: form.value.visibility,
@@ -184,8 +196,12 @@ const submitPost = async () => {
   if (!valid) return;
   submitting.value = true;
   try {
-    await request.post("/api/post/create", buildPostData());
-    ElMessage.success("游记发布成功");
+    if (editingPostId.value) {
+      await request.put(`/api/post/${editingPostId.value}`, buildPostData());
+    } else {
+      await request.post("/api/post/create", buildPostData());
+    }
+    ElMessage.success("游记已提交审核");
     router.push("/community");
   } catch (e) {
   } finally {
@@ -200,7 +216,12 @@ const saveDraft = async () => {
   }
   submitting.value = true;
   try {
-    await request.post("/api/post/create", { ...buildPostData(), status: 3 });
+    const payload = { ...buildPostData(), status: 3 };
+    if (editingPostId.value) {
+      await request.put(`/api/post/${editingPostId.value}`, payload);
+    } else {
+      await request.post("/api/post/create", payload);
+    }
     ElMessage.success("草稿已保存");
     router.push("/community");
   } catch (e) {
@@ -208,6 +229,23 @@ const saveDraft = async () => {
     submitting.value = false;
   }
 };
+
+const loadDraft = async () => {
+  if (!editingPostId.value) return;
+  try {
+    const data = await request.get(`/api/post/${editingPostId.value}`);
+    form.value = {
+      title: data.title || "",
+      content: data.content || "",
+      destination: data.destination || "",
+      tags: data.tags ? data.tags.split(",").map((item) => item.trim()).filter(Boolean) : [],
+      visibility: data.visibility ?? 0,
+    };
+    uploadedImages.value = parseImages(data.images);
+  } catch (e) {}
+};
+
+onMounted(loadDraft);
 </script>
 
 <style scoped>

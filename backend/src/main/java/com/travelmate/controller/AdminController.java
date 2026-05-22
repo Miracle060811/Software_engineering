@@ -28,6 +28,7 @@ import com.travelmate.mapper.SysLogMapper;
 import com.travelmate.mapper.SysSensitiveWordMapper;
 import com.travelmate.mapper.TrafficOrderMapper;
 import com.travelmate.mapper.TrainMapper;
+import com.travelmate.service.HotelRoomStockService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -84,6 +85,9 @@ public class AdminController {
 
     @Autowired
     private HotelOrderMapper hotelOrderMapper;
+
+    @Autowired
+    private HotelRoomStockService hotelRoomStockService;
 
     private static final int STATUS_REFUND_REJECTED = 5;
 
@@ -501,6 +505,7 @@ public class AdminController {
         validateHotelRoom(room);
         room.setHotelId(hotelId);
         hotelRoomMapper.insert(room);
+        hotelRoomStockService.syncWithDatabase(room.getId());
         return Result.success(room);
     }
 
@@ -510,6 +515,7 @@ public class AdminController {
         validateHotelRoom(room);
         room.setId(id);
         hotelRoomMapper.updateById(room);
+        hotelRoomStockService.syncWithDatabase(id);
         return Result.success();
     }
 
@@ -522,6 +528,7 @@ public class AdminController {
             return Result.error("该房型已有订单，不能删除");
         }
         hotelRoomMapper.deleteById(id);
+        hotelRoomStockService.syncWithDatabase(id);
         return Result.success();
     }
 
@@ -654,6 +661,7 @@ public class AdminController {
                 order.setStatus(4);
                 hotelOrderMapper.updateById(order);
                 hotelRoomMapper.returnRoom(order.getRoomId());
+                hotelRoomStockService.syncWithDatabase(order.getRoomId());
             }
         } else {
             TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper<TrafficOrder>()

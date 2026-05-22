@@ -165,8 +165,26 @@
             </el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="优惠券">
+          <el-select
+            v-model="bookForm.userCouponId"
+            placeholder="不使用优惠券"
+            clearable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="coupon in usableCoupons"
+              :key="coupon.id"
+              :label="couponLabel(coupon)"
+              :value="coupon.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="应付金额">
-          <span class="total-price">¥{{ currentSeatPrice }}</span>
+          <span class="total-price">
+            <span v-if="currentPayablePrice < currentSeatPrice" class="origin-price">¥{{ currentSeatPrice }}</span>
+            ¥{{ currentPayablePrice }}
+          </span>
         </el-form-item>
       </el-form>
       <el-collapse style="margin-top:12px">
@@ -213,7 +231,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Search, Tickets } from "@element-plus/icons-vue";
@@ -232,6 +250,7 @@ const passengerDrawerVisible = ref(false);
 const booking = ref(false);
 const selectedTrain = ref(null);
 const passengers = ref([]);
+const myCoupons = ref([]);
 const priceTrendVisible = ref(false);
 const priceTrendTicket = ref(null);
 
@@ -241,7 +260,7 @@ const searchForm = ref({
   date: "",
 });
 
-const bookForm = ref({ passengerId: null, seatType: "secondClass" });
+const bookForm = ref({ passengerId: null, seatType: "secondClass", userCouponId: null });
 const newPassenger = ref({ name: "", idCard: "", phone: "" });
 
 const currentSeatPrice = computed(() => {
@@ -252,6 +271,15 @@ const currentSeatPrice = computed(() => {
     businessClass: selectedTrain.value.businessClassPrice,
   };
   return map[bookForm.value.seatType] || 0;
+});
+
+const usableCoupons = computed(() =>
+  myCoupons.value.filter((coupon) => coupon.status === 0 && currentSeatPrice.value >= Number(coupon.minAmount || 0)),
+);
+
+const currentPayablePrice = computed(() => {
+  const coupon = usableCoupons.value.find((item) => item.id === bookForm.value.userCouponId);
+  return calcCouponAmount(currentSeatPrice.value, coupon);
 });
 
 const fetchTrains = async () => {
@@ -303,9 +331,9 @@ const openPriceTrend = (train) => {
 
 const openBookDialog = async (train) => {
   selectedTrain.value = train;
-  bookForm.value = { passengerId: null, seatType: "secondClass" };
+  bookForm.value = { passengerId: null, seatType: "secondClass", userCouponId: null };
   bookDialogVisible.value = true;
-  await fetchPassengers();
+  await Promise.all([fetchPassengers(), fetchMyCoupons()]);
 };
 
 const fetchPassengers = async () => {
@@ -314,6 +342,15 @@ const fetchPassengers = async () => {
     passengers.value = Array.isArray(data) ? data : [];
   } catch (e) {
     passengers.value = [];
+  }
+};
+
+const fetchMyCoupons = async () => {
+  try {
+    const data = await request.get("/api/coupon/my");
+    myCoupons.value = Array.isArray(data) ? data : [];
+  } catch (e) {
+    myCoupons.value = [];
   }
 };
 
@@ -341,6 +378,7 @@ const confirmBook = async () => {
       trainId: selectedTrain.value.id,
       passengerId: passenger?.id,
       seatType: bookForm.value.seatType === "firstClass" ? "FirstClass" : "SecondClass",
+      userCouponId: bookForm.value.userCouponId,
     });
     ElMessage.success("下单成功！请前往【我的订单】完成支付");
     bookDialogVisible.value = false;
@@ -350,6 +388,31 @@ const confirmBook = async () => {
     booking.value = false;
   }
 };
+
+const calcCouponAmount = (amount, coupon) => {
+  if (!coupon) return Number(amount.toFixed(2));
+  const discountValue = Number(coupon.discountValue || 0);
+  const discounted =
+    coupon.discountType === 1 ? amount * discountValue : amount - discountValue;
+  return Number(Math.max(discounted, 0).toFixed(2));
+};
+
+const couponLabel = (coupon) => {
+  const discount =
+    coupon.discountType === 1
+      ? `${Number(coupon.discountValue) * 10}折`
+      : `减¥${coupon.discountValue}`;
+  return `${coupon.couponName || coupon.name}（${discount}，满¥${coupon.minAmount || 0}可用）`;
+};
+
+watch(currentSeatPrice, () => {
+  if (
+    bookForm.value.userCouponId &&
+    !usableCoupons.value.some((coupon) => coupon.id === bookForm.value.userCouponId)
+  ) {
+    bookForm.value.userCouponId = null;
+  }
+});
 
 onMounted(() => {
   fetchTrains();
@@ -450,6 +513,12 @@ onMounted(() => {
   font-size: 24px;
   font-weight: 800;
   color: #EF4444;
+}
+.origin-price {
+  margin-right: 8px;
+  font-size: 14px;
+  color: #a0a0b8;
+  text-decoration: line-through;
 }
 
 @media (max-width: 768px) {

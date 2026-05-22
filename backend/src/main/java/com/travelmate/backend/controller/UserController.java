@@ -33,6 +33,14 @@ public class UserController {
         return token != null ? Result.success(token) : Result.error("用户名或密码错误");
     }
 
+    @PostMapping("/reset-password")
+    public Result<String> resetPassword(
+            @RequestParam String username,
+            @RequestParam String newPassword) {
+        boolean ok = userService.resetPassword(username, newPassword);
+        return ok ? Result.success("密码重置成功") : Result.error("用户不存在或已禁用");
+    }
+
     @PostMapping("/password")
     public Result<String> changePassword(
             @RequestHeader("Authorization") String authHeader,
@@ -44,6 +52,18 @@ public class UserController {
         if (user == null) return Result.error("用户不存在");
         boolean ok = userService.changePassword(user.getId(), oldPassword, newPassword);
         return ok ? Result.success("密码修改成功") : Result.error("旧密码错误");
+    }
+
+    @DeleteMapping("/account")
+    public Result<String> deleteAccount(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam String password) {
+        String token = authHeader.substring(7);
+        String username = jwtUtil.extractUsername(token);
+        User user = userService.getUserByUsername(username);
+        if (user == null) return Result.error("用户不存在");
+        boolean ok = userService.deleteAccount(user.getId(), password);
+        return ok ? Result.success("账户已注销") : Result.error("密码错误");
     }
 
     @GetMapping("/me")

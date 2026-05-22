@@ -2,7 +2,9 @@ package com.travelmate.service.impl;
 
 import com.travelmate.entity.HotelRoom;
 import com.travelmate.mapper.HotelRoomMapper;
+import com.travelmate.common.RedisKeyConstants;
 import com.travelmate.service.HotelRoomStockService;
+import com.travelmate.service.StockPreDeductResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -45,9 +47,9 @@ public class HotelRoomStockServiceImpl implements HotelRoomStockService {
     private HotelRoomMapper hotelRoomMapper;
 
     @Override
-    public boolean preDeductRoom(Long roomId, Integer dbAvailableRooms) {
+    public StockPreDeductResult preDeductRoom(Long roomId, Integer dbAvailableRooms) {
         if (dbAvailableRooms == null || dbAvailableRooms <= 0) {
-            return false;
+            return StockPreDeductResult.NO_STOCK;
         }
 
         String stockKey = Objects.requireNonNull(buildStockKey(roomId));
@@ -64,10 +66,10 @@ public class HotelRoomStockServiceImpl implements HotelRoomStockService {
                 throw new RuntimeException("Redis库存服务异常");
             }
 
-            return result >= 0;
+            return result >= 0 ? StockPreDeductResult.DEDUCTED_IN_REDIS : StockPreDeductResult.NO_STOCK;
         } catch (RedisConnectionFailureException e) {
             log.warn("Redis unavailable, falling back to database stock deduction for room {}", roomId);
-            return true;
+            return StockPreDeductResult.FALLBACK_TO_DB;
         }
     }
 
@@ -113,6 +115,6 @@ public class HotelRoomStockServiceImpl implements HotelRoomStockService {
     }
 
     private @NonNull String buildStockKey(Long roomId) {
-        return "hotel:room:stock:" + roomId;
+        return RedisKeyConstants.HOTEL_ROOM_STOCK_PREFIX + roomId;
     }
 }

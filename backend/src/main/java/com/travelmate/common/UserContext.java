@@ -31,6 +31,7 @@ public class UserContext {
 
         return userMapper.selectOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, username)
+                .eq(User::getStatus, 1)
                 .and(wrapper -> wrapper.eq(User::getDeleted, 0)
                         .or()
                         .isNull(User::getDeleted)));

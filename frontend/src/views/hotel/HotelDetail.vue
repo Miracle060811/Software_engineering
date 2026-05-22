@@ -162,8 +162,26 @@
         <el-form-item label="联系电话">
           <el-input v-model="bookForm.guestPhone" placeholder="联系人手机号" />
         </el-form-item>
+        <el-form-item label="优惠券">
+          <el-select
+            v-model="bookForm.userCouponId"
+            placeholder="不使用优惠券"
+            clearable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="coupon in usableCoupons"
+              :key="coupon.id"
+              :label="couponLabel(coupon)"
+              :value="coupon.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="应付金额">
-          <span class="total-price">¥{{ calcTotalPrice }}</span>
+          <span class="total-price">
+            <span v-if="currentPayablePrice < calcTotalPrice" class="origin-price">¥{{ calcTotalPrice }}</span>
+            ¥{{ currentPayablePrice }}
+          </span>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -177,7 +195,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { StarFilled, LocationFilled, Plus } from "@element-plus/icons-vue";
@@ -189,6 +207,7 @@ const hotelId = route.params.id;
 const hotel = ref(null);
 const rooms = ref([]);
 const reviews = ref([]);
+const myCoupons = ref([]);
 const loading = ref(false);
 const bookDialogVisible = ref(false);
 const booking = ref(false);
@@ -212,6 +231,7 @@ const bookForm = ref({
   checkOut: "",
   guestName: "",
   guestPhone: "",
+  userCouponId: null,
 });
 
 const calcTotalPrice = computed(() => {
@@ -226,6 +246,15 @@ const calcTotalPrice = computed(() => {
       86400000,
   );
   return days > 0 ? days * selectedRoom.value.price : 0;
+});
+
+const usableCoupons = computed(() =>
+  myCoupons.value.filter((coupon) => coupon.status === 0 && calcTotalPrice.value >= Number(coupon.minAmount || 0)),
+);
+
+const currentPayablePrice = computed(() => {
+  const coupon = usableCoupons.value.find((item) => item.id === bookForm.value.userCouponId);
+  return calcCouponAmount(calcTotalPrice.value, coupon);
 });
 
 const fetchHotelDetail = async () => {
@@ -255,15 +284,17 @@ const fetchHotelDetail = async () => {
   }
 };
 
-const openBookDialog = (room) => {
+const openBookDialog = async (room) => {
   selectedRoom.value = room;
   bookForm.value = {
     checkIn: "",
     checkOut: "",
     guestName: "",
     guestPhone: "",
+    userCouponId: null,
   };
   bookDialogVisible.value = true;
+  await fetchMyCoupons();
 };
 
 const confirmBook = async () => {
@@ -284,6 +315,7 @@ const confirmBook = async () => {
       checkOutDate: bookForm.value.checkOut,
       guestName: bookForm.value.guestName,
       guestPhone: bookForm.value.guestPhone,
+      userCouponId: bookForm.value.userCouponId,
     });
     ElMessage.success("预订成功！请前往【我的订单】完成支付");
     window.dispatchEvent(new Event("notification-updated"));
@@ -294,6 +326,40 @@ const confirmBook = async () => {
     booking.value = false;
   }
 };
+
+const fetchMyCoupons = async () => {
+  try {
+    const data = await request.get("/api/coupon/my");
+    myCoupons.value = Array.isArray(data) ? data : [];
+  } catch (e) {
+    myCoupons.value = [];
+  }
+};
+
+const calcCouponAmount = (amount, coupon) => {
+  if (!coupon) return Number(amount.toFixed(2));
+  const discountValue = Number(coupon.discountValue || 0);
+  const discounted =
+    coupon.discountType === 1 ? amount * discountValue : amount - discountValue;
+  return Number(Math.max(discounted, 0).toFixed(2));
+};
+
+const couponLabel = (coupon) => {
+  const discount =
+    coupon.discountType === 1
+      ? `${Number(coupon.discountValue) * 10}折`
+      : `减¥${coupon.discountValue}`;
+  return `${coupon.couponName || coupon.name}（${discount}，满¥${coupon.minAmount || 0}可用）`;
+};
+
+watch(calcTotalPrice, () => {
+  if (
+    bookForm.value.userCouponId &&
+    !usableCoupons.value.some((coupon) => coupon.id === bookForm.value.userCouponId)
+  ) {
+    bookForm.value.userCouponId = null;
+  }
+});
 
 const onUploadSuccess = (res, file) => {
   if (res.url) uploadedImageUrls.value.push(res.url);
@@ -508,5 +574,11 @@ onMounted(() => {
   font-size: 22px;
   font-weight: 700;
   color: #ef4444;
+}
+.origin-price {
+  margin-right: 8px;
+  font-size: 14px;
+  color: #94a3b8;
+  text-decoration: line-through;
 }
 </style>

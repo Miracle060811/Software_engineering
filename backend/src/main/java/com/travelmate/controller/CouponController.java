@@ -25,7 +25,8 @@ public class CouponController {
 
     @GetMapping("/list")
     public Result<List<Coupon>> listAvailable() {
-        return Result.success(couponService.listAvailable());
+        Long userId = getCurrentUserId();
+        return Result.success(couponService.listAvailable(userId));
     }
 
     @GetMapping("/my")

@@ -245,7 +245,7 @@
         <div class="feature-card" @click="$router.push('/ai-plan')">
           <div class="feat-visual feat-visual-ai">
             <div class="feat-illustration">
-              <el-icon class="feat-icon-lg"><Cpu /></el-icon>
+              <img :src="aiPlannerIcon" alt="AI 智能规划" class="feat-icon-img" />
               <div class="feat-rings">
                 <span class="ring ring-1"></span>
                 <span class="ring ring-2"></span>
@@ -262,7 +262,7 @@
         <div class="feature-card" @click="$router.push('/community')">
           <div class="feat-visual feat-visual-community">
             <div class="feat-illustration">
-              <el-icon class="feat-icon-lg"><Notebook /></el-icon>
+              <img :src="communityIcon" alt="旅行社区" class="feat-icon-img" />
               <div class="feat-rings">
                 <span class="ring ring-1"></span>
                 <span class="ring ring-2"></span>
@@ -279,7 +279,7 @@
         <div class="feature-card" @click="$router.push('/attractions')">
           <div class="feat-visual feat-visual-attraction">
             <div class="feat-illustration">
-              <el-icon class="feat-icon-lg"><OfficeBuilding /></el-icon>
+              <img :src="attractionIcon" alt="热门景点" class="feat-icon-img" />
               <div class="feat-rings">
                 <span class="ring ring-1"></span>
                 <span class="ring ring-2"></span>
@@ -331,12 +331,12 @@ import {
   UserFilled,
   Aim,
   ChatDotSquare,
-  Cpu,
-  Notebook,
-  OfficeBuilding,
   MagicStick,
 } from "@element-plus/icons-vue";
 import CountUp from "../components/CountUp.vue";
+import aiPlannerIcon from "@/assets/feature-icons/ai-planner.png";
+import communityIcon from "@/assets/feature-icons/travel-community.png";
+import attractionIcon from "@/assets/feature-icons/attraction-ticket.png";
 
 const router = useRouter();
 const searchTab = ref("flight");
@@ -934,13 +934,19 @@ const quickSearch = (hint) => {
   z-index: 1;
 }
 
-.feat-icon-lg {
-  font-size: 56px;
-  color: inherit;
+.feat-icon-img {
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
   position: relative;
   z-index: 2;
   display: block;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+  filter: drop-shadow(0 16px 24px rgba(15,23,42,0.16));
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feature-card:hover .feat-icon-img {
+  transform: translateY(-4px) scale(1.05);
 }
 
 .feat-rings {

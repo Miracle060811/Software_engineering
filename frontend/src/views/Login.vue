@@ -53,6 +53,11 @@
             >
               登 录
             </el-button>
+            <div class="form-actions">
+              <el-button link type="primary" @click="openResetDialog">
+                忘记密码？
+              </el-button>
+            </div>
           </el-form>
         </el-tab-pane>
 
@@ -112,6 +117,65 @@
         <el-button link type="primary" @click="$router.push('/')">← 返回首页</el-button>
       </p>
     </div>
+
+    <el-dialog
+      v-model="resetDialogVisible"
+      title="重置密码"
+      width="420px"
+      class="reset-dialog"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="resetFormRef"
+        :model="resetForm"
+        :rules="resetRules"
+        label-width="0"
+        class="auth-form"
+      >
+        <el-form-item prop="username">
+          <el-input
+            v-model="resetForm.username"
+            placeholder="请输入用户名"
+            size="large"
+            :prefix-icon="User"
+            class="auth-input"
+          />
+        </el-form-item>
+        <el-form-item prop="newPassword">
+          <el-input
+            v-model="resetForm.newPassword"
+            type="password"
+            placeholder="请输入新密码（至少6位）"
+            size="large"
+            :prefix-icon="Lock"
+            show-password
+            class="auth-input"
+          />
+        </el-form-item>
+        <el-form-item prop="confirmPassword">
+          <el-input
+            v-model="resetForm.confirmPassword"
+            type="password"
+            placeholder="请再次输入新密码"
+            size="large"
+            :prefix-icon="Lock"
+            show-password
+            class="auth-input"
+            @keyup.enter="handleResetPassword"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="resetDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="resetLoading"
+          @click="handleResetPassword"
+        >
+          确认重置
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -121,17 +185,22 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { User, Lock, Promotion } from "@element-plus/icons-vue";
 import { useUserStore } from "../stores/user";
+import request from "../utils/request";
 
 const router = useRouter();
 const userStore = useUserStore();
 const activeTab = ref("login");
 const loading = ref(false);
+const resetLoading = ref(false);
+const resetDialogVisible = ref(false);
 
 const loginFormRef = ref(null);
 const registerFormRef = ref(null);
+const resetFormRef = ref(null);
 
 const loginForm = ref({ username: "", password: "" });
 const registerForm = ref({ username: "", password: "", confirmPassword: "" });
+const resetForm = ref({ username: "", newPassword: "", confirmPassword: "" });
 
 const loginRules = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
@@ -160,6 +229,36 @@ const registerRules = {
       trigger: "blur",
     },
   ],
+};
+
+const resetRules = {
+  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+  newPassword: [
+    { required: true, message: "请输入新密码", trigger: "blur" },
+    { min: 6, message: "密码至少6位", trigger: "blur" },
+  ],
+  confirmPassword: [
+    { required: true, message: "请确认新密码", trigger: "blur" },
+    {
+      validator: (_rule, value, callback) => {
+        if (value !== resetForm.value.newPassword) {
+          callback(new Error("两次密码不一致"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
+  ],
+};
+
+const openResetDialog = () => {
+  resetForm.value = {
+    username: loginForm.value.username,
+    newPassword: "",
+    confirmPassword: "",
+  };
+  resetDialogVisible.value = true;
 };
 
 const handleLogin = async () => {
@@ -194,6 +293,29 @@ const handleRegister = async () => {
     // error handled in request.js
   } finally {
     loading.value = false;
+  }
+};
+
+const handleResetPassword = async () => {
+  const valid = await resetFormRef.value?.validate().catch(() => false);
+  if (!valid) return;
+  resetLoading.value = true;
+  try {
+    await request.post("/user/reset-password", null, {
+      params: {
+        username: resetForm.value.username,
+        newPassword: resetForm.value.newPassword,
+      },
+    });
+    ElMessage.success("密码重置成功，请使用新密码登录");
+    loginForm.value.username = resetForm.value.username;
+    loginForm.value.password = "";
+    resetDialogVisible.value = false;
+    activeTab.value = "login";
+  } catch (e) {
+    // error handled in request.js
+  } finally {
+    resetLoading.value = false;
   }
 };
 </script>
@@ -330,6 +452,17 @@ const handleRegister = async () => {
   letter-spacing: 4px;
   border-radius: 14px;
   margin-top: 8px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 28px;
+  margin-top: 4px;
+}
+
+.reset-dialog :deep(.el-dialog) {
+  border-radius: 16px;
 }
 
 .login-footer {

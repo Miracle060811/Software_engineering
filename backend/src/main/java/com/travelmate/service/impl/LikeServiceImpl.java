@@ -1,6 +1,7 @@
 package com.travelmate.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.travelmate.entity.Like;
 import com.travelmate.entity.Post;
 import com.travelmate.mapper.LikeMapper;
@@ -24,8 +25,11 @@ public class LikeServiceImpl implements LikeService {
     @Override
     @Transactional
     public Map<String, Object> toggleLike(Long userId, Map<String, Object> body) {
-        Long targetId = Long.valueOf(body.get("targetId").toString());
-        Integer targetType = Integer.valueOf(body.get("targetType").toString());
+        Long targetId = parseLong(body.get("targetId"), "目标ID无效");
+        Integer targetType = parseTargetType(body.get("targetType"));
+        if (targetType != 0 && targetType != 1 && targetType != 2) {
+            throw new RuntimeException("不支持的操作类型");
+        }
 
         LambdaQueryWrapper<Like> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Like::getUserId, userId)
@@ -34,9 +38,10 @@ public class LikeServiceImpl implements LikeService {
         Like existing = likeMapper.selectOne(wrapper);
 
         Map<String, Object> result = new HashMap<>();
+        boolean active;
         if (existing != null) {
             likeMapper.deleteById(existing.getId());
-            result.put("liked", false);
+            active = false;
             // 回退点赞/收藏计数
             if (targetType == 0) {
                 decrementPostLikeCount(targetId);
@@ -49,7 +54,7 @@ public class LikeServiceImpl implements LikeService {
             like.setTargetId(targetId);
             like.setTargetType(targetType);
             likeMapper.insert(like);
-            result.put("liked", true);
+            active = true;
             if (targetType == 0) {
                 incrementPostLikeCount(targetId);
             } else if (targetType == 2) {
@@ -57,6 +62,14 @@ public class LikeServiceImpl implements LikeService {
             }
         }
 
+        Post post = targetType == 0 || targetType == 2 ? postMapper.selectById(targetId) : null;
+        result.put("liked", active);
+        result.put("collected", active);
+        if (targetType == 0) {
+            result.put("count", post == null ? 0 : Optional.ofNullable(post.getLikeCount()).orElse(0));
+        } else if (targetType == 2) {
+            result.put("count", post == null ? 0 : Optional.ofNullable(post.getCollectCount()).orElse(0));
+        }
         return result;
     }
 
@@ -70,27 +83,21 @@ public class LikeServiceImpl implements LikeService {
     }
 
     private void incrementPostLikeCount(Long postId) {
-        Post post = postMapper.selectById(postId);
-        if (post != null) {
-            post.setLikeCount((post.getLikeCount() != null ? post.getLikeCount() : 0) + 1);
-            postMapper.updateById(post);
-        }
+        LambdaUpdateWrapper<Post> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(Post::getId, postId).setSql("like_count = COALESCE(like_count, 0) + 1");
+        postMapper.update(null, wrapper);
     }
 
     private void decrementPostLikeCount(Long postId) {
-        Post post = postMapper.selectById(postId);
-        if (post != null && post.getLikeCount() != null && post.getLikeCount() > 0) {
-            post.setLikeCount(post.getLikeCount() - 1);
-            postMapper.updateById(post);
-        }
+        LambdaUpdateWrapper<Post> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(Post::getId, postId).setSql("like_count = GREATEST(COALESCE(like_count, 0) - 1, 0)");
+        postMapper.update(null, wrapper);
     }
 
     private void incrementPostCollectCount(Long postId) {
-        Post post = postMapper.selectById(postId);
-        if (post != null) {
-            post.setCollectCount((post.getCollectCount() != null ? post.getCollectCount() : 0) + 1);
-            postMapper.updateById(post);
-        }
+        LambdaUpdateWrapper<Post> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(Post::getId, postId).setSql("collect_count = COALESCE(collect_count, 0) + 1");
+        postMapper.update(null, wrapper);
     }
 
     @Override
@@ -122,10 +129,38 @@ public class LikeServiceImpl implements LikeService {
     }
 
     private void decrementPostCollectCount(Long postId) {
-        Post post = postMapper.selectById(postId);
-        if (post != null && post.getCollectCount() != null && post.getCollectCount() > 0) {
-            post.setCollectCount(post.getCollectCount() - 1);
-            postMapper.updateById(post);
+        LambdaUpdateWrapper<Post> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(Post::getId, postId).setSql("collect_count = GREATEST(COALESCE(collect_count, 0) - 1, 0)");
+        postMapper.update(null, wrapper);
+    }
+
+    private Long parseLong(Object value, String message) {
+        if (value == null) {
+            throw new RuntimeException(message);
         }
+        try {
+            return Long.valueOf(value.toString());
+        } catch (NumberFormatException e) {
+            throw new RuntimeException(message);
+        }
+    }
+
+    private Integer parseTargetType(Object value) {
+        if (value == null) {
+            throw new RuntimeException("操作类型不能为空");
+        }
+        String raw = value.toString().trim();
+        return switch (raw.toLowerCase()) {
+            case "post", "like", "post_like" -> 0;
+            case "comment", "comment_like" -> 1;
+            case "collect", "favorite", "post_collect" -> 2;
+            default -> {
+                try {
+                    yield Integer.valueOf(raw);
+                } catch (NumberFormatException e) {
+                    throw new RuntimeException("操作类型无效");
+                }
+            }
+        };
     }
 }

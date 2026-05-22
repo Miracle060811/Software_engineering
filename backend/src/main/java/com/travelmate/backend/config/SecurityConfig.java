@@ -24,14 +24,16 @@ public class SecurityConfig {
                                 .httpBasic(basic -> basic.disable())
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(
-                                                                "/user/register", "/user/login")
+                                                                "/user/register", "/user/login",
+                                                                "/user/reset-password")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/flight/**",
                                                                 "/api/train/**",
                                                                 "/api/hotel/search",
                                                                 "/api/attraction/search",
-                                                                "/api/review/list")
+                                                                "/api/review/list",
+                                                                "/api/coupon/list")
                                                 .permitAll()
                                                 .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET,
                                                                 "^/api/hotel/\\d+$"))

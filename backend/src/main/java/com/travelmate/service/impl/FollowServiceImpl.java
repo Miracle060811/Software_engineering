@@ -23,8 +23,14 @@ public class FollowServiceImpl implements FollowService {
 
     @Override
     public int toggleFollow(Long followerId, Long followeeId) {
+        if (followerId == null || followeeId == null) {
+            throw new RuntimeException("用户信息无效");
+        }
         if (followerId.equals(followeeId)) {
             throw new RuntimeException("不能关注自己");
+        }
+        if (userMapper.selectById(followeeId) == null) {
+            throw new RuntimeException("被关注用户不存在");
         }
 
         LambdaQueryWrapper<Follow> wrapper = new LambdaQueryWrapper<>();
@@ -70,6 +76,9 @@ public class FollowServiceImpl implements FollowService {
 
     @Override
     public int followStatus(Long followerId, Long followeeId) {
+        if (followerId == null || followeeId == null) {
+            return 0;
+        }
         LambdaQueryWrapper<Follow> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Follow::getFollowerId, followerId)
                 .eq(Follow::getFolloweeId, followeeId);

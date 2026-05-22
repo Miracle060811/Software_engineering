@@ -9,9 +9,11 @@ import com.travelmate.entity.HotelRoom;
 import com.travelmate.mapper.HotelMapper;
 import com.travelmate.mapper.HotelOrderMapper;
 import com.travelmate.mapper.HotelRoomMapper;
+import com.travelmate.service.CouponService;
 import com.travelmate.service.HotelOrderService;
 import com.travelmate.service.HotelRoomStockService;
 import com.travelmate.service.NotificationCenterService;
+import com.travelmate.service.StockPreDeductResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +41,9 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
     @Autowired
     private NotificationCenterService notificationCenterService;
 
+    @Autowired
+    private CouponService couponService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String createOrder(Long userId, HotelOrderCreateDTO dto) {
@@ -62,8 +67,9 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
             throw new RuntimeException("房型与酒店不匹配");
         }
 
-        boolean redisPreDeducted = hotelRoomStockService.preDeductRoom(dto.getRoomId(), room.getAvailableRooms());
-        if (!redisPreDeducted) {
+        StockPreDeductResult preDeductResult = hotelRoomStockService.preDeductRoom(dto.getRoomId(),
+                room.getAvailableRooms());
+        if (preDeductResult == StockPreDeductResult.NO_STOCK) {
             throw new RuntimeException("该房型暂无可用房间，预订失败");
         }
 
@@ -78,6 +84,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
                 throw new RuntimeException("房型价格缺失，暂不可预订");
             }
             BigDecimal amount = room.getPrice().multiply(BigDecimal.valueOf(nights));
+            BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), amount);
 
             HotelOrder order = new HotelOrder();
             String orderNo = "HT" + System.currentTimeMillis()
@@ -93,7 +100,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
             order.setNights((int) nights);
             order.setGuestName(dto.getGuestName());
             order.setGuestPhone(dto.getGuestPhone());
-            order.setAmount(amount);
+            order.setAmount(payableAmount);
             order.setStatus(0);
             order.setCreateTime(LocalDateTime.now());
 
@@ -109,7 +116,9 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
 
             return orderNo;
         } catch (Exception e) {
-            hotelRoomStockService.rollbackPreDeduct(dto.getRoomId());
+            if (preDeductResult == StockPreDeductResult.DEDUCTED_IN_REDIS) {
+                hotelRoomStockService.rollbackPreDeduct(dto.getRoomId());
+            }
             throw e;
         }
     }

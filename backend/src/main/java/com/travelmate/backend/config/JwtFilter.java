@@ -43,12 +43,15 @@ public class JwtFilter extends OncePerRequestFilter {
                 String username = jwtUtil.extractUsername(token);
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>();
                 User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
-                if (user != null && user.getRole() != null && user.getRole() == 1) {
-                    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                if (user != null && Integer.valueOf(1).equals(user.getStatus())
+                        && Integer.valueOf(0).equals(user.getDeleted())) {
+                    if (user.getRole() != null && user.getRole() == 1) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                    }
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null,
+                            authorities);
+                    SecurityContextHolder.getContext().setAuthentication(auth);
                 }
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null,
-                        authorities);
-                SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (Exception e) {
                 // token无效，不设置认证信息
             }

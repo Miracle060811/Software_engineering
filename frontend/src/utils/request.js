@@ -23,6 +23,8 @@ const handleAuthExpired = () => {
   window.location.replace("/login");
 };
 
+const shouldNotify = (config) => !config?.silent && !config?.skipErrorMessage;
+
 const request = axios.create({
   baseURL: apiBaseURL,
   timeout: 30000,
@@ -45,7 +47,9 @@ request.interceptors.response.use(
         return res.data;
       }
 
-      ElMessage.error(res.msg || "请求失败");
+      if (shouldNotify(response.config)) {
+        ElMessage.error(res.msg || "请求失败");
+      }
       const businessError = new Error(res.msg || "请求失败");
       businessError.response = {
         status: response.status,
@@ -65,12 +69,16 @@ request.interceptors.response.use(
     }
 
     if (!error.response) {
-      ElMessage.error("无法连接后端服务，请确认前后端都已启动");
+      if (shouldNotify(error.config)) {
+        ElMessage.error("无法连接后端服务，请确认前后端都已启动");
+      }
       return Promise.reject(error);
     }
 
     sessionStorage.removeItem(AUTH_REDIRECT_FLAG);
-    ElMessage.error(error.response.data?.msg || error.message || "请求失败");
+    if (shouldNotify(error.config)) {
+      ElMessage.error(error.response.data?.msg || error.message || "请求失败");
+    }
     return Promise.reject(error);
   },
 );

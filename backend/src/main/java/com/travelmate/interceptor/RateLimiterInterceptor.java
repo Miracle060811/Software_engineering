@@ -2,7 +2,9 @@ package com.travelmate.interceptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.travelmate.annotation.RateLimiter;
+import com.travelmate.common.RedisKeyConstants;
 import com.travelmate.common.Result;
+import com.travelmate.common.UserContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,9 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
+    @Autowired
+    private UserContext userContext;
+
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull Object handler) throws Exception {
@@ -40,7 +45,7 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
 
         String ip = getClientIp(request);
         String uri = request.getRequestURI();
-        String key = "rate_limit:" + ip + ":" + uri;
+        String key = buildRateLimitKey(ip, uri);
 
         Long count;
         try {
@@ -73,5 +78,18 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
             return xff.split(",")[0].trim();
         }
         return request.getRemoteAddr();
+    }
+
+    private String buildRateLimitKey(String ip, String uri) {
+        Long userId = null;
+        try {
+            userId = userContext.getCurrentUserIdOrNull();
+        } catch (RuntimeException ignored) {
+        }
+
+        if (userId != null) {
+            return RedisKeyConstants.RATE_LIMIT_USER_PREFIX + userId + ":" + uri;
+        }
+        return RedisKeyConstants.RATE_LIMIT_IP_PREFIX + ip + ":" + uri;
     }
 }
