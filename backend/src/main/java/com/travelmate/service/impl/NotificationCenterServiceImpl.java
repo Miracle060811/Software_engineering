@@ -19,6 +19,11 @@ public class NotificationCenterServiceImpl implements NotificationCenterService 
 
     @Override
     public void createNotification(Long userId, String type, String title, String content) {
+        createNotification(userId, type, title, content, null);
+    }
+
+    @Override
+    public void createNotification(Long userId, String type, String title, String content, String actionUrl) {
         if (userId == null) {
             return;
         }
@@ -29,6 +34,7 @@ public class NotificationCenterServiceImpl implements NotificationCenterService 
             notification.setType(type);
             notification.setTitle(title);
             notification.setContent(content);
+            notification.setActionUrl(actionUrl);
             notification.setIsRead(0);
             notification.setCreateTime(LocalDateTime.now());
             notificationMapper.insert(notification);
@@ -51,6 +57,21 @@ public class NotificationCenterServiceImpl implements NotificationCenterService 
                 .eq(Notification::getUserId, userId)
                 .set(Notification::getIsRead, 1);
         notificationMapper.update(null, wrapper);
+    }
+
+    @Override
+    public void deleteNotification(Long id, Long userId) {
+        LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Notification::getId, id)
+                .eq(Notification::getUserId, userId);
+        notificationMapper.delete(wrapper);
+    }
+
+    @Override
+    public void deleteAllNotifications(Long userId) {
+        LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Notification::getUserId, userId);
+        notificationMapper.delete(wrapper);
     }
 
     @Override

@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "check:images": "node scripts/check-image-links.mjs"
+  },
   "dependencies": {
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^1.0.2",

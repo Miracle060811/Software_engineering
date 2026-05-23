@@ -287,11 +287,15 @@ CREATE TABLE IF NOT EXISTS `tm_notification` (
   `type` VARCHAR(50) NOT NULL COMMENT '通知类型(order/comment/like/system)',
   `title` VARCHAR(200) NOT NULL COMMENT '通知标题',
   `content` TEXT COMMENT '通知内容',
+  `action_url` VARCHAR(300) DEFAULT NULL COMMENT '点击跳转路径',
   `is_read` TINYINT(1) DEFAULT '0' COMMENT '0-未读, 1-已读',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='站内通知表';
+
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_notification` ADD COLUMN `action_url` VARCHAR(300) DEFAULT NULL COMMENT ''点击跳转路径'' AFTER `content`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_notification' AND COLUMN_NAME = 'action_url');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- 15. 社区游记表 (Post) 成员D负责
 CREATE TABLE IF NOT EXISTS `tm_post` (
@@ -473,20 +477,20 @@ INSERT IGNORE INTO `tm_train` (`train_no`, `train_type`, `departure_station`, `a
 -- 酒店数据
 -- 酒店封面采用与酒店匹配的真实酒店照片；来源优先使用酒店官网、OTA 酒店图库或 Wikimedia Commons，并在 tm_media_asset 中记录来源。
 INSERT IGNORE INTO `tm_hotel` (`id`, `name`, `city`, `address`, `star_rating`, `description`, `cover_img`, `lat`, `lng`, `avg_price`, `score`, `source_name`, `source_url`, `data_checked_date`) VALUES
-(1, '北京国贸大酒店', '北京', '朝阳区建国门外大街1号', 5, '位于北京CBD核心地带，毗邻国贸商圈，提供顶级商务服务与城市景观。', 'https://upload.wikimedia.org/wikipedia/commons/e/ef/The_Forbidden_City_-_View_from_Coal_Hill.jpg', 39.9087, 116.4575, 1580.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(2, '上海外滩华尔道夫酒店', '上海', '黄浦区中山东一路2号', 5, '位于外滩历史建筑群区域，临近黄浦江与外滩公共开放空间。', 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Shanghai_Bund-20150516-RM-173803.jpg', 31.2400, 121.4900, 2380.00, 4.9, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(3, '广州白天鹅宾馆', '广州', '荔湾区沙面岛南街1号', 5, '坐落于沙面岛珠江畔，是广州具有代表性的老牌高星酒店。', 'https://upload.wikimedia.org/wikipedia/commons/5/50/Guangzhou_skyline_%283to4%29.jpg', 23.1198, 113.2432, 1280.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(4, '成都锦江宾馆', '成都', '锦江区人民南路二段80号', 4, '位于成都市中心区域，临近天府广场及核心商圈。', 'https://upload.wikimedia.org/wikipedia/commons/2/20/Chengdu_skyline_June_2017.jpg', 30.6500, 104.0633, 880.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(5, '西安大唐芙蓉园精品酒店', '西安', '雁塔区芙蓉南路100号', 4, '临近大唐芙蓉园景区，适合古都文化主题出行。', 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Xi-an_city_wall_side.jpg', 34.2076, 109.0082, 680.00, 4.5, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(6, '三亚亚龙湾万豪度假酒店', '三亚', '亚龙湾国家旅游度假区', 5, '位于亚龙湾度假区，面向滨海休闲度假场景。', 'https://upload.wikimedia.org/wikipedia/commons/4/44/Yalong_Bay_01.jpg', 18.2208, 109.6600, 2880.00, 4.9, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(7, '丽江古城铂尔曼大酒店', '丽江', '古城区象山路99号', 5, '临近丽江古城，面向古城休闲与雪山观光客群。', 'https://upload.wikimedia.org/wikipedia/commons/7/74/1_lijiang_old_town_night.jpg', 26.8720, 100.2275, 1680.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(8, '杭州西湖喜来登大酒店', '杭州', '西湖区北山路9号', 5, '位于西湖周边，适合湖滨休闲及城市观光。', 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Hangzhou_Skyline_against_the_West_Lake.png', 30.2563, 120.1495, 1980.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(9, '重庆解放碑威斯汀酒店', '重庆', '渝中区中山三路36号', 5, '位于重庆中心城区，适合解放碑及两江夜景行程。', 'https://upload.wikimedia.org/wikipedia/commons/f/f5/Chongqing_Skyline_At_Night.png', 29.5600, 106.5714, 1380.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(10, '北京王府井万豪酒店', '北京', '东城区王府井大街57号', 5, '位于王府井商圈，临近故宫、天安门等核心景点。', 'https://upload.wikimedia.org/wikipedia/commons/2/28/Beijing_Wangfujing_Yintai_in88_%2820220908154425%29.jpg', 39.9200, 116.4114, 1880.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(11, '上海静安香格里拉大酒店', '上海', '静安区静安寺路1218号', 5, '位于南京西路商圈，临近静安寺及商业办公区。', 'https://upload.wikimedia.org/wikipedia/commons/4/48/2024-Apr_Jing-an_Temple_%E9%9D%99%E5%AE%89%E5%AF%BA_Shanghai_02.jpg', 31.2244, 121.4471, 1680.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(12, '厦门悦华酒店', '厦门', '湖里区乌石浦路2号', 4, '位于厦门岛内，适合商务与休闲出行。', 'https://upload.wikimedia.org/wikipedia/commons/b/b6/Gulangyu_Island_from_Zhongshan_Road%2C_Xiamen.jpg', 24.5020, 118.0936, 780.00, 4.5, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(13, '桂林香格里拉大酒店', '桂林', '象山区解放东路111号', 5, '临近漓江城市段，适合桂林山水观光行程。', 'https://upload.wikimedia.org/wikipedia/commons/9/92/1_li_jiang_guilin_yangshuo_2011.jpg', 25.2877, 110.2978, 1180.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-19'),
-(14, '青岛海景花园大酒店', '青岛', '市南区香港中路76号', 5, '位于青岛滨海城区，适合海滨度假及城市观光。', 'https://upload.wikimedia.org/wikipedia/commons/8/89/Zhanqiao_pier_with_Little_Qingdao_Isle.jpg', 36.0584, 120.3817, 1280.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-19');
+(1, '北京国贸大酒店', '北京', '朝阳区建国门外大街1号', 5, '位于北京CBD核心地带，毗邻国贸商圈，提供顶级商务服务与城市景观。', '/images/seed/beijing.svg', 39.9087, 116.4575, 1580.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(2, '上海外滩华尔道夫酒店', '上海', '黄浦区中山东一路2号', 5, '位于外滩历史建筑群区域，临近黄浦江与外滩公共开放空间。', '/images/seed/shanghai.svg', 31.2400, 121.4900, 2380.00, 4.9, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(3, '广州白天鹅宾馆', '广州', '荔湾区沙面岛南街1号', 5, '坐落于沙面岛珠江畔，是广州具有代表性的老牌高星酒店。', '/images/seed/attraction.svg', 23.1198, 113.2432, 1280.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(4, '成都锦江宾馆', '成都', '锦江区人民南路二段80号', 4, '位于成都市中心区域，临近天府广场及核心商圈。', '/images/seed/chengdu.svg', 30.6500, 104.0633, 880.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(5, '西安大唐芙蓉园精品酒店', '西安', '雁塔区芙蓉南路100号', 4, '临近大唐芙蓉园景区，适合古都文化主题出行。', '/images/seed/xian.svg', 34.2076, 109.0082, 680.00, 4.5, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(6, '三亚亚龙湾万豪度假酒店', '三亚', '亚龙湾国家旅游度假区', 5, '位于亚龙湾度假区，面向滨海休闲度假场景。', '/images/seed/sanya.svg', 18.2208, 109.6600, 2880.00, 4.9, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(7, '丽江古城铂尔曼大酒店', '丽江', '古城区象山路99号', 5, '临近丽江古城，面向古城休闲与雪山观光客群。', '/images/seed/attraction.svg', 26.8720, 100.2275, 1680.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(8, '杭州西湖喜来登大酒店', '杭州', '西湖区北山路9号', 5, '位于西湖周边，适合湖滨休闲及城市观光。', '/images/seed/hangzhou.svg', 30.2563, 120.1495, 1980.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(9, '重庆解放碑威斯汀酒店', '重庆', '渝中区中山三路36号', 5, '位于重庆中心城区，适合解放碑及两江夜景行程。', '/images/seed/chongqing.svg', 29.5600, 106.5714, 1380.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(10, '北京王府井万豪酒店', '北京', '东城区王府井大街57号', 5, '位于王府井商圈，临近故宫、天安门等核心景点。', '/images/seed/beijing.svg', 39.9200, 116.4114, 1880.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(11, '上海静安香格里拉大酒店', '上海', '静安区静安寺路1218号', 5, '位于南京西路商圈，临近静安寺及商业办公区。', '/images/seed/shanghai.svg', 31.2244, 121.4471, 1680.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(12, '厦门悦华酒店', '厦门', '湖里区乌石浦路2号', 4, '位于厦门岛内，适合商务与休闲出行。', '/images/seed/coast.svg', 24.5020, 118.0936, 780.00, 4.5, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(13, '桂林香格里拉大酒店', '桂林', '象山区解放东路111号', 5, '临近漓江城市段，适合桂林山水观光行程。', '/images/seed/guilin.svg', 25.2877, 110.2978, 1180.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-19'),
+(14, '青岛海景花园大酒店', '青岛', '市南区香港中路76号', 5, '位于青岛滨海城区，适合海滨度假及城市观光。', '/images/seed/qingdao.svg', 36.0584, 120.3817, 1280.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-19');
 
 -- 酒店房型数据
 INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`, `price`, `total_rooms`, `available_rooms`, `facilities`) VALUES
@@ -535,34 +539,34 @@ WHERE NOT EXISTS (
 -- 景点数据
 -- 票价与开放时间来自官方/政府页面核验；余票为演示库存，不代表实时可售库存。
 INSERT INTO `tm_attraction` (`id`, `name`, `city`, `address`, `description`, `cover_img`, `adult_price`, `child_price`, `total_tickets`, `available_tickets`, `open_time`, `lat`, `lng`, `official_url`, `source_name`, `data_checked_date`) VALUES
-(1, '故宫博物院', '北京', '东城区景山前街4号', '明清两代皇家宫殿，世界文化遗产，馆藏体系覆盖古代宫廷建筑、书画、器物等。', 'https://commons.wikimedia.org/wiki/Special:FilePath/The_Forbidden_City_-_View_from_Coal_Hill.jpg?width=800', 60.00, 0.00, 1000, 456, '08:30-17:00（旺季，周一闭馆，法定节假日除外）', 39.916345, 116.397155, 'https://www.dpm.org.cn/Visit.html', '故宫博物院官网', '2026-05-19'),
-(2, '颐和园', '北京', '海淀区新建宫门路19号', '以昆明湖、万寿山为主体的大型皇家园林，1998年列入世界遗产名录。', 'https://commons.wikimedia.org/wiki/Special:FilePath/20090530_Beijing_Summer_Palace_8467.jpg?width=800', 30.00, 0.00, 2000, 1234, '06:00-20:00（旺季，停止入园19:00）', 39.999946, 116.275481, 'https://www.summerpalace.net.cn/visit.html', '颐和园官网', '2026-05-19'),
-(3, '外滩', '上海', '黄浦区中山东一路', '上海近代城市景观代表区域，沿黄浦江分布多座历史建筑，是城市公共开放空间。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Shanghai_Bund-20150516-RM-173803.jpg?width=800', 0.00, 0.00, 9999, 9999, '全天开放', 31.239706, 121.490317, 'https://www.shhuangpu.gov.cn/', '上海市黄浦区人民政府', '2026-05-19'),
-(4, '西湖', '杭州', '西湖区龙井路1号', '杭州西湖文化景观为世界文化遗产，核心湖区与沿湖开放空间面向公众开放。', 'https://commons.wikimedia.org/wiki/Special:FilePath/West_Lake%2C_Hangzhou_%28Nine-turn_bridge%29.jpg?width=800', 0.00, 0.00, 9999, 9999, '全天开放（部分收费景点另行开放）', 30.242703, 120.150269, 'https://westlake.hangzhou.gov.cn/', '杭州西湖风景名胜区管委会', '2026-05-19'),
-(5, '张家界国家森林公园', '张家界', '武陵源区国家森林公园内', '中国第一个国家森林公园，武陵源世界自然遗产核心景区之一，以石英砂岩峰林地貌著称。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Zhangjiajie_National_Forest_Park.jpg?width=800', 227.00, 113.00, 500, 234, '07:30-18:00（以景区当日公告为准）', 29.327001, 110.475704, 'https://wly.hunan.gov.cn/', '湖南省文化和旅游厅/武陵源景区公开信息', '2026-05-19'),
-(6, '秦始皇帝陵博物院', '西安', '临潼区秦陵北路', '以秦始皇兵马俑坑和秦始皇陵相关遗址为核心的遗址类博物馆。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Terracotta_Army_%2854082561381%29.jpg?width=800', 120.00, 0.00, 800, 356, '08:30-18:30（旺季，停止检票17:00）', 34.384018, 109.278491, 'https://www.bmy.com.cn/', '秦始皇帝陵博物院官网', '2026-05-19'),
-(7, '九寨沟风景名胜区', '阿坝', '阿坝藏族羌族自治州九寨沟县漳扎镇', '以高山湖泊、瀑布群、彩林和雪峰景观闻名的世界自然遗产。', 'https://commons.wikimedia.org/wiki/Special:FilePath/1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg?width=800', 190.00, 95.00, 1000, 445, '07:30-17:00（旺季，具体以景区公告为准）', 33.260772, 103.918599, 'https://www.jiuzhai.com/intelligent-service/tickets', '九寨沟风景名胜区官网', '2026-05-19'),
-(8, '黄山风景区', '黄山', '黄山市黄山区汤口镇', '世界文化与自然双重遗产，以奇松、怪石、云海、温泉等景观著称。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Anhui_Huangshan.jpg?width=800', 190.00, 95.00, 1500, 678, '06:00-17:30（旺季，具体以景区公告为准）', 30.130130, 118.168498, 'https://hsgwh.huangshan.gov.cn/', '黄山风景区管委会', '2026-05-19'),
-(9, '漓江风景名胜区', '桂林', '桂林市灵川县至阳朔县漓江沿线', '桂林山水代表性景区，游船线路以漓江喀斯特峰林、江湾和田园景观为核心。', 'https://commons.wikimedia.org/wiki/Special:FilePath/1_li_jiang_guilin_yangshuo_2011.jpg?width=800', 210.00, 105.00, 600, 289, '08:00-12:00（游船班次以当日公告为准）', 25.166667, 110.416667, 'https://wglj.guilin.gov.cn/', '桂林市文化广电和旅游局', '2026-05-19'),
-(10, '天坛公园', '北京', '东城区天坛东里甲1号', '明清两代皇帝祭天祈谷场所，是北京中轴线南段的重要世界文化遗产。', 'https://commons.wikimedia.org/wiki/Special:FilePath/20200110_Temple_of_Heaven-1.jpg?width=800', 34.00, 17.00, 2000, 1280, '06:00-22:00（景点院落开放时间另行公告）', 39.882200, 116.406600, 'http://www.tiantanpark.com/', '天坛公园官网', '2026-05-19'),
-(11, '八达岭长城', '北京', '延庆区G6京藏高速58号出口', '明长城重要关隘，保存状况较好，是北京长城游览代表景区。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Badaling_China_Great-Wall-of-China-01.jpg?width=800', 40.00, 20.00, 2500, 1600, '06:30-16:30（以景区公告为准）', 40.358100, 116.020300, 'https://www.badaling.cn/', '八达岭长城景区官网', '2026-05-19'),
-(12, '东方明珠广播电视塔', '上海', '浦东新区世纪大道1号', '上海陆家嘴地标建筑，集城市观光、展览和餐饮功能于一体。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Oriental_Pearl_Tower_in_Shanghai.jpg?width=800', 199.00, 99.00, 1800, 920, '09:00-21:00（以景区公告为准）', 31.239700, 121.499800, 'https://www.orientalpearltower.com/', '东方明珠官网', '2026-05-19'),
-(13, '豫园', '上海', '黄浦区福佑路168号', '江南古典园林代表之一，周边连接豫园商城和城隍庙历史文化街区。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Yuyuan_Garden_3.jpg?width=800', 40.00, 20.00, 1200, 760, '09:00-16:30（以景区公告为准）', 31.227200, 121.492100, 'https://www.yuyuantm.com.cn/', '豫园商城公开信息', '2026-05-19'),
-(14, '上海迪士尼乐园', '上海', '浦东新区川沙新镇黄赵路310号', '大型主题乐园，包含主题园区、演艺、巡游和烟花等游乐体验。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Firework_in_Shanghai_Disneyland_Park.jpg?width=800', 475.00, 356.00, 3000, 1780, '08:30-21:30（以乐园日历为准）', 31.143400, 121.657900, 'https://www.shanghaidisneyresort.com/', '上海迪士尼度假区官网', '2026-05-19'),
-(15, '成都大熊猫繁育研究基地', '成都', '成华区熊猫大道1375号', '以大熊猫保护、繁育、科研和公众教育为核心的生态型景区。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Chengdu-pandas-d10.jpg?width=800', 55.00, 27.00, 2000, 1188, '07:30-18:00（以景区公告为准）', 30.735500, 104.145600, 'https://www.panda.org.cn/', '成都大熊猫繁育研究基地官网', '2026-05-19'),
-(16, '都江堰景区', '成都', '都江堰市公园路', '世界文化遗产，古代水利工程代表，与青城山共同构成重要旅游目的地。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Dujiang_Weir.jpg?width=800', 80.00, 40.00, 1800, 960, '08:00-18:00（以景区公告为准）', 31.001700, 103.605500, 'https://www.djy517.com/', '都江堰青城山景区官网', '2026-05-19'),
-(17, '蜈支洲岛', '三亚', '海棠区林旺镇后海村', '三亚近海海岛景区，以海水能见度、潜水和滨海休闲项目闻名。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Wuzhizhou_Island_-_01.jpg?width=800', 136.00, 68.00, 1500, 820, '08:00-18:30（航班以天气和公告为准）', 18.312600, 109.757400, 'https://www.wuzhizhou.com/', '蜈支洲岛旅游区官网', '2026-05-19'),
-(18, '天涯海角游览区', '三亚', '天涯区天涯镇马岭山麓', '海南代表性滨海文化景区，以海滨礁石景观和“天涯”“海角”题刻闻名。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Beach_of_Tianya-Haijiao_near_Tianya_Rock_%2820230325134441%29.jpg?width=800', 68.00, 34.00, 1600, 900, '08:00-18:00（以景区公告为准）', 18.296000, 109.344000, 'https://www.aitianya.cn/', '天涯海角游览区官网', '2026-05-19'),
-(19, '丽江古城', '丽江', '古城区大研古城', '世界文化遗产，以纳西族传统街巷、水系和民居建筑景观著称。', 'https://commons.wikimedia.org/wiki/Special:FilePath/1_lijiang_old_town_night.jpg?width=800', 0.00, 0.00, 9999, 9999, '全天开放（部分院落另行开放）', 26.872200, 100.233000, 'https://www.ljgucheng.com/', '丽江古城保护管理局公开信息', '2026-05-19'),
-(20, '亚龙湾国家旅游度假区', '三亚', '吉阳区亚龙湾国家旅游度假区', '三亚重要滨海度假区，以海湾、沙滩和度假酒店群为主要吸引物。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Yalong_Bay_01.jpg?width=800', 0.00, 0.00, 9999, 9999, '全天开放（海滩及项目以现场公告为准）', 18.229500, 109.637000, 'https://lwj.sanya.gov.cn/', '三亚市旅游和文化广电体育局', '2026-05-19'),
-(21, '鼓浪屿', '厦门', '思明区鼓浪屿', '世界文化遗产，融合海岛街巷、近代建筑和音乐文化景观。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Gulangyu_Island_from_Zhongshan_Road%2C_Xiamen.jpg?width=800', 0.00, 0.00, 9999, 9999, '全天开放（上岛船班及收费景点另行公告）', 24.447700, 118.061900, 'https://gly.xm.gov.cn/', '鼓浪屿管委会公开信息', '2026-05-19'),
-(22, '中山陵', '南京', '玄武区石象路7号', '孙中山先生陵寝所在地，位于钟山风景名胜区内，是南京重要历史文化地标。', 'https://commons.wikimedia.org/wiki/Special:FilePath/China-Nanjing_%282024%29_Mausoleum_of_Sun_Yat_Sen_%E4%B8%AD%E5%B1%B1%E9%99%B5_-_img_08.jpg?width=800', 0.00, 0.00, 3000, 2100, '08:30-17:00（周一部分区域闭馆，节假日除外）', 32.064300, 118.848600, 'https://zschina.nanjing.gov.cn/', '南京钟山风景区官网', '2026-05-19'),
-(23, '拙政园', '苏州', '姑苏区东北街178号', '苏州古典园林代表，世界文化遗产，以水景、亭台和园林空间布局著称。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Humble_Administrator%27s_Garden_Suzhou_November_2017_005.jpg?width=800', 80.00, 40.00, 1400, 780, '07:30-17:30（以景区公告为准）', 31.324300, 120.629700, 'https://www.szzzy.cn/', '拙政园官网', '2026-05-19'),
-(24, '洪崖洞民俗风貌区', '重庆', '渝中区嘉陵江滨江路88号', '重庆山城夜景代表地，以吊脚楼风貌、滨江夜景和城市商业空间闻名。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Hongyadong_night_lights_Chongqing.jpg?width=800', 0.00, 0.00, 9999, 9999, '全天开放（商户营业时间不一）', 29.562800, 106.584000, 'https://whlyw.cq.gov.cn/', '重庆市文化和旅游发展委员会', '2026-05-19'),
-(25, '龙脊梯田', '桂林', '龙胜各族自治县和平乡', '桂林北部山地梯田景观，包含平安寨、金坑大寨等观景区域。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Longji_Rice_Terraces_004.jpg?width=800', 80.00, 40.00, 1000, 520, '08:00-17:30（以景区公告为准）', 25.764000, 110.123000, 'https://wglj.guilin.gov.cn/', '桂林市文化广电和旅游局', '2026-05-19'),
-(26, '象鼻山景区', '桂林', '象山区滨江路1号', '桂林城市山水代表景观，山体形似象鼻伸入漓江，是桂林标志性景点。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Elephant_Trunk_Hill%2C_Guilin.jpg?width=800', 0.00, 0.00, 1800, 1260, '07:00-18:00（以景区公告为准）', 25.273900, 110.296700, 'https://wglj.guilin.gov.cn/', '桂林市文化广电和旅游局', '2026-05-19'),
-(27, '天门山国家森林公园', '张家界', '永定区大庸路', '张家界城市近郊山岳型景区，以天门洞、玻璃栈道和索道体验闻名。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Zhangjiajie_from_Tianmen_Mountain_01.jpg?width=800', 278.00, 139.00, 1200, 660, '08:00-18:00（索道及线路以景区公告为准）', 29.044600, 110.482400, 'https://wly.hunan.gov.cn/', '湖南省文化和旅游厅/天门山公开信息', '2026-05-19'),
-(28, '宏村', '黄山', '黟县宏村镇', '皖南古村落代表，世界文化遗产，以月沼、水圳和徽派民居格局著称。', 'https://commons.wikimedia.org/wiki/Special:FilePath/Yuezhao_Lake%2C_Hongcun%2C_Anhui%2C_China.jpg?width=800', 104.00, 52.00, 1200, 720, '07:30-17:30（以景区公告为准）', 30.004900, 117.987500, 'https://ct.ah.gov.cn/', '安徽省文化和旅游厅公开信息', '2026-05-19')
+(1, '故宫博物院', '北京', '东城区景山前街4号', '明清两代皇家宫殿，世界文化遗产，馆藏体系覆盖古代宫廷建筑、书画、器物等。', '/images/seed/beijing.svg', 60.00, 0.00, 1000, 456, '08:30-17:00（旺季，周一闭馆，法定节假日除外）', 39.916345, 116.397155, 'https://www.dpm.org.cn/Visit.html', '故宫博物院官网', '2026-05-19'),
+(2, '颐和园', '北京', '海淀区新建宫门路19号', '以昆明湖、万寿山为主体的大型皇家园林，1998年列入世界遗产名录。', '/images/seed/beijing.svg', 30.00, 0.00, 2000, 1234, '06:00-20:00（旺季，停止入园19:00）', 39.999946, 116.275481, 'https://www.summerpalace.net.cn/visit.html', '颐和园官网', '2026-05-19'),
+(3, '外滩', '上海', '黄浦区中山东一路', '上海近代城市景观代表区域，沿黄浦江分布多座历史建筑，是城市公共开放空间。', '/images/seed/shanghai.svg', 0.00, 0.00, 9999, 9999, '全天开放', 31.239706, 121.490317, 'https://www.shhuangpu.gov.cn/', '上海市黄浦区人民政府', '2026-05-19'),
+(4, '西湖', '杭州', '西湖区龙井路1号', '杭州西湖文化景观为世界文化遗产，核心湖区与沿湖开放空间面向公众开放。', '/images/seed/hangzhou.svg', 0.00, 0.00, 9999, 9999, '全天开放（部分收费景点另行开放）', 30.242703, 120.150269, 'https://westlake.hangzhou.gov.cn/', '杭州西湖风景名胜区管委会', '2026-05-19'),
+(5, '张家界国家森林公园', '张家界', '武陵源区国家森林公园内', '中国第一个国家森林公园，武陵源世界自然遗产核心景区之一，以石英砂岩峰林地貌著称。', '/images/seed/zhangjiajie.svg', 227.00, 113.00, 500, 234, '07:30-18:00（以景区当日公告为准）', 29.327001, 110.475704, 'https://wly.hunan.gov.cn/', '湖南省文化和旅游厅/武陵源景区公开信息', '2026-05-19'),
+(6, '秦始皇帝陵博物院', '西安', '临潼区秦陵北路', '以秦始皇兵马俑坑和秦始皇陵相关遗址为核心的遗址类博物馆。', '/images/seed/xian.svg', 120.00, 0.00, 800, 356, '08:30-18:30（旺季，停止检票17:00）', 34.384018, 109.278491, 'https://www.bmy.com.cn/', '秦始皇帝陵博物院官网', '2026-05-19'),
+(7, '九寨沟风景名胜区', '阿坝', '阿坝藏族羌族自治州九寨沟县漳扎镇', '以高山湖泊、瀑布群、彩林和雪峰景观闻名的世界自然遗产。', '/images/seed/lake.svg', 190.00, 95.00, 1000, 445, '07:30-17:00（旺季，具体以景区公告为准）', 33.260772, 103.918599, 'https://www.jiuzhai.com/intelligent-service/tickets', '九寨沟风景名胜区官网', '2026-05-19'),
+(8, '黄山风景区', '黄山', '黄山市黄山区汤口镇', '世界文化与自然双重遗产，以奇松、怪石、云海、温泉等景观著称。', '/images/seed/mountain.svg', 190.00, 95.00, 1500, 678, '06:00-17:30（旺季，具体以景区公告为准）', 30.130130, 118.168498, 'https://hsgwh.huangshan.gov.cn/', '黄山风景区管委会', '2026-05-19'),
+(9, '漓江风景名胜区', '桂林', '桂林市灵川县至阳朔县漓江沿线', '桂林山水代表性景区，游船线路以漓江喀斯特峰林、江湾和田园景观为核心。', '/images/seed/guilin.svg', 210.00, 105.00, 600, 289, '08:00-12:00（游船班次以当日公告为准）', 25.166667, 110.416667, 'https://wglj.guilin.gov.cn/', '桂林市文化广电和旅游局', '2026-05-19'),
+(10, '天坛公园', '北京', '东城区天坛东里甲1号', '明清两代皇帝祭天祈谷场所，是北京中轴线南段的重要世界文化遗产。', '/images/seed/beijing.svg', 34.00, 17.00, 2000, 1280, '06:00-22:00（景点院落开放时间另行公告）', 39.882200, 116.406600, 'http://www.tiantanpark.com/', '天坛公园官网', '2026-05-19'),
+(11, '八达岭长城', '北京', '延庆区G6京藏高速58号出口', '明长城重要关隘，保存状况较好，是北京长城游览代表景区。', '/images/seed/beijing.svg', 40.00, 20.00, 2500, 1600, '06:30-16:30（以景区公告为准）', 40.358100, 116.020300, 'https://www.badaling.cn/', '八达岭长城景区官网', '2026-05-19'),
+(12, '东方明珠广播电视塔', '上海', '浦东新区世纪大道1号', '上海陆家嘴地标建筑，集城市观光、展览和餐饮功能于一体。', '/images/seed/shanghai.svg', 199.00, 99.00, 1800, 920, '09:00-21:00（以景区公告为准）', 31.239700, 121.499800, 'https://www.orientalpearltower.com/', '东方明珠官网', '2026-05-19'),
+(13, '豫园', '上海', '黄浦区福佑路168号', '江南古典园林代表之一，周边连接豫园商城和城隍庙历史文化街区。', '/images/seed/shanghai.svg', 40.00, 20.00, 1200, 760, '09:00-16:30（以景区公告为准）', 31.227200, 121.492100, 'https://www.yuyuantm.com.cn/', '豫园商城公开信息', '2026-05-19'),
+(14, '上海迪士尼乐园', '上海', '浦东新区川沙新镇黄赵路310号', '大型主题乐园，包含主题园区、演艺、巡游和烟花等游乐体验。', '/images/seed/shanghai.svg', 475.00, 356.00, 3000, 1780, '08:30-21:30（以乐园日历为准）', 31.143400, 121.657900, 'https://www.shanghaidisneyresort.com/', '上海迪士尼度假区官网', '2026-05-19'),
+(15, '成都大熊猫繁育研究基地', '成都', '成华区熊猫大道1375号', '以大熊猫保护、繁育、科研和公众教育为核心的生态型景区。', '/images/seed/chengdu.svg', 55.00, 27.00, 2000, 1188, '07:30-18:00（以景区公告为准）', 30.735500, 104.145600, 'https://www.panda.org.cn/', '成都大熊猫繁育研究基地官网', '2026-05-19'),
+(16, '都江堰景区', '成都', '都江堰市公园路', '世界文化遗产，古代水利工程代表，与青城山共同构成重要旅游目的地。', '/images/seed/chengdu.svg', 80.00, 40.00, 1800, 960, '08:00-18:00（以景区公告为准）', 31.001700, 103.605500, 'https://www.djy517.com/', '都江堰青城山景区官网', '2026-05-19'),
+(17, '蜈支洲岛', '三亚', '海棠区林旺镇后海村', '三亚近海海岛景区，以海水能见度、潜水和滨海休闲项目闻名。', '/images/seed/sanya.svg', 136.00, 68.00, 1500, 820, '08:00-18:30（航班以天气和公告为准）', 18.312600, 109.757400, 'https://www.wuzhizhou.com/', '蜈支洲岛旅游区官网', '2026-05-19'),
+(18, '天涯海角游览区', '三亚', '天涯区天涯镇马岭山麓', '海南代表性滨海文化景区，以海滨礁石景观和“天涯”“海角”题刻闻名。', '/images/seed/sanya.svg', 68.00, 34.00, 1600, 900, '08:00-18:00（以景区公告为准）', 18.296000, 109.344000, 'https://www.aitianya.cn/', '天涯海角游览区官网', '2026-05-19'),
+(19, '丽江古城', '丽江', '古城区大研古城', '世界文化遗产，以纳西族传统街巷、水系和民居建筑景观著称。', '/images/seed/attraction.svg', 0.00, 0.00, 9999, 9999, '全天开放（部分院落另行开放）', 26.872200, 100.233000, 'https://www.ljgucheng.com/', '丽江古城保护管理局公开信息', '2026-05-19'),
+(20, '亚龙湾国家旅游度假区', '三亚', '吉阳区亚龙湾国家旅游度假区', '三亚重要滨海度假区，以海湾、沙滩和度假酒店群为主要吸引物。', '/images/seed/sanya.svg', 0.00, 0.00, 9999, 9999, '全天开放（海滩及项目以现场公告为准）', 18.229500, 109.637000, 'https://lwj.sanya.gov.cn/', '三亚市旅游和文化广电体育局', '2026-05-19'),
+(21, '鼓浪屿', '厦门', '思明区鼓浪屿', '世界文化遗产，融合海岛街巷、近代建筑和音乐文化景观。', '/images/seed/coast.svg', 0.00, 0.00, 9999, 9999, '全天开放（上岛船班及收费景点另行公告）', 24.447700, 118.061900, 'https://gly.xm.gov.cn/', '鼓浪屿管委会公开信息', '2026-05-19'),
+(22, '中山陵', '南京', '玄武区石象路7号', '孙中山先生陵寝所在地，位于钟山风景名胜区内，是南京重要历史文化地标。', '/images/seed/nanjing.svg', 0.00, 0.00, 3000, 2100, '08:30-17:00（周一部分区域闭馆，节假日除外）', 32.064300, 118.848600, 'https://zschina.nanjing.gov.cn/', '南京钟山风景区官网', '2026-05-19'),
+(23, '拙政园', '苏州', '姑苏区东北街178号', '苏州古典园林代表，世界文化遗产，以水景、亭台和园林空间布局著称。', '/images/seed/garden.svg', 80.00, 40.00, 1400, 780, '07:30-17:30（以景区公告为准）', 31.324300, 120.629700, 'https://www.szzzy.cn/', '拙政园官网', '2026-05-19'),
+(24, '洪崖洞民俗风貌区', '重庆', '渝中区嘉陵江滨江路88号', '重庆山城夜景代表地，以吊脚楼风貌、滨江夜景和城市商业空间闻名。', '/images/seed/chongqing.svg', 0.00, 0.00, 9999, 9999, '全天开放（商户营业时间不一）', 29.562800, 106.584000, 'https://whlyw.cq.gov.cn/', '重庆市文化和旅游发展委员会', '2026-05-19'),
+(25, '龙脊梯田', '桂林', '龙胜各族自治县和平乡', '桂林北部山地梯田景观，包含平安寨、金坑大寨等观景区域。', '/images/seed/guilin.svg', 80.00, 40.00, 1000, 520, '08:00-17:30（以景区公告为准）', 25.764000, 110.123000, 'https://wglj.guilin.gov.cn/', '桂林市文化广电和旅游局', '2026-05-19'),
+(26, '象鼻山景区', '桂林', '象山区滨江路1号', '桂林城市山水代表景观，山体形似象鼻伸入漓江，是桂林标志性景点。', '/images/seed/guilin.svg', 0.00, 0.00, 1800, 1260, '07:00-18:00（以景区公告为准）', 25.273900, 110.296700, 'https://wglj.guilin.gov.cn/', '桂林市文化广电和旅游局', '2026-05-19'),
+(27, '天门山国家森林公园', '张家界', '永定区大庸路', '张家界城市近郊山岳型景区，以天门洞、玻璃栈道和索道体验闻名。', '/images/seed/zhangjiajie.svg', 278.00, 139.00, 1200, 660, '08:00-18:00（索道及线路以景区公告为准）', 29.044600, 110.482400, 'https://wly.hunan.gov.cn/', '湖南省文化和旅游厅/天门山公开信息', '2026-05-19'),
+(28, '宏村', '黄山', '黟县宏村镇', '皖南古村落代表，世界文化遗产，以月沼、水圳和徽派民居格局著称。', '/images/seed/lake.svg', 104.00, 52.00, 1200, 720, '07:30-17:30（以景区公告为准）', 30.004900, 117.987500, 'https://ct.ah.gov.cn/', '安徽省文化和旅游厅公开信息', '2026-05-19')
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `city` = VALUES(`city`),
@@ -580,17 +584,17 @@ ON DUPLICATE KEY UPDATE
 
 -- 开放授权图片素材来源。前端展示图片时应同步展示作者和协议，避免只存裸 URL。
 INSERT INTO `tm_media_asset` (`id`, `target_type`, `target_id`, `media_type`, `url`, `caption`, `author`, `license_name`, `license_url`, `source_url`, `source_name`, `data_checked_date`) VALUES
-(1, 'attraction', 1, 'image', 'https://upload.wikimedia.org/wikipedia/commons/e/ef/The_Forbidden_City_-_View_from_Coal_Hill.jpg', '故宫俯瞰图', 'Pixelflake', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:The_Forbidden_City_-_View_from_Coal_Hill.jpg', 'Wikimedia Commons', '2026-05-19'),
-(2, 'attraction', 2, 'image', 'https://upload.wikimedia.org/wikipedia/commons/f/fb/20090530_Beijing_Summer_Palace_8467.jpg', '颐和园景观', 'Jakub Halun', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:20090530_Beijing_Summer_Palace_8467.jpg', 'Wikimedia Commons', '2026-05-19'),
-(3, 'attraction', 3, 'image', 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Shanghai_Bund-20150516-RM-173803.jpg', '上海外滩', 'Ermell', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:Shanghai_Bund-20150516-RM-173803.jpg', 'Wikimedia Commons', '2026-05-19'),
-(4, 'attraction', 4, 'image', 'https://upload.wikimedia.org/wikipedia/commons/d/d8/West_Lake%2C_Hangzhou_%28Nine-turn_bridge%29.jpg', '西湖九曲桥', 'Sekino Tadashi', 'Public domain', 'https://creativecommons.org/publicdomain/mark/1.0/', 'https://commons.wikimedia.org/wiki/File:West_Lake,_Hangzhou_(Nine-turn_bridge).jpg', 'Wikimedia Commons', '2026-05-19'),
-(5, 'attraction', 5, 'image', 'https://upload.wikimedia.org/wikipedia/commons/4/47/Zhangjiajie_National_Forest_Park.jpg', '张家界国家森林公园', 'Kuruman', 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/', 'https://commons.wikimedia.org/wiki/File:Zhangjiajie_National_Forest_Park.jpg', 'Wikimedia Commons', '2026-05-19'),
-(6, 'attraction', 6, 'image', 'https://upload.wikimedia.org/wikipedia/commons/5/52/Terracotta_Army_%2854082561381%29.jpg', '秦兵马俑', 'xiquinhosilva', 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/', 'https://commons.wikimedia.org/wiki/File:Terracotta_Army_(54082561381).jpg', 'Wikimedia Commons', '2026-05-19'),
-(7, 'attraction', 7, 'image', 'https://upload.wikimedia.org/wikipedia/commons/2/28/1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg', '九寨沟五花海', 'Chensiyuan', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg', 'Wikimedia Commons', '2026-05-19'),
-(8, 'attraction', 8, 'image', 'https://upload.wikimedia.org/wikipedia/commons/2/28/Anhui_Huangshan.jpg', '黄山景观', 'Miaulian', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:Anhui_Huangshan.jpg', 'Wikimedia Commons', '2026-05-19'),
-(9, 'attraction', 9, 'image', 'https://upload.wikimedia.org/wikipedia/commons/9/92/1_li_jiang_guilin_yangshuo_2011.jpg', '漓江山水', 'Chensiyuan', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:1_li_jiang_guilin_yangshuo_2011.jpg', 'Wikimedia Commons', '2026-05-19'),
-(10, 'post', 3, 'image', 'https://upload.wikimedia.org/wikipedia/commons/4/44/Yalong_Bay_01.jpg', '三亚亚龙湾', 'Anna Frodesiak', 'Public domain', 'https://creativecommons.org/publicdomain/mark/1.0/', 'https://commons.wikimedia.org/wiki/File:Yalong_Bay_01.jpg', 'Wikimedia Commons', '2026-05-19'),
-(11, 'post', 5, 'image', 'https://upload.wikimedia.org/wikipedia/commons/7/74/1_lijiang_old_town_night.jpg', '丽江古城夜景', 'Chensiyuan', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:1_lijiang_old_town_night.jpg', 'Wikimedia Commons', '2026-05-19'),
+(1, 'attraction', 1, 'image', '/images/seed/beijing.svg', '故宫俯瞰图', 'Pixelflake', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:The_Forbidden_City_-_View_from_Coal_Hill.jpg', 'Wikimedia Commons', '2026-05-19'),
+(2, 'attraction', 2, 'image', '/images/seed/beijing.svg', '颐和园景观', 'Jakub Halun', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:20090530_Beijing_Summer_Palace_8467.jpg', 'Wikimedia Commons', '2026-05-19'),
+(3, 'attraction', 3, 'image', '/images/seed/shanghai.svg', '上海外滩', 'Ermell', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:Shanghai_Bund-20150516-RM-173803.jpg', 'Wikimedia Commons', '2026-05-19'),
+(4, 'attraction', 4, 'image', '/images/seed/hangzhou.svg', '西湖九曲桥', 'Sekino Tadashi', 'Public domain', 'https://creativecommons.org/publicdomain/mark/1.0/', 'https://commons.wikimedia.org/wiki/File:West_Lake,_Hangzhou_(Nine-turn_bridge).jpg', 'Wikimedia Commons', '2026-05-19'),
+(5, 'attraction', 5, 'image', '/images/seed/zhangjiajie.svg', '张家界国家森林公园', 'Kuruman', 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/', 'https://commons.wikimedia.org/wiki/File:Zhangjiajie_National_Forest_Park.jpg', 'Wikimedia Commons', '2026-05-19'),
+(6, 'attraction', 6, 'image', '/images/seed/xian.svg', '秦兵马俑', 'xiquinhosilva', 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/', 'https://commons.wikimedia.org/wiki/File:Terracotta_Army_(54082561381).jpg', 'Wikimedia Commons', '2026-05-19'),
+(7, 'attraction', 7, 'image', '/images/seed/lake.svg', '九寨沟五花海', 'Chensiyuan', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg', 'Wikimedia Commons', '2026-05-19'),
+(8, 'attraction', 8, 'image', '/images/seed/mountain.svg', '黄山景观', 'Miaulian', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:Anhui_Huangshan.jpg', 'Wikimedia Commons', '2026-05-19'),
+(9, 'attraction', 9, 'image', '/images/seed/guilin.svg', '漓江山水', 'Chensiyuan', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:1_li_jiang_guilin_yangshuo_2011.jpg', 'Wikimedia Commons', '2026-05-19'),
+(10, 'post', 3, 'image', '/images/seed/sanya.svg', '三亚亚龙湾', 'Anna Frodesiak', 'Public domain', 'https://creativecommons.org/publicdomain/mark/1.0/', 'https://commons.wikimedia.org/wiki/File:Yalong_Bay_01.jpg', 'Wikimedia Commons', '2026-05-19'),
+(11, 'post', 5, 'image', '/images/seed/attraction.svg', '丽江古城夜景', 'Chensiyuan', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:1_lijiang_old_town_night.jpg', 'Wikimedia Commons', '2026-05-19'),
 (12, 'hotel', 3, 'image', 'https://ak-d.tripcdn.com/images/1mc6f12000hrejeww92B0.jpg', '广州白天鹅宾馆外观', 'Wikimedia Commons contributors', 'Wikimedia Commons 图片授权以文件页为准', NULL, 'https://commons.wikimedia.org/wiki/File:WHITE_SWAN_HOTEL_(2017-10-14).jpg', 'Wikimedia Commons', '2026-05-23'),
 (13, 'hotel', 4, 'image', 'https://dimg04.c-ctrip.com/images/220i1b000001aohx93B7F_R_960_660_R5_D.jpg', '成都锦江宾馆外观', 'Trip.com 酒店图库', '平台图片，仅用于课程演示引用', NULL, 'https://ph.trip.com/hotels/chengdu-hotel-detail-392701/jinjiang-hotel/photo.html', 'Trip.com', '2026-05-23'),
 (14, 'hotel', 9, 'image', 'https://ak-d.tripcdn.com/images/0220t12000plokdzi4C79_R_960_660_R5_D.jpg', '重庆解放碑威斯汀酒店外观', 'Trip.com 酒店图库', '平台图片，仅用于课程演示引用', NULL, 'https://www.trip.com/hotels/chongqing-hotel-detail-1200477/the-westin-chongqing-liberation-square/', 'Trip.com', '2026-05-23'),
@@ -606,12 +610,12 @@ ON DUPLICATE KEY UPDATE
   `data_checked_date` = VALUES(`data_checked_date`);
 
 INSERT IGNORE INTO `tm_media_asset` (`id`, `target_type`, `target_id`, `media_type`, `url`, `caption`, `author`, `license_name`, `license_url`, `source_url`, `source_name`, `data_checked_date`) VALUES
-(16, 'post', 1, 'image', 'https://upload.wikimedia.org/wikipedia/commons/5/50/Badaling_China_Great-Wall-of-China-01.jpg', '八达岭长城', 'CEphoto, Uwe Aranas', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:Badaling_China_Great-Wall-of-China-01.jpg', 'Wikimedia Commons', '2026-05-19'),
-(17, 'post', 2, 'image', 'https://upload.wikimedia.org/wikipedia/commons/8/86/Blue_hour_view_of_the_Bund_from_the_Shanghai_World_Financial_Center_dllu.jpg', '上海外滩蓝调时刻', 'Dllu', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:Blue_hour_view_of_the_Bund_from_the_Shanghai_World_Financial_Center_dllu.jpg', 'Wikimedia Commons', '2026-05-19'),
-(18, 'post', 3, 'image', 'https://upload.wikimedia.org/wikipedia/commons/0/04/Yalong_Bay_from_hotel.JPG', '亚龙湾海岸', 'Phillip Hong', 'CC BY-SA 1.0', 'https://creativecommons.org/licenses/by-sa/1.0/', 'https://commons.wikimedia.org/wiki/File:Yalong_Bay_from_hotel.JPG', 'Wikimedia Commons', '2026-05-19'),
-(19, 'post', 4, 'image', 'https://upload.wikimedia.org/wikipedia/commons/1/13/Chengdu_Hotpot.jpg', '成都火锅', 'Prince Roy', 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/', 'https://commons.wikimedia.org/wiki/File:Chengdu_Hotpot.jpg', 'Wikimedia Commons', '2026-05-19'),
-(20, 'post', 4, 'image', 'https://upload.wikimedia.org/wikipedia/commons/2/26/Chengdu_Kuanzhai_Alley_Touristic_Spot_Relics_%E6%88%90%E9%83%BD%E5%AE%BD%E7%AA%84%E5%B7%B7%E5%AD%90%E6%96%87%E7%89%A9%E5%8F%91%E6%8E%98%E9%81%97%E4%BA%A7.jpg', '成都宽窄巷子', 'Breaknet2025', 'CC BY 4.0', 'https://creativecommons.org/licenses/by/4.0/', 'https://commons.wikimedia.org/wiki/File:Chengdu_Kuanzhai_Alley_Touristic_Spot_Relics_%E6%88%90%E9%83%BD%E5%AE%BD%E7%AA%84%E5%B7%B7%E5%AD%90%E6%96%87%E7%89%A9%E5%8F%91%E6%8E%98%E9%81%97%E4%BA%A7.jpg', 'Wikimedia Commons', '2026-05-19'),
-(21, 'post', 5, 'image', 'https://upload.wikimedia.org/wikipedia/commons/b/b9/Lijiang_Yunnan_Doors-_in-old-town-01.jpg', '丽江古城街巷', 'CEphoto, Uwe Aranas', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:Lijiang_Yunnan_Doors-_in-old-town-01.jpg', 'Wikimedia Commons', '2026-05-19');
+(16, 'post', 1, 'image', '/images/seed/beijing.svg', '八达岭长城', 'CEphoto, Uwe Aranas', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:Badaling_China_Great-Wall-of-China-01.jpg', 'Wikimedia Commons', '2026-05-19'),
+(17, 'post', 2, 'image', '/images/seed/shanghai.svg', '上海外滩蓝调时刻', 'Dllu', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:Blue_hour_view_of_the_Bund_from_the_Shanghai_World_Financial_Center_dllu.jpg', 'Wikimedia Commons', '2026-05-19'),
+(18, 'post', 3, 'image', '/images/seed/sanya.svg', '亚龙湾海岸', 'Phillip Hong', 'CC BY-SA 1.0', 'https://creativecommons.org/licenses/by-sa/1.0/', 'https://commons.wikimedia.org/wiki/File:Yalong_Bay_from_hotel.JPG', 'Wikimedia Commons', '2026-05-19'),
+(19, 'post', 4, 'image', '/images/seed/chengdu.svg', '成都火锅', 'Prince Roy', 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/', 'https://commons.wikimedia.org/wiki/File:Chengdu_Hotpot.jpg', 'Wikimedia Commons', '2026-05-19'),
+(20, 'post', 4, 'image', '/images/seed/chengdu.svg', '成都宽窄巷子', 'Breaknet2025', 'CC BY 4.0', 'https://creativecommons.org/licenses/by/4.0/', 'https://commons.wikimedia.org/wiki/File:Chengdu_Kuanzhai_Alley_Touristic_Spot_Relics_%E6%88%90%E9%83%BD%E5%AE%BD%E7%AA%84%E5%B7%B7%E5%AD%90%E6%96%87%E7%89%A9%E5%8F%91%E6%8E%98%E9%81%97%E4%BA%A7.jpg', 'Wikimedia Commons', '2026-05-19'),
+(21, 'post', 5, 'image', '/images/seed/attraction.svg', '丽江古城街巷', 'CEphoto, Uwe Aranas', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:Lijiang_Yunnan_Doors-_in-old-town-01.jpg', 'Wikimedia Commons', '2026-05-19');
 
 -- 修正酒店封面：旧数据中部分酒店使用城市风景图，这里统一覆盖为与酒店本体匹配的真实照片。
 -- 部分 OTA/CDN 图片 URL 会随平台策略调整，source_url 保留酒店图库页便于后续核验替换。
@@ -675,11 +679,11 @@ ON DUPLICATE KEY UPDATE
 -- 社区游记数据
 -- 文案按小红书高互动笔记的路线结构改写；互动数来自公开笔记详情，图片仍使用开放授权素材。
 INSERT INTO `tm_post` (`id`, `user_id`, `title`, `content`, `images`, `destination`, `tags`, `like_count`, `comment_count`, `collect_count`, `view_count`, `status`, `source_name`, `source_url`, `data_checked_date`) VALUES
-(1, 3, '北京5天｜中轴线故宫长城不绕路路线', '参考高收藏北京路线帖改写：D1-D2安排升旗、天安门、故宫、国家博物馆与王府井或西单，把故宫和国博拆开更从容；D3走八达岭长城，再接奥林匹克公园、鸟巢和水立方；D4留给颐和园、圆明园、清华北大周边；D5走恭王府、什刹海、鼓楼、雍和宫和南锣鼓巷。热门场馆按官方预约为准，旺季住宿和门票都要提前处理。', 'https://upload.wikimedia.org/wikipedia/commons/e/ef/The_Forbidden_City_-_View_from_Coal_Hill.jpg,https://upload.wikimedia.org/wikipedia/commons/5/50/Badaling_China_Great-Wall-of-China-01.jpg,https://upload.wikimedia.org/wikipedia/commons/f/fb/20090530_Beijing_Summer_Palace_8467.jpg', '北京', '北京,故宫,八达岭长城,颐和园,小红书高收藏', 9224, 108, 9174, 27600, 1, '小红书公开笔记：简单的快乐《北京不绕路版游玩线路图攻略｜北京旅游攻略》（改写）', 'https://www.xiaohongshu.com/search_result/69ae5ed5000000001b01f99f?xsec_token=AB-KsfAVfTpWoQqxwNb41bEL7FhLSLzdaEls-_IsF1CYk=&xsec_source=', '2026-05-21'),
-(2, 4, '上海1天｜武康路静安寺外滩陆家嘴', '参考高收藏上海一日路线帖改写：从虹桥站进城后先走武康大楼和武康路，再到静安寺、南京路步行街、豫园和城隍庙，傍晚转到外滩看灯光，最后用轮渡过江到陆家嘴看三件套。路线点位多，适合取舍式 citywalk；外滩和陆家嘴建议留到 18:30 后。', 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Shanghai_Bund-20150516-RM-173803.jpg,https://upload.wikimedia.org/wikipedia/commons/8/86/Blue_hour_view_of_the_Bund_from_the_Shanghai_World_Financial_Center_dllu.jpg', '上海', '上海,外滩,陆家嘴,武康路,小红书高收藏', 5725, 16, 5034, 17200, 1, '小红书公开笔记：大圆圆《拒绝绕路费腿！上海一日游保姆级路线》（改写）', 'https://www.xiaohongshu.com/search_result/69a9596100000000150399ef?xsec_token=AB-tZWf_D2F1XIloB9X4eSYEYxGFeHnZrGYxzuB4MyrKU=&xsec_source=', '2026-05-21'),
-(3, 3, '三亚蜈支洲岛｜玻璃海环岛路线', '参考高收藏蜈支洲岛攻略帖改写：适合亲子、情侣和想玩水上项目的游客。经典环岛可按海洋之星、观日岩、情人谷、情人岛、茶馆、私人订制区域走，最后沿灯塔、情人桥和沙滩慢慢回码头。观光车排队会影响体验，晴天和高温天要留足时间，岛上餐饮价格偏高。', 'https://upload.wikimedia.org/wikipedia/commons/4/44/Yalong_Bay_01.jpg,https://upload.wikimedia.org/wikipedia/commons/0/04/Yalong_Bay_from_hotel.JPG', '三亚', '三亚,蜈支洲岛,亚龙湾,海岛,小红书高收藏', 5283, 149, 4513, 15800, 1, '小红书公开笔记：海岛与猫《答应我！来三亚不去蜈支洲岛等于白来！附攻略》（改写）', 'https://www.xiaohongshu.com/search_result/68fb160b000000000300f7d7?xsec_token=AB9h6SJWJnT8iGigDULzUoYF03035b1gkYL_1FTzygvjw=&xsec_source=', '2026-05-21'),
-(4, 4, '成都周边1天｜熊猫谷都江堰轻量路线', '参考高收藏成都周边一日游帖改写：早上从春熙路或市中心出发，地铁到犀浦后换乘高铁到离堆公园，先打卡仰天窝广场，再去熊猫谷；午餐放在灌县古城，下午从秦堰楼方向进入都江堰，顺着二王庙、安澜索桥、鱼嘴、飞沙堰、宝瓶口和离堆公园往下游览；傍晚回南桥看夜景再返程。', 'https://upload.wikimedia.org/wikipedia/commons/2/26/Chengdu_Kuanzhai_Alley_Touristic_Spot_Relics_%E6%88%90%E9%83%BD%E5%AE%BD%E7%AA%84%E5%B7%B7%E5%AD%90%E6%96%87%E7%89%A9%E5%8F%91%E6%8E%98%E9%81%97%E4%BA%A7.jpg,https://upload.wikimedia.org/wikipedia/commons/1/13/Chengdu_Hotpot.jpg', '成都', '成都,熊猫谷,都江堰,灌县古城,小红书高收藏', 2242, 94, 3413, 9800, 1, '小红书公开笔记：小鱼er《熊猫谷+都江堰一日游，超详细路线》（改写）', 'https://www.xiaohongshu.com/search_result/693a554d000000001e00f30c?xsec_token=AB1voB1D9XCtyDQpC55AqfYO4DdagKCQ439Ul_OEDkxZY=&xsec_source=', '2026-05-21'),
-(5, 2, '丽江2天｜玉龙雪山蓝月谷白沙古镇', '参考高收藏丽江两日路线帖改写：Day1 走玉龙雪山云杉坪和蓝月谷，下午转束河古镇；Day2 早起看东巴谷日照金山，再去白沙古镇，下午回丽江古城逛现文巷、大研花巷和狮子山。索道票、日出时间和天气直接决定体验，高海拔行程要提前准备氧气和保暖衣物。', 'https://upload.wikimedia.org/wikipedia/commons/7/74/1_lijiang_old_town_night.jpg,https://upload.wikimedia.org/wikipedia/commons/b/b9/Lijiang_Yunnan_Doors-_in-old-town-01.jpg', '丽江', '丽江,玉龙雪山,蓝月谷,白沙古镇,小红书高收藏', 2518, 10, 2160, 7600, 1, '小红书公开笔记：筱爱退休了吗《丽江两日游攻略 懒人出片不绕路版》（改写）', 'https://www.xiaohongshu.com/search_result/69bccb33000000002200ca8b?xsec_token=ABkfmvRJZmJdYbRFmDl7_-zST9bUT9BQwTVoOawuN2UDU=&xsec_source=', '2026-05-21')
+(1, 3, '北京5天｜中轴线故宫长城不绕路路线', '参考高收藏北京路线帖改写：D1-D2安排升旗、天安门、故宫、国家博物馆与王府井或西单，把故宫和国博拆开更从容；D3走八达岭长城，再接奥林匹克公园、鸟巢和水立方；D4留给颐和园、圆明园、清华北大周边；D5走恭王府、什刹海、鼓楼、雍和宫和南锣鼓巷。热门场馆按官方预约为准，旺季住宿和门票都要提前处理。', '/images/seed/beijing.svg,/images/seed/beijing.svg,/images/seed/beijing.svg', '北京', '北京,故宫,八达岭长城,颐和园,小红书高收藏', 9224, 108, 9174, 27600, 1, '小红书公开笔记：简单的快乐《北京不绕路版游玩线路图攻略｜北京旅游攻略》（改写）', 'https://www.xiaohongshu.com/search_result/69ae5ed5000000001b01f99f?xsec_token=AB-KsfAVfTpWoQqxwNb41bEL7FhLSLzdaEls-_IsF1CYk=&xsec_source=', '2026-05-21'),
+(2, 4, '上海1天｜武康路静安寺外滩陆家嘴', '参考高收藏上海一日路线帖改写：从虹桥站进城后先走武康大楼和武康路，再到静安寺、南京路步行街、豫园和城隍庙，傍晚转到外滩看灯光，最后用轮渡过江到陆家嘴看三件套。路线点位多，适合取舍式 citywalk；外滩和陆家嘴建议留到 18:30 后。', '/images/seed/shanghai.svg,/images/seed/shanghai.svg', '上海', '上海,外滩,陆家嘴,武康路,小红书高收藏', 5725, 16, 5034, 17200, 1, '小红书公开笔记：大圆圆《拒绝绕路费腿！上海一日游保姆级路线》（改写）', 'https://www.xiaohongshu.com/search_result/69a9596100000000150399ef?xsec_token=AB-tZWf_D2F1XIloB9X4eSYEYxGFeHnZrGYxzuB4MyrKU=&xsec_source=', '2026-05-21'),
+(3, 3, '三亚蜈支洲岛｜玻璃海环岛路线', '参考高收藏蜈支洲岛攻略帖改写：适合亲子、情侣和想玩水上项目的游客。经典环岛可按海洋之星、观日岩、情人谷、情人岛、茶馆、私人订制区域走，最后沿灯塔、情人桥和沙滩慢慢回码头。观光车排队会影响体验，晴天和高温天要留足时间，岛上餐饮价格偏高。', '/images/seed/sanya.svg,/images/seed/sanya.svg', '三亚', '三亚,蜈支洲岛,亚龙湾,海岛,小红书高收藏', 5283, 149, 4513, 15800, 1, '小红书公开笔记：海岛与猫《答应我！来三亚不去蜈支洲岛等于白来！附攻略》（改写）', 'https://www.xiaohongshu.com/search_result/68fb160b000000000300f7d7?xsec_token=AB9h6SJWJnT8iGigDULzUoYF03035b1gkYL_1FTzygvjw=&xsec_source=', '2026-05-21'),
+(4, 4, '成都周边1天｜熊猫谷都江堰轻量路线', '参考高收藏成都周边一日游帖改写：早上从春熙路或市中心出发，地铁到犀浦后换乘高铁到离堆公园，先打卡仰天窝广场，再去熊猫谷；午餐放在灌县古城，下午从秦堰楼方向进入都江堰，顺着二王庙、安澜索桥、鱼嘴、飞沙堰、宝瓶口和离堆公园往下游览；傍晚回南桥看夜景再返程。', '/images/seed/chengdu.svg,/images/seed/chengdu.svg', '成都', '成都,熊猫谷,都江堰,灌县古城,小红书高收藏', 2242, 94, 3413, 9800, 1, '小红书公开笔记：小鱼er《熊猫谷+都江堰一日游，超详细路线》（改写）', 'https://www.xiaohongshu.com/search_result/693a554d000000001e00f30c?xsec_token=AB1voB1D9XCtyDQpC55AqfYO4DdagKCQ439Ul_OEDkxZY=&xsec_source=', '2026-05-21'),
+(5, 2, '丽江2天｜玉龙雪山蓝月谷白沙古镇', '参考高收藏丽江两日路线帖改写：Day1 走玉龙雪山云杉坪和蓝月谷，下午转束河古镇；Day2 早起看东巴谷日照金山，再去白沙古镇，下午回丽江古城逛现文巷、大研花巷和狮子山。索道票、日出时间和天气直接决定体验，高海拔行程要提前准备氧气和保暖衣物。', '/images/seed/attraction.svg,/images/seed/attraction.svg', '丽江', '丽江,玉龙雪山,蓝月谷,白沙古镇,小红书高收藏', 2518, 10, 2160, 7600, 1, '小红书公开笔记：筱爱退休了吗《丽江两日游攻略 懒人出片不绕路版》（改写）', 'https://www.xiaohongshu.com/search_result/69bccb33000000002200ca8b?xsec_token=ABkfmvRJZmJdYbRFmDl7_-zST9bUT9BQwTVoOawuN2UDU=&xsec_source=', '2026-05-21')
 ON DUPLICATE KEY UPDATE
   `title` = VALUES(`title`),
   `content` = VALUES(`content`),
@@ -771,12 +775,12 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 ALTER TABLE `tm_tour_product` MODIFY COLUMN `cover_img` VARCHAR(500) DEFAULT NULL COMMENT '封面图';
 
 INSERT IGNORE INTO `tm_tour_product` (`id`, `name`, `description`, `tour_type`, `departure_city`, `destination`, `duration`, `price`, `cover_img`, `source_name`, `source_url`, `data_checked_date`) VALUES
-(1, '故宫博物院官方导览一日', '基于故宫博物院开放时间与官方导览信息整理，适合首次到访的中轴线游览。价格为演示服务费，不代表官方票价。', 0, '北京', '故宫博物院', '1天', 128.00, 'https://upload.wikimedia.org/wikipedia/commons/e/ef/The_Forbidden_City_-_View_from_Coal_Hill.jpg', '故宫博物院官网', 'https://www.dpm.org.cn/Visit.html', '2026-05-19'),
-(2, '颐和园昆明湖半日游', '基于颐和园开放时间与园区导览整理，覆盖东宫门、仁寿殿、长廊、昆明湖等节点。价格为演示服务费。', 0, '北京', '颐和园', '0.5天', 98.00, 'https://upload.wikimedia.org/wikipedia/commons/f/fb/20090530_Beijing_Summer_Palace_8467.jpg', '颐和园官网', 'https://www.summerpalace.net.cn/visit.html', '2026-05-19'),
-(3, '杭州西湖环湖一日游', '基于西湖景区公开信息整理，串联断桥、白堤、苏堤、花港观鱼和湖滨区域。价格为演示服务费。', 0, '杭州', '西湖', '1天', 118.00, 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Hangzhou_Skyline_against_the_West_Lake.png', '杭州西湖风景名胜区管委会', 'https://westlake.hangzhou.gov.cn/', '2026-05-19'),
-(4, '黄山风景区经典两日游', '基于黄山风景区公开信息整理，覆盖云谷寺、始信峰、北海、光明顶、玉屏楼等常规节点。价格为演示服务费。', 1, '黄山', '黄山风景区', '2天1晚', 398.00, 'https://upload.wikimedia.org/wikipedia/commons/2/28/Anhui_Huangshan.jpg', '黄山风景区管委会', 'https://hsgwh.huangshan.gov.cn/', '2026-05-19'),
-(5, '九寨沟核心景点一日游', '基于九寨沟景区票务与服务信息整理，覆盖树正沟、日则沟、则查洼沟核心观景点。价格为演示服务费。', 0, '阿坝', '九寨沟风景名胜区', '1天', 268.00, 'https://upload.wikimedia.org/wikipedia/commons/2/28/1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg', '九寨沟风景名胜区官网', 'https://www.jiuzhai.com/intelligent-service/tickets', '2026-05-19'),
-(6, '桂林漓江游船一日游', '基于桂林文旅公开信息整理，围绕桂林至阳朔漓江游船线路设计。价格为演示服务费。', 0, '桂林', '漓江风景名胜区', '1天', 288.00, 'https://upload.wikimedia.org/wikipedia/commons/9/92/1_li_jiang_guilin_yangshuo_2011.jpg', '桂林市文化广电和旅游局', 'https://wglj.guilin.gov.cn/', '2026-05-19');
+(1, '故宫博物院官方导览一日', '基于故宫博物院开放时间与官方导览信息整理，适合首次到访的中轴线游览。价格为演示服务费，不代表官方票价。', 0, '北京', '故宫博物院', '1天', 128.00, '/images/seed/beijing.svg', '故宫博物院官网', 'https://www.dpm.org.cn/Visit.html', '2026-05-19'),
+(2, '颐和园昆明湖半日游', '基于颐和园开放时间与园区导览整理，覆盖东宫门、仁寿殿、长廊、昆明湖等节点。价格为演示服务费。', 0, '北京', '颐和园', '0.5天', 98.00, '/images/seed/beijing.svg', '颐和园官网', 'https://www.summerpalace.net.cn/visit.html', '2026-05-19'),
+(3, '杭州西湖环湖一日游', '基于西湖景区公开信息整理，串联断桥、白堤、苏堤、花港观鱼和湖滨区域。价格为演示服务费。', 0, '杭州', '西湖', '1天', 118.00, '/images/seed/hangzhou.svg', '杭州西湖风景名胜区管委会', 'https://westlake.hangzhou.gov.cn/', '2026-05-19'),
+(4, '黄山风景区经典两日游', '基于黄山风景区公开信息整理，覆盖云谷寺、始信峰、北海、光明顶、玉屏楼等常规节点。价格为演示服务费。', 1, '黄山', '黄山风景区', '2天1晚', 398.00, '/images/seed/mountain.svg', '黄山风景区管委会', 'https://hsgwh.huangshan.gov.cn/', '2026-05-19'),
+(5, '九寨沟核心景点一日游', '基于九寨沟景区票务与服务信息整理，覆盖树正沟、日则沟、则查洼沟核心观景点。价格为演示服务费。', 0, '阿坝', '九寨沟风景名胜区', '1天', 268.00, '/images/seed/lake.svg', '九寨沟风景名胜区官网', 'https://www.jiuzhai.com/intelligent-service/tickets', '2026-05-19'),
+(6, '桂林漓江游船一日游', '基于桂林文旅公开信息整理，围绕桂林至阳朔漓江游船线路设计。价格为演示服务费。', 0, '桂林', '漓江风景名胜区', '1天', 288.00, '/images/seed/guilin.svg', '桂林市文化广电和旅游局', 'https://wglj.guilin.gov.cn/', '2026-05-19');
 
 CREATE TABLE IF NOT EXISTS `tm_tour_product_step` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -905,12 +909,12 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 -- ============================================================
 
 INSERT IGNORE INTO `tm_hotel` (`id`, `name`, `city`, `address`, `star_rating`, `description`, `cover_img`, `lat`, `lng`, `avg_price`, `score`, `source_name`, `source_url`, `data_checked_date`) VALUES
-(15, '全季酒店(成都太古里春熙路店)', '成都', '交通路8号中环广场2座', 4, '位于春熙路与太古里商圈周边，适合城市观光、购物和商务短住。', 'https://upload.wikimedia.org/wikipedia/commons/2/20/Chengdu_skyline_June_2017.jpg', 30.661950, 104.078639, 520.00, 4.8, '携程酒店搜索', 'https://hotels.ctrip.com/hotels/detail/?hotelid=133457358', '2026-05-21'),
-(16, '成都太古里春熙美居酒店', '成都', '暑袜北三街20号东楼', 4, '靠近成都太古里与春熙路，适合轻量 citywalk 和夜间餐饮行程。', 'https://upload.wikimedia.org/wikipedia/commons/2/26/Chengdu_Kuanzhai_Alley_Touristic_Spot_Relics_%E6%88%90%E9%83%BD%E5%AE%BD%E7%AA%84%E5%B7%B7%E5%AD%90%E6%96%87%E7%89%A9%E5%8F%91%E6%8E%98%E9%81%97%E4%BA%A7.jpg', 30.664968, 104.082064, 680.00, 4.8, '携程酒店搜索', 'https://hotels.ctrip.com/hotels/detail/?hotelid=21132716', '2026-05-21'),
-(17, '成都瑞城名人酒店', '成都', '人民中路二段68号', 4, '临近文殊院和宽窄巷子，适合老城休闲与亲子出行。', 'https://upload.wikimedia.org/wikipedia/commons/1/13/Chengdu_Hotpot.jpg', 30.676451, 104.072363, 460.00, 4.7, '携程酒店搜索', 'https://hotels.ctrip.com/hotels/detail/?hotelid=470094', '2026-05-21'),
-(18, '成都东大明宇豪雅饭店(春熙路太古里店)', '成都', '东大街紫东楼段39号', 5, '位于东大街商圈，适合高星商务、太古里购物和市区美食动线。', 'https://upload.wikimedia.org/wikipedia/commons/2/20/Chengdu_skyline_June_2017.jpg', 30.652909, 104.097655, 980.00, 4.8, '携程酒店搜索', 'https://hotels.ctrip.com/hotels/detail/?hotelid=435688', '2026-05-21'),
-(19, '南京金陵饭店', '南京', '新街口汉中路2号', 5, '南京新街口地标型酒店，适合城市中心商务、购物和博物馆游线。', 'https://upload.wikimedia.org/wikipedia/commons/0/06/China-Nanjing_%282024%29_Mausoleum_of_Sun_Yat_Sen_%E4%B8%AD%E5%B1%B1%E9%99%B5_-_img_08.jpg', 32.042447, 118.782824, 920.00, 4.8, '携程目的地/酒店联想', 'https://hotels.ctrip.com/hotels/detail/?hotelid=346283', '2026-05-21'),
-(20, '苏州吴宫泛太平洋酒店', '苏州', '姑苏区新市路259号', 5, '临近盘门和姑苏古城片区，适合园林游览与江南度假。', 'https://upload.wikimedia.org/wikipedia/commons/f/f5/Humble_Administrator%27s_Garden_Suzhou_November_2017_005.jpg', 31.290418, 120.617053, 880.00, 4.7, '携程目的地/酒店联想', 'https://hotels.ctrip.com/hotels/detail/?hotelid=346290', '2026-05-21');
+(15, '全季酒店(成都太古里春熙路店)', '成都', '交通路8号中环广场2座', 4, '位于春熙路与太古里商圈周边，适合城市观光、购物和商务短住。', '/images/seed/chengdu.svg', 30.661950, 104.078639, 520.00, 4.8, '携程酒店搜索', 'https://hotels.ctrip.com/hotels/detail/?hotelid=133457358', '2026-05-21'),
+(16, '成都太古里春熙美居酒店', '成都', '暑袜北三街20号东楼', 4, '靠近成都太古里与春熙路，适合轻量 citywalk 和夜间餐饮行程。', '/images/seed/chengdu.svg', 30.664968, 104.082064, 680.00, 4.8, '携程酒店搜索', 'https://hotels.ctrip.com/hotels/detail/?hotelid=21132716', '2026-05-21'),
+(17, '成都瑞城名人酒店', '成都', '人民中路二段68号', 4, '临近文殊院和宽窄巷子，适合老城休闲与亲子出行。', '/images/seed/chengdu.svg', 30.676451, 104.072363, 460.00, 4.7, '携程酒店搜索', 'https://hotels.ctrip.com/hotels/detail/?hotelid=470094', '2026-05-21'),
+(18, '成都东大明宇豪雅饭店(春熙路太古里店)', '成都', '东大街紫东楼段39号', 5, '位于东大街商圈，适合高星商务、太古里购物和市区美食动线。', '/images/seed/chengdu.svg', 30.652909, 104.097655, 980.00, 4.8, '携程酒店搜索', 'https://hotels.ctrip.com/hotels/detail/?hotelid=435688', '2026-05-21'),
+(19, '南京金陵饭店', '南京', '新街口汉中路2号', 5, '南京新街口地标型酒店，适合城市中心商务、购物和博物馆游线。', '/images/seed/nanjing.svg', 32.042447, 118.782824, 920.00, 4.8, '携程目的地/酒店联想', 'https://hotels.ctrip.com/hotels/detail/?hotelid=346283', '2026-05-21'),
+(20, '苏州吴宫泛太平洋酒店', '苏州', '姑苏区新市路259号', 5, '临近盘门和姑苏古城片区，适合园林游览与江南度假。', '/images/seed/garden.svg', 31.290418, 120.617053, 880.00, 4.7, '携程目的地/酒店联想', 'https://hotels.ctrip.com/hotels/detail/?hotelid=346290', '2026-05-21');
 
 INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`, `price`, `total_rooms`, `available_rooms`, `facilities`) VALUES
 (15, '高级大床房', '1.8m大床', 28, 458.00, 30, 21, 'WiFi,空调,淋浴,办公桌,近地铁'),
@@ -943,11 +947,11 @@ END
 WHERE `id` BETWEEN 15 AND 20;
 
 INSERT INTO `tm_post` (`id`, `user_id`, `title`, `content`, `images`, `destination`, `tags`, `like_count`, `comment_count`, `collect_count`, `view_count`, `status`, `source_name`, `source_url`, `data_checked_date`) VALUES
-(6, 3, '重庆3天2晚｜洪崖洞山城步道轻松版', '参考小红书重庆三天两晚高收藏笔记改写：第一天放在解放碑、八一好吃街、洪崖洞和千厮门大桥，夜景留足时间；第二天走鹅岭二厂、李子坝、山城步道和十八梯，坡多要穿舒服鞋；第三天安排磁器口或观音桥，再按返程时间取舍。重庆动线看起来近，实际上下坡和排队会消耗体力。', 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Hongyadong_night_lights_Chongqing.jpg,https://upload.wikimedia.org/wikipedia/commons/f/f5/Chongqing_Skyline_At_Night.png', '重庆', '重庆,洪崖洞,山城步道,三天两晚,小红书高收藏', 1759, 86, 1480, 8200, 1, '小红书公开搜索：与风去远行《重庆三天两晚旅游攻略》（改写）', 'https://www.xiaohongshu.com/search_result/69f1ceb7000000003700c850?xsec_token=ABRylwHdzGX4fvdh_5AVpnkZCUsPSpPSR1VngkZp7QIqk=&xsec_source=', '2026-05-21'),
-(7, 4, '重庆特种兵路线｜轻轨夜景火锅都要有', '参考小红书重庆特种兵路线帖改写：适合周末压缩行程，白天优先李子坝、鹅岭二厂、湖广会馆和白象居，傍晚切到来福士、朝天门和洪崖洞，晚上把火锅或江湖菜留在住宿附近。热门机位不要执着排长队，山城旅行更适合边走边调整。', 'https://upload.wikimedia.org/wikipedia/commons/f/f5/Chongqing_Skyline_At_Night.png,https://upload.wikimedia.org/wikipedia/commons/f/f1/Hongyadong_night_lights_Chongqing.jpg', '重庆', '重庆,李子坝,火锅,夜景,小红书高收藏', 1245, 54, 1190, 6900, 1, '小红书公开搜索：SeVen《重庆｜3天2晚特种兵保姆级攻略》（改写）', 'https://www.xiaohongshu.com/search_result/69527e29000000001e0104e3?xsec_token=AB6Nmx2NPTIida2wNAZKoe5hcIEHgoQBrmGY5RMJvBJF4=&xsec_source=', '2026-05-21'),
-(8, 2, '厦门3天2晚｜鼓浪屿沙坡尾环岛路', '参考小红书厦门三天两晚高赞笔记改写：Day1 从中山路、八市和沙坡尾开始，晚上看双子塔周边夜景；Day2 预留给鼓浪屿，岛上用步行串联街巷、海边和老建筑；Day3 走南普陀、厦大周边、白城沙滩和环岛路。厦门节奏适合慢下来，海边天气和轮渡预约要提前看。', 'https://upload.wikimedia.org/wikipedia/commons/b/b6/Gulangyu_Island_from_Zhongshan_Road%2C_Xiamen.jpg', '厦门', '厦门,鼓浪屿,沙坡尾,环岛路,小红书高收藏', 7270, 211, 6380, 26800, 1, '小红书公开搜索：正在晒太阳《厦门｜三天两晚，主打一个：来都来了》（改写）', 'https://www.xiaohongshu.com/search_result/69d2089a000000002103baff?xsec_token=ABa2URARwU2dy6rXtRtvuFSOOlogh_zRR6bspLh5r2M-8=&xsec_source=', '2026-05-21'),
-(9, 3, '江南串线｜杭州绍兴乌镇苏州上海', '参考小红书江南跨城路线搜索结果改写：从杭州进，先走西湖和湖滨；第二站到绍兴看鲁迅故里、仓桥直街和黄酒小馆；再去乌镇住一晚看夜景；之后转苏州园林和平江路，最后上海外滩收尾。城市多时不要每天换太远住宿，高铁站到景区的接驳时间要算进去。', 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Hangzhou_Skyline_against_the_West_Lake.png,https://upload.wikimedia.org/wikipedia/commons/f/f5/Humble_Administrator%27s_Garden_Suzhou_November_2017_005.jpg,https://upload.wikimedia.org/wikipedia/commons/2/2b/Shanghai_Bund-20150516-RM-173803.jpg', '江南', '杭州,绍兴,乌镇,苏州,上海,小红书路线', 587, 32, 520, 4100, 1, '小红书公开搜索：Bibi《深圳-杭州-绍兴-乌镇-苏州-上海》（改写）', 'https://www.xiaohongshu.com/search_result/693ab105000000001f00ed09?xsec_token=AB1voB1D9XCtyDQpC55AqfYIABux13F2Jrx34zjEP6s1w=&xsec_source=', '2026-05-21'),
-(10, 4, '暑期热门旅行地图｜9城灵感清单', '参考小红书暑期旅行地图类笔记改写：亲子和第一次出游优先北京、西安、南京；想看海可选厦门、青岛、三亚；喜欢城市烟火气可选成都、重庆、长沙。路线清单适合做首页灵感流，真正下单前仍要看天气、门票预约和交通余量。', 'https://upload.wikimedia.org/wikipedia/commons/e/ef/The_Forbidden_City_-_View_from_Coal_Hill.jpg,https://upload.wikimedia.org/wikipedia/commons/8/89/Zhanqiao_pier_with_Little_Qingdao_Isle.jpg,https://upload.wikimedia.org/wikipedia/commons/f/f5/Chongqing_Skyline_At_Night.png', '全国', '暑期旅行,城市清单,亲子,海边,小红书高收藏', 1397, 74, 1280, 7600, 1, '小红书公开搜索：春秋探路兔高高《旅行地图暑期热门》（改写）', 'https://www.xiaohongshu.com/search_result/6850cbde0000000023003940?xsec_token=ABmevfsa6nI8fQ9mn6s2bEo5Sv3fHaui8BIYgVOX11b_Y=&xsec_source=', '2026-05-21')
+(6, 3, '重庆3天2晚｜洪崖洞山城步道轻松版', '参考小红书重庆三天两晚高收藏笔记改写：第一天放在解放碑、八一好吃街、洪崖洞和千厮门大桥，夜景留足时间；第二天走鹅岭二厂、李子坝、山城步道和十八梯，坡多要穿舒服鞋；第三天安排磁器口或观音桥，再按返程时间取舍。重庆动线看起来近，实际上下坡和排队会消耗体力。', '/images/seed/chongqing.svg,/images/seed/chongqing.svg', '重庆', '重庆,洪崖洞,山城步道,三天两晚,小红书高收藏', 1759, 86, 1480, 8200, 1, '小红书公开搜索：与风去远行《重庆三天两晚旅游攻略》（改写）', 'https://www.xiaohongshu.com/search_result/69f1ceb7000000003700c850?xsec_token=ABRylwHdzGX4fvdh_5AVpnkZCUsPSpPSR1VngkZp7QIqk=&xsec_source=', '2026-05-21'),
+(7, 4, '重庆特种兵路线｜轻轨夜景火锅都要有', '参考小红书重庆特种兵路线帖改写：适合周末压缩行程，白天优先李子坝、鹅岭二厂、湖广会馆和白象居，傍晚切到来福士、朝天门和洪崖洞，晚上把火锅或江湖菜留在住宿附近。热门机位不要执着排长队，山城旅行更适合边走边调整。', '/images/seed/chongqing.svg,/images/seed/chongqing.svg', '重庆', '重庆,李子坝,火锅,夜景,小红书高收藏', 1245, 54, 1190, 6900, 1, '小红书公开搜索：SeVen《重庆｜3天2晚特种兵保姆级攻略》（改写）', 'https://www.xiaohongshu.com/search_result/69527e29000000001e0104e3?xsec_token=AB6Nmx2NPTIida2wNAZKoe5hcIEHgoQBrmGY5RMJvBJF4=&xsec_source=', '2026-05-21'),
+(8, 2, '厦门3天2晚｜鼓浪屿沙坡尾环岛路', '参考小红书厦门三天两晚高赞笔记改写：Day1 从中山路、八市和沙坡尾开始，晚上看双子塔周边夜景；Day2 预留给鼓浪屿，岛上用步行串联街巷、海边和老建筑；Day3 走南普陀、厦大周边、白城沙滩和环岛路。厦门节奏适合慢下来，海边天气和轮渡预约要提前看。', '/images/seed/coast.svg', '厦门', '厦门,鼓浪屿,沙坡尾,环岛路,小红书高收藏', 7270, 211, 6380, 26800, 1, '小红书公开搜索：正在晒太阳《厦门｜三天两晚，主打一个：来都来了》（改写）', 'https://www.xiaohongshu.com/search_result/69d2089a000000002103baff?xsec_token=ABa2URARwU2dy6rXtRtvuFSOOlogh_zRR6bspLh5r2M-8=&xsec_source=', '2026-05-21'),
+(9, 3, '江南串线｜杭州绍兴乌镇苏州上海', '参考小红书江南跨城路线搜索结果改写：从杭州进，先走西湖和湖滨；第二站到绍兴看鲁迅故里、仓桥直街和黄酒小馆；再去乌镇住一晚看夜景；之后转苏州园林和平江路，最后上海外滩收尾。城市多时不要每天换太远住宿，高铁站到景区的接驳时间要算进去。', '/images/seed/hangzhou.svg,/images/seed/garden.svg,/images/seed/shanghai.svg', '江南', '杭州,绍兴,乌镇,苏州,上海,小红书路线', 587, 32, 520, 4100, 1, '小红书公开搜索：Bibi《深圳-杭州-绍兴-乌镇-苏州-上海》（改写）', 'https://www.xiaohongshu.com/search_result/693ab105000000001f00ed09?xsec_token=AB1voB1D9XCtyDQpC55AqfYIABux13F2Jrx34zjEP6s1w=&xsec_source=', '2026-05-21'),
+(10, 4, '暑期热门旅行地图｜9城灵感清单', '参考小红书暑期旅行地图类笔记改写：亲子和第一次出游优先北京、西安、南京；想看海可选厦门、青岛、三亚；喜欢城市烟火气可选成都、重庆、长沙。路线清单适合做首页灵感流，真正下单前仍要看天气、门票预约和交通余量。', '/images/seed/beijing.svg,/images/seed/qingdao.svg,/images/seed/chongqing.svg', '全国', '暑期旅行,城市清单,亲子,海边,小红书高收藏', 1397, 74, 1280, 7600, 1, '小红书公开搜索：春秋探路兔高高《旅行地图暑期热门》（改写）', 'https://www.xiaohongshu.com/search_result/6850cbde0000000023003940?xsec_token=ABmevfsa6nI8fQ9mn6s2bEo5Sv3fHaui8BIYgVOX11b_Y=&xsec_source=', '2026-05-21')
 ON DUPLICATE KEY UPDATE
   `title` = VALUES(`title`),
   `content` = VALUES(`content`),
@@ -964,10 +968,10 @@ ON DUPLICATE KEY UPDATE
   `data_checked_date` = VALUES(`data_checked_date`);
 
 INSERT IGNORE INTO `tm_tour_product` (`id`, `name`, `description`, `tour_type`, `departure_city`, `destination`, `duration`, `price`, `cover_img`, `source_name`, `source_url`, `data_checked_date`) VALUES
-(7, '重庆山城夜景三日游', '结合小红书重庆三天两晚路线和重庆公开文旅信息整理，覆盖解放碑、洪崖洞、李子坝、山城步道等节点。价格为演示服务费。', 1, '重庆', '重庆主城', '3天2晚', 468.00, 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Hongyadong_night_lights_Chongqing.jpg', '小红书公开搜索/重庆市文旅委公开信息', 'https://whlyw.cq.gov.cn/', '2026-05-21'),
-(8, '厦门鼓浪屿三日慢游', '结合小红书厦门三天两晚路线和鼓浪屿管委会公开信息整理，覆盖鼓浪屿、沙坡尾、环岛路等节点。价格为演示服务费。', 1, '厦门', '厦门', '3天2晚', 498.00, 'https://upload.wikimedia.org/wikipedia/commons/b/b6/Gulangyu_Island_from_Zhongshan_Road%2C_Xiamen.jpg', '小红书公开搜索/鼓浪屿管委会公开信息', 'https://gly.xm.gov.cn/', '2026-05-21'),
-(9, '南京博物馆中山陵一日游', '基于携程南京目的地联想和南京钟山风景区公开信息整理，适合城市历史文化轻量游。价格为演示服务费。', 0, '南京', '南京', '1天', 158.00, 'https://upload.wikimedia.org/wikipedia/commons/0/06/China-Nanjing_%282024%29_Mausoleum_of_Sun_Yat_Sen_%E4%B8%AD%E5%B1%B1%E9%99%B5_-_img_08.jpg', '携程目的地搜索/南京钟山风景区官网', 'https://zschina.nanjing.gov.cn/', '2026-05-21'),
-(10, '苏州园林平江路一日游', '基于携程苏州目的地联想和拙政园公开信息整理，覆盖古典园林、平江路和山塘街。价格为演示服务费。', 0, '苏州', '苏州古城', '1天', 168.00, 'https://upload.wikimedia.org/wikipedia/commons/f/f5/Humble_Administrator%27s_Garden_Suzhou_November_2017_005.jpg', '携程目的地搜索/拙政园官网', 'https://www.szzzy.cn/', '2026-05-21');
+(7, '重庆山城夜景三日游', '结合小红书重庆三天两晚路线和重庆公开文旅信息整理，覆盖解放碑、洪崖洞、李子坝、山城步道等节点。价格为演示服务费。', 1, '重庆', '重庆主城', '3天2晚', 468.00, '/images/seed/chongqing.svg', '小红书公开搜索/重庆市文旅委公开信息', 'https://whlyw.cq.gov.cn/', '2026-05-21'),
+(8, '厦门鼓浪屿三日慢游', '结合小红书厦门三天两晚路线和鼓浪屿管委会公开信息整理，覆盖鼓浪屿、沙坡尾、环岛路等节点。价格为演示服务费。', 1, '厦门', '厦门', '3天2晚', 498.00, '/images/seed/coast.svg', '小红书公开搜索/鼓浪屿管委会公开信息', 'https://gly.xm.gov.cn/', '2026-05-21'),
+(9, '南京博物馆中山陵一日游', '基于携程南京目的地联想和南京钟山风景区公开信息整理，适合城市历史文化轻量游。价格为演示服务费。', 0, '南京', '南京', '1天', 158.00, '/images/seed/nanjing.svg', '携程目的地搜索/南京钟山风景区官网', 'https://zschina.nanjing.gov.cn/', '2026-05-21'),
+(10, '苏州园林平江路一日游', '基于携程苏州目的地联想和拙政园公开信息整理，覆盖古典园林、平江路和山塘街。价格为演示服务费。', 0, '苏州', '苏州古城', '1天', 168.00, '/images/seed/garden.svg', '携程目的地搜索/拙政园官网', 'https://www.szzzy.cn/', '2026-05-21');
 
 INSERT IGNORE INTO `tm_tour_product_step` (`id`, `product_id`, `day_no`, `sequence_no`, `place_name`, `attraction_id`, `stay_minutes`, `transport_note`, `source_url`) VALUES
 (21, 7, 1, 1, '解放碑-八一好吃街', NULL, 120, '市中心步行，适合抵达日', 'https://whlyw.cq.gov.cn/'),
@@ -988,8 +992,8 @@ INSERT IGNORE INTO `tm_review` (`id`, `user_id`, `target_id`, `target_type`, `or
 (2, 3, 16, 0, NULL, 5, '步行到太古里很顺，早餐和前台服务都在线，适合第一次来成都住市中心。', NULL, '服务好,商圈方便,早餐不错'),
 (3, 4, 19, 0, NULL, 5, '新街口出行太方便了，去南京博物院和中山陵打车都不远，整体很稳。', NULL, '地铁方便,老牌酒店,商务出行'),
 (4, 2, 20, 0, NULL, 4, '酒店园林感很强，离古城景点近，房间略老但氛围很好。', NULL, '园林风格,亲子友好,近景区'),
-(5, 3, 24, 1, NULL, 5, '洪崖洞夜景确实很出片，但人多的时候要提前找好返程路线。', 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Hongyadong_night_lights_Chongqing.jpg', '夜景好看,人气高,拍照出片'),
-(6, 4, 21, 1, NULL, 5, '鼓浪屿适合慢慢走，别把点位排太满，傍晚海边风很舒服。', 'https://upload.wikimedia.org/wikipedia/commons/b/b6/Gulangyu_Island_from_Zhongshan_Road%2C_Xiamen.jpg', '适合慢游,海岛,亲子友好');
+(5, 3, 24, 1, NULL, 5, '洪崖洞夜景确实很出片，但人多的时候要提前找好返程路线。', '/images/seed/chongqing.svg', '夜景好看,人气高,拍照出片'),
+(6, 4, 21, 1, NULL, 5, '鼓浪屿适合慢慢走，别把点位排太满，傍晚海边风很舒服。', '/images/seed/coast.svg', '适合慢游,海岛,亲子友好');
 
 INSERT IGNORE INTO `tm_reply` (`id`, `review_id`, `user_id`, `content`) VALUES
 (1, 1, 1, '感谢反馈，春熙路商圈房源后续会继续补充不同价位选择。'),
@@ -1010,12 +1014,12 @@ INSERT IGNORE INTO `tm_user_coupon` (`id`, `user_id`, `coupon_id`, `status`, `re
 -- ============================================================
 
 INSERT IGNORE INTO `tm_hotel` (`id`, `name`, `city`, `address`, `star_rating`, `description`, `cover_img`, `lat`, `lng`, `avg_price`, `score`, `source_name`, `source_url`, `data_checked_date`) VALUES
-(21, '重庆解放碑来福士雅诗阁服务公寓', '重庆', '渝中区接圣街6号', 5, '位于朝天门和来福士商圈，适合家庭、长住和两江夜景行程。', 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Hongyadong_night_lights_Chongqing.jpg', 29.566900, 106.588300, 1180.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-21'),
-(22, '南京夫子庙亚朵酒店', '南京', '秦淮区建康路附近', 4, '靠近夫子庙和秦淮河片区，适合夜游、家庭和周末短途。', 'https://upload.wikimedia.org/wikipedia/commons/0/06/China-Nanjing_%282024%29_Mausoleum_of_Sun_Yat_Sen_%E4%B8%AD%E5%B1%B1%E9%99%B5_-_img_08.jpg', 32.023805, 118.791212, 560.00, 4.7, '携程目的地/酒店联想', 'https://hotels.ctrip.com/hotels/detail/?hotelid=8838971', '2026-05-21'),
-(23, '苏州观前平江美居酒店', '苏州', '姑苏区观前平江片区', 4, '位于观前街和平江路周边，适合园林游、古城步行和美食探索。', 'https://upload.wikimedia.org/wikipedia/commons/f/f5/Humble_Administrator%27s_Garden_Suzhou_November_2017_005.jpg', 31.308031, 120.635090, 620.00, 4.7, '携程目的地/酒店联想', 'https://hotels.ctrip.com/hotels/detail/?hotelid=64962190', '2026-05-21'),
-(24, '厦门鼓浪屿海景度假酒店', '厦门', '思明区鼓浪屿内厝澳片区', 4, '面向鼓浪屿慢游和海岛度假场景，适合住岛看日落。', 'https://upload.wikimedia.org/wikipedia/commons/b/b6/Gulangyu_Island_from_Zhongshan_Road%2C_Xiamen.jpg', 24.447900, 118.061600, 720.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-21'),
+(21, '重庆解放碑来福士雅诗阁服务公寓', '重庆', '渝中区接圣街6号', 5, '位于朝天门和来福士商圈，适合家庭、长住和两江夜景行程。', '/images/seed/chongqing.svg', 29.566900, 106.588300, 1180.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-21'),
+(22, '南京夫子庙亚朵酒店', '南京', '秦淮区建康路附近', 4, '靠近夫子庙和秦淮河片区，适合夜游、家庭和周末短途。', '/images/seed/nanjing.svg', 32.023805, 118.791212, 560.00, 4.7, '携程目的地/酒店联想', 'https://hotels.ctrip.com/hotels/detail/?hotelid=8838971', '2026-05-21'),
+(23, '苏州观前平江美居酒店', '苏州', '姑苏区观前平江片区', 4, '位于观前街和平江路周边，适合园林游、古城步行和美食探索。', '/images/seed/garden.svg', 31.308031, 120.635090, 620.00, 4.7, '携程目的地/酒店联想', 'https://hotels.ctrip.com/hotels/detail/?hotelid=64962190', '2026-05-21'),
+(24, '厦门鼓浪屿海景度假酒店', '厦门', '思明区鼓浪屿内厝澳片区', 4, '面向鼓浪屿慢游和海岛度假场景，适合住岛看日落。', '/images/seed/coast.svg', 24.447900, 118.061600, 720.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-21'),
 (25, '长沙五一广场国金中心酒店', '长沙', '芙蓉区五一广场商圈', 4, '临近五一广场、IFS和黄兴路步行街，适合美食与夜生活行程。', 'https://ak-d.tripcdn.com/images/1mc0q12000mffam9bF93D.jpg', 28.193300, 112.976900, 520.00, 4.6, 'Trip.com 酒店图库/演示价格', 'https://sa.trip.com/hotels/changsha-hotel-detail-114935658/quan-ji-jiu-dian/photo.html', '2026-05-23'),
-(26, '青岛八大关海景酒店', '青岛', '市南区八大关风景区附近', 4, '靠近八大关、第二海水浴场和栈桥片区，适合海滨城市度假。', 'https://upload.wikimedia.org/wikipedia/commons/8/89/Zhanqiao_pier_with_Little_Qingdao_Isle.jpg', 36.055300, 120.343600, 860.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-21');
+(26, '青岛八大关海景酒店', '青岛', '市南区八大关风景区附近', 4, '靠近八大关、第二海水浴场和栈桥片区，适合海滨城市度假。', '/images/seed/qingdao.svg', 36.055300, 120.343600, 860.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-21');
 
 INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`, `price`, `total_rooms`, `available_rooms`, `facilities`) VALUES
 (21, '两江景观大床房', '1.8m大床', 45, 980.00, 18, 9, 'WiFi,江景,洗衣机,厨房,浴缸'),
@@ -1032,11 +1036,11 @@ INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`,
 (26, '亲子海景套房', '1.8m+1.2m床', 55, 1180.00, 8, 3, 'WiFi,亲子用品,海景,客厅');
 
 INSERT INTO `tm_attraction` (`id`, `name`, `city`, `address`, `description`, `cover_img`, `adult_price`, `child_price`, `total_tickets`, `available_tickets`, `open_time`, `lat`, `lng`, `official_url`, `source_name`, `data_checked_date`) VALUES
-(29, '夫子庙秦淮风光带', '南京', '秦淮区夫子庙贡院街', '南京代表性历史文化街区，夜游秦淮河、江南贡院和夫子庙商圈集中分布。', 'https://upload.wikimedia.org/wikipedia/commons/0/06/China-Nanjing_%282024%29_Mausoleum_of_Sun_Yat_Sen_%E4%B8%AD%E5%B1%B1%E9%99%B5_-_img_08.jpg', 0.00, 0.00, 9999, 9999, '全天开放（游船和场馆另行开放）', 32.020600, 118.788900, 'https://wlj.nanjing.gov.cn/', '南京市文化和旅游局公开信息', '2026-05-21'),
-(30, '平江路历史街区', '苏州', '姑苏区平江路', '苏州古城代表性历史街区，保留河街并行格局，适合步行和夜游。', 'https://upload.wikimedia.org/wikipedia/commons/f/f5/Humble_Administrator%27s_Garden_Suzhou_November_2017_005.jpg', 0.00, 0.00, 9999, 9999, '全天开放（商户营业时间不一）', 31.314700, 120.633700, 'https://wglj.suzhou.gov.cn/', '苏州市文化广电和旅游局公开信息', '2026-05-21'),
-(31, '沙坡尾艺术西区', '厦门', '思明区沙坡尾', '厦门老港口与城市更新街区，集合咖啡、展览、市集和海边步行体验。', 'https://upload.wikimedia.org/wikipedia/commons/b/b6/Gulangyu_Island_from_Zhongshan_Road%2C_Xiamen.jpg', 0.00, 0.00, 9999, 9999, '全天开放（商户营业时间不一）', 24.437200, 118.091400, 'https://wlj.xm.gov.cn/', '厦门市文化和旅游局公开信息', '2026-05-21'),
-(32, '橘子洲景区', '长沙', '岳麓区橘子洲头', '湘江江心洲景区，是长沙城市观光和夜游烟花活动的重要地标。', 'https://upload.wikimedia.org/wikipedia/commons/0/07/Changsha_Skyline_2021.jpg', 0.00, 0.00, 9999, 9999, '07:00-22:00（以景区公告为准）', 28.181900, 112.959500, 'https://wlj.changsha.gov.cn/', '长沙市文化旅游广电局公开信息', '2026-05-21'),
-(33, '八大关风景区', '青岛', '市南区汇泉角东北部', '青岛海滨历史建筑街区，适合城市漫步、建筑观赏和海边拍照。', 'https://upload.wikimedia.org/wikipedia/commons/8/89/Zhanqiao_pier_with_Little_Qingdao_Isle.jpg', 0.00, 0.00, 9999, 9999, '全天开放（部分建筑另行开放）', 36.050200, 120.347800, 'https://whlyj.qingdao.gov.cn/', '青岛市文化和旅游局公开信息', '2026-05-21')
+(29, '夫子庙秦淮风光带', '南京', '秦淮区夫子庙贡院街', '南京代表性历史文化街区，夜游秦淮河、江南贡院和夫子庙商圈集中分布。', '/images/seed/nanjing.svg', 0.00, 0.00, 9999, 9999, '全天开放（游船和场馆另行开放）', 32.020600, 118.788900, 'https://wlj.nanjing.gov.cn/', '南京市文化和旅游局公开信息', '2026-05-21'),
+(30, '平江路历史街区', '苏州', '姑苏区平江路', '苏州古城代表性历史街区，保留河街并行格局，适合步行和夜游。', '/images/seed/garden.svg', 0.00, 0.00, 9999, 9999, '全天开放（商户营业时间不一）', 31.314700, 120.633700, 'https://wglj.suzhou.gov.cn/', '苏州市文化广电和旅游局公开信息', '2026-05-21'),
+(31, '沙坡尾艺术西区', '厦门', '思明区沙坡尾', '厦门老港口与城市更新街区，集合咖啡、展览、市集和海边步行体验。', '/images/seed/coast.svg', 0.00, 0.00, 9999, 9999, '全天开放（商户营业时间不一）', 24.437200, 118.091400, 'https://wlj.xm.gov.cn/', '厦门市文化和旅游局公开信息', '2026-05-21'),
+(32, '橘子洲景区', '长沙', '岳麓区橘子洲头', '湘江江心洲景区，是长沙城市观光和夜游烟花活动的重要地标。', '/images/seed/attraction.svg', 0.00, 0.00, 9999, 9999, '07:00-22:00（以景区公告为准）', 28.181900, 112.959500, 'https://wlj.changsha.gov.cn/', '长沙市文化旅游广电局公开信息', '2026-05-21'),
+(33, '八大关风景区', '青岛', '市南区汇泉角东北部', '青岛海滨历史建筑街区，适合城市漫步、建筑观赏和海边拍照。', '/images/seed/qingdao.svg', 0.00, 0.00, 9999, 9999, '全天开放（部分建筑另行开放）', 36.050200, 120.347800, 'https://whlyj.qingdao.gov.cn/', '青岛市文化和旅游局公开信息', '2026-05-21')
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `city` = VALUES(`city`),
@@ -1053,10 +1057,10 @@ ON DUPLICATE KEY UPDATE
   `data_checked_date` = VALUES(`data_checked_date`);
 
 INSERT INTO `tm_post` (`id`, `user_id`, `title`, `content`, `images`, `destination`, `tags`, `like_count`, `comment_count`, `collect_count`, `view_count`, `status`, `source_name`, `source_url`, `data_checked_date`) VALUES
-(11, 2, '南京2天1晚｜博物院夫子庙中山陵', '南京适合周末短途：第一天上午南京博物院，下午总统府或老门东，晚上留给夫子庙秦淮河；第二天早起去中山陵和音乐台，时间宽裕再接玄武湖。博物馆和热门景点要提前预约，住宿放新街口或夫子庙都比较方便。', 'https://upload.wikimedia.org/wikipedia/commons/0/06/China-Nanjing_%282024%29_Mausoleum_of_Sun_Yat_Sen_%E4%B8%AD%E5%B1%B1%E9%99%B5_-_img_08.jpg', '南京', '南京,夫子庙,南京博物院,中山陵,周末游', 1830, 64, 1660, 9200, 1, '小红书路线结构改写/公开文旅信息', NULL, '2026-05-21'),
-(12, 3, '苏州1天｜拙政园平江路山塘街', '苏州一日游可以早上进拙政园，避开中午客流；午后从苏州博物馆周边走到平江路，慢慢喝茶和看小桥流水；傍晚再去山塘街看夜景。古城内打车不一定快，步行和地铁组合更稳。', 'https://upload.wikimedia.org/wikipedia/commons/f/f5/Humble_Administrator%27s_Garden_Suzhou_November_2017_005.jpg', '苏州', '苏州,拙政园,平江路,山塘街,江南', 1246, 38, 1090, 6100, 1, '小红书路线结构改写/携程目的地联想', NULL, '2026-05-21'),
-(13, 4, '长沙周末｜五一广场橘子洲岳麓山', '长沙适合轻松吃喝路线：第一天下午到五一广场和黄兴路，晚上吃小吃和茶饮；第二天上午橘子洲，下午岳麓山和湖南大学，晚上回市区。热门餐饮排队时间长，别把行程排得太满。', 'https://upload.wikimedia.org/wikipedia/commons/0/07/Changsha_Skyline_2021.jpg', '长沙', '长沙,橘子洲,岳麓山,五一广场,美食', 986, 41, 820, 5300, 1, '小红书路线结构改写/公开文旅信息', NULL, '2026-05-21'),
-(14, 2, '青岛3天｜栈桥八大关小麦岛看海', '青岛三天可以把老城和海边拆开：第一天栈桥、天主教堂和信号山；第二天八大关、第二海水浴场和小鱼山；第三天小麦岛、石老人或崂山。看海很吃天气，建议把海边拍照点放在晴天。', 'https://upload.wikimedia.org/wikipedia/commons/8/89/Zhanqiao_pier_with_Little_Qingdao_Isle.jpg', '青岛', '青岛,栈桥,八大关,小麦岛,看海', 1468, 52, 1330, 7900, 1, '小红书路线结构改写/公开文旅信息', NULL, '2026-05-21')
+(11, 2, '南京2天1晚｜博物院夫子庙中山陵', '南京适合周末短途：第一天上午南京博物院，下午总统府或老门东，晚上留给夫子庙秦淮河；第二天早起去中山陵和音乐台，时间宽裕再接玄武湖。博物馆和热门景点要提前预约，住宿放新街口或夫子庙都比较方便。', '/images/seed/nanjing.svg', '南京', '南京,夫子庙,南京博物院,中山陵,周末游', 1830, 64, 1660, 9200, 1, '小红书路线结构改写/公开文旅信息', NULL, '2026-05-21'),
+(12, 3, '苏州1天｜拙政园平江路山塘街', '苏州一日游可以早上进拙政园，避开中午客流；午后从苏州博物馆周边走到平江路，慢慢喝茶和看小桥流水；傍晚再去山塘街看夜景。古城内打车不一定快，步行和地铁组合更稳。', '/images/seed/garden.svg', '苏州', '苏州,拙政园,平江路,山塘街,江南', 1246, 38, 1090, 6100, 1, '小红书路线结构改写/携程目的地联想', NULL, '2026-05-21'),
+(13, 4, '长沙周末｜五一广场橘子洲岳麓山', '长沙适合轻松吃喝路线：第一天下午到五一广场和黄兴路，晚上吃小吃和茶饮；第二天上午橘子洲，下午岳麓山和湖南大学，晚上回市区。热门餐饮排队时间长，别把行程排得太满。', '/images/seed/attraction.svg', '长沙', '长沙,橘子洲,岳麓山,五一广场,美食', 986, 41, 820, 5300, 1, '小红书路线结构改写/公开文旅信息', NULL, '2026-05-21'),
+(14, 2, '青岛3天｜栈桥八大关小麦岛看海', '青岛三天可以把老城和海边拆开：第一天栈桥、天主教堂和信号山；第二天八大关、第二海水浴场和小鱼山；第三天小麦岛、石老人或崂山。看海很吃天气，建议把海边拍照点放在晴天。', '/images/seed/qingdao.svg', '青岛', '青岛,栈桥,八大关,小麦岛,看海', 1468, 52, 1330, 7900, 1, '小红书路线结构改写/公开文旅信息', NULL, '2026-05-21')
 ON DUPLICATE KEY UPDATE
   `title` = VALUES(`title`),
   `content` = VALUES(`content`),
@@ -1135,12 +1139,12 @@ ON DUPLICATE KEY UPDATE
   `status` = VALUES(`status`);
 
 INSERT INTO `tm_hotel` (`id`, `name`, `city`, `address`, `star_rating`, `description`, `cover_img`, `lat`, `lng`, `avg_price`, `score`, `source_name`, `source_url`, `data_checked_date`) VALUES
-(31, '北京前门建国饭店', '北京', '西城区永安路175号', 4, '临近前门、大栅栏和天安门南侧，适合中轴线和老城游览。', 'https://upload.wikimedia.org/wikipedia/commons/e/ef/The_Forbidden_City_-_View_from_Coal_Hill.jpg', 39.889600, 116.393700, 760.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-21'),
-(32, '上海人民广场南京东路珍宝酒店', '上海', '黄浦区人民广场南京东路片区', 4, '靠近人民广场、南京路步行街和外滩，适合上海 citywalk。', 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Shanghai_Bund-20150516-RM-173803.jpg', 31.235800, 121.478900, 720.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-21'),
-(33, '杭州湖滨银泰亚朵酒店', '杭州', '上城区湖滨银泰商圈', 4, '临近西湖湖滨和地铁站，适合周末短住与亲子出行。', 'https://upload.wikimedia.org/wikipedia/commons/d/d8/West_Lake%2C_Hangzhou_%28Nine-turn_bridge%29.jpg', 30.257200, 120.165400, 680.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-21'),
-(34, '西安钟楼鼓楼美居酒店', '西安', '碑林区钟楼商圈', 4, '靠近钟楼、鼓楼和回民街，适合古城夜游与美食路线。', 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Xi-an_city_wall_side.jpg', 34.261100, 108.942100, 520.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-21'),
-(35, '三亚海棠湾度假酒店', '三亚', '海棠区海棠湾国家海岸', 5, '面向亲子度假和免税购物场景，适合海棠湾慢旅行。', 'https://upload.wikimedia.org/wikipedia/commons/4/44/Yalong_Bay_01.jpg', 18.307400, 109.736600, 1680.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-21'),
-(36, '广州珠江新城雅致酒店', '广州', '天河区珠江新城商圈', 4, '临近花城广场、广州塔和珠江夜游动线，适合商务和城市观光。', 'https://upload.wikimedia.org/wikipedia/commons/5/50/Guangzhou_skyline_%283to4%29.jpg', 23.120900, 113.324400, 690.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-21')
+(31, '北京前门建国饭店', '北京', '西城区永安路175号', 4, '临近前门、大栅栏和天安门南侧，适合中轴线和老城游览。', '/images/seed/beijing.svg', 39.889600, 116.393700, 760.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-21'),
+(32, '上海人民广场南京东路珍宝酒店', '上海', '黄浦区人民广场南京东路片区', 4, '靠近人民广场、南京路步行街和外滩，适合上海 citywalk。', '/images/seed/shanghai.svg', 31.235800, 121.478900, 720.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-21'),
+(33, '杭州湖滨银泰亚朵酒店', '杭州', '上城区湖滨银泰商圈', 4, '临近西湖湖滨和地铁站，适合周末短住与亲子出行。', '/images/seed/hangzhou.svg', 30.257200, 120.165400, 680.00, 4.7, '公开酒店信息/演示价格', NULL, '2026-05-21'),
+(34, '西安钟楼鼓楼美居酒店', '西安', '碑林区钟楼商圈', 4, '靠近钟楼、鼓楼和回民街，适合古城夜游与美食路线。', '/images/seed/xian.svg', 34.261100, 108.942100, 520.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-21'),
+(35, '三亚海棠湾度假酒店', '三亚', '海棠区海棠湾国家海岸', 5, '面向亲子度假和免税购物场景，适合海棠湾慢旅行。', '/images/seed/sanya.svg', 18.307400, 109.736600, 1680.00, 4.8, '公开酒店信息/演示价格', NULL, '2026-05-21'),
+(36, '广州珠江新城雅致酒店', '广州', '天河区珠江新城商圈', 4, '临近花城广场、广州塔和珠江夜游动线，适合商务和城市观光。', '/images/seed/attraction.svg', 23.120900, 113.324400, 690.00, 4.6, '公开酒店信息/演示价格', NULL, '2026-05-21')
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `city` = VALUES(`city`),
@@ -1178,121 +1182,121 @@ INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`,
 INSERT INTO `tm_attraction` (`id`, `name`, `city`, `address`, `description`, `cover_img`, `adult_price`, `child_price`, `total_tickets`, `available_tickets`, `open_time`, `lat`, `lng`, `official_url`, `source_name`, `data_checked_date`) VALUES
 (29, '黄鹤楼', '武汉', '武昌区蛇山峰岭之上',
   '中国历史名楼之一，矗立于武汉蛇山，登楼可俯瞰长江与武汉三镇城市风貌，是湖北省标志性文化地标。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Yellow_Crane_Tower_61426-Wuhan_%2849150471556%29.jpg?width=800',
+  '/images/seed/temple.svg',
   70.00, 35.00, 2000, 1456, '08:00-18:00（旺季，停止入场17:30）',
   30.5447, 114.3029, 'https://www.yhl.com.cn/', '黄鹤楼公园官网', '2026-05-19'),
 
 (30, '布达拉宫', '拉萨', '城关区布达拉宫广场',
   '矗立于拉萨红山之上，历代达赖喇嘛冬宫，世界文化遗产，藏传佛教圣地。每日严格限流，须至少提前3天预约。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Lhasa_Potala.jpg?width=800',
+  '/images/seed/temple.svg',
   200.00, 0.00, 2300, 342, '09:00-15:00（每日限流，须提前预约）',
   29.6578, 91.1174, 'https://www.potalapalace.cn/', '布达拉宫管理处官网', '2026-05-19'),
 
 (31, '纳木错', '拉萨', '当雄县纳木错湖区',
   '藏语意为"天湖"，海拔4718米，西藏最大湖泊，以圣湖美景和雪山倒影闻名。高海拔须注意高原反应。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Namcso_Lake_in_Tibet.jpg?width=800',
+  '/images/seed/lake.svg',
   120.00, 60.00, 1000, 780, '08:00-18:00（以景区公告为准）',
   30.7367, 90.5227, NULL, '那曲市文化和旅游局公开信息', '2026-05-19'),
 
 (32, '莫高窟', '敦煌', '甘肃省敦煌市鸣沙山东麓',
   '俗称千佛洞，世界上现存规模最大、保存最完好的佛教艺术宝库，世界文化遗产。须提前网络预约，日票额有限。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Mogao_Caves.jpg?width=800',
+  '/images/seed/temple.svg',
   238.00, 119.00, 6000, 2130, '08:00-17:00（A类票额，参观时段固定，须提前预约）',
   40.0361, 94.8086, 'https://www.dha.ac.cn/', '敦煌研究院官网', '2026-05-19'),
 
 (33, '乐山大佛', '乐山', '四川省乐山市凌云山',
   '世界最高石刻弥勒佛坐像，依山而凿，通高71米，与乌尤寺、凌云寺共同构成景区，世界文化与自然双遗产。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Leshan_Giant_Buddha.jpg?width=800',
+  '/images/seed/temple.svg',
   120.00, 60.00, 2000, 1560, '07:30-18:30（旺季）',
   29.5458, 103.7716, 'https://www.leshandafo.com/', '乐山大佛景区官网', '2026-05-19'),
 
 (34, '峨眉山', '乐山', '四川省峨眉山市',
   '佛教四大名山之一，以金顶云海、雷洞坪等景观闻名，与乐山大佛共同列入世界文化与自然双遗产，海拔3079米。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Golden_Summit%2C_Mount_Emei%2C_China%2C_August_2016.jpg?width=800',
+  '/images/seed/mountain.svg',
   160.00, 80.00, 3000, 1870, '06:00-18:00（缆车另计，以景区公告为准）',
   29.6159, 103.3436, 'https://www.emeishan.com/', '峨眉山景区官网', '2026-05-19'),
 
 (35, '泰山', '泰安', '山东省泰安市泰山区',
   '五岳之首，世界自然与文化双遗产，古代帝王封禅之地，以日出云海和南天门石阶著称。可徒步或乘缆车。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/50513-Taishan_%2849055887817%29.jpg?width=800',
+  '/images/seed/mountain.svg',
   125.00, 62.00, 5000, 3400, '全天开放（缆车运营时间以公告为准）',
   36.2538, 117.1082, 'https://www.taishan.com/', '泰山景区官网', '2026-05-19'),
 
 (36, '天山天池', '乌鲁木齐', '新疆昌吉回族自治州阜康市',
   '天山博格达峰下高山冰碛湖，海拔1910米，以雪山倒映和天山云杉林著称，国家5A级风景区。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Tianchi_Lake.jpg?width=800',
+  '/images/seed/mountain.svg',
   100.00, 50.00, 2000, 1380, '08:00-20:00（旺季，以景区公告为准）',
   43.8851, 88.1206, NULL, '昌吉州文化和旅游局公开信息', '2026-05-19'),
 
 (37, '喀纳斯景区', '阿勒泰', '新疆阿勒泰地区布尔津县',
   '集湖泊、河流、草原、森林、雪山于一体，以禾木晨雾和彩林秋色闻名的边境风景区。旺季需提前订住宿。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/LakeKanas.jpg?width=800',
+  '/images/seed/lake.svg',
   245.00, 122.00, 1500, 890, '08:00-20:00（旺季，以景区公告为准）',
   48.6867, 87.0005, NULL, '阿勒泰地区文化和旅游局公开信息', '2026-05-19'),
 
 (38, '元阳哈尼梯田', '红河', '云南省红河州元阳县',
   '世界文化遗产，哈尼族先民开凿的大规模梯田，以冬春水季日照云海倒影最为壮观，多依树观景台是核心打卡点。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Yuanyang_Rice_Terraces_%2848639450842%29.jpg?width=800',
+  '/images/seed/attraction.svg',
   100.00, 50.00, 2000, 1560, '08:00-18:00（以景区公告为准）',
   23.1161, 102.7756, NULL, '红河州文化和旅游局公开信息', '2026-05-19'),
 
 (39, '石林风景区', '昆明', '云南省昆明市石林彝族自治县',
   '世界自然遗产，以喀斯特地貌形成的剑状石灰岩群落著称，被称为"天下第一奇观"。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Shilin_Stone_Forest_01.JPG?width=800',
+  '/images/seed/attraction.svg',
   200.00, 100.00, 2000, 1240, '07:30-18:00（以景区公告为准）',
   24.7726, 103.2701, 'https://www.chinastoneforest.com/', '石林风景名胜区官网', '2026-05-19'),
 
 (40, '龙门石窟', '洛阳', '河南省洛阳市南郊伊水两岸',
   '北魏至唐代皇家开凿的大型石窟群，世界文化遗产，奉先寺卢舍那大佛为代表性造像，规模宏大。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Longmen_Grottoes_2.jpg?width=800',
+  '/images/seed/temple.svg',
   90.00, 45.00, 2500, 1560, '08:00-17:30（以景区公告为准）',
   34.5604, 112.4741, 'https://www.longmen.gov.cn/', '龙门石窟景区官网', '2026-05-19'),
 
 (41, '武夷山', '南平', '福建省南平市武夷山市',
   '世界文化与自然双重遗产，以丹霞地貌、碧水九曲和武夷岩茶产区著称，竹筏漂流体验极佳。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/20121029_Mount_Wuyi_01.jpg?width=800',
+  '/images/seed/mountain.svg',
   140.00, 70.00, 1500, 1020, '07:30-18:00（以景区公告为准）',
   27.7494, 117.9855, 'https://www.wuyi.gov.cn/', '武夷山风景名胜区管委会官网', '2026-05-19'),
 
 (42, '周庄古镇', '苏州', '江苏省苏州市昆山市周庄镇',
   '江南水乡代表古镇，以水道、石桥、明清民居和双桥著称，有"中国第一水乡"之称。早晨人少，建议8点前进入。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Zhouzhuang.JPG?width=800',
+  '/images/seed/garden.svg',
   100.00, 50.00, 2000, 1460, '08:00-17:00（以景区公告为准）',
   31.1132, 120.8476, NULL, '周庄古镇景区管委会公开信息', '2026-05-19'),
 
 (43, '夫子庙秦淮风光带', '南京', '江苏省南京市秦淮区贡院街',
   '以秦淮河沿岸历史文化街区为核心，涵盖夫子庙、贡院、乌衣巷等历史景观，是南京文化旅游核心区，多数区域免费开放。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Confucius_Temple_Qinhuai_river_2.jpg?width=800',
+  '/images/seed/nanjing.svg',
   0.00, 0.00, 9999, 9999, '全天开放（贡院等收费景点另行公告）',
   32.0211, 118.7834, NULL, '南京市文化和旅游局公开信息', '2026-05-19'),
 
 (44, '西双版纳热带植物园', '西双版纳', '云南省西双版纳州勐腊县勐仑镇',
   '中国科学院直属热带植物科研基地，同时对公众开放，以物种多样性和热带雨林景观著称，是自然科普和度假的优选地。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/20251225_Tropical_rainforest_in_the_Xishuangbanna_Tropical_Botanical_Garden%2C_Chinese_Academy_of_Sciences.jpg?width=800',
+  '/images/seed/garden.svg',
   80.00, 40.00, 2000, 1650, '08:00-18:00（以园区公告为准）',
   21.9158, 101.0253, 'https://www.xtbg.cas.cn/', '西双版纳热带植物园官网', '2026-05-19'),
 
 (45, '崂山风景区', '青岛', '山东省青岛市崂山区',
   '道教名山，主峰巨峰海拔1132.7米，以海上仙山、清泉奇石和道教文化著称，是青岛近郊必游山岳景区。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Laoshan-mountain-with-rocks.jpg?width=800',
+  '/images/seed/qingdao.svg',
   80.00, 40.00, 2000, 1560, '06:30-17:00（以景区公告为准）',
   36.1654, 120.6028, 'https://www.laoshan.gov.cn/', '崂山区文化和旅游局', '2026-05-19'),
 
 (46, '海螺沟冰川森林公园', '甘孜', '四川省甘孜州泸定县磨西镇',
   '以现代冰川、高山温泉和原始森林为核心景观，贡嘎山麓冰川可步行近距离接触，是四川高原特色景区。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Hailuogou_Glaciers_in_Summer_10_24_10_817000.jpeg?width=800',
+  '/images/seed/mountain.svg',
   82.00, 41.00, 1200, 820, '08:00-18:00（以景区公告为准）',
   29.5744, 102.0626, NULL, '海螺沟景区管委会公开信息', '2026-05-19'),
 
 (47, '黄龙风景名胜区', '阿坝', '四川省阿坝州松潘县',
   '世界自然遗产，以彩池、雪山、峡谷、森林构成的景观组合闻名，核心景区彩池群层叠绵延，与九寨沟形成黄九环线。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/1_huanglong_2.jpg?width=800',
+  '/images/seed/lake.svg',
   150.00, 75.00, 1500, 960, '08:00-17:00（以景区公告为准，海拔高）',
   32.7502, 103.8165, NULL, '阿坝州文化和旅游局公开信息', '2026-05-19'),
 
 (48, '武陵源·黄龙洞', '张家界', '湖南省张家界市武陵源区',
   '武陵源世界自然遗产核心区内的溶洞景区，以大规模石钟乳、石笋和地下河著称，是张家界地下景观的代表。',
-  'https://commons.wikimedia.org/wiki/Special:FilePath/Huanglongdong.JPG?width=800',
+  '/images/seed/zhangjiajie.svg',
   130.00, 65.00, 1000, 680, '08:00-17:30（以景区公告为准）',
   29.368, 110.5526, NULL, '武陵源景区管委会公开信息', '2026-05-19')
 
@@ -1317,27 +1321,27 @@ ON DUPLICATE KEY UPDATE
 INSERT INTO `tm_post` (`id`, `user_id`, `title`, `content`, `images`, `destination`, `tags`, `like_count`, `comment_count`, `collect_count`, `view_count`, `status`, `source_name`, `data_checked_date`) VALUES
 (11, 4, '山东泰山+曲阜孔庙4天｜登顶看日出攻略',
   'Day1济南：趵突泉+大明湖+宽厚里；Day2泰山：推荐凌晨12点从红门出发徒步，爬5小时到南天门在天街等日出，日出后吃豆腐脑早餐再下山（用缆车）；Day3曲阜：三孔（孔庙孔林孔府），半天到一天即可；Day4返程。泰山登顶一定要带厚衣物，山顶夏天也只有十几度，日出前后风大刺骨。',
-  'https://picsum.photos/seed/taishan-summit-view/800/500,https://picsum.photos/seed/taishan-sunrise-clouds/800/500,https://picsum.photos/seed/qufu-confucius-temple/800/500',
+  '/images/seed/mountain.svg,/images/seed/mountain.svg,/images/seed/nanjing.svg',
   '泰安', '山东,泰山,泰山日出,曲阜,孔庙,济南', 11200, 247, 10800, 43000, 1, '演示游记', '2026-05-19'),
 
 (12, 2, '武汉2天｜黄鹤楼+汉口租界+东湖绿道',
   'Day1：黄鹤楼（早9点前进景区人少）—蛇山城墙—武汉大学（需提前预约）—户部巷宵夜；Day2：汉口老租界漫步（大和街、中山大道）—黎黄陂路小吃—东湖绿道骑行（推荐磨山段）—光谷步行街。武汉地铁很方便，主要景点都能覆盖，两天完全够用，热干面和豆皮必尝。',
-  'https://picsum.photos/seed/yellow-crane-wuhan-view/800/500,https://picsum.photos/seed/wuhan-yangtze-bridge/800/500,https://picsum.photos/seed/east-lake-greenway/800/500',
+  '/images/seed/attraction.svg,/images/seed/attraction.svg,/images/seed/lake.svg',
   '武汉', '武汉,黄鹤楼,汉口租界,东湖,两天一夜', 6700, 158, 6400, 26000, 1, '演示游记', '2026-05-19'),
 
 (13, 3, '苏州+周庄2天｜古典园林完整打卡',
   'Day1苏州：拙政园（7:30刚开门进最安静）—狮子林—平江路茶馆—苏博（免费需预约）—观前街；Day2周庄：早8点前进古镇人最少，走富安桥—双桥—沈厅—张厅，中午吃万三蹄，下午2点前出镇避开人流。苏州园林建议只选1-2个深度游，不要贪多导致走马观花。周庄早进早出是关键。',
-  'https://picsum.photos/seed/suzhou-humble-admin/800/500,https://picsum.photos/seed/zhouzhuang-double-bridge/800/500,https://picsum.photos/seed/jiangnan-watertown/800/500',
+  '/images/seed/garden.svg,/images/seed/garden.svg,/images/seed/attraction.svg',
   '苏州', '苏州,拙政园,周庄,园林,江南水乡', 7400, 169, 7100, 28000, 1, '演示游记', '2026-05-19'),
 
 (14, 4, '青岛+崂山3天｜海滨城市完整路线',
   'Day1青岛市区：栈桥—小鱼山—八大关（欧式建筑群）—太平山索道—台东步行街晚餐；Day2崂山：北线巨峰，上缆车下步行，下午顺路看太清宫；Day3劈柴院早餐+中山路+博物馆（免费）+啤酒街晚餐扫货。青岛比想象中大，建议地铁为主，五四广场+海边走走必排。海鲜大排档一定要货比三家再进。',
-  'https://picsum.photos/seed/qingdao-pier-coast/800/500,https://picsum.photos/seed/laoshan-sea-mountain/800/500,https://picsum.photos/seed/qingdao-beer-street/800/500',
+  '/images/seed/qingdao.svg,/images/seed/qingdao.svg,/images/seed/qingdao.svg',
   '青岛', '青岛,崂山,栈桥,八大关,海鲜,啤酒', 5900, 143, 5700, 23000, 1, '演示游记', '2026-05-19'),
 
 (15, 2, '南京2天｜中山陵+夫子庙+先锋书店',
   'Day1：中山陵（徒步博爱坊到祭堂329级台阶，背景开阔壮观）—明孝陵（石象路神兽路很出片）—紫金山步道散步；Day2：玄武湖公园（免费，环湖一圈约1小时）—台城（樱花季必来，非花季也很美）—夫子庙秦淮河—先锋书店（地下空间全国最美书店之一）。南京旅游性价比极高，博物馆基本免费。',
-  'https://picsum.photos/seed/nanjing-zhongshan-mausoleum/800/500,https://picsum.photos/seed/nanjing-qinhuai-night/800/500,https://picsum.photos/seed/nanjing-cherry-taicheng/800/500',
+  '/images/seed/nanjing.svg,/images/seed/nanjing.svg,/images/seed/nanjing.svg',
   '南京', '南京,中山陵,夫子庙,玄武湖,台城,周末游', 8100, 187, 7800, 32000, 1, '演示游记', '2026-05-19')
 
 ON DUPLICATE KEY UPDATE

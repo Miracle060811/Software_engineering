@@ -59,7 +59,7 @@
             <el-radio-group v-if="isSelf" v-model="postStatusFilter" size="small">
               <el-radio-button label="all">全部</el-radio-button>
               <el-radio-button label="draft">草稿</el-radio-button>
-              <el-radio-button label="pending">待审核</el-radio-button>
+              <el-radio-button label="pending">AI审核中</el-radio-button>
               <el-radio-button label="published">已发布</el-radio-button>
               <el-radio-button label="rejected">已拒绝</el-radio-button>
             </el-radio-group>
@@ -71,7 +71,7 @@
           type="info"
           show-icon
           :closable="false"
-          title="普通发布会进入待审核；管理员审核通过后才会出现在社区推荐流。草稿只对自己可见。"
+          title="普通发布会进入 AI审核中 状态；审核通过后才会出现在社区推荐流。草稿只对自己可见。"
         />
         <el-empty v-if="visiblePosts.length === 0" description="暂无游记" />
         <el-row :gutter="16">
@@ -86,10 +86,10 @@
               :body-style="{ padding: 0 }"
               @click="openPost(post)"
             >
-              <img
+              <SafeImage
                 v-if="hasImages(post.images)"
                 :src="getFirstImage(post.images)"
-                class="post-cover"
+                image-class="post-cover"
                 :alt="post.title"
               />
               <div class="post-info">
@@ -114,6 +114,9 @@
                 </div>
                 <div class="post-title">{{ post.title }}</div>
                 <div v-if="!hasImages(post.images)" class="post-excerpt">{{ post.content }}</div>
+                <div v-if="post.status === 2 && post.rejectReason" class="reject-reason">
+                  未通过原因：{{ post.rejectReason }}
+                </div>
                 <div class="post-likes"><el-icon><StarFilled /></el-icon> {{ post.likeCount || 0 }}</div>
               </div>
             </el-card>
@@ -196,6 +199,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { StarFilled } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import { useUserStore } from "@/stores/user";
+import SafeImage from "@/components/SafeImage.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -391,7 +395,7 @@ const deleteAccount = async () => {
         inputType: "password",
         inputPlaceholder: "当前密码",
         confirmButtonText: "确认注销",
-        cancelButtonText: "取消",
+        cancelButtonText: "暂不注销",
         inputValidator: (value) => !!value || "请输入当前密码",
       },
     );
@@ -416,7 +420,7 @@ const getFirstImage = (images) => {
 const hasImages = (images) => !!getFirstImage(images);
 
 const statusLabel = (status) =>
-  ({ 0: "待审核", 1: "已发布", 2: "已拒绝", 3: "草稿" })[status] || `状态${status}`;
+  ({ 0: "AI审核中", 1: "已发布", 2: "已拒绝", 3: "草稿" })[status] || `状态${status}`;
 
 const statusType = (status) =>
   status === 1 ? "success" : status === 2 ? "danger" : status === 3 ? "info" : "warning";
@@ -435,7 +439,11 @@ const editDraft = (post) => {
 
 const deletePost = async (post) => {
   try {
-    await ElMessageBox.confirm(`确认删除「${post.title}」吗？`, "删除游记", { type: "warning" });
+    await ElMessageBox.confirm(`确认删除「${post.title}」吗？`, "删除游记", {
+      type: "warning",
+      confirmButtonText: "确认删除",
+      cancelButtonText: "暂不删除",
+    });
     await request.delete(`/api/post/${post.id}`);
     ElMessage.success("删除成功");
     posts.value = posts.value.filter((item) => item.id !== post.id);
@@ -590,6 +598,16 @@ onMounted(fetchProfile);
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.reject-reason {
+  font-size: 12px;
+  color: #B91C1C;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  padding: 7px 9px;
+  line-height: 1.5;
+  margin: 8px 0;
 }
 .follow-list {
   display: flex;

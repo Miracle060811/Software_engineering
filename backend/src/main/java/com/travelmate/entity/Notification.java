@@ -16,6 +16,7 @@ public class Notification {
     private String type;
     private String title;
     private String content;
+    private String actionUrl;
     private Integer isRead;
     private LocalDateTime createTime;
 }

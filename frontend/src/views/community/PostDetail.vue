@@ -69,7 +69,11 @@
           fit="cover"
           :preview-src-list="parseImages(post.images)"
           :initial-index="idx"
-        />
+        >
+          <template #error>
+            <img src="/images/seed/fallback.svg" class="post-image-fallback" alt="图片暂不可用" />
+          </template>
+        </el-image>
       </el-card>
 
       <!-- 游记内容 -->
@@ -383,7 +387,11 @@ const submitReply = async (parentId) => {
 };
 
 const deleteComment = async (commentId) => {
-  await ElMessageBox.confirm("确认删除该评论吗？", "提示", { type: "warning" });
+  await ElMessageBox.confirm("确认删除该评论吗？", "提示", {
+    type: "warning",
+    confirmButtonText: "确认删除",
+    cancelButtonText: "暂不删除",
+  });
   try {
     await request.delete(`/api/comment/${commentId}`);
     ElMessage.success("删除成功");
@@ -393,7 +401,11 @@ const deleteComment = async (commentId) => {
 
 const deletePost = async () => {
   try {
-    await ElMessageBox.confirm("确认删除这篇游记吗？", "删除游记", { type: "warning" });
+    await ElMessageBox.confirm("确认删除这篇游记吗？", "删除游记", {
+      type: "warning",
+      confirmButtonText: "确认删除",
+      cancelButtonText: "暂不删除",
+    });
     await request.delete(`/api/post/${postId}`);
     ElMessage.success("删除成功");
     router.push("/community");
@@ -467,6 +479,11 @@ onMounted(() => {
   border-radius: 8px;
   margin-right: 12px;
   margin-bottom: 8px;
+}
+.post-image-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .post-content {
   font-size: 15px;

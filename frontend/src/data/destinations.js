@@ -5,7 +5,7 @@ export const destinations = [
     country: "中国",
     tag: "文化古都",
     keywords: ["故宫", "长城", "胡同"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/e/ef/The_Forbidden_City_-_View_from_Coal_Hill.jpg",
+    img: "/images/seed/beijing.svg",
     desc: "古都风韵与现代繁华交融，适合用几天时间慢慢读懂中轴线、皇家建筑和胡同生活。",
     intro:
       "北京是中国历史文化名城，也是现代公共交通、博物馆和城市服务都很成熟的旅行目的地。故宫、长城、颐和园、天坛与北京中轴线共同构成了厚重的古都印象，胡同、老字号和新兴商圈则展现城市日常的一面。",
@@ -28,7 +28,7 @@ export const destinations = [
     country: "中国",
     tag: "魔都风情",
     keywords: ["外滩", "迪士尼", "田子坊"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/2/2b/Shanghai_Bund-20150516-RM-173803.jpg",
+    img: "/images/seed/shanghai.svg",
     desc: "海派建筑、城市天际线和潮流街区并存，适合城市漫步与夜景旅行。",
     intro:
       "上海兼具开埠以来形成的海派建筑风貌与现代都市节奏。外滩沿线保留了大量历史建筑，浦东陆家嘴呈现城市天际线，田子坊、武康路、苏河湾等街区适合慢走。",
@@ -51,7 +51,7 @@ export const destinations = [
     country: "中国",
     tag: "海岛度假",
     keywords: ["海滩", "潜水", "海鲜"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/4/44/Yalong_Bay_01.jpg",
+    img: "/images/seed/sanya.svg",
     desc: "热带海湾、潜水体验和滨海度假资源集中，适合放松型海岛旅行。",
     intro:
       "三亚位于海南岛南端，以亚龙湾、三亚湾、海棠湾等海湾度假资源闻名。这里适合海滩、潜水、亲子度假、免税购物和滨海自驾，也有南山文化旅游区等人文景点。",
@@ -74,7 +74,7 @@ export const destinations = [
     country: "中国",
     tag: "美食天堂",
     keywords: ["熊猫", "火锅", "茶馆"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/2/20/Chengdu_skyline_June_2017.jpg",
+    img: "/images/seed/chengdu.svg",
     desc: "烟火气、美食、茶馆和历史人文交织，是适合慢游的西南城市。",
     intro:
       "成都的旅行体验兼具悠闲生活与历史文化。大熊猫、川菜火锅、茶馆、锦里、杜甫草堂、武侯祠和宽窄巷子构成了最典型的城市印象。",
@@ -97,7 +97,7 @@ export const destinations = [
     country: "中国",
     tag: "江南水乡",
     keywords: ["西湖", "灵隐寺", "龙井"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/d/d8/West_Lake%2C_Hangzhou_%28Nine-turn_bridge%29.jpg",
+    img: "/images/seed/hangzhou.svg",
     desc: "西湖山水、人文古迹与茶文化共同构成江南旅行的经典样本。",
     intro:
       "杭州以西湖文化景观最具代表性。西湖三面环山、一面临城，湖山、园林、寺院、堤桥和茶村共同形成了诗意的城市旅行体验。",
@@ -120,7 +120,7 @@ export const destinations = [
     country: "中国",
     tag: "历史名城",
     keywords: ["兵马俑", "古城墙", "回民街"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/8/8e/Xi-an_city_wall_side.jpg",
+    img: "/images/seed/xian.svg",
     desc: "十三朝古都气质鲜明，适合围绕秦汉唐历史和夜游街区安排行程。",
     intro:
       "西安是中国重要古都之一，兵马俑、古城墙、大雁塔、碑林和大唐不夜城等目的地把文物遗产、城市生活和夜间文旅串联起来。",
@@ -143,7 +143,7 @@ export const destinations = [
     country: "中国",
     tag: "金陵古韵",
     keywords: ["中山陵", "夫子庙", "秦淮河"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/0/06/China-Nanjing_%282024%29_Mausoleum_of_Sun_Yat_Sen_%E4%B8%AD%E5%B1%B1%E9%99%B5_-_img_08.jpg",
+    img: "/images/seed/nanjing.svg",
     desc: "六朝古都的历史厚度和秦淮河夜色并存，适合历史文化与城市漫步结合。",
     intro:
       "南京是长江下游重要的历史文化名城，城市气质沉稳而丰富。中山陵、明孝陵、南京城墙、总统府等历史地标串联起近现代与明代遗产，夫子庙、秦淮河和老门东则保留了金陵街巷、灯彩与小吃的生活场景。",
@@ -166,7 +166,7 @@ export const destinations = [
     country: "中国",
     tag: "山城夜景",
     keywords: ["洪崖洞", "火锅", "轻轨"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Hongyadong_night_lights_Chongqing.jpg",
+    img: "/images/seed/chongqing.svg",
     desc: "立体交通、江岸夜景和麻辣烟火气鲜明，适合城市探索和夜游。",
     intro:
       "重庆依山临江，城市空间层次感强。洪崖洞、解放碑、长江索道、李子坝轻轨和南山夜景构成典型山城体验，火锅、小面和江湖菜则让旅行更有烟火气。这里的路线不适合只看平面距离，更要考虑坡道、跨江和交通换乘。",
@@ -189,7 +189,7 @@ export const destinations = [
     country: "中国",
     tag: "山水画卷",
     keywords: ["漓江", "象鼻山", "阳朔"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/9/92/1_li_jiang_guilin_yangshuo_2011.jpg",
+    img: "/images/seed/guilin.svg",
     desc: "喀斯特峰林、漓江水路和田园骑行构成经典山水旅行体验。",
     intro:
       "桂林以喀斯特山水闻名，漓江、象鼻山、两江四湖和阳朔共同构成“城在景中、景在城中”的旅行印象。市区适合看象鼻山和夜游水系，阳朔则更适合漓江竹筏、遇龙河骑行和西街夜生活。",
@@ -212,7 +212,7 @@ export const destinations = [
     country: "中国",
     tag: "海滨德韵",
     keywords: ["栈桥", "八大关", "啤酒"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/8/89/Zhanqiao_pier_with_Little_Qingdao_Isle.jpg",
+    img: "/images/seed/qingdao.svg",
     desc: "红瓦绿树、海湾栈桥和啤酒文化鲜明，适合海滨城市慢游。",
     intro:
       "青岛的城市风貌兼具海滨度假与近代建筑特色。栈桥、小青岛、八大关、信号山和奥帆中心展现海岸线与城市天际，啤酒博物馆和老城区街巷则保留了青岛独特的城市记忆。夏季海水浴场热闹，春秋季更适合步行和拍照。",
@@ -235,7 +235,7 @@ export const destinations = [
     country: "中国",
     tag: "峰林奇境",
     keywords: ["武陵源", "天门山", "玻璃栈道"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/b/b5/Zhangjiajie_from_Tianmen_Mountain_01.jpg",
+    img: "/images/seed/zhangjiajie.svg",
     desc: "石英砂岩峰林和高山峡谷景观突出，适合自然风光与轻户外旅行。",
     intro:
       "张家界以武陵源峰林、天门山索道、玻璃栈道和峡谷景观闻名。这里的景区范围大、海拔变化明显，旅行体验更接近山地目的地：需要提前确认门票、线路、索道和天气，并把体力分配到不同景区。",

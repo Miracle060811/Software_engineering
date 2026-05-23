@@ -6,6 +6,7 @@ import com.travelmate.dto.PostAuditResult;
 import com.travelmate.entity.Post;
 import com.travelmate.mapper.PostMapper;
 import com.travelmate.service.AiService;
+import com.travelmate.service.NotificationCenterService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,9 @@ public class PostAuditScheduler {
 
     @Autowired
     private AiService aiService;
+
+    @Autowired
+    private NotificationCenterService notificationCenterService;
 
     @Scheduled(fixedRate = 60 * 1000)
     public void auditPendingPosts() {
@@ -61,12 +65,23 @@ public class PostAuditScheduler {
                     post.getTags(),
                     post.getDestination());
             boolean approved = auditResult == null || auditResult.isApproved();
-            postMapper.update(null, new LambdaUpdateWrapper<Post>()
+            String reason = approved ? null : auditResult.getReason();
+            int updated = postMapper.update(null, new LambdaUpdateWrapper<Post>()
                     .eq(Post::getId, post.getId())
                     .eq(Post::getStatus, 0)
                     .set(Post::getStatus, approved ? 1 : 2)
-                    .set(Post::getRejectReason, approved ? null : auditResult.getReason())
+                    .set(Post::getRejectReason, reason)
                     .set(Post::getUpdateTime, LocalDateTime.now()));
+            if (updated > 0) {
+                notificationCenterService.createNotification(
+                        post.getUserId(),
+                        "post_audit",
+                        approved ? "游记审核通过" : "游记审核未通过",
+                        approved
+                                ? String.format("《%s》已通过 AI 审核并发布。", post.getTitle())
+                                : String.format("《%s》未通过 AI 审核，原因：%s", post.getTitle(), reason == null ? "内容不符合社区规范" : reason),
+                        "/post/" + post.getId());
+            }
         } catch (Exception e) {
             log.warn("游记 AI 审核失败，保留在队列等待下次处理。postId={}, error={}", post.getId(), e.getMessage());
         }

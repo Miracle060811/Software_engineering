@@ -90,6 +90,34 @@ public class AiController {
     }
 
     /**
+     * DELETE /api/notification/clear-all - 清空通知
+     */
+    @DeleteMapping("/api/notification/clear-all")
+    public Result<Void> deleteAllNotifications() {
+        Long userId = getCurrentUserId();
+        aiService.deleteAllNotifications(userId);
+        return Result.success();
+    }
+
+    /**
+     * DELETE /api/notifications/clear-all - 清空通知（避免与 /api/notification/{id} 冲突）
+     */
+    @DeleteMapping("/api/notifications/clear-all")
+    public Result<Void> deleteAllNotificationsCompat() {
+        return deleteAllNotifications();
+    }
+
+    /**
+     * DELETE /api/notification/{id} - 删除通知
+     */
+    @DeleteMapping("/api/notification/{id}")
+    public Result<Void> deleteNotification(@PathVariable Long id) {
+        Long userId = getCurrentUserId();
+        aiService.deleteNotification(id, userId);
+        return Result.success();
+    }
+
+    /**
      * GET /api/notification/unread-count - 未读通知数
      */
     @GetMapping("/api/notification/unread-count")

@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travelmate.entity.Attraction;
 import com.travelmate.mapper.AttractionMapper;
 import com.travelmate.service.AttractionService;
+import com.travelmate.service.NotificationCenterService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -15,6 +17,9 @@ import java.util.UUID;
 @Service
 public class AttractionServiceImpl extends ServiceImpl<AttractionMapper, Attraction>
         implements AttractionService {
+
+    @Autowired
+    private NotificationCenterService notificationCenterService;
 
     @Override
     public List<Attraction> searchAttractions(String city) {
@@ -64,6 +69,13 @@ public class AttractionServiceImpl extends ServiceImpl<AttractionMapper, Attract
                 + "，成人票: " + adults
                 + "，儿童票: " + children
                 + "，总数: " + count + " ======");
+
+        notificationCenterService.createNotification(
+                userId,
+                "attraction_order",
+                "景点门票购买成功",
+                String.format("您已成功购买 %s 门票 %d 张，订单号：%s。", attraction.getName(), count, orderNo),
+                "/attractions");
 
         return orderNo;
     }

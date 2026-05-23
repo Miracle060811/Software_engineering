@@ -25,5 +25,9 @@ public interface AiService {
 
     void markRead(Long id, Long userId);
 
+    void deleteNotification(Long id, Long userId);
+
+    void deleteAllNotifications(Long userId);
+
     long unreadCount(Long userId);
 }

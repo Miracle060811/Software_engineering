@@ -113,14 +113,14 @@ start.bat -DryRun
 
 ### 社区模块说明
 
-社区游记发布默认进入审核中状态，审核通过后才会出现在推荐流和用户公开主页。用户可以在社区页 `我的` 标签和自己的个人主页中查看全部笔记，按 `草稿 / 待审核 / 已发布 / 已拒绝` 筛选；草稿可继续编辑，自己的笔记可删除。个人主页、关注/粉丝、帖子详情点赞、评论与回复会依赖最新后端接口；修改后如果仍看到 `undefined`、`post` 或 `No static resource api/user/profile/.../posts`，请重启后端和前端开发服务。
+社区游记发布默认进入 `AI审核中` 状态，审核通过后才会出现在推荐流和用户公开主页。用户可以在社区页 `我的` 标签和自己的个人主页中查看全部笔记，按 `草稿 / AI审核中 / 已发布 / 已拒绝` 筛选；草稿可继续编辑，自己的笔记可删除。AI 或人工审核未通过时，会在已拒绝笔记上展示拒绝原因，并同步发送站内通知。个人主页、关注/粉丝、帖子详情点赞、评论与回复会依赖最新后端接口；修改后如果仍看到 `undefined`、`post` 或 `No static resource api/user/profile/.../posts`，请重启后端和前端开发服务。
 
 已覆盖的社区交互：
 
 - 游记列表支持关键词搜索，推荐流按热度和时间衰减排序。
-- 游记发布后进入待审核，后端可通过 AI 审核任务自动判断通过/拒绝；失败时保留人工审核兜底。
+- 游记发布后进入 AI审核中，后端可通过 AI 审核任务自动判断通过/拒绝；失败时保留人工审核兜底。
 - 关注流需要登录；关注/取消关注后会同步刷新关注状态和粉丝数。
-- 社区页增加 `我的` 标签，展示草稿、待审核、已发布、已拒绝内容。
+- 社区页增加 `我的` 标签，展示草稿、AI审核中、已发布、已拒绝内容。
 - 个人主页支持查看关注/粉丝列表，并可跳转到用户主页。
 - 无配图游记使用纯文字卡片，不再随机渲染占位图片。
 - 帖子详情点赞使用数字 `targetType`，避免字符串类型导致的后端解析错误。
@@ -186,15 +186,27 @@ npm run dev
 - 后端已具备：用户认证、航班/火车、交通订单、酒店/景点、AI 行程、AI 聊天、社区、管理后台等基础接口。
 - 前端已具备：[frontend/src/views/Home.vue](frontend/src/views/Home.vue)、[frontend/src/views/Login.vue](frontend/src/views/Login.vue)、[frontend/src/views/destination/DestinationList.vue](frontend/src/views/destination/DestinationList.vue)、[frontend/src/views/destination/DestinationDetail.vue](frontend/src/views/destination/DestinationDetail.vue)、[frontend/src/views/info/InfoPage.vue](frontend/src/views/info/InfoPage.vue)、[frontend/src/views/flight/FlightSearch.vue](frontend/src/views/flight/FlightSearch.vue)、[frontend/src/views/train/TrainSearch.vue](frontend/src/views/train/TrainSearch.vue)、[frontend/src/views/hotel/HotelSearch.vue](frontend/src/views/hotel/HotelSearch.vue)、[frontend/src/views/hotel/HotelDetail.vue](frontend/src/views/hotel/HotelDetail.vue)、[frontend/src/views/hotel/AttractionList.vue](frontend/src/views/hotel/AttractionList.vue)、[frontend/src/views/ai/AiPlan.vue](frontend/src/views/ai/AiPlan.vue)、[frontend/src/views/community/Community.vue](frontend/src/views/community/Community.vue)、[frontend/src/views/community/PostCreate.vue](frontend/src/views/community/PostCreate.vue)、[frontend/src/views/community/PostDetail.vue](frontend/src/views/community/PostDetail.vue)、[frontend/src/views/order/CouponCenter.vue](frontend/src/views/order/CouponCenter.vue)、[frontend/src/views/order/MyOrders.vue](frontend/src/views/order/MyOrders.vue)、[frontend/src/views/user/NotificationCenter.vue](frontend/src/views/user/NotificationCenter.vue)、[frontend/src/views/user/UserProfile.vue](frontend/src/views/user/UserProfile.vue)、[frontend/src/views/admin/AdminDashboard.vue](frontend/src/views/admin/AdminDashboard.vue) 等基础页面。
 - Windows 根目录已提供一键启动脚本：[start.ps1](start.ps1) 和 [start.bat](start.bat)。
-- 数据库种子已补充真实酒店/景点图片、热门城市资料、一日游/周边游、优惠券、订单、日志、评价等演示数据；景点封面避免使用随机占位图。
+- 数据库种子已改用本地静态图片路径，热门城市资料、一日游/周边游、优惠券、订单、日志、评价等演示数据不再依赖随机占位图。
 - 订单链路已支持机票/火车票多张购买、酒店多间房预订，库存预扣减和超时取消会按实际数量回补。
+
+## 图片资源策略
+
+核心演示图片统一放在 [frontend/public/images/seed](frontend/public/images/seed)，数据库 `cover_img`、媒体资源 URL 和热门城市封面保存 `/images/seed/...` 这类本地路径。前端使用 [SafeImage.vue](frontend/src/components/SafeImage.vue) 做统一兜底，空地址或加载失败会显示 `/images/seed/fallback.svg`。
+
+新增或修改种子图片后建议执行：
+
+```powershell
+npm run check:images
+```
+
+该命令会检查 `docs/sql/init.sql` 和主要前端入口，避免重新引入 `picsum.photos`、Wikimedia 图片直链等高风险外链，并确认本地 seed 图片文件存在。
 
 ## 当前待完善项
 
 - Redis 限流已覆盖大部分关键写接口，仍有少量非核心接口待补齐。
 - 管理后台中的 QPS、延迟和告警已基于本地 `sys_log` 做轻量统计，尚未接入真实 APM / 链路追踪系统。
 - AI 行程与订单的更深度联动、同行人共享行程等扩展能力待后续补充。
-- 外链图片依赖 Wikimedia Commons、酒店官网或 OTA 图库，若校园/本地网络拦截外链，建议后续改成本地静态资源或自建 CDN。
+- 若后续需要更真实的照片效果，可把同名 seed SVG 替换为自建 CDN 或对象存储中的稳定图片，并保持数据库路径由项目方控制。
 - 更深层的并发压测与端到端自动化回归仍需继续完善。
 
 ---
@@ -219,22 +231,22 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 
 - 航班搜索（出发城市、到达城市、日期，多维度筛选）
 - 火车票搜索（出发站、到达站、日期、中转方案推荐）
-- 订单管理（多张票下单、模拟支付、取消，乐观锁 + Redis 预扣减防超卖）
+- 基础订单管理（多张票下单、模拟支付、取消、退款处理、状态机流转）
+- 库存管控（机票、酒店等资源的 Redis 预扣减 + MySQL 原子更新防超卖）
 - 常用旅客管理
 - 历史价格趋势（ECharts 折线图，近 7 天模拟数据）
 - 退改签规则展示（各舱位退改费用说明）
 - 行程单下载（文本格式订单回执）
-- 优惠券中心（可领取满减券/折扣券，按交通/酒店/通用分类筛选）
 
 ### 目的地住宿与本地生活（成员 B - 莫谨瑞）
 
 - 酒店多条件搜索（城市、星级、价格区间）
-- 酒店详情与房型展示
-- 酒店预订（支持多房间预订，Redis Lua 预减 + MySQL 乐观锁双重防超卖）
-- 景点搜索与门票购买（成人票/儿童票分项计数）
+- 酒店详情与房型展示（提供房型与基础库存数据）
+- 景点搜索与详情展示
+- 景点门票购买入口与订单 / 凭证展示
 - 一日游 / 周边游产品推荐
-- 评价系统（星级评分、图片上传、标签选择、商家回复、举报）
-- 酒店订单扫码核销（二维码出示）
+- 基础评价系统（星级评分、图片上传、标签选择、评价列表）
+- 酒店订单扫码核销（内置不可用示例二维码，避免外链破图）
 - 热门城市资料页（真实目的地介绍、代表景点、出行建议）
 
 ### AI 智能规划与 Agent 服务（成员 C - 陈一鸿）
@@ -242,8 +254,7 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 - AI 行程规划（调用 DeepSeek API，强制 JSON 结构化输出）
 - API 超时/失败时自动降级为模板方案
 - AI 客服多轮对话（Function Calling Tools: 天气/航班/酒店查询）
-- AI 游记审核（定时扫描待审核内容，输出通过/拒绝与原因）
-- 站内通知查询 / 已读 / 未读数接口
+- 站内通知查询 / 已读 / 删除 / 一键删除 / 未读数接口，支持点击通知跳转业务页面并自动清除未读红点
 - 航班延误预警模拟（定时任务随机推送通知）
 - 行程导出（文本格式，含每日路线和费用明细）
 
@@ -251,21 +262,22 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 
 - 用户注册/登录（BCrypt + JWT 认证）
 - 游记发布（图片上传、标签、可见范围、草稿箱）
-- 游记 AI 审核 + 人工审核兜底（待审核、已发布、已拒绝状态）
+- 游记审核状态流转（审核中、已发布、已拒绝）
 - 双列瀑布流社区浏览（推荐 + 关注信息流）
 - 点赞、收藏、评论（二级评论树）
 - 关注/粉丝社交关系
 - 个人资料编辑 + 密码修改
-- 通知中心（未读红点、批量已读）
 
 ### 管理后台与可观测性（成员 E - 李科）
 
 - RBAC 权限控制（后端 `/api/admin/**` 要求 `ROLE_ADMIN`，前端 `requiresAdmin` 二次拦截）
-- ECharts 可观测仪表盘（真实订单趋势、类型分布、热门目的地、用户增长、今日订单、本地请求量、接口延迟、报错日志告警）
-- 资源管理（航班 CRUD、火车 CRUD、酒店 CRUD、房型库存/价格/上下架干预）
-- 优惠券配置（满减券/折扣券新增、编辑、删除，支持业务类型分类）
-- 内容审核（游记默认进入待审核、通过/拒绝原因记录、评价举报工单处理备注）
-- 用户管理（启用/禁用、用户画像侧边查看）
+- ECharts 可观测仪表盘（真实订单趋势、类型分布、热门目的地、用户增长、今日 GMV、近 15 分钟活跃用户、本地请求量、接口延迟、报错日志告警）
+- 资源管理（航班 CRUD、火车 CRUD、酒店 CRUD、房型库存/价格/上下架干预、景点 CRUD）
+- 资源批量导入（航班、火车、酒店、房型、景点 CSV 导入，格式见 [docs/admin-csv-import.md](docs/admin-csv-import.md)）
+- 优惠券配置（满减券/折扣券新增、编辑、删除，支持业务类型分类和用户领券记录查看）
+- 内容与安全审核（敏感词新增/编辑/删除、游记人工审核、AI 审核建议复核、通过 / 拒绝原因记录、一键封禁作者）
+- 商家回复与评价举报工单处理（驳回举报、删除被举报评价、查看/新增/删除商家回复）
+- 用户管理（启用/禁用、用户画像侧边查看，含订单、发帖、评论、评价、举报和最近操作统计）
 - 全平台订单流水（按类型/状态筛选、分页查看、交通与酒店退款审批闭环）
 - 系统操作日志（AOP 自动记录 Controller 调用）
 - 敏感词管理

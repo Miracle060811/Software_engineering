@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img" aria-label="TM ???">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#be123c"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+  <rect width="240" height="240" rx="120" fill="url(#g)"/>
+  <circle cx="120" cy="92" r="40" fill="rgba(255,255,255,.86)"/>
+  <path d="M52 214c14-48 49-76 68-76s54 28 68 76" fill="rgba(255,255,255,.8)"/>
+  <text x="120" y="104" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="700" fill="#be123c">TM</text>
+</svg>

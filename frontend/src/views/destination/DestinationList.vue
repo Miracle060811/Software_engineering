@@ -20,7 +20,7 @@
         @click="$router.push(`/destination/${dest.slug}`)"
       >
         <div class="image-wrap">
-          <img :src="dest.img" :alt="dest.name" referrerpolicy="no-referrer" />
+          <SafeImage :src="dest.img" :alt="dest.name" />
           <span>{{ dest.tag }}</span>
         </div>
         <div class="card-body">
@@ -42,6 +42,7 @@
 
 <script setup>
 import { ArrowRight, MagicStick } from "@element-plus/icons-vue";
+import SafeImage from "@/components/SafeImage.vue";
 import { destinations } from "@/data/destinations";
 </script>
 
@@ -56,7 +57,7 @@ import { destinations } from "@/data/destinations";
   border-radius: 24px;
   background:
     linear-gradient(135deg, rgba(13, 148, 136, 0.94), rgba(14, 165, 233, 0.88)),
-    url("https://upload.wikimedia.org/wikipedia/commons/d/d8/West_Lake%2C_Hangzhou_%28Nine-turn_bridge%29.jpg") center/cover;
+    url("/images/seed/hangzhou.svg") center/cover;
   color: #fff;
   display: flex;
   align-items: flex-end;

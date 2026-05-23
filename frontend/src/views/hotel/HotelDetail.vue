@@ -5,15 +5,10 @@
       <el-card class="hotel-header-card">
         <el-row :gutter="24">
           <el-col :span="10">
-            <img
-              :src="
-                hotel.coverImage ||
-                hotel.coverImg ||
-                `https://picsum.photos/seed/hotel${hotel.id}/600/360`
-              "
-              class="hotel-cover"
+            <SafeImage
+              :src="hotel.coverImage || hotel.coverImg || localSeedImage(hotel.name, 'hotel')"
+              image-class="hotel-cover"
               :alt="hotel.name"
-              referrerpolicy="no-referrer"
             />
           </el-col>
           <el-col :span="14">
@@ -123,7 +118,11 @@
               :src="img"
               :preview-src-list="JSON.parse(review.images)"
               style="width:80px;height:80px;border-radius:8px;margin-right:8px;object-fit:cover"
-            />
+            >
+              <template #error>
+                <img src="/images/seed/fallback.svg" class="review-image-fallback" alt="图片暂不可用" />
+              </template>
+            </el-image>
           </div>
           <el-divider v-if="review.replies && review.replies.length" style="margin:10px 0" />
           <div v-for="reply in review.replies" :key="reply.id" class="reply-item">
@@ -208,6 +207,8 @@ import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { StarFilled, LocationFilled, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import SafeImage from "@/components/SafeImage.vue";
+import { localSeedImage } from "@/utils/image";
 
 const route = useRoute();
 const router = useRouter();
@@ -588,6 +589,11 @@ onMounted(() => {
   margin-top: 8px;
   display: flex;
   flex-wrap: wrap;
+}
+.review-image-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .review-form {
   padding: 16px;

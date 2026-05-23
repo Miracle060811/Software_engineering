@@ -89,15 +89,10 @@
             :body-style="{ padding: 0 }"
             @click="$router.push(`/hotel/${hotel.id}`)"
           >
-            <img
-              :src="
-                hotel.coverImage ||
-                hotel.coverImg ||
-                `https://picsum.photos/seed/hotel${hotel.id}/400/220`
-              "
-              class="hotel-img"
+            <SafeImage
+              :src="hotel.coverImage || hotel.coverImg || localSeedImage(hotel.name, 'hotel')"
+              image-class="hotel-img"
               :alt="hotel.name"
-              referrerpolicy="no-referrer"
             />
             <div class="hotel-info">
               <div class="hotel-name">{{ hotel.name }}</div>
@@ -130,6 +125,8 @@ import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
+import SafeImage from "@/components/SafeImage.vue";
+import { localSeedImage } from "@/utils/image";
 
 const route = useRoute();
 const hotels = ref([]);

@@ -153,7 +153,8 @@ public class AiServiceImpl implements AiService {
                 userId,
                 "ai_plan",
                 "AI 行程已生成",
-                String.format("您的 %s %d 天行程已生成，可在行程列表中查看详情。", dto.getDestination(), dto.getDays()));
+                String.format("您的 %s %d 天行程已生成，可在行程列表中查看详情。", dto.getDestination(), dto.getDays()),
+                "/ai-plan");
         return plan;
     }
 
@@ -564,6 +565,16 @@ public class AiServiceImpl implements AiService {
     @Override
     public void markRead(Long id, Long userId) {
         notificationCenterService.markRead(id, userId);
+    }
+
+    @Override
+    public void deleteNotification(Long id, Long userId) {
+        notificationCenterService.deleteNotification(id, userId);
+    }
+
+    @Override
+    public void deleteAllNotifications(Long userId) {
+        notificationCenterService.deleteAllNotifications(userId);
     }
 
     @Override

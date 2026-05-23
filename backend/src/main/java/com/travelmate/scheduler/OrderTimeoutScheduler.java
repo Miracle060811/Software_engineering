@@ -69,7 +69,8 @@ public class OrderTimeoutScheduler {
                         order.getUserId(),
                         "traffic_order",
                         "票务订单超时取消",
-                        String.format("订单 %s 超过15分钟未支付，系统已自动取消并释放库存。", order.getOrderNo()));
+                        String.format("订单 %s 超过15分钟未支付，系统已自动取消并释放库存。", order.getOrderNo()),
+                        "/my-orders?tab=traffic");
                 log.info("[Timeout] 大交通订单超时取消并归还库存: {}", order.getOrderNo());
             }
 
@@ -90,7 +91,8 @@ public class OrderTimeoutScheduler {
                         order.getUserId(),
                         "hotel_order",
                         "酒店订单超时取消",
-                        String.format("订单 %s 超过15分钟未支付，系统已自动取消。", order.getOrderNo()));
+                        String.format("订单 %s 超过15分钟未支付，系统已自动取消。", order.getOrderNo()),
+                        "/my-orders?tab=hotel");
                 log.info("[Timeout] 酒店订单超时取消: {}", order.getOrderNo());
             }
         } catch (RuntimeException e) {

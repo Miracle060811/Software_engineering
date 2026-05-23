@@ -6,44 +6,59 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travelmate.backend.entity.User;
 import com.travelmate.backend.mapper.UserMapper;
 import com.travelmate.common.Result;
+import com.travelmate.entity.Attraction;
+import com.travelmate.entity.Comment;
 import com.travelmate.entity.Coupon;
 import com.travelmate.entity.Flight;
 import com.travelmate.entity.Hotel;
 import com.travelmate.entity.HotelOrder;
 import com.travelmate.entity.HotelRoom;
 import com.travelmate.entity.Post;
+import com.travelmate.entity.Reply;
+import com.travelmate.entity.Review;
 import com.travelmate.entity.ReviewReport;
 import com.travelmate.entity.SysLog;
 import com.travelmate.entity.SysSensitiveWord;
 import com.travelmate.entity.TrafficOrder;
 import com.travelmate.entity.Train;
+import com.travelmate.entity.UserCoupon;
+import com.travelmate.mapper.AttractionMapper;
+import com.travelmate.mapper.CommentMapper;
 import com.travelmate.mapper.CouponMapper;
 import com.travelmate.mapper.FlightMapper;
 import com.travelmate.mapper.HotelMapper;
 import com.travelmate.mapper.HotelOrderMapper;
 import com.travelmate.mapper.HotelRoomMapper;
 import com.travelmate.mapper.PostMapper;
+import com.travelmate.mapper.ReplyMapper;
+import com.travelmate.mapper.ReviewMapper;
 import com.travelmate.mapper.ReviewReportMapper;
 import com.travelmate.mapper.SysLogMapper;
 import com.travelmate.mapper.SysSensitiveWordMapper;
 import com.travelmate.mapper.TrafficOrderMapper;
 import com.travelmate.mapper.TrainMapper;
+import com.travelmate.mapper.UserCouponMapper;
 import com.travelmate.service.HotelRoomStockService;
+import com.travelmate.service.NotificationCenterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -66,6 +81,9 @@ public class AdminController {
     private HotelRoomMapper hotelRoomMapper;
 
     @Autowired
+    private AttractionMapper attractionMapper;
+
+    @Autowired
     private SysLogMapper sysLogMapper;
 
     @Autowired
@@ -78,6 +96,18 @@ public class AdminController {
     private ReviewReportMapper reviewReportMapper;
 
     @Autowired
+    private ReviewMapper reviewMapper;
+
+    @Autowired
+    private ReplyMapper replyMapper;
+
+    @Autowired
+    private UserCouponMapper userCouponMapper;
+
+    @Autowired
+    private CommentMapper commentMapper;
+
+    @Autowired
     private TrafficOrderMapper trafficOrderMapper;
 
     @Autowired
@@ -88,6 +118,9 @@ public class AdminController {
 
     @Autowired
     private HotelRoomStockService hotelRoomStockService;
+
+    @Autowired
+    private NotificationCenterService notificationCenterService;
 
     private static final int STATUS_REFUND_REJECTED = 5;
 
@@ -169,6 +202,45 @@ public class AdminController {
         requireNonNegative(room.getAvailableRooms(), "可售房量");
     }
 
+    private void validateAttraction(Attraction attraction) {
+        requireText(attraction.getName(), "景点名称");
+        requireText(attraction.getCity(), "城市");
+        requireText(attraction.getAddress(), "地址");
+        requireNonNegative(attraction.getAdultPrice(), "成人票价");
+        requireNonNegative(attraction.getChildPrice(), "儿童票价");
+        requireNonNegative(attraction.getTotalTickets(), "总票数");
+        requireNonNegative(attraction.getAvailableTickets(), "可售票数");
+        if (attraction.getStatus() == null) {
+            attraction.setStatus(1);
+        }
+    }
+
+    private void validateCoupon(Coupon coupon) {
+        requireText(coupon.getName(), "优惠券名称");
+        if (coupon.getDiscountType() == null || (coupon.getDiscountType() != 0 && coupon.getDiscountType() != 1)) {
+            throw new RuntimeException("优惠类型必须为满减或折扣");
+        }
+        requireNonNegative(coupon.getDiscountValue(), "优惠值");
+        requireNonNegative(coupon.getMinAmount(), "最低消费");
+        requireNonNegative(coupon.getStock(), "库存");
+        if (coupon.getExpireDate() == null) {
+            throw new RuntimeException("有效期不能为空");
+        }
+        if (coupon.getDiscountType() == 1 && coupon.getDiscountValue().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("折扣比例必须大于 0");
+        }
+    }
+
+    private void validateSensitiveWordUnique(SysSensitiveWord word, Long excludeId) {
+        requireText(word.getWord(), "敏感词");
+        Long count = sensitiveWordMapper.selectCount(new LambdaQueryWrapper<SysSensitiveWord>()
+                .eq(SysSensitiveWord::getWord, word.getWord().trim())
+                .ne(excludeId != null, SysSensitiveWord::getId, excludeId));
+        if (count > 0) {
+            throw new RuntimeException("敏感词已存在");
+        }
+    }
+
     private long countTotalOrders() {
         return trafficOrderMapper.selectCount(null) + hotelOrderMapper.selectCount(null);
     }
@@ -179,6 +251,35 @@ public class AdminController {
                 .ge(TrafficOrder::getCreateTime, todayStart))
                 + hotelOrderMapper.selectCount(new LambdaQueryWrapper<HotelOrder>()
                         .ge(HotelOrder::getCreateTime, todayStart));
+    }
+
+    private BigDecimal countTodayGmv() {
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        BigDecimal traffic = trafficOrderMapper.selectList(new LambdaQueryWrapper<TrafficOrder>()
+                .ge(TrafficOrder::getCreateTime, todayStart)
+                .in(TrafficOrder::getStatus, List.of(1, 2)))
+                .stream()
+                .map(TrafficOrder::getAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal hotel = hotelOrderMapper.selectList(new LambdaQueryWrapper<HotelOrder>()
+                .ge(HotelOrder::getCreateTime, todayStart)
+                .in(HotelOrder::getStatus, List.of(1, 2, 3)))
+                .stream()
+                .map(HotelOrder::getAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return traffic.add(hotel);
+    }
+
+    private long countOnlineUsers() {
+        return sysLogMapper.selectList(new LambdaQueryWrapper<SysLog>()
+                .ge(SysLog::getCreateTime, LocalDateTime.now().minusMinutes(15))
+                .isNotNull(SysLog::getUserId))
+                .stream()
+                .map(SysLog::getUserId)
+                .distinct()
+                .count();
     }
 
     private String buildTrafficRoute(TrafficOrder order) {
@@ -352,6 +453,102 @@ public class AdminController {
         return alerts;
     }
 
+    private Map<String, Object> buildPostAuditRow(Post post) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", post.getId());
+        row.put("userId", post.getUserId());
+        row.put("title", post.getTitle());
+        row.put("content", post.getContent());
+        row.put("destination", post.getDestination());
+        row.put("tags", post.getTags());
+        row.put("status", post.getStatus());
+        row.put("rejectReason", post.getRejectReason());
+        row.put("createTime", post.getCreateTime());
+        User author = post.getUserId() == null ? null : userMapper.selectById(post.getUserId());
+        row.put("authorUsername", author == null ? "未知用户" : author.getUsername());
+        row.put("authorNickname", author == null ? null : author.getNickname());
+
+        String joined = String.join(" ",
+                Objects.toString(post.getTitle(), ""),
+                Objects.toString(post.getContent(), ""),
+                Objects.toString(post.getTags(), ""),
+                Objects.toString(post.getDestination(), ""));
+        List<String> matchedWords = sensitiveWordMapper.selectList(null).stream()
+                .filter(word -> word.getWord() != null && !word.getWord().isBlank() && joined.contains(word.getWord()))
+                .map(SysSensitiveWord::getWord)
+                .distinct()
+                .toList();
+        row.put("matchedWords", matchedWords);
+        if (Objects.equals(post.getStatus(), 0)) {
+            row.put("aiSuggestion", matchedWords.isEmpty() ? "AI建议：未命中敏感词，可人工复核后通过" : "AI建议：命中敏感词，建议重点复核");
+        } else if (Objects.equals(post.getStatus(), 2)) {
+            row.put("aiSuggestion", post.getRejectReason() == null ? "已拒绝" : post.getRejectReason());
+        } else {
+            row.put("aiSuggestion", "已通过审核");
+        }
+        return row;
+    }
+
+    private Map<String, Object> buildReviewReportRow(ReviewReport report) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", report.getId());
+        row.put("reviewId", report.getReviewId());
+        row.put("reporterId", report.getReporterId());
+        row.put("reason", report.getReason());
+        row.put("status", report.getStatus());
+        row.put("handleRemark", report.getHandleRemark());
+        row.put("createTime", report.getCreateTime());
+        row.put("handleTime", report.getHandleTime());
+
+        User reporter = report.getReporterId() == null ? null : userMapper.selectById(report.getReporterId());
+        row.put("reporterUsername", reporter == null ? "未知用户" : reporter.getUsername());
+        Review review = report.getReviewId() == null ? null : reviewMapper.selectById(report.getReviewId());
+        if (review != null) {
+            row.put("reviewContent", review.getContent());
+            row.put("rating", review.getRating());
+            row.put("targetType", review.getTargetType());
+            row.put("reviewUserId", review.getUserId());
+            User reviewUser = review.getUserId() == null ? null : userMapper.selectById(review.getUserId());
+            row.put("reviewUsername", reviewUser == null ? "未知用户" : reviewUser.getUsername());
+            if (Objects.equals(review.getTargetType(), 0)) {
+                Hotel hotel = hotelMapper.selectById(review.getTargetId());
+                row.put("targetName", hotel == null ? "未知酒店" : hotel.getName());
+            } else {
+                Attraction attraction = attractionMapper.selectById(review.getTargetId());
+                row.put("targetName", attraction == null ? "未知景点" : attraction.getName());
+            }
+        }
+        return row;
+    }
+
+    private Map<String, Object> buildUserProfileRow(User user) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", user.getId());
+        row.put("username", user.getUsername());
+        row.put("nickname", user.getNickname());
+        row.put("email", user.getEmail());
+        row.put("phone", user.getPhone());
+        row.put("bio", user.getBio());
+        row.put("role", user.getRole());
+        row.put("level", user.getLevel());
+        row.put("status", user.getStatus());
+        row.put("createTime", user.getCreateTime());
+        row.put("updateTime", user.getUpdateTime());
+        row.put("trafficOrderCount", trafficOrderMapper.selectCount(new LambdaQueryWrapper<TrafficOrder>().eq(TrafficOrder::getUserId, user.getId())));
+        row.put("hotelOrderCount", hotelOrderMapper.selectCount(new LambdaQueryWrapper<HotelOrder>().eq(HotelOrder::getUserId, user.getId())));
+        row.put("postCount", postMapper.selectCount(new LambdaQueryWrapper<Post>().eq(Post::getUserId, user.getId())));
+        row.put("commentCount", commentMapper.selectCount(new LambdaQueryWrapper<Comment>().eq(Comment::getUserId, user.getId())));
+        row.put("reviewCount", reviewMapper.selectCount(new LambdaQueryWrapper<Review>().eq(Review::getUserId, user.getId()).eq(Review::getDeleted, 0)));
+        row.put("reportCount", reviewReportMapper.selectCount(new LambdaQueryWrapper<ReviewReport>().eq(ReviewReport::getReporterId, user.getId())));
+        SysLog lastLog = sysLogMapper.selectOne(new LambdaQueryWrapper<SysLog>()
+                .eq(SysLog::getUserId, user.getId())
+                .orderByDesc(SysLog::getCreateTime)
+                .last("LIMIT 1"));
+        row.put("lastOperationTime", lastLog == null ? null : lastLog.getCreateTime());
+        row.put("lastOperation", lastLog == null ? null : lastLog.getOperation());
+        return row;
+    }
+
     @GetMapping("/stats")
     public Result<Map<String, Object>> stats() {
         checkAdmin();
@@ -364,6 +561,8 @@ public class AdminController {
         stats.put("todayOrders", countTodayOrders());
         stats.put("pendingPosts", pendingPosts);
         stats.put("todayNewUsers", todayNewUsers);
+        stats.put("todayGmv", countTodayGmv());
+        stats.put("onlineUsers", countOnlineUsers());
         return Result.success(stats);
     }
 
@@ -376,6 +575,8 @@ public class AdminController {
         data.put("totalOrders", countTotalOrders());
         data.put("todayOrders", countTodayOrders());
         data.put("pendingPosts", pendingPosts);
+        data.put("todayGmv", countTodayGmv());
+        data.put("onlineUsers", countOnlineUsers());
         data.put("dailyTrend", buildDailyOrderTrend());
         data.put("hotDestinations", buildHotDestinations());
         data.put("orderTypeDist", buildOrderTypeDist());
@@ -532,24 +733,76 @@ public class AdminController {
         return Result.success();
     }
 
+    @GetMapping("/attractions")
+    public Result<List<Attraction>> listAttractions() {
+        checkAdmin();
+        return Result.success(attractionMapper.selectList(new LambdaQueryWrapper<Attraction>()
+                .orderByAsc(Attraction::getCity).orderByDesc(Attraction::getId)));
+    }
+
+    @PostMapping("/attractions")
+    public Result<Attraction> addAttraction(@RequestBody Attraction attraction) {
+        checkAdmin();
+        validateAttraction(attraction);
+        attractionMapper.insert(attraction);
+        return Result.success(attraction);
+    }
+
+    @PutMapping("/attractions/{id}")
+    public Result<Void> updateAttraction(@PathVariable Long id, @RequestBody Attraction attraction) {
+        checkAdmin();
+        validateAttraction(attraction);
+        attraction.setId(id);
+        attractionMapper.updateById(attraction);
+        return Result.success();
+    }
+
+    @DeleteMapping("/attractions/{id}")
+    public Result<Void> deleteAttraction(@PathVariable Long id) {
+        checkAdmin();
+        long reviewCount = reviewMapper.selectCount(new LambdaQueryWrapper<Review>()
+                .eq(Review::getTargetType, 1)
+                .eq(Review::getTargetId, id)
+                .eq(Review::getDeleted, 0));
+        if (reviewCount > 0) {
+            attractionMapper.update(null, new LambdaUpdateWrapper<Attraction>()
+                    .eq(Attraction::getId, id)
+                    .set(Attraction::getStatus, 0));
+            return Result.success();
+        }
+        attractionMapper.deleteById(id);
+        return Result.success();
+    }
+
     @GetMapping("/posts")
-    public Result<List<Post>> listPosts(@RequestParam(required = false) Integer status) {
+    public Result<List<Map<String, Object>>> listPosts(@RequestParam(required = false) Integer status) {
         checkAdmin();
         LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
         if (status != null) {
             wrapper.eq(Post::getStatus, status);
         }
         wrapper.orderByDesc(Post::getCreateTime);
-        return Result.success(postMapper.selectList(wrapper));
+        return Result.success(postMapper.selectList(wrapper).stream()
+                .map(this::buildPostAuditRow)
+                .toList());
     }
 
     @PostMapping("/posts/{id}/approve")
     public Result<Void> approvePost(@PathVariable Long id) {
         checkAdmin();
+        Post post = postMapper.selectById(id);
         postMapper.update(null, new LambdaUpdateWrapper<Post>()
                 .eq(Post::getId, id)
                 .set(Post::getStatus, 1)
                 .set(Post::getRejectReason, null));
+        if (post != null) {
+            notificationCenterService.createNotification(
+                    post.getUserId(),
+                    "post_audit",
+                    "游记审核通过",
+                    String.format("《%s》已通过人工审核并发布。", post.getTitle()),
+                    "/post/" + post.getId());
+        }
         return Result.success();
     }
 
@@ -557,22 +810,37 @@ public class AdminController {
     public Result<Void> rejectPost(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
         checkAdmin();
         String reason = body == null || body.get("reason") == null ? "内容不符合社区规范" : body.get("reason").toString();
+        Post post = postMapper.selectById(id);
         postMapper.update(null, new LambdaUpdateWrapper<Post>()
                 .eq(Post::getId, id)
                 .set(Post::getStatus, 2)
                 .set(Post::getRejectReason, reason));
+        if (post != null) {
+            notificationCenterService.createNotification(
+                    post.getUserId(),
+                    "post_audit",
+                    "游记审核未通过",
+                    String.format("《%s》未通过人工审核，原因：%s", post.getTitle(), reason),
+                    "/post/" + post.getId());
+        }
         return Result.success();
     }
 
     @GetMapping("/users")
-    public Result<List<User>> listUsers() {
+    public Result<List<Map<String, Object>>> listUsers() {
         checkAdmin();
-        return Result.success(userMapper.selectList(null));
+        return Result.success(userMapper.selectList(new LambdaQueryWrapper<User>().orderByDesc(User::getCreateTime))
+                .stream()
+                .map(this::buildUserProfileRow)
+                .toList());
     }
 
     @PostMapping("/users/{id}/disable")
     public Result<Void> disableUser(@PathVariable Long id) {
-        checkAdmin();
+        User admin = checkAdmin();
+        if (Objects.equals(admin.getId(), id)) {
+            throw new RuntimeException("不能禁用当前管理员账号");
+        }
         userMapper.update(null, new LambdaUpdateWrapper<User>().eq(User::getId, id).set(User::getStatus, 0));
         return Result.success();
     }
@@ -733,6 +1001,7 @@ public class AdminController {
     public Result<Coupon> addCoupon(@RequestBody Coupon coupon) {
         checkAdmin();
         coupon.setCategory(normalizeCouponCategory(coupon.getCategory()));
+        validateCoupon(coupon);
         if (coupon.getCreateTime() == null) {
             coupon.setCreateTime(LocalDateTime.now());
         }
@@ -745,6 +1014,7 @@ public class AdminController {
         checkAdmin();
         coupon.setId(id);
         coupon.setCategory(normalizeCouponCategory(coupon.getCategory()));
+        validateCoupon(coupon);
         couponMapper.updateById(coupon);
         return Result.success();
     }
@@ -754,6 +1024,26 @@ public class AdminController {
         checkAdmin();
         couponMapper.deleteById(id);
         return Result.success();
+    }
+
+    @GetMapping("/coupons/{id}/claims")
+    public Result<List<Map<String, Object>>> listCouponClaims(@PathVariable Long id) {
+        checkAdmin();
+        List<UserCoupon> claims = userCouponMapper.selectList(new LambdaQueryWrapper<UserCoupon>()
+                .eq(UserCoupon::getCouponId, id)
+                .orderByDesc(UserCoupon::getReceivedTime));
+        return Result.success(claims.stream().map(claim -> {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", claim.getId());
+            row.put("userId", claim.getUserId());
+            User user = userMapper.selectById(claim.getUserId());
+            row.put("username", user == null ? "未知用户" : user.getUsername());
+            row.put("nickname", user == null ? null : user.getNickname());
+            row.put("status", claim.getStatus());
+            row.put("receivedTime", claim.getReceivedTime());
+            row.put("usedTime", claim.getUsedTime());
+            return row;
+        }).toList());
     }
 
     private String normalizeCouponCategory(String category) {
@@ -768,14 +1058,16 @@ public class AdminController {
     }
 
     @GetMapping("/review-reports")
-    public Result<List<ReviewReport>> listReviewReports(@RequestParam(required = false) Integer status) {
+    public Result<List<Map<String, Object>>> listReviewReports(@RequestParam(required = false) Integer status) {
         checkAdmin();
         LambdaQueryWrapper<ReviewReport> wrapper = new LambdaQueryWrapper<>();
         if (status != null) {
             wrapper.eq(ReviewReport::getStatus, status);
         }
         wrapper.orderByDesc(ReviewReport::getCreateTime).orderByDesc(ReviewReport::getId);
-        return Result.success(reviewReportMapper.selectList(wrapper));
+        return Result.success(reviewReportMapper.selectList(wrapper).stream()
+                .map(this::buildReviewReportRow)
+                .toList());
     }
 
     @PostMapping("/review-reports/{id}/resolve")
@@ -790,6 +1082,74 @@ public class AdminController {
         return Result.success();
     }
 
+    @PostMapping("/review-reports/{id}/reject")
+    public Result<Void> rejectReviewReport(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
+        checkAdmin();
+        String remark = body == null || body.get("remark") == null ? "举报不成立，已驳回" : body.get("remark").toString();
+        reviewReportMapper.update(null, new LambdaUpdateWrapper<ReviewReport>()
+                .eq(ReviewReport::getId, id)
+                .set(ReviewReport::getStatus, 1)
+                .set(ReviewReport::getHandleRemark, remark)
+                .set(ReviewReport::getHandleTime, LocalDateTime.now()));
+        return Result.success();
+    }
+
+    @PostMapping("/review-reports/{id}/delete-review")
+    public Result<Void> deleteReportedReview(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
+        checkAdmin();
+        ReviewReport report = reviewReportMapper.selectById(id);
+        if (report == null) {
+            return Result.error("举报工单不存在");
+        }
+        Review review = reviewMapper.selectById(report.getReviewId());
+        if (review == null) {
+            return Result.error("评价不存在");
+        }
+        reviewMapper.update(null, new LambdaUpdateWrapper<Review>()
+                .eq(Review::getId, review.getId())
+                .set(Review::getDeleted, 1));
+        String remark = body == null || body.get("remark") == null ? "举报成立，评价已删除" : body.get("remark").toString();
+        reviewReportMapper.update(null, new LambdaUpdateWrapper<ReviewReport>()
+                .eq(ReviewReport::getId, id)
+                .set(ReviewReport::getStatus, 1)
+                .set(ReviewReport::getHandleRemark, remark)
+                .set(ReviewReport::getHandleTime, LocalDateTime.now()));
+        return Result.success();
+    }
+
+    @GetMapping("/reviews/{reviewId}/replies")
+    public Result<List<Reply>> listReviewReplies(@PathVariable Long reviewId) {
+        checkAdmin();
+        return Result.success(replyMapper.selectList(new LambdaQueryWrapper<Reply>()
+                .eq(Reply::getReviewId, reviewId)
+                .eq(Reply::getDeleted, 0)
+                .orderByAsc(Reply::getCreateTime)));
+    }
+
+    @PostMapping("/reviews/{reviewId}/replies")
+    public Result<Reply> addReviewReply(@PathVariable Long reviewId, @RequestBody Map<String, Object> body) {
+        User admin = checkAdmin();
+        String content = body == null || body.get("content") == null ? "" : body.get("content").toString();
+        requireText(content, "回复内容");
+        Reply reply = new Reply();
+        reply.setReviewId(reviewId);
+        reply.setUserId(admin.getId());
+        reply.setContent(content.trim());
+        reply.setDeleted(0);
+        reply.setCreateTime(LocalDateTime.now());
+        replyMapper.insert(reply);
+        return Result.success(reply);
+    }
+
+    @DeleteMapping("/replies/{id}")
+    public Result<Void> deleteReply(@PathVariable Long id) {
+        checkAdmin();
+        replyMapper.update(null, new LambdaUpdateWrapper<Reply>()
+                .eq(Reply::getId, id)
+                .set(Reply::getDeleted, 1));
+        return Result.success();
+    }
+
     @GetMapping("/sensitive-words")
     public Result<List<SysSensitiveWord>> listSensitiveWords() {
         checkAdmin();
@@ -799,10 +1159,21 @@ public class AdminController {
     @PostMapping("/sensitive-words")
     public Result<SysSensitiveWord> addSensitiveWord(@RequestBody SysSensitiveWord word) {
         checkAdmin();
-        requireText(word.getWord(), "敏感词");
+        validateSensitiveWordUnique(word, null);
+        word.setWord(word.getWord().trim());
         word.setCreateTime(LocalDateTime.now());
         sensitiveWordMapper.insert(word);
         return Result.success(word);
+    }
+
+    @PutMapping("/sensitive-words/{id}")
+    public Result<Void> updateSensitiveWord(@PathVariable Long id, @RequestBody SysSensitiveWord word) {
+        checkAdmin();
+        validateSensitiveWordUnique(word, id);
+        word.setId(id);
+        word.setWord(word.getWord().trim());
+        sensitiveWordMapper.updateById(word);
+        return Result.success();
     }
 
     @DeleteMapping("/sensitive-words/{id}")
@@ -810,6 +1181,181 @@ public class AdminController {
         checkAdmin();
         sensitiveWordMapper.deleteById(id);
         return Result.success();
+    }
+
+    @PostMapping("/import/{type}")
+    public Result<Map<String, Object>> importCsv(@PathVariable String type, @RequestParam("file") MultipartFile file) {
+        checkAdmin();
+        if (file == null || file.isEmpty()) {
+            return Result.error("CSV 文件不能为空");
+        }
+        try {
+            List<String> lines = Arrays.stream(new String(file.getBytes(), StandardCharsets.UTF_8).split("\\R"))
+                    .map(String::trim)
+                    .filter(line -> !line.isEmpty())
+                    .toList();
+            if (lines.size() < 2) {
+                return Result.error("CSV 至少需要表头和一行数据");
+            }
+            List<String> headers = parseCsvLine(lines.get(0));
+            int success = 0;
+            List<Map<String, Object>> failures = new ArrayList<>();
+            for (int i = 1; i < lines.size(); i++) {
+                Map<String, String> row = mapCsvRow(headers, parseCsvLine(lines.get(i)));
+                try {
+                    importCsvRow(type, row);
+                    success++;
+                } catch (Exception e) {
+                    failures.add(Map.of("line", i + 1, "reason", e.getMessage()));
+                }
+            }
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("success", success);
+            result.put("failed", failures.size());
+            result.put("failures", failures);
+            return Result.success(result);
+        } catch (Exception e) {
+            return Result.error("导入失败：" + e.getMessage());
+        }
+    }
+
+    private List<String> parseCsvLine(String line) {
+        List<String> values = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean quoted = false;
+        for (int i = 0; i < line.length(); i++) {
+            char ch = line.charAt(i);
+            if (ch == '"') {
+                quoted = !quoted;
+            } else if (ch == ',' && !quoted) {
+                values.add(current.toString().trim());
+                current.setLength(0);
+            } else {
+                current.append(ch);
+            }
+        }
+        values.add(current.toString().trim());
+        return values;
+    }
+
+    private Map<String, String> mapCsvRow(List<String> headers, List<String> values) {
+        Map<String, String> row = new HashMap<>();
+        for (int i = 0; i < headers.size(); i++) {
+            row.put(headers.get(i), i < values.size() ? values.get(i) : "");
+        }
+        return row;
+    }
+
+    private void importCsvRow(String type, Map<String, String> row) {
+        switch (type) {
+            case "flights" -> {
+                Flight flight = new Flight();
+                flight.setFlightNo(csv(row, "flightNo"));
+                flight.setAirline(csv(row, "airline"));
+                flight.setDepartureCity(csv(row, "departureCity"));
+                flight.setArrivalCity(csv(row, "arrivalCity"));
+                flight.setDepartureTime(LocalDateTime.parse(csv(row, "departureTime")));
+                flight.setArrivalTime(LocalDateTime.parse(csv(row, "arrivalTime")));
+                flight.setEconomyPrice(decimal(row, "economyPrice"));
+                flight.setBusinessPrice(decimal(row, "businessPrice"));
+                flight.setTotalSeats(integer(row, "totalSeats"));
+                flight.setAvailableSeats(integer(row, "availableSeats"));
+                flight.setStatus(optionalInteger(row, "status", 1));
+                validateFlight(flight);
+                flightMapper.insert(flight);
+            }
+            case "trains" -> {
+                Train train = new Train();
+                train.setTrainNo(csv(row, "trainNo"));
+                train.setTrainType(csv(row, "trainType"));
+                train.setDepartureStation(csv(row, "departureStation"));
+                train.setArrivalStation(csv(row, "arrivalStation"));
+                train.setDepartureTime(LocalDateTime.parse(csv(row, "departureTime")));
+                train.setArrivalTime(LocalDateTime.parse(csv(row, "arrivalTime")));
+                train.setFirstClassPrice(decimal(row, "firstClassPrice"));
+                train.setSecondClassPrice(decimal(row, "secondClassPrice"));
+                train.setFirstClassSeats(integer(row, "firstClassSeats"));
+                train.setSecondClassSeats(integer(row, "secondClassSeats"));
+                train.setStatus(optionalInteger(row, "status", 1));
+                validateTrain(train);
+                trainMapper.insert(train);
+            }
+            case "hotels" -> {
+                Hotel hotel = new Hotel();
+                hotel.setName(csv(row, "name"));
+                hotel.setCity(csv(row, "city"));
+                hotel.setAddress(csv(row, "address"));
+                hotel.setDescription(row.getOrDefault("description", ""));
+                hotel.setStarRating(integer(row, "starRating"));
+                hotel.setAvgPrice(decimal(row, "avgPrice"));
+                hotel.setScore(new BigDecimal(row.getOrDefault("score", "4.5")));
+                hotel.setStatus(optionalInteger(row, "status", 1));
+                validateHotel(hotel);
+                hotelMapper.insert(hotel);
+            }
+            case "rooms" -> {
+                HotelRoom room = new HotelRoom();
+                room.setHotelId(Long.valueOf(csv(row, "hotelId")));
+                room.setRoomType(csv(row, "roomType"));
+                room.setBedType(csv(row, "bedType"));
+                room.setArea(optionalInteger(row, "area", 30));
+                room.setPrice(decimal(row, "price"));
+                room.setTotalRooms(integer(row, "totalRooms"));
+                room.setAvailableRooms(integer(row, "availableRooms"));
+                room.setStatus(optionalInteger(row, "status", 1));
+                validateHotelRoom(room);
+                hotelRoomMapper.insert(room);
+                hotelRoomStockService.syncWithDatabase(room.getId());
+            }
+            case "attractions" -> {
+                Attraction attraction = new Attraction();
+                attraction.setName(csv(row, "name"));
+                attraction.setCity(csv(row, "city"));
+                attraction.setAddress(csv(row, "address"));
+                attraction.setDescription(row.getOrDefault("description", ""));
+                attraction.setCoverImg(row.getOrDefault("coverImg", ""));
+                attraction.setAdultPrice(decimal(row, "adultPrice"));
+                attraction.setChildPrice(decimal(row, "childPrice"));
+                attraction.setTotalTickets(integer(row, "totalTickets"));
+                attraction.setAvailableTickets(integer(row, "availableTickets"));
+                attraction.setOpenTime(row.getOrDefault("openTime", ""));
+                attraction.setLat(optionalDecimal(row, "lat"));
+                attraction.setLng(optionalDecimal(row, "lng"));
+                attraction.setOfficialUrl(row.getOrDefault("officialUrl", ""));
+                attraction.setSourceName(row.getOrDefault("sourceName", ""));
+                attraction.setDataCheckedDate(row.get("dataCheckedDate") == null || row.get("dataCheckedDate").isBlank() ? null : LocalDate.parse(row.get("dataCheckedDate")));
+                attraction.setStatus(optionalInteger(row, "status", 1));
+                validateAttraction(attraction);
+                attractionMapper.insert(attraction);
+            }
+            default -> throw new RuntimeException("不支持的导入类型：" + type);
+        }
+    }
+
+    private String csv(Map<String, String> row, String key) {
+        String value = row.get(key);
+        if (value == null || value.isBlank()) {
+            throw new RuntimeException("缺少字段 " + key);
+        }
+        return value.trim();
+    }
+
+    private Integer integer(Map<String, String> row, String key) {
+        return Integer.valueOf(csv(row, key));
+    }
+
+    private Integer optionalInteger(Map<String, String> row, String key, Integer fallback) {
+        String value = row.get(key);
+        return value == null || value.isBlank() ? fallback : Integer.valueOf(value.trim());
+    }
+
+    private BigDecimal decimal(Map<String, String> row, String key) {
+        return new BigDecimal(csv(row, key));
+    }
+
+    private BigDecimal optionalDecimal(Map<String, String> row, String key) {
+        String value = row.get(key);
+        return value == null || value.isBlank() ? null : new BigDecimal(value.trim());
     }
 
     @GetMapping("/logs")

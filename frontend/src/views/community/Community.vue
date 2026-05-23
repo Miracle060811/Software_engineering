@@ -77,12 +77,10 @@
           @click="openPost(post)"
         >
           <div v-if="hasImages(post.images)" class="post-img-wrap">
-            <img
+            <SafeImage
               :src="getFirstImage(post.images)"
-              class="post-cover"
+              image-class="post-cover"
               :alt="post.title"
-              referrerpolicy="no-referrer"
-              @error="onImageError($event, post)"
             />
             <div class="post-img-overlay"></div>
           </div>
@@ -108,6 +106,9 @@
             </div>
             <div class="post-title">{{ post.title }}</div>
             <div v-if="!hasImages(post.images)" class="post-excerpt">{{ post.content }}</div>
+            <div v-if="post.status === 2 && post.rejectReason" class="reject-reason">
+              未通过原因：{{ post.rejectReason }}
+            </div>
             <div class="post-meta">
               <span class="post-author">
                 <el-icon :size="14"><UserFilled /></el-icon>
@@ -150,6 +151,7 @@ import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
+import SafeImage from "@/components/SafeImage.vue";
 import { useUserStore } from "@/stores/user";
 
 const posts = ref([]);
@@ -247,10 +249,6 @@ const getAuthorName = (post) =>
 
 const getLikeCount = (post) => post.likeCount ?? post.like_count ?? 0;
 
-const onImageError = (event, post) => {
-  event.target.style.display = "none";
-};
-
 const filterMinePosts = (list) => {
   if (activeTab.value !== "mine") return list;
   const statusMap = { draft: 3, pending: 0, published: 1, rejected: 2 };
@@ -290,7 +288,11 @@ const editDraft = (post) => {
 
 const deletePost = async (post) => {
   try {
-    await ElMessageBox.confirm(`确认删除「${post.title}」吗？`, "删除游记", { type: "warning" });
+    await ElMessageBox.confirm(`确认删除「${post.title}」吗？`, "删除游记", {
+      type: "warning",
+      confirmButtonText: "确认删除",
+      cancelButtonText: "暂不删除",
+    });
     await request.delete(`/api/post/${post.id}`);
     ElMessage.success("删除成功");
     posts.value = posts.value.filter((item) => item.id !== post.id);
@@ -415,6 +417,16 @@ onMounted(() => {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.reject-reason {
+  font-size: 13px;
+  color: #B91C1C;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  padding: 8px 10px;
+  line-height: 1.5;
+  margin-bottom: 12px;
 }
 
 .post-meta {

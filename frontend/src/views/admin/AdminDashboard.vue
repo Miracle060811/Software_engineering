@@ -21,6 +21,9 @@
           <el-menu-item index="hotels"
             ><el-icon><House /></el-icon><span>酒店与房态</span></el-menu-item
           >
+          <el-menu-item index="attractions"
+            ><el-icon><Promotion /></el-icon><span>景点资源</span></el-menu-item
+          >
           <el-menu-item index="coupons"
             ><el-icon><Tickets /></el-icon><span>促销券配置</span></el-menu-item
           >
@@ -46,7 +49,7 @@
         <section v-if="activeMenu === 'stats'" v-loading="dashboardLoading">
           <h2 class="section-title">可观测仪表盘</h2>
           <el-row :gutter="16" class="stat-row">
-            <el-col :span="4"
+            <el-col :span="3"
               ><el-card class="stat-card"
                 ><div class="stat-value">
                   {{ dashboardData.totalUsers || 0 }}
@@ -54,7 +57,7 @@
                 <div class="stat-label">总用户数</div></el-card
               ></el-col
             >
-            <el-col :span="4"
+            <el-col :span="3"
               ><el-card class="stat-card"
                 ><div class="stat-value">
                   {{ dashboardData.totalOrders || 0 }}
@@ -62,7 +65,7 @@
                 <div class="stat-label">总订单数</div></el-card
               ></el-col
             >
-            <el-col :span="4"
+            <el-col :span="3"
               ><el-card class="stat-card"
                 ><div class="stat-value">
                   {{ dashboardData.todayOrders || 0 }}
@@ -70,7 +73,7 @@
                 <div class="stat-label">今日订单</div></el-card
               ></el-col
             >
-            <el-col :span="4"
+            <el-col :span="3"
               ><el-card class="stat-card"
                 ><div class="stat-value">
                   {{ dashboardData.pendingPosts || 0 }}
@@ -78,16 +81,28 @@
                 <div class="stat-label">待审核内容</div></el-card
               ></el-col
             >
-            <el-col :span="4"
+            <el-col :span="3"
               ><el-card class="stat-card"
                 ><div class="stat-value">{{ latestQps }}</div>
                 <div class="stat-label">近分钟请求量</div></el-card
               ></el-col
             >
-            <el-col :span="4"
+            <el-col :span="3"
               ><el-card class="stat-card"
                 ><div class="stat-value">{{ latestLatency }}ms</div>
                 <div class="stat-label">近分钟平均延迟</div></el-card
+              ></el-col
+            >
+            <el-col :span="3"
+              ><el-card class="stat-card"
+                ><div class="stat-value">¥{{ dashboardData.todayGmv || 0 }}</div>
+                <div class="stat-label">今日 GMV</div></el-card
+              ></el-col
+            >
+            <el-col :span="3"
+              ><el-card class="stat-card"
+                ><div class="stat-value">{{ dashboardData.onlineUsers || 0 }}</div>
+                <div class="stat-label">近 15 分钟活跃</div></el-card
               ></el-col
             >
           </el-row>
@@ -150,9 +165,10 @@
         <section v-else-if="activeMenu === 'flights'">
           <div class="toolbar">
             <h2 class="section-title">航班资源管理</h2>
-            <el-button type="primary" @click="openFlightDialog()"
-              >新增航班</el-button
-            >
+            <div>
+              <el-button @click="triggerImport('flights')">导入 CSV</el-button>
+              <el-button type="primary" @click="openFlightDialog()">新增航班</el-button>
+            </div>
           </div>
           <el-table :data="flights" v-loading="flightLoading" stripe>
             <el-table-column prop="flightNo" label="航班号" width="120" />
@@ -213,9 +229,10 @@
         <section v-else-if="activeMenu === 'trains'">
           <div class="toolbar">
             <h2 class="section-title">火车资源管理</h2>
-            <el-button type="primary" @click="openTrainDialog()"
-              >新增车次</el-button
-            >
+            <div>
+              <el-button @click="triggerImport('trains')">导入 CSV</el-button>
+              <el-button type="primary" @click="openTrainDialog()">新增车次</el-button>
+            </div>
           </div>
           <el-table :data="trains" v-loading="trainLoading" stripe>
             <el-table-column prop="trainNo" label="车次" width="120" />
@@ -270,9 +287,10 @@
         <section v-else-if="activeMenu === 'hotels'">
           <div class="toolbar">
             <h2 class="section-title">酒店与房态管理</h2>
-            <el-button type="primary" @click="openHotelDialog()"
-              >新增酒店</el-button
-            >
+            <div>
+              <el-button @click="triggerImport('hotels')">导入 CSV</el-button>
+              <el-button type="primary" @click="openHotelDialog()">新增酒店</el-button>
+            </div>
           </div>
           <el-table :data="hotels" v-loading="hotelLoading" stripe>
             <el-table-column prop="name" label="酒店名称" min-width="180" />
@@ -307,6 +325,38 @@
                   @click="removeHotel(scope.row)"
                   >删除</el-button
                 >
+              </template>
+            </el-table-column>
+          </el-table>
+        </section>
+
+        <section v-else-if="activeMenu === 'attractions'">
+          <div class="toolbar">
+            <h2 class="section-title">景点资源管理</h2>
+            <div>
+              <el-button @click="triggerImport('attractions')">导入 CSV</el-button>
+              <el-button type="primary" @click="openAttractionDialog()">新增景点</el-button>
+            </div>
+          </div>
+          <el-table :data="attractions" v-loading="attractionLoading" stripe>
+            <el-table-column prop="name" label="景点名称" min-width="180" />
+            <el-table-column prop="city" label="城市" width="100" />
+            <el-table-column label="门票" width="150">
+              <template #default="scope">成人 ¥{{ scope.row.adultPrice }} / 儿童 ¥{{ scope.row.childPrice }}</template>
+            </el-table-column>
+            <el-table-column label="余票" width="130">
+              <template #default="scope">{{ scope.row.availableTickets }} / {{ scope.row.totalTickets }}</template>
+            </el-table-column>
+            <el-table-column prop="openTime" label="开放时间" min-width="160" show-overflow-tooltip />
+            <el-table-column label="状态" width="90">
+              <template #default="scope">
+                <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">{{ scope.row.status === 1 ? "开放" : "下线" }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="160" fixed="right">
+              <template #default="scope">
+                <el-button size="small" @click="openAttractionDialog(scope.row)">编辑</el-button>
+                <el-button size="small" type="danger" @click="removeAttraction(scope.row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -350,8 +400,11 @@
                 }}</el-tag></template
               >
             </el-table-column>
-            <el-table-column label="操作" width="160" fixed="right">
+            <el-table-column label="操作" width="220" fixed="right">
               <template #default="scope">
+                <el-button size="small" type="primary" plain @click="openCouponClaims(scope.row)"
+                  >领取记录</el-button
+                >
                 <el-button size="small" @click="openCouponDialog(scope.row)"
                   >编辑</el-button
                 >
@@ -477,6 +530,18 @@
                   label="目的地"
                   width="120"
                 />
+                <el-table-column
+                  prop="aiSuggestion"
+                  label="AI建议"
+                  min-width="180"
+                  show-overflow-tooltip
+                />
+                <el-table-column
+                  prop="rejectReason"
+                  label="拒绝原因"
+                  min-width="160"
+                  show-overflow-tooltip
+                />
                 <el-table-column label="状态" width="100">
                   <template #default="scope"
                     ><el-tag :type="postStatusType(scope.row.status)">{{
@@ -489,7 +554,7 @@
                   label="发布时间"
                   width="180"
                 />
-                <el-table-column label="操作" width="180" fixed="right">
+                <el-table-column label="操作" width="250" fixed="right">
                   <template #default="scope">
                     <el-button
                       v-if="scope.row.status === 0"
@@ -505,7 +570,14 @@
                       @click="rejectPost(scope.row.id)"
                       >拒绝</el-button
                     >
-                    <span v-else class="muted-text">已处理</span>
+                    <el-button
+                      size="small"
+                      type="danger"
+                      plain
+                      @click="disablePostAuthor(scope.row)"
+                      >封禁作者</el-button
+                    >
+                    <span v-if="scope.row.status !== 0" class="muted-text">已处理</span>
                   </template>
                 </el-table-column>
               </el-table>
@@ -518,9 +590,22 @@
               <el-table :data="reviewReports" v-loading="reportLoading" stripe>
                 <el-table-column prop="reviewId" label="评价ID" width="100" />
                 <el-table-column
-                  prop="reporterId"
-                  label="举报人ID"
-                  width="110"
+                  prop="targetName"
+                  label="评价对象"
+                  min-width="140"
+                  show-overflow-tooltip
+                />
+                <el-table-column
+                  prop="reviewContent"
+                  label="评价内容"
+                  min-width="220"
+                  show-overflow-tooltip
+                />
+                <el-table-column prop="rating" label="评分" width="70" />
+                <el-table-column
+                  prop="reporterUsername"
+                  label="举报人"
+                  width="120"
                 />
                 <el-table-column
                   prop="reason"
@@ -549,7 +634,7 @@
                   label="提交时间"
                   width="180"
                 />
-                <el-table-column label="操作" width="120" fixed="right">
+                <el-table-column label="操作" width="330" fixed="right">
                   <template #default="scope">
                     <el-button
                       v-if="scope.row.status === 0"
@@ -558,7 +643,27 @@
                       @click="resolveReviewReport(scope.row.id)"
                       >标记已处理</el-button
                     >
-                    <span v-else class="muted-text">已完成</span>
+                    <el-button
+                      v-if="scope.row.status === 0"
+                      size="small"
+                      @click="rejectReviewReport(scope.row.id)"
+                      >驳回举报</el-button
+                    >
+                    <el-button
+                      v-if="scope.row.status === 0"
+                      size="small"
+                      type="danger"
+                      @click="deleteReportedReview(scope.row.id)"
+                      >删除评价</el-button
+                    >
+                    <el-button
+                      size="small"
+                      type="success"
+                      plain
+                      @click="openReplyDrawer(scope.row)"
+                      >商家回复</el-button
+                    >
+                    <span v-if="scope.row.status !== 0" class="muted-text">已完成</span>
                   </template>
                 </el-table-column>
               </el-table>
@@ -569,7 +674,7 @@
         <section v-else-if="activeMenu === 'sensitive'">
           <div class="toolbar">
             <h2 class="section-title">敏感词过滤配置</h2>
-            <el-button type="primary" @click="sensitiveDialogVisible = true"
+            <el-button type="primary" @click="openSensitiveDialog()"
               >新增敏感词</el-button
             >
           </div>
@@ -577,15 +682,18 @@
             <el-table-column prop="word" label="敏感词" min-width="180" />
             <el-table-column prop="level" label="等级" width="100" />
             <el-table-column prop="createTime" label="创建时间" width="180" />
-            <el-table-column label="操作" width="100" fixed="right">
-              <template #default="scope"
-                ><el-button
+            <el-table-column label="操作" width="150" fixed="right">
+              <template #default="scope">
+                <el-button size="small" @click="openSensitiveDialog(scope.row)"
+                  >编辑</el-button
+                >
+                <el-button
                   size="small"
                   type="danger"
                   @click="removeSensitiveWord(scope.row)"
                   >删除</el-button
-                ></template
-              >
+                >
+              </template>
             </el-table-column>
           </el-table>
         </section>
@@ -914,7 +1022,10 @@
     >
       <div class="toolbar toolbar-inline">
         <div class="muted-text">成员 E 可在此干预房态、价格和上下架。</div>
-        <el-button type="primary" @click="openRoomDialog()">新增房型</el-button>
+        <div>
+          <el-button @click="triggerImport('rooms')">导入 CSV</el-button>
+          <el-button type="primary" @click="openRoomDialog()">新增房型</el-button>
+        </div>
       </div>
       <el-table :data="hotelRooms" v-loading="roomLoading" stripe>
         <el-table-column prop="roomType" label="房型" min-width="160" />
@@ -1006,6 +1117,37 @@
     </el-dialog>
 
     <el-dialog
+      v-model="attractionDialogVisible"
+      :title="attractionForm.id ? '编辑景点' : '新增景点'"
+      width="820px"
+    >
+      <el-form :model="attractionForm" label-width="110px" class="entity-form">
+        <el-row :gutter="16">
+          <el-col :span="12"><el-form-item label="景点名称"><el-input v-model="attractionForm.name" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="城市"><el-input v-model="attractionForm.city" /></el-form-item></el-col>
+          <el-col :span="24"><el-form-item label="地址"><el-input v-model="attractionForm.address" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="成人票价"><el-input-number v-model="attractionForm.adultPrice" :min="0" :precision="2" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="儿童票价"><el-input-number v-model="attractionForm.childPrice" :min="0" :precision="2" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="总票数"><el-input-number v-model="attractionForm.totalTickets" :min="0" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="可售票数"><el-input-number v-model="attractionForm.availableTickets" :min="0" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="开放时间"><el-input v-model="attractionForm.openTime" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="状态"><el-select v-model="attractionForm.status" style="width: 100%"><el-option label="开放" :value="1" /><el-option label="下线" :value="0" /></el-select></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="纬度"><el-input-number v-model="attractionForm.lat" :precision="6" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="经度"><el-input-number v-model="attractionForm.lng" :precision="6" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="24"><el-form-item label="封面图"><el-input v-model="attractionForm.coverImg" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="来源名称"><el-input v-model="attractionForm.sourceName" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="核验日期"><el-date-picker v-model="attractionForm.dataCheckedDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="24"><el-form-item label="来源URL"><el-input v-model="attractionForm.officialUrl" /></el-form-item></el-col>
+          <el-col :span="24"><el-form-item label="描述"><el-input v-model="attractionForm.description" type="textarea" :rows="3" /></el-form-item></el-col>
+        </el-row>
+      </el-form>
+      <template #footer>
+        <el-button @click="attractionDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveAttraction">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
       v-model="couponDialogVisible"
       :title="couponForm.id ? '编辑优惠券' : '新增优惠券'"
       width="760px"
@@ -1069,7 +1211,7 @@
               ><el-date-picker
                 v-model="couponForm.expireDate"
                 type="datetime"
-                value-format="YYYY-MM-DD HH:mm:ss"
+                value-format="YYYY-MM-DD[T]HH:mm:ss"
                 style="width: 100%" /></el-form-item
           ></el-col>
           <el-col :span="24"
@@ -1089,7 +1231,7 @@
 
     <el-dialog
       v-model="sensitiveDialogVisible"
-      title="新增敏感词"
+      :title="sensitiveForm.id ? '编辑敏感词' : '新增敏感词'"
       width="520px"
     >
       <el-form :model="sensitiveForm" label-width="90px" class="entity-form">
@@ -1109,6 +1251,46 @@
         <el-button type="primary" @click="saveSensitiveWord">保存</el-button>
       </template>
     </el-dialog>
+
+    <el-drawer
+      v-model="couponClaimsDrawerVisible"
+      :title="activeCoupon ? `${activeCoupon.name} · 领取记录` : '领取记录'"
+      size="620px"
+    >
+      <el-table :data="couponClaims" v-loading="couponClaimsLoading" stripe>
+        <el-table-column prop="username" label="用户名" width="140" />
+        <el-table-column prop="nickname" label="昵称" width="140" />
+        <el-table-column label="状态" width="90">
+          <template #default="scope">{{ couponClaimStatusLabel(scope.row.status) }}</template>
+        </el-table-column>
+        <el-table-column prop="receivedTime" label="领取时间" width="180" />
+        <el-table-column prop="usedTime" label="使用时间" width="180" />
+      </el-table>
+    </el-drawer>
+
+    <el-drawer
+      v-model="replyDrawerVisible"
+      :title="activeReport ? `评价 ${activeReport.reviewId} · 商家回复` : '商家回复'"
+      size="620px"
+    >
+      <el-descriptions v-if="activeReport" :column="1" border>
+        <el-descriptions-item label="评价对象">{{ activeReport.targetName }}</el-descriptions-item>
+        <el-descriptions-item label="评价内容">{{ activeReport.reviewContent }}</el-descriptions-item>
+      </el-descriptions>
+      <div class="reply-editor">
+        <el-input v-model="replyContent" type="textarea" :rows="3" placeholder="输入商家回复内容" />
+        <el-button type="primary" @click="saveReply">发布回复</el-button>
+      </div>
+      <el-table :data="reviewReplies" v-loading="replyLoading" stripe>
+        <el-table-column prop="content" label="回复内容" min-width="240" />
+        <el-table-column prop="createTime" label="时间" width="180" />
+        <el-table-column label="操作" width="90">
+          <template #default="scope">
+            <el-button size="small" type="danger" @click="removeReply(scope.row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-drawer>
 
     <el-drawer
       v-model="userDrawerVisible"
@@ -1142,6 +1324,30 @@
         }}</el-descriptions-item>
         <el-descriptions-item label="注册时间">{{
           selectedUser.createTime
+        }}</el-descriptions-item>
+        <el-descriptions-item label="交通订单">{{
+          selectedUser.trafficOrderCount || 0
+        }}</el-descriptions-item>
+        <el-descriptions-item label="酒店订单">{{
+          selectedUser.hotelOrderCount || 0
+        }}</el-descriptions-item>
+        <el-descriptions-item label="发帖数">{{
+          selectedUser.postCount || 0
+        }}</el-descriptions-item>
+        <el-descriptions-item label="评论数">{{
+          selectedUser.commentCount || 0
+        }}</el-descriptions-item>
+        <el-descriptions-item label="评价数">{{
+          selectedUser.reviewCount || 0
+        }}</el-descriptions-item>
+        <el-descriptions-item label="举报数">{{
+          selectedUser.reportCount || 0
+        }}</el-descriptions-item>
+        <el-descriptions-item label="最近操作">{{
+          selectedUser.lastOperation || "暂无"
+        }}</el-descriptions-item>
+        <el-descriptions-item label="最近操作时间">{{
+          selectedUser.lastOperationTime || "暂无"
         }}</el-descriptions-item>
       </el-descriptions>
     </el-drawer>
@@ -1177,10 +1383,13 @@ const flights = ref([]);
 const trains = ref([]);
 const hotels = ref([]);
 const hotelRooms = ref([]);
+const attractions = ref([]);
 const coupons = ref([]);
+const couponClaims = ref([]);
 const orders = ref([]);
 const reviewPosts = ref([]);
 const reviewReports = ref([]);
+const reviewReplies = ref([]);
 const sensitiveWords = ref([]);
 const logs = ref([]);
 const users = ref([]);
@@ -1189,10 +1398,13 @@ const flightLoading = ref(false);
 const trainLoading = ref(false);
 const hotelLoading = ref(false);
 const roomLoading = ref(false);
+const attractionLoading = ref(false);
 const couponLoading = ref(false);
+const couponClaimsLoading = ref(false);
 const orderLoading = ref(false);
 const postLoading = ref(false);
 const reportLoading = ref(false);
+const replyLoading = ref(false);
 const sensitiveLoading = ref(false);
 const logLoading = ref(false);
 const userLoading = ref(false);
@@ -1215,12 +1427,18 @@ const trainDialogVisible = ref(false);
 const hotelDialogVisible = ref(false);
 const roomDrawerVisible = ref(false);
 const roomDialogVisible = ref(false);
+const attractionDialogVisible = ref(false);
 const couponDialogVisible = ref(false);
+const couponClaimsDrawerVisible = ref(false);
 const sensitiveDialogVisible = ref(false);
+const replyDrawerVisible = ref(false);
 const userDrawerVisible = ref(false);
 
 const activeHotel = ref(null);
+const activeCoupon = ref(null);
+const activeReport = ref(null);
 const selectedUser = ref(null);
+const replyContent = ref("");
 
 const createFlightForm = () => ({
   id: null,
@@ -1275,6 +1493,26 @@ const createRoomForm = () => ({
   status: 1,
 });
 
+const createAttractionForm = () => ({
+  id: null,
+  name: "",
+  city: "",
+  address: "",
+  description: "",
+  coverImg: "",
+  adultPrice: 0,
+  childPrice: 0,
+  totalTickets: 1000,
+  availableTickets: 1000,
+  openTime: "",
+  lat: null,
+  lng: null,
+  officialUrl: "",
+  sourceName: "",
+  dataCheckedDate: "",
+  status: 1,
+});
+
 const createCouponForm = () => ({
   id: null,
   name: "",
@@ -1289,6 +1527,7 @@ const createCouponForm = () => ({
 });
 
 const createSensitiveForm = () => ({
+  id: null,
   word: "",
   level: 1,
 });
@@ -1297,6 +1536,7 @@ const flightForm = ref(createFlightForm());
 const trainForm = ref(createTrainForm());
 const hotelForm = ref(createHotelForm());
 const roomForm = ref(createRoomForm());
+const attractionForm = ref(createAttractionForm());
 const couponForm = ref(createCouponForm());
 const sensitiveForm = ref(createSensitiveForm());
 
@@ -1344,6 +1584,18 @@ const normalizeRoom = (row = {}) => ({
   price: parseNumberish(row.price, 0),
   totalRooms: parseNumberish(row.totalRooms, 10),
   availableRooms: parseNumberish(row.availableRooms, 10),
+  status: parseNumberish(row.status, 1),
+});
+
+const normalizeAttraction = (row = {}) => ({
+  ...createAttractionForm(),
+  ...row,
+  adultPrice: parseNumberish(row.adultPrice, 0),
+  childPrice: parseNumberish(row.childPrice, 0),
+  totalTickets: parseNumberish(row.totalTickets, 1000),
+  availableTickets: parseNumberish(row.availableTickets, 1000),
+  lat: row.lat === null || row.lat === undefined ? null : parseNumberish(row.lat, null),
+  lng: row.lng === null || row.lng === undefined ? null : parseNumberish(row.lng, null),
   status: parseNumberish(row.status, 1),
 });
 
@@ -1637,6 +1889,18 @@ const fetchHotelRooms = async (hotelId) => {
   }
 };
 
+const fetchAttractions = async () => {
+  attractionLoading.value = true;
+  try {
+    const data = await request.get("/api/admin/attractions");
+    attractions.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    attractions.value = [];
+  } finally {
+    attractionLoading.value = false;
+  }
+};
+
 const fetchCoupons = async () => {
   couponLoading.value = true;
   try {
@@ -1646,6 +1910,18 @@ const fetchCoupons = async () => {
     coupons.value = [];
   } finally {
     couponLoading.value = false;
+  }
+};
+
+const fetchCouponClaims = async (couponId) => {
+  couponClaimsLoading.value = true;
+  try {
+    const data = await request.get(`/api/admin/coupons/${couponId}/claims`);
+    couponClaims.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    couponClaims.value = [];
+  } finally {
+    couponClaimsLoading.value = false;
   }
 };
 
@@ -1696,6 +1972,18 @@ const fetchReviewReports = async () => {
     reviewReports.value = [];
   } finally {
     reportLoading.value = false;
+  }
+};
+
+const fetchReviewReplies = async (reviewId) => {
+  replyLoading.value = true;
+  try {
+    const data = await request.get(`/api/admin/reviews/${reviewId}/replies`);
+    reviewReplies.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    reviewReplies.value = [];
+  } finally {
+    replyLoading.value = false;
   }
 };
 
@@ -1762,6 +2050,8 @@ const saveFlight = async () => {
 const removeFlight = async (row) => {
   await ElMessageBox.confirm(`确认删除航班 ${row.flightNo} 吗？`, "删除确认", {
     type: "warning",
+    confirmButtonText: "确认删除",
+    cancelButtonText: "暂不删除",
   });
   try {
     await request.delete(`/api/admin/flights/${row.id}`);
@@ -1793,6 +2083,8 @@ const saveTrain = async () => {
 const removeTrain = async (row) => {
   await ElMessageBox.confirm(`确认删除车次 ${row.trainNo} 吗？`, "删除确认", {
     type: "warning",
+    confirmButtonText: "确认删除",
+    cancelButtonText: "暂不删除",
   });
   try {
     await request.delete(`/api/admin/trains/${row.id}`);
@@ -1824,6 +2116,8 @@ const saveHotel = async () => {
 const removeHotel = async (row) => {
   await ElMessageBox.confirm(`确认删除酒店 ${row.name} 吗？`, "删除确认", {
     type: "warning",
+    confirmButtonText: "确认删除",
+    cancelButtonText: "暂不删除",
   });
   try {
     await request.delete(`/api/admin/hotels/${row.id}`);
@@ -1867,6 +2161,8 @@ const saveRoom = async () => {
 const removeRoom = async (row) => {
   await ElMessageBox.confirm(`确认删除房型 ${row.roomType} 吗？`, "删除确认", {
     type: "warning",
+    confirmButtonText: "确认删除",
+    cancelButtonText: "暂不删除",
   });
   try {
     await request.delete(`/api/admin/hotel-rooms/${row.id}`);
@@ -1875,9 +2171,81 @@ const removeRoom = async (row) => {
   } catch (error) {}
 };
 
+const openAttractionDialog = (row = null) => {
+  attractionForm.value = normalizeAttraction(row || {});
+  attractionDialogVisible.value = true;
+};
+
+const saveAttraction = async () => {
+  const payload = { ...attractionForm.value };
+  try {
+    if (payload.id) {
+      await request.put(`/api/admin/attractions/${payload.id}`, payload);
+      ElMessage.success("景点已更新");
+    } else {
+      await request.post("/api/admin/attractions", payload);
+      ElMessage.success("景点已新增");
+    }
+    attractionDialogVisible.value = false;
+    await fetchAttractions();
+  } catch (error) {}
+};
+
+const removeAttraction = async (row) => {
+  await ElMessageBox.confirm(`确认删除或下线景点 ${row.name} 吗？`, "删除确认", {
+    type: "warning",
+    confirmButtonText: "确认",
+    cancelButtonText: "取消",
+  });
+  try {
+    await request.delete(`/api/admin/attractions/${row.id}`);
+    ElMessage.success("景点已删除或下线");
+    await fetchAttractions();
+  } catch (error) {}
+};
+
+const triggerImport = (type) => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".csv,text/csv";
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append("file", file);
+    try {
+      const result = await request.post(`/api/admin/import/${type}`, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const failures = result?.failures || [];
+      ElMessageBox.alert(
+        `成功 ${result?.success || 0} 行，失败 ${result?.failed || 0} 行` +
+          (failures.length ? `\n${failures.map((f) => `第 ${f.line} 行：${f.reason}`).join("\n")}` : ""),
+        "导入结果",
+      );
+      await refreshResourceAfterImport(type);
+    } catch (error) {}
+  };
+  input.click();
+};
+
+const refreshResourceAfterImport = async (type) => {
+  if (type === "flights") return fetchFlights();
+  if (type === "trains") return fetchTrains();
+  if (type === "hotels") return fetchHotels();
+  if (type === "rooms") return fetchHotelRooms(activeHotel.value?.id);
+  if (type === "attractions") return fetchAttractions();
+};
+
 const openCouponDialog = (row = null) => {
   couponForm.value = normalizeCoupon(row || {});
   couponDialogVisible.value = true;
+};
+
+const openCouponClaims = async (row) => {
+  activeCoupon.value = row;
+  couponClaimsDrawerVisible.value = true;
+  await fetchCouponClaims(row.id);
 };
 
 const saveCoupon = async () => {
@@ -1898,6 +2266,8 @@ const saveCoupon = async () => {
 const removeCoupon = async (row) => {
   await ElMessageBox.confirm(`确认删除优惠券 ${row.name} 吗？`, "删除确认", {
     type: "warning",
+    confirmButtonText: "确认删除",
+    cancelButtonText: "暂不删除",
   });
   try {
     await request.delete(`/api/admin/coupons/${row.id}`);
@@ -1906,19 +2276,37 @@ const removeCoupon = async (row) => {
   } catch (error) {}
 };
 
+const couponClaimStatusLabel = (status) =>
+  ({ 0: "未使用", 1: "已使用", 2: "已过期" }[status] || `状态${status}`);
+
 const saveSensitiveWord = async () => {
   try {
-    await request.post("/api/admin/sensitive-words", sensitiveForm.value);
-    ElMessage.success("敏感词已新增");
+    if (sensitiveForm.value.id) {
+      await request.put(
+        `/api/admin/sensitive-words/${sensitiveForm.value.id}`,
+        sensitiveForm.value,
+      );
+      ElMessage.success("敏感词已更新");
+    } else {
+      await request.post("/api/admin/sensitive-words", sensitiveForm.value);
+      ElMessage.success("敏感词已新增");
+    }
     sensitiveDialogVisible.value = false;
     sensitiveForm.value = createSensitiveForm();
     await fetchSensitiveWords();
   } catch (error) {}
 };
 
+const openSensitiveDialog = (row = null) => {
+  sensitiveForm.value = { ...createSensitiveForm(), ...(row || {}) };
+  sensitiveDialogVisible.value = true;
+};
+
 const removeSensitiveWord = async (row) => {
   await ElMessageBox.confirm(`确认删除敏感词 ${row.word} 吗？`, "删除确认", {
     type: "warning",
+    confirmButtonText: "确认删除",
+    cancelButtonText: "暂不删除",
   });
   try {
     await request.delete(`/api/admin/sensitive-words/${row.id}`);
@@ -1947,6 +2335,8 @@ const rejectPost = async (id) => {
         inputValue: "内容不符合社区规范",
         inputPattern: /\S+/,
         inputErrorMessage: "拒绝原因不能为空",
+        confirmButtonText: "确认拒绝",
+        cancelButtonText: "暂不处理",
       },
     );
     await request.post(`/api/admin/posts/${id}/reject`, { reason: value });
@@ -1955,6 +2345,20 @@ const rejectPost = async (id) => {
     if (activeMenu.value === "stats") {
       await fetchDashboard();
     }
+  } catch (error) {}
+};
+
+const disablePostAuthor = async (row) => {
+  if (!row.userId) return;
+  await ElMessageBox.confirm(`确认封禁作者 ${row.authorUsername || row.userId} 吗？`, "封禁确认", {
+    type: "warning",
+    confirmButtonText: "确认封禁",
+    cancelButtonText: "取消",
+  });
+  try {
+    await request.post(`/api/admin/users/${row.userId}/disable`);
+    ElMessage.success("作者已封禁");
+    await fetchPosts();
   } catch (error) {}
 };
 
@@ -1967,6 +2371,8 @@ const resolveReviewReport = async (id) => {
         inputValue: "已人工复核",
         inputPattern: /\S+/,
         inputErrorMessage: "处理备注不能为空",
+        confirmButtonText: "确认处理",
+        cancelButtonText: "暂不处理",
       },
     );
     await request.post(`/api/admin/review-reports/${id}/resolve`, {
@@ -1974,6 +2380,70 @@ const resolveReviewReport = async (id) => {
     });
     ElMessage.success("举报工单已处理");
     await fetchReviewReports();
+  } catch (error) {}
+};
+
+const rejectReviewReport = async (id) => {
+  try {
+    const { value } = await ElMessageBox.prompt("请输入驳回原因", "驳回举报", {
+      inputValue: "举报不成立，已驳回",
+      inputPattern: /\S+/,
+      inputErrorMessage: "驳回原因不能为空",
+      confirmButtonText: "确认驳回",
+      cancelButtonText: "取消",
+    });
+    await request.post(`/api/admin/review-reports/${id}/reject`, {
+      remark: value,
+    });
+    ElMessage.success("举报已驳回");
+    await fetchReviewReports();
+  } catch (error) {}
+};
+
+const deleteReportedReview = async (id) => {
+  await ElMessageBox.confirm("确认删除被举报评价并关闭工单吗？", "删除评价", {
+    type: "warning",
+    confirmButtonText: "确认删除",
+    cancelButtonText: "取消",
+  });
+  try {
+    await request.post(`/api/admin/review-reports/${id}/delete-review`, {
+      remark: "举报成立，评价已删除",
+    });
+    ElMessage.success("评价已删除");
+    await fetchReviewReports();
+  } catch (error) {}
+};
+
+const openReplyDrawer = async (row) => {
+  activeReport.value = row;
+  replyContent.value = "";
+  replyDrawerVisible.value = true;
+  await fetchReviewReplies(row.reviewId);
+};
+
+const saveReply = async () => {
+  if (!activeReport.value?.reviewId) return;
+  try {
+    await request.post(`/api/admin/reviews/${activeReport.value.reviewId}/replies`, {
+      content: replyContent.value,
+    });
+    ElMessage.success("商家回复已发布");
+    replyContent.value = "";
+    await fetchReviewReplies(activeReport.value.reviewId);
+  } catch (error) {}
+};
+
+const removeReply = async (row) => {
+  await ElMessageBox.confirm("确认删除该回复吗？", "删除回复", {
+    type: "warning",
+    confirmButtonText: "确认删除",
+    cancelButtonText: "取消",
+  });
+  try {
+    await request.delete(`/api/admin/replies/${row.id}`);
+    ElMessage.success("回复已删除");
+    await fetchReviewReplies(activeReport.value?.reviewId);
   } catch (error) {}
 };
 
@@ -2074,6 +2544,8 @@ const handleMenuSelect = (menu) => {
     fetchTrains();
   } else if (menu === "hotels") {
     fetchHotels();
+  } else if (menu === "attractions") {
+    fetchAttractions();
   } else if (menu === "coupons") {
     fetchCoupons();
   } else if (menu === "orders") {
@@ -2119,6 +2591,12 @@ onUnmounted(() => {
 .admin-page {
   margin: -24px -40px;
   min-height: calc(100vh - 60px);
+}
+
+.reply-editor {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
 }
 
 .admin-aside {

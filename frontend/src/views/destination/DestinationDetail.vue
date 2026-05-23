@@ -1,7 +1,7 @@
 <template>
   <div v-if="destination" class="destination-detail-page">
     <section class="detail-hero">
-      <img :src="destination.img" :alt="destination.name" referrerpolicy="no-referrer" />
+      <SafeImage :src="destination.img" :alt="destination.name" />
       <div class="hero-overlay"></div>
       <div class="hero-content">
         <el-button class="back-btn" round @click="$router.push('/destinations')">
@@ -70,6 +70,7 @@
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { ArrowLeft, Link } from "@element-plus/icons-vue";
+import SafeImage from "@/components/SafeImage.vue";
 import { destinationMap } from "@/data/destinations";
 
 const route = useRoute();

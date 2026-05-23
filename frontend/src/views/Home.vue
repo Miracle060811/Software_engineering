@@ -206,7 +206,7 @@
           @click="goDestination(dest)"
         >
           <div class="dest-img-wrap">
-            <img :src="dest.img" :alt="dest.name" class="dest-img" />
+            <SafeImage :src="dest.img" :alt="dest.name" image-class="dest-img" />
             <div class="dest-gradient"></div>
             <div class="dest-badge">{{ dest.tag }}</div>
             <div class="dest-img-info">
@@ -312,7 +312,7 @@
             class="cta-avatar"
             :class="`cta-avatar-${idx + 1}`"
           >
-            <img :src="avatar.src" :alt="avatar.name" />
+            <SafeImage :src="avatar.src" :alt="avatar.name" />
           </div>
         </div>
       </div>
@@ -338,6 +338,7 @@ import {
   MagicStick,
 } from "@element-plus/icons-vue";
 import CountUp from "../components/CountUp.vue";
+import SafeImage from "@/components/SafeImage.vue";
 import { destinations } from "@/data/destinations";
 import aiPlannerIcon from "@/assets/feature-icons/ai-planner.png";
 import communityIcon from "@/assets/feature-icons/travel-community.png";
@@ -385,10 +386,10 @@ const hotDestinations = [...destinations]
   .slice(0, 6);
 
 const travelerAvatars = [
-  { name: "旅行者头像 1", src: "https://randomuser.me/api/portraits/women/44.jpg" },
-  { name: "旅行者头像 2", src: "https://randomuser.me/api/portraits/men/32.jpg" },
-  { name: "旅行者头像 3", src: "https://randomuser.me/api/portraits/women/68.jpg" },
-  { name: "旅行者头像 4", src: "https://randomuser.me/api/portraits/men/75.jpg" },
+  { name: "旅行者头像 1", src: "/images/seed/avatar-1.svg" },
+  { name: "旅行者头像 2", src: "/images/seed/avatar-2.svg" },
+  { name: "旅行者头像 3", src: "/images/seed/avatar-3.svg" },
+  { name: "旅行者头像 4", src: "/images/seed/avatar-4.svg" },
 ];
 
 const searchFlight = () => {

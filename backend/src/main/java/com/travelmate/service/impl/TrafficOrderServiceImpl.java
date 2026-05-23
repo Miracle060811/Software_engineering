@@ -13,6 +13,7 @@ import com.travelmate.mapper.PassengerMapper;
 import com.travelmate.mapper.TrafficOrderMapper;
 import com.travelmate.mapper.TrainMapper;
 import com.travelmate.service.CouponService;
+import com.travelmate.service.NotificationCenterService;
 import com.travelmate.service.TrafficOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -38,6 +40,9 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
 
     @Autowired
     private CouponService couponService;
+
+    @Autowired
+    private NotificationCenterService notificationCenterService;
 
     /**
      * 核心难点：防超卖事务拦截、减库存并生成订单
@@ -174,6 +179,12 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         if (updated == 0) {
             throw new RuntimeException("订单状态已变化，请刷新后重试");
         }
+        notificationCenterService.createNotification(
+                userId,
+                "traffic_order",
+                Objects.equals(order.getOrderType(), 0) ? "机票购票成功" : "火车票购票成功",
+                String.format("订单 %s 支付成功，系统正在为您出票。", orderNo),
+                "/my-orders?tab=traffic");
         return true;
     }
 

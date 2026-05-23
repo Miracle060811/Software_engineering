@@ -137,7 +137,7 @@
       <div class="qr-code-box">
         <img
           v-if="qrOrderNo"
-          :src="`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrOrderNo)}`"
+          :src="mockCheckinQr"
           alt="核销二维码"
           class="qr-img"
         />
@@ -156,6 +156,7 @@ import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Promotion, Tickets, House } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import mockCheckinQr from "@/assets/mock-checkin-qr.png";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
@@ -291,7 +292,11 @@ const showQrCode = (order) => {
 };
 
 const cancelOrder = async (orderNo, type) => {
-  await ElMessageBox.confirm("确认取消该订单？", "提示", { type: "warning" });
+  await ElMessageBox.confirm("确认取消该订单？", "提示", {
+    type: "warning",
+    confirmButtonText: "确认取消",
+    cancelButtonText: "暂不取消",
+  });
   try {
     if (type === "traffic") {
       await request.post(`/api/order/${orderNo}/cancel`);
@@ -406,14 +411,18 @@ onMounted(() => {
   gap: 8px;
 }
 .qr-code-box {
-  text-align: center;
   padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .qr-img {
   width: 200px;
   height: 200px;
   margin-bottom: 12px;
   border-radius: 12px;
+  display: block;
+  object-fit: contain;
 }
 .qr-label {
   font-size: 13px;

@@ -58,6 +58,8 @@ public class DatabaseStartupValidator implements ApplicationRunner {
                 "ALTER TABLE tm_review_report ADD COLUMN handle_time DATETIME DEFAULT NULL COMMENT '处理时间' AFTER handle_remark");
         executeQuietly(connection,
                 "ALTER TABLE tm_coupon ADD COLUMN category VARCHAR(20) DEFAULT 'all' COMMENT '使用类别：all=通用, flight=机票, train=火车票, hotel=酒店' AFTER description");
+        executeQuietly(connection,
+                "ALTER TABLE tm_notification ADD COLUMN action_url VARCHAR(300) DEFAULT NULL COMMENT '点击跳转路径' AFTER content");
     }
 
     private void executeQuietly(Connection connection, String sql) {

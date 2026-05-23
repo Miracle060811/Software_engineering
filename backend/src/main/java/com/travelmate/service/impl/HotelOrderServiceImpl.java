@@ -116,7 +116,8 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
                     userId,
                     "hotel_order",
                     "酒店订单已创建",
-                    String.format("您的酒店订单 %s 已创建，请在15分钟内完成支付。", orderNo));
+                    String.format("您的酒店订单 %s 已创建，请在15分钟内完成支付。", orderNo),
+                    "/my-orders?tab=hotel");
 
             return orderNo;
         } catch (Exception e) {
@@ -150,7 +151,8 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
                 userId,
                 "hotel_order",
                 "酒店订单支付成功",
-                String.format("订单 %s 已支付成功，祝您旅途愉快。", orderNo));
+                String.format("订单 %s 已支付成功，祝您旅途愉快。", orderNo),
+                "/my-orders?tab=hotel");
 
         return true;
     }
@@ -182,7 +184,8 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
                 userId,
                 "hotel_order",
                 "酒店订单已取消",
-                String.format("订单 %s 已取消，库存已自动归还。", orderNo));
+                String.format("订单 %s 已取消，库存已自动归还。", orderNo),
+                "/my-orders?tab=hotel");
 
         return true;
     }

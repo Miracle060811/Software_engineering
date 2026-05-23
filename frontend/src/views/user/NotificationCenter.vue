@@ -26,6 +26,15 @@
           >
             全部已读
           </el-button>
+          <el-button
+            v-if="notifications.length > 0"
+            type="danger"
+            plain
+            round
+            @click="deleteAllNotifications"
+          >
+            一键删除
+          </el-button>
         </div>
       </template>
     </PageHeader>
@@ -49,7 +58,8 @@
         v-for="item in notifications"
         :key="item.id"
         class="notification-card"
-        :class="{ unread: item.isRead === 0 }"
+        :class="{ unread: item.isRead === 0, clickable: !!item.actionUrl }"
+        @click="openNotification(item)"
       >
         <div class="notif-top">
           <div class="notif-title-row">
@@ -67,16 +77,22 @@
           <div class="notif-status">
             <span class="status-dot" :class="{ 'status-unread': item.isRead === 0 }"></span>
             {{ item.isRead === 0 ? "未读" : "已读" }}
+            <span v-if="item.actionUrl" class="jump-hint">点击查看</span>
           </div>
-          <el-button
-            v-if="item.isRead === 0"
-            type="primary"
-            text
-            size="small"
-            @click="markRead(item.id)"
-          >
-            标记已读
-          </el-button>
+          <div class="notif-actions" @click.stop>
+            <el-button
+              v-if="item.isRead === 0"
+              type="primary"
+              text
+              size="small"
+              @click="markRead(item.id)"
+            >
+              标记已读
+            </el-button>
+            <el-button type="danger" text size="small" @click="deleteNotification(item)">
+              删除
+            </el-button>
+          </div>
         </div>
       </div>
     </div>
@@ -85,7 +101,8 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { ElMessage } from "element-plus";
+import { useRouter } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { Refresh, Bell } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
@@ -94,6 +111,7 @@ import EmptyState from "@/components/EmptyState.vue";
 
 const loading = ref(false);
 const notifications = ref([]);
+const router = useRouter();
 
 const unreadCount = computed(
   () => notifications.value.filter((item) => item.isRead === 0).length
@@ -111,17 +129,57 @@ const fetchNotifications = async () => {
   }
 };
 
-const markRead = async (id) => {
+const markRead = async (id, options = {}) => {
   try {
     await request.post(`/api/notification/read/${id}`);
     notifications.value = notifications.value.map((item) =>
       item.id === id ? { ...item, isRead: 1 } : item
     );
     window.dispatchEvent(new Event("notification-updated"));
-    ElMessage.success("已标记为已读");
+    if (!options.silent) {
+      ElMessage.success("已标记为已读");
+    }
   } catch (e) {
-    ElMessage.error("标记已读失败");
+    if (!options.silent) {
+      ElMessage.error("标记已读失败");
+    }
   }
+};
+
+const deleteNotification = async (item) => {
+  try {
+    await ElMessageBox.confirm(`确认删除「${item.title}」吗？`, "删除通知", {
+      type: "warning",
+      confirmButtonText: "确认删除",
+      cancelButtonText: "暂不删除",
+    });
+    await request.delete(`/api/notification/${item.id}`);
+    notifications.value = notifications.value.filter((notice) => notice.id !== item.id);
+    window.dispatchEvent(new Event("notification-updated"));
+    ElMessage.success("通知已删除");
+  } catch (e) {}
+};
+
+const deleteAllNotifications = async () => {
+  try {
+    await ElMessageBox.confirm("确认删除全部通知吗？该操作不可恢复。", "一键删除通知", {
+      type: "warning",
+      confirmButtonText: "全部删除",
+      cancelButtonText: "暂不删除",
+    });
+    await request.delete("/api/notifications/clear-all");
+    notifications.value = [];
+    window.dispatchEvent(new Event("notification-updated"));
+    ElMessage.success("通知已全部删除");
+  } catch (e) {}
+};
+
+const openNotification = async (item) => {
+  if (!item.actionUrl) return;
+  if (item.isRead === 0) {
+    await markRead(item.id, { silent: true });
+  }
+  router.push(item.actionUrl);
 };
 
 const markAllRead = async () => {
@@ -149,13 +207,23 @@ const getTypeLabel = (type) => {
   const map = {
     ai_plan: "AI 行程",
     hotel_order: "酒店订单",
+    traffic_order: "大交通订单",
+    attraction_order: "景点门票",
+    post_audit: "游记审核",
     system: "系统通知",
   };
   return map[type] ?? "消息通知";
 };
 
 const getTypeTag = (type) => {
-  const map = { ai_plan: "success", hotel_order: "warning", system: "info" };
+  const map = {
+    ai_plan: "success",
+    hotel_order: "warning",
+    traffic_order: "primary",
+    attraction_order: "success",
+    post_audit: "danger",
+    system: "info",
+  };
   return map[type] ?? "info";
 };
 
@@ -193,6 +261,9 @@ onMounted(() => {
   border: 1px solid #F0F2F5;
   transition: all 0.3s ease;
   cursor: default;
+}
+.notification-card.clickable {
+  cursor: pointer;
 }
 .notification-card:hover {
   box-shadow: 0 4px 20px rgba(0,0,0,0.05);
@@ -245,6 +316,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .notif-status {
@@ -264,6 +336,16 @@ onMounted(() => {
 .status-dot.status-unread {
   background: #0D9488;
   animation: pulse 2s ease infinite;
+}
+.jump-hint {
+  color: #0D9488;
+  margin-left: 8px;
+}
+.notif-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 @keyframes pulse {
