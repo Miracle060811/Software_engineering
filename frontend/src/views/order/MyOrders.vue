@@ -50,7 +50,7 @@
               <span class="route-city">{{ order.arrivalCity || order.arrivalStation }}</span>
             </div>
             <div class="order-detail">
-              乘客：{{ order.passengerName }} | 证件：{{ order.passengerIdCard }} | 席位：{{ order.seatType }}
+              乘客：{{ order.passengerName }} | 证件：{{ order.passengerIdCard }} | 席位：{{ order.seatType }} | 数量：{{ order.ticketCount || 1 }}
             </div>
           </div>
           <div class="order-footer">
@@ -106,7 +106,7 @@
           <div class="order-body">
             <div class="hotel-name-row">{{ order.hotelName }}</div>
             <div class="order-detail">
-              房型：{{ order.roomType }} | 入住：{{ order.checkInDate }} | 退房：{{ order.checkOutDate }}
+              房型：{{ order.roomType }} | 房间数：{{ order.roomCount || 1 }} | 入住：{{ order.checkInDate }} | 退房：{{ order.checkOutDate }}
             </div>
             <div class="order-detail">
               联系人：{{ order.guestName }} | 电话：{{ order.guestPhone }}
@@ -247,6 +247,9 @@ const downloadReceipt = async (order, type) => {
       type === "traffic"
         ? `路线：${data.departureCity || data.departureStation || order.departureCity || order.departureStation} → ${data.arrivalCity || data.arrivalStation || order.arrivalCity || order.arrivalStation}`
         : `酒店：${data.hotelName || order.hotelName}`,
+      type === "traffic"
+        ? `票数：${data.ticketCount || order.ticketCount || 1}`
+        : `房型：${data.roomType || order.roomType}，房间数：${data.roomCount || order.roomCount || 1}`,
       `乘客/住客：${data.passengerName || data.guestName || order.passengerName || order.guestName}`,
       `金额：¥${data.amount || order.amount}`,
       `========================================`,

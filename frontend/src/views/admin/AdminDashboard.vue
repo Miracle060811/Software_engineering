@@ -1463,7 +1463,7 @@ const renderCharts = () => {
 
   setChartOption(destChartRef.value, {
     title: {
-      text: "热门目的地 Top10",
+      text: "热门城市 Top10",
       left: "center",
       textStyle: { fontSize: 14 },
     },

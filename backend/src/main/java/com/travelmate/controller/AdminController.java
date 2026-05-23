@@ -627,7 +627,7 @@ public class AdminController {
                 Map<String, Object> m = new HashMap<>();
                 m.put("orderNo", o.getOrderNo());
                 m.put("type", "酒店");
-                m.put("route", o.getHotelName() + " " + o.getRoomType());
+                m.put("route", o.getHotelName() + " " + o.getRoomType() + " x" + (o.getRoomCount() == null ? 1 : o.getRoomCount()));
                 m.put("passenger", o.getGuestName());
                 m.put("amount", o.getAmount());
                 m.put("status", o.getStatus());
@@ -660,7 +660,7 @@ public class AdminController {
             if (!Objects.equals(order.getStatus(), 4)) {
                 order.setStatus(4);
                 hotelOrderMapper.updateById(order);
-                hotelRoomMapper.returnRoom(order.getRoomId());
+                hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());
                 hotelRoomStockService.syncWithDatabase(order.getRoomId());
             }
         } else {
@@ -706,16 +706,20 @@ public class AdminController {
             return;
         }
         if (order.getOrderType() == 0) {
-            flightMapper.returnSeat(order.getTicketId());
+            flightMapper.returnSeat(order.getTicketId(), getTicketCount(order));
             return;
         }
         if (order.getOrderType() == 1) {
             if ("FirstClass".equalsIgnoreCase(order.getSeatType())) {
-                trainMapper.returnFirstClassSeat(order.getTicketId());
+                trainMapper.returnFirstClassSeat(order.getTicketId(), getTicketCount(order));
             } else {
-                trainMapper.returnSecondClassSeat(order.getTicketId());
+                trainMapper.returnSecondClassSeat(order.getTicketId(), getTicketCount(order));
             }
         }
+    }
+
+    private int getTicketCount(TrafficOrder order) {
+        return order.getTicketCount() == null ? 1 : order.getTicketCount();
     }
 
     @GetMapping("/coupons")

@@ -36,6 +36,9 @@ public class HotelOrder {
     /** 房型名称快照 */
     private String roomType;
 
+    /** 预订房间数 */
+    private Integer roomCount;
+
     /** 入住日期 */
     private LocalDate checkInDate;
 

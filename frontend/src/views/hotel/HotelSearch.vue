@@ -92,24 +92,26 @@
             <img
               :src="
                 hotel.coverImage ||
+                hotel.coverImg ||
                 `https://picsum.photos/seed/hotel${hotel.id}/400/220`
               "
               class="hotel-img"
               :alt="hotel.name"
+              referrerpolicy="no-referrer"
             />
             <div class="hotel-info">
               <div class="hotel-name">{{ hotel.name }}</div>
               <div class="hotel-star">
                 <el-icon v-for="i in hotel.starRating" :key="i" class="star-icon"><StarFilled /></el-icon>
                 <el-tag size="small" type="warning" style="margin-left: 8px">
-                  {{ hotel.rating || "暂无" }} 分
+                  {{ hotel.rating || hotel.score || "暂无" }} 分
                 </el-tag>
               </div>
               <div class="hotel-location"><el-icon><LocationFilled /></el-icon> {{ hotel.address }}</div>
               <div class="hotel-price">
                 <span class="price-from">起价</span>
                 <span class="price-value"
-                  >¥{{ hotel.minPrice || hotel.price || "—" }}</span
+                  >¥{{ hotel.minPrice || hotel.price || hotel.avgPrice || "—" }}</span
                 >
                 <span class="price-unit">/晚</span>
               </div>

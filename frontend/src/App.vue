@@ -376,7 +376,7 @@
             <a @click="footerNav('/flight-search')">机票预订</a>
             <a @click="footerNav('/train-search')">火车票预订</a>
             <a @click="footerNav('/hotel-search')">酒店预订</a>
-            <a @click="footerNav('/attractions')">热门景点</a>
+            <a @click="footerNav('/attractions')">景点门票</a>
           </div>
           <div class="footer-col">
             <h4>发现更多</h4>
@@ -386,10 +386,10 @@
           </div>
           <div class="footer-col">
             <h4>关于我们</h4>
-            <a>关于 TravelMate</a>
-            <a>用户协议</a>
-            <a>隐私政策</a>
-            <a>帮助中心</a>
+            <a @click="footerNav('/about')">关于 TravelMate</a>
+            <a @click="footerNav('/terms')">用户协议</a>
+            <a @click="footerNav('/privacy')">隐私政策</a>
+            <a @click="footerNav('/help')">帮助中心</a>
           </div>
         </div>
         <div class="footer-bottom">
@@ -560,7 +560,8 @@ const navLinks = [
     label: "出游",
     children: [
       { path: "/hotel-search", label: "酒店" },
-      { path: "/attractions", label: "热门景点" },
+      { path: "/destinations", label: "热门城市" },
+      { path: "/attractions", label: "景点门票" },
     ],
   },
   { path: "/community", label: "社区", activePaths: ["/community", "/post"] },
@@ -577,6 +578,16 @@ const isAuthPage = computed(() => route.path === "/login");
 // ---------- 面包屑 ----------
 const breadcrumbRouteMap = {
   Home: [{ label: "首页", to: "/" }],
+  DestinationList: [{ label: "首页", to: "/" }, { label: "热门城市" }],
+  DestinationDetail: [
+    { label: "首页", to: "/" },
+    { label: "热门城市", to: "/destinations" },
+    { label: "目的地详情" },
+  ],
+  About: [{ label: "首页", to: "/" }, { label: "关于 TravelMate" }],
+  Terms: [{ label: "首页", to: "/" }, { label: "用户协议" }],
+  Privacy: [{ label: "首页", to: "/" }, { label: "隐私政策" }],
+  Help: [{ label: "首页", to: "/" }, { label: "帮助中心" }],
   FlightSearch: [{ label: "首页", to: "/" }, { label: "机票搜索" }],
   TrainSearch: [{ label: "首页", to: "/" }, { label: "火车票搜索" }],
   HotelSearch: [{ label: "首页", to: "/" }, { label: "酒店搜索" }],
@@ -585,7 +596,7 @@ const breadcrumbRouteMap = {
     { label: "酒店搜索", to: "/hotel-search" },
     { label: "酒店详情" },
   ],
-  AttractionList: [{ label: "首页", to: "/" }, { label: "热门景点" }],
+  AttractionList: [{ label: "首页", to: "/" }, { label: "景点门票" }],
   AiPlan: [{ label: "首页", to: "/" }, { label: "AI 行程规划" }],
   Community: [{ label: "首页", to: "/" }, { label: "旅行社区" }],
   PostCreate: [

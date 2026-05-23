@@ -84,7 +84,7 @@ public class OrderTimeoutScheduler {
                     continue;
                 }
                 // 归还房间库存
-                hotelRoomMapper.returnRoom(order.getRoomId());
+                hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());
                 hotelRoomStockService.syncWithDatabase(order.getRoomId());
                 notificationCenterService.createNotification(
                         order.getUserId(),
@@ -108,17 +108,21 @@ public class OrderTimeoutScheduler {
         }
 
         if (order.getOrderType() == 0) {
-            flightMapper.returnSeat(order.getTicketId());
+            flightMapper.returnSeat(order.getTicketId(), getTicketCount(order));
             return;
         }
 
         if (order.getOrderType() == 1) {
             if ("FirstClass".equalsIgnoreCase(order.getSeatType())) {
-                trainMapper.returnFirstClassSeat(order.getTicketId());
+                trainMapper.returnFirstClassSeat(order.getTicketId(), getTicketCount(order));
             } else {
-                trainMapper.returnSecondClassSeat(order.getTicketId());
+                trainMapper.returnSecondClassSeat(order.getTicketId(), getTicketCount(order));
             }
         }
+    }
+
+    private int getTicketCount(TrafficOrder order) {
+        return order.getTicketCount() == null ? 1 : order.getTicketCount();
     }
 
     private boolean isDatabaseUnavailable(Throwable throwable) {

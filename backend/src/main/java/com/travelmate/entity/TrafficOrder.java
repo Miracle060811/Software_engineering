@@ -30,6 +30,8 @@ public class TrafficOrder {
      */
     private String seatType;
 
+    private Integer ticketCount;
+
     private String passengerName;
     private String passengerIdCard;
 

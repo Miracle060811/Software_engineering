@@ -33,9 +33,6 @@
             <el-tab-pane name="hotel">
               <template #label><el-icon style="margin-right:4px"><House /></el-icon>酒店</template>
             </el-tab-pane>
-            <el-tab-pane name="attraction">
-              <template #label><el-icon style="margin-right:4px"><Aim /></el-icon>热门景点</template>
-            </el-tab-pane>
           </el-tabs>
 
           <div class="search-row" v-if="searchTab === 'flight'">
@@ -156,27 +153,6 @@
             </el-button>
           </div>
 
-          <div class="search-row" v-if="searchTab === 'attraction'">
-            <div class="search-field">
-              <el-input
-                v-model="attractionForm.city"
-                placeholder="目的城市"
-                size="large"
-                :prefix-icon="LocationFilled"
-                class="search-input"
-              />
-            </div>
-            <el-button
-              type="primary"
-              size="large"
-              class="search-btn"
-              @click="searchAttraction"
-            >
-              <el-icon><Search /></el-icon>
-              <span>搜索景点</span>
-            </el-button>
-          </div>
-
           <!-- 热门搜索提示 -->
           <div class="search-hints">
             <span class="hint-label">热门搜索:</span>
@@ -209,14 +185,14 @@
       </div>
     </section>
 
-    <!-- ========== 热门目的地 ========== -->
+    <!-- ========== 热门城市 ========== -->
     <section class="dest-section">
       <div class="section-header">
         <div>
-          <h2 class="section-title">热门目的地</h2>
+          <h2 class="section-title">热门城市</h2>
           <p class="section-sub">精选热门旅行目的地，发现你的下一站</p>
         </div>
-        <el-button text type="primary" @click="$router.push('/hotel-search')">
+        <el-button text type="primary" @click="$router.push('/destinations')">
           查看全部 <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
@@ -225,7 +201,7 @@
         <div
           class="dest-card"
           v-for="(dest, idx) in hotDestinations"
-          :key="dest.name"
+          :key="dest.slug"
           :style="{ animationDelay: idx * 0.08 + 's' }"
           @click="goDestination(dest)"
         >
@@ -303,7 +279,7 @@
         <div class="feature-card" @click="$router.push('/attractions')">
           <div class="feat-visual feat-visual-attraction">
             <div class="feat-illustration">
-              <img :src="attractionIcon" alt="热门景点" class="feat-icon-img" />
+              <img :src="attractionIcon" alt="景点门票" class="feat-icon-img" />
               <div class="feat-rings">
                 <span class="ring ring-1"></span>
                 <span class="ring ring-2"></span>
@@ -311,7 +287,7 @@
             </div>
           </div>
           <div class="feat-body">
-            <h3 class="feat-title">热门景点</h3>
+            <h3 class="feat-title">景点门票</h3>
             <p class="feat-desc">探索各地必打卡景点，在线购票免排队</p>
             <span class="feat-link">探索景点 <el-icon><ArrowRight /></el-icon></span>
           </div>
@@ -330,10 +306,14 @@
           </el-button>
         </div>
         <div class="cta-decoration">
-          <span class="cta-shape cta-shape-1"></span>
-          <span class="cta-shape cta-shape-2"></span>
-          <span class="cta-shape cta-shape-3"></span>
-          <span class="cta-shape cta-shape-4"></span>
+          <div
+            v-for="(avatar, idx) in travelerAvatars"
+            :key="avatar.name"
+            class="cta-avatar"
+            :class="`cta-avatar-${idx + 1}`"
+          >
+            <img :src="avatar.src" :alt="avatar.name" />
+          </div>
         </div>
       </div>
     </section>
@@ -341,7 +321,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 import {
   Search,
@@ -358,6 +338,7 @@ import {
   MagicStick,
 } from "@element-plus/icons-vue";
 import CountUp from "../components/CountUp.vue";
+import { destinations } from "@/data/destinations";
 import aiPlannerIcon from "@/assets/feature-icons/ai-planner.png";
 import communityIcon from "@/assets/feature-icons/travel-community.png";
 import attractionIcon from "@/assets/feature-icons/attraction-ticket.png";
@@ -368,7 +349,6 @@ const searchTab = ref("flight");
 const flightForm = ref({ depCity: "", arrCity: "", date: "" });
 const trainForm = ref({ depStation: "", arrStation: "", date: "" });
 const hotelForm = ref({ city: "", dateRange: [] });
-const attractionForm = ref({ city: "" });
 
 const hotSearches = ["北京", "上海", "三亚", "成都", "杭州", "西安"];
 
@@ -400,55 +380,15 @@ const stats = [
   },
 ];
 
-const hotDestinations = [
-  {
-    name: "北京",
-    country: "中国",
-    desc: "古都风韵与现代繁华完美交融，探索千年历史遗迹",
-    tag: "文化古都",
-    keywords: ["故宫", "长城", "胡同"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/e/ef/The_Forbidden_City_-_View_from_Coal_Hill.jpg",
-  },
-  {
-    name: "上海",
-    country: "中国",
-    desc: "东方明珠，感受魔都的摩登魅力与海派风情",
-    tag: "魔都风情",
-    keywords: ["外滩", "迪士尼", "田子坊"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/2/2b/Shanghai_Bund-20150516-RM-173803.jpg",
-  },
-  {
-    name: "三亚",
-    country: "中国",
-    desc: "碧海蓝天、椰风树影，你的热带度假天堂",
-    tag: "海岛度假",
-    keywords: ["海滩", "潜水", "海鲜"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/4/44/Yalong_Bay_01.jpg",
-  },
-  {
-    name: "成都",
-    country: "中国",
-    desc: "慢生活与美食的天堂，来了就不想走的城市",
-    tag: "美食天堂",
-    keywords: ["熊猫", "火锅", "茶馆"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/2/20/Chengdu_skyline_June_2017.jpg",
-  },
-  {
-    name: "杭州",
-    country: "中国",
-    desc: "江南水乡的诗意栖居，西湖美景冠绝天下",
-    tag: "江南水乡",
-    keywords: ["西湖", "灵隐寺", "龙井"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/d/d8/West_Lake%2C_Hangzhou_%28Nine-turn_bridge%29.jpg",
-  },
-  {
-    name: "西安",
-    country: "中国",
-    desc: "十三朝古都，触摸中华文明的厚重历史",
-    tag: "历史名城",
-    keywords: ["兵马俑", "古城墙", "回民街"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/8/8e/Xi-an_city_wall_side.jpg",
-  },
+const hotDestinations = [...destinations]
+  .sort(() => Math.random() - 0.5)
+  .slice(0, 6);
+
+const travelerAvatars = [
+  { name: "旅行者头像 1", src: "https://randomuser.me/api/portraits/women/44.jpg" },
+  { name: "旅行者头像 2", src: "https://randomuser.me/api/portraits/men/32.jpg" },
+  { name: "旅行者头像 3", src: "https://randomuser.me/api/portraits/women/68.jpg" },
+  { name: "旅行者头像 4", src: "https://randomuser.me/api/portraits/men/75.jpg" },
 ];
 
 const searchFlight = () => {
@@ -480,15 +420,8 @@ const searchHotel = () => {
   });
 };
 
-const searchAttraction = () => {
-  router.push({
-    path: "/attractions",
-    query: { city: attractionForm.value.city },
-  });
-};
-
 const goDestination = (dest) => {
-  router.push({ path: "/hotel-search", query: { city: dest.name } });
+  router.push(`/destination/${dest.slug}`);
 };
 
 const quickSearch = (hint) => {
@@ -500,8 +433,6 @@ const quickSearch = (hint) => {
     trainForm.value.arrStation = hint;
   } else if (searchTab.value === "hotel") {
     hotelForm.value.city = hint;
-  } else {
-    attractionForm.value.city = hint;
   }
   router.push({
     path:
@@ -509,9 +440,7 @@ const quickSearch = (hint) => {
         ? "/flight-search"
         : searchTab.value === "train"
           ? "/train-search"
-          : searchTab.value === "hotel"
-            ? "/hotel-search"
-            : "/attractions",
+          : "/hotel-search",
     query:
       searchTab.value === "flight"
         ? { depCity: "上海", arrCity: hint }
@@ -809,7 +738,7 @@ const quickSearch = (hint) => {
   color: #71718B;
 }
 
-/* ==================== 热门目的地 ==================== */
+/* ==================== 热门城市 ==================== */
 .dest-section {
   padding: 64px var(--tm-page-padding) 0;
 }
@@ -828,11 +757,12 @@ const quickSearch = (hint) => {
   border: 1px solid #F0F2F5;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: fadeInUp 0.5s ease both;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  box-shadow: var(--tm-shadow-card);
 }
 .dest-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+  border-color: var(--el-color-primary-light-7);
+  box-shadow: var(--tm-shadow-card-hover);
 }
 
 .dest-img-wrap {
@@ -854,8 +784,8 @@ const quickSearch = (hint) => {
 .dest-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%);
-  opacity: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.16) 58%, transparent 100%);
+  opacity: 0.78;
   transition: opacity 0.4s ease;
 }
 .dest-card:hover .dest-gradient {
@@ -882,8 +812,8 @@ const quickSearch = (hint) => {
   left: 14px;
   display: flex;
   flex-direction: column;
-  opacity: 0;
-  transform: translateY(8px);
+  opacity: 1;
+  transform: translateY(0);
   transition: all 0.4s ease;
 }
 .dest-card:hover .dest-img-info {
@@ -1085,24 +1015,41 @@ const quickSearch = (hint) => {
   position: relative;
   z-index: 1;
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
+  align-items: center;
+  min-width: 310px;
+  min-height: 108px;
   justify-content: center;
 }
 
-.cta-shape {
-  width: 64px;
-  height: 64px;
+.cta-avatar {
+  width: 78px;
+  height: 78px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  border: 3px solid rgba(255, 255, 255, 0.4);
+  border: 4px solid rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+  margin-left: -12px;
   animation: float 4s ease infinite;
-  opacity: 0.9;
+  transition: transform 0.25s ease;
 }
-.cta-shape-1 { background: rgba(255, 255, 255, 0.25); }
-.cta-shape-2 { background: rgba(255, 255, 255, 0.2); animation-delay: -1s; }
-.cta-shape-3 { background: rgba(255, 255, 255, 0.15); animation-delay: -2s; }
-.cta-shape-4 { background: rgba(255, 255, 255, 0.1); animation-delay: -3s; }
+
+.cta-avatar:first-child {
+  margin-left: 0;
+}
+
+.cta-avatar:hover {
+  transform: translateY(-6px) scale(1.04);
+}
+
+.cta-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cta-avatar-2 { animation-delay: -1s; }
+.cta-avatar-3 { animation-delay: -2s; }
+.cta-avatar-4 { animation-delay: -3s; }
 
 /* ==================== 响应式 ==================== */
 @media (max-width: 992px) {
@@ -1170,6 +1117,15 @@ const quickSearch = (hint) => {
     flex-direction: column;
     text-align: center;
     padding: 36px 24px;
+  }
+  .cta-decoration {
+    min-width: 0;
+    min-height: 76px;
+  }
+  .cta-avatar {
+    width: 58px;
+    height: 58px;
+    margin-left: -8px;
   }
   .cta-title {
     font-size: 22px;

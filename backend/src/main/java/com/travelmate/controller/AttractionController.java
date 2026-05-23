@@ -53,7 +53,7 @@ public class AttractionController {
     /**
      * 购买门票
      * POST /api/attraction/{id}/ticket
-     * Body: { "count": 2, "guestName": "张三", "guestPhone": "13800138000" }
+     * Body: { "adultCount": 1, "childCount": 1, "guestName": "张三", "guestPhone": "13800138000" }
      */
     @PostMapping("/{id}/ticket")
     public Result<String> buyTicket(
@@ -65,9 +65,12 @@ public class AttractionController {
             return Result.error("用户未登录或Token无效");
         }
 
-        Integer count = body.get("count") != null
-                ? Integer.valueOf(body.get("count").toString())
-                : 1;
+        Integer adultCount = body.get("adultCount") != null
+                ? Integer.valueOf(body.get("adultCount").toString())
+                : (body.get("count") != null ? Integer.valueOf(body.get("count").toString()) : 1);
+        Integer childCount = body.get("childCount") != null
+                ? Integer.valueOf(body.get("childCount").toString())
+                : 0;
         String guestName = body.get("guestName") != null
                 ? body.get("guestName").toString()
                 : "";
@@ -76,7 +79,7 @@ public class AttractionController {
                 : "";
 
         try {
-            String orderNo = attractionService.buyTicket(userId, id, count, guestName, guestPhone);
+            String orderNo = attractionService.buyTicket(userId, id, adultCount, childCount, guestName, guestPhone);
             return Result.success(orderNo);
         } catch (Exception e) {
             return Result.error(e.getMessage());

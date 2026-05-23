@@ -1,12 +1,12 @@
 <template>
   <div class="attraction-page">
     <PageHeader
-      title="热门景点"
-      subtitle="搜索并预订热门景点门票"
+      title="景点门票"
+      subtitle="搜索并预订景点门票"
       :icon="Clock"
       :breadcrumbs="[
         { label: '首页', to: '/' },
-        { label: '热门景点' }
+        { label: '景点门票' }
       ]"
     />
 
@@ -43,7 +43,7 @@
       <el-row v-else :gutter="20">
         <el-col :span="8" v-for="attr in attractions" :key="attr.id" style="margin-bottom:20px">
           <el-card class="attr-card" :body-style="{ padding: 0 }">
-            <img :src="attr.coverImg || `https://picsum.photos/seed/attr${attr.id}/400/220`" class="attr-img" :alt="attr.name" referrerpolicy="no-referrer" />
+            <img :src="getAttractionImage(attr)" class="attr-img" :alt="attr.name" referrerpolicy="no-referrer" />
             <div class="attr-info">
               <div class="attr-name">{{ attr.name }}</div>
               <div class="attr-desc">{{ attr.description }}</div>
@@ -167,6 +167,61 @@ const bookForm = ref({ adultCount: 1, childCount: 0, guestName: "", guestPhone: 
 const dayTours = ref([]);
 const nearTours = ref([]);
 
+const attractionImages = {
+  故宫博物院: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Forbidden_City_-_View_from_Coal_Hill.jpg?width=800",
+  颐和园: "https://commons.wikimedia.org/wiki/Special:FilePath/20090530_Beijing_Summer_Palace_8467.jpg?width=800",
+  外滩: "https://commons.wikimedia.org/wiki/Special:FilePath/Shanghai_Bund-20150516-RM-173803.jpg?width=800",
+  西湖: "https://commons.wikimedia.org/wiki/Special:FilePath/West_Lake%2C_Hangzhou_%28Nine-turn_bridge%29.jpg?width=800",
+  张家界国家森林公园: "https://commons.wikimedia.org/wiki/Special:FilePath/Zhangjiajie_National_Forest_Park.jpg?width=800",
+  秦始皇帝陵博物院: "https://commons.wikimedia.org/wiki/Special:FilePath/Terracotta_Army_%2854082561381%29.jpg?width=800",
+  九寨沟风景名胜区: "https://commons.wikimedia.org/wiki/Special:FilePath/1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg?width=800",
+  黄山风景区: "https://commons.wikimedia.org/wiki/Special:FilePath/Anhui_Huangshan.jpg?width=800",
+  漓江风景名胜区: "https://commons.wikimedia.org/wiki/Special:FilePath/1_li_jiang_guilin_yangshuo_2011.jpg?width=800",
+  天坛公园: "https://commons.wikimedia.org/wiki/Special:FilePath/20200110_Temple_of_Heaven-1.jpg?width=800",
+  八达岭长城: "https://commons.wikimedia.org/wiki/Special:FilePath/Badaling_China_Great-Wall-of-China-01.jpg?width=800",
+  东方明珠广播电视塔: "https://commons.wikimedia.org/wiki/Special:FilePath/Oriental_Pearl_Tower_in_Shanghai.jpg?width=800",
+  豫园: "https://commons.wikimedia.org/wiki/Special:FilePath/Yuyuan_Garden_3.jpg?width=800",
+  上海迪士尼乐园: "https://commons.wikimedia.org/wiki/Special:FilePath/Firework_in_Shanghai_Disneyland_Park.jpg?width=800",
+  成都大熊猫繁育研究基地: "https://commons.wikimedia.org/wiki/Special:FilePath/Chengdu-pandas-d10.jpg?width=800",
+  都江堰景区: "https://commons.wikimedia.org/wiki/Special:FilePath/Dujiang_Weir.jpg?width=800",
+  蜈支洲岛: "https://commons.wikimedia.org/wiki/Special:FilePath/Wuzhizhou_Island_-_01.jpg?width=800",
+  天涯海角游览区: "https://commons.wikimedia.org/wiki/Special:FilePath/Beach_of_Tianya-Haijiao_near_Tianya_Rock_%2820230325134441%29.jpg?width=800",
+  丽江古城: "https://commons.wikimedia.org/wiki/Special:FilePath/1_lijiang_old_town_night.jpg?width=800",
+  亚龙湾国家旅游度假区: "https://commons.wikimedia.org/wiki/Special:FilePath/Yalong_Bay_01.jpg?width=800",
+  鼓浪屿: "https://commons.wikimedia.org/wiki/Special:FilePath/Gulangyu_Island_from_Zhongshan_Road%2C_Xiamen.jpg?width=800",
+  中山陵: "https://commons.wikimedia.org/wiki/Special:FilePath/China-Nanjing_%282024%29_Mausoleum_of_Sun_Yat_Sen_%E4%B8%AD%E5%B1%B1%E9%99%B5_-_img_08.jpg?width=800",
+  拙政园: "https://commons.wikimedia.org/wiki/Special:FilePath/Humble_Administrator%27s_Garden_Suzhou_November_2017_005.jpg?width=800",
+  洪崖洞民俗风貌区: "https://commons.wikimedia.org/wiki/Special:FilePath/Hongyadong_night_lights_Chongqing.jpg?width=800",
+  龙脊梯田: "https://commons.wikimedia.org/wiki/Special:FilePath/Longji_Rice_Terraces_004.jpg?width=800",
+  象鼻山景区: "https://commons.wikimedia.org/wiki/Special:FilePath/Elephant_Trunk_Hill%2C_Guilin.jpg?width=800",
+  天门山国家森林公园: "https://commons.wikimedia.org/wiki/Special:FilePath/Zhangjiajie_from_Tianmen_Mountain_01.jpg?width=800",
+  宏村: "https://commons.wikimedia.org/wiki/Special:FilePath/Yuezhao_Lake%2C_Hongcun%2C_Anhui%2C_China.jpg?width=800",
+  黄鹤楼: "https://commons.wikimedia.org/wiki/Special:FilePath/Yellow_Crane_Tower_61426-Wuhan_%2849150471556%29.jpg?width=800",
+  布达拉宫: "https://commons.wikimedia.org/wiki/Special:FilePath/Lhasa_Potala.jpg?width=800",
+  纳木错: "https://commons.wikimedia.org/wiki/Special:FilePath/Namcso_Lake_in_Tibet.jpg?width=800",
+  莫高窟: "https://commons.wikimedia.org/wiki/Special:FilePath/Mogao_Caves.jpg?width=800",
+  乐山大佛: "https://commons.wikimedia.org/wiki/Special:FilePath/Leshan_Giant_Buddha.jpg?width=800",
+  峨眉山: "https://commons.wikimedia.org/wiki/Special:FilePath/Golden_Summit%2C_Mount_Emei%2C_China%2C_August_2016.jpg?width=800",
+  泰山: "https://commons.wikimedia.org/wiki/Special:FilePath/50513-Taishan_%2849055887817%29.jpg?width=800",
+  天山天池: "https://commons.wikimedia.org/wiki/Special:FilePath/Tianchi_Lake.jpg?width=800",
+  喀纳斯景区: "https://commons.wikimedia.org/wiki/Special:FilePath/LakeKanas.jpg?width=800",
+  元阳哈尼梯田: "https://commons.wikimedia.org/wiki/Special:FilePath/Yuanyang_Rice_Terraces_%2848639450842%29.jpg?width=800",
+  石林风景区: "https://commons.wikimedia.org/wiki/Special:FilePath/Shilin_Stone_Forest_01.JPG?width=800",
+  龙门石窟: "https://commons.wikimedia.org/wiki/Special:FilePath/Longmen_Grottoes_2.jpg?width=800",
+  武夷山: "https://commons.wikimedia.org/wiki/Special:FilePath/20121029_Mount_Wuyi_01.jpg?width=800",
+  周庄古镇: "https://commons.wikimedia.org/wiki/Special:FilePath/Zhouzhuang.JPG?width=800",
+  夫子庙秦淮风光带: "https://commons.wikimedia.org/wiki/Special:FilePath/Confucius_Temple_Qinhuai_river_2.jpg?width=800",
+  西双版纳热带植物园: "https://commons.wikimedia.org/wiki/Special:FilePath/20251225_Tropical_rainforest_in_the_Xishuangbanna_Tropical_Botanical_Garden%2C_Chinese_Academy_of_Sciences.jpg?width=800",
+  崂山风景区: "https://commons.wikimedia.org/wiki/Special:FilePath/Laoshan-mountain-with-rocks.jpg?width=800",
+  海螺沟冰川森林公园: "https://commons.wikimedia.org/wiki/Special:FilePath/Hailuogou_Glaciers_in_Summer_10_24_10_817000.jpeg?width=800",
+  黄龙风景名胜区: "https://commons.wikimedia.org/wiki/Special:FilePath/1_huanglong_2.jpg?width=800",
+  "武陵源·黄龙洞": "https://commons.wikimedia.org/wiki/Special:FilePath/Huanglongdong.JPG?width=800",
+};
+
+const getAttractionImage = (attr) => {
+  return attractionImages[attr.name] || attr.coverImg || `https://picsum.photos/seed/attr${attr.id}/400/220`;
+};
+
 const totalTicketPrice = computed(() => {
   if (!selectedAttraction.value) return 0;
   let total = 0;
@@ -218,7 +273,8 @@ const confirmBook = async () => {
   booking.value = true;
   try {
     const resp = await request.post(`/api/attraction/${selectedAttraction.value.id}/ticket`, {
-      count: total,
+      adultCount: bookForm.value.adultCount,
+      childCount: bookForm.value.childCount,
       guestName: bookForm.value.guestName,
       guestPhone: bookForm.value.guestPhone,
     });

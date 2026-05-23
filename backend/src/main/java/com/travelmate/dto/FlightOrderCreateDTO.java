@@ -10,6 +10,9 @@ public class FlightOrderCreateDTO {
     /** 舱位类型: Economy (经济舱) 或 Business (商务舱) */
     private String seatType;
 
+    /** 购票数量 */
+    private Integer ticketCount;
+
     /** 选择的乘车人ID (从常用旅客管理里选出来的) */
     private Long passengerId;
 

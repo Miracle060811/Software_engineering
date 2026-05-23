@@ -157,6 +157,9 @@
             </el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="数量">
+          <el-input-number v-model="bookForm.ticketCount" :min="1" :max="10" />
+        </el-form-item>
         <el-form-item label="优惠券">
           <el-select
             v-model="bookForm.userCouponId"
@@ -252,16 +255,17 @@ const searchForm = ref({
   date: "",
 });
 
-const bookForm = ref({ passengerId: null, seatType: "economy", userCouponId: null });
+const bookForm = ref({ passengerId: null, seatType: "economy", ticketCount: 1, userCouponId: null });
 const newPassenger = ref({ name: "", idCard: "", phone: "" });
 
 const currentOriginalPrice = computed(() => {
   if (!selectedFlight.value) return 0;
-  return Number(
+  const unitPrice = Number(
     bookForm.value.seatType === "economy"
       ? selectedFlight.value.economyPrice
       : selectedFlight.value.businessPrice,
   ) || 0;
+  return unitPrice * (bookForm.value.ticketCount || 1);
 });
 
 const usableCoupons = computed(() =>
@@ -314,7 +318,7 @@ const openPriceTrend = (flight) => {
 
 const openBookDialog = async (flight) => {
   selectedFlight.value = flight;
-  bookForm.value = { passengerId: null, seatType: "economy", userCouponId: null };
+  bookForm.value = { passengerId: null, seatType: "economy", ticketCount: 1, userCouponId: null };
   bookDialogVisible.value = true;
   await Promise.all([fetchPassengers(), fetchMyCoupons()]);
 };
@@ -361,6 +365,7 @@ const confirmBook = async () => {
       flightId: selectedFlight.value.id,
       passengerId: passenger?.id,
       seatType: bookForm.value.seatType === "business" ? "Business" : "Economy",
+      ticketCount: bookForm.value.ticketCount,
       userCouponId: bookForm.value.userCouponId,
     });
     ElMessage.success("下单成功！请前往【我的订单】完成支付");

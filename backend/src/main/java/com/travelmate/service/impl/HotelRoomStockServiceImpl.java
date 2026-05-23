@@ -32,11 +32,12 @@ public class HotelRoomStockServiceImpl implements HotelRoomStockService {
                         return -2
                     end
                     current = tonumber(current)
-                    if current <= 0 then
+                    local count = tonumber(ARGV[1])
+                    if current < count then
                         return -1
                     end
-                    redis.call('DECR', KEYS[1])
-                    return current - 1
+                    redis.call('DECRBY', KEYS[1], count)
+                    return current - count
                     """,
             Long.class);
 
@@ -47,8 +48,9 @@ public class HotelRoomStockServiceImpl implements HotelRoomStockService {
     private HotelRoomMapper hotelRoomMapper;
 
     @Override
-    public StockPreDeductResult preDeductRoom(Long roomId, Integer dbAvailableRooms) {
-        if (dbAvailableRooms == null || dbAvailableRooms <= 0) {
+    public StockPreDeductResult preDeductRoom(Long roomId, Integer dbAvailableRooms, Integer count) {
+        int deductCount = count == null ? 1 : count;
+        if (dbAvailableRooms == null || dbAvailableRooms < deductCount) {
             return StockPreDeductResult.NO_STOCK;
         }
 
@@ -56,10 +58,10 @@ public class HotelRoomStockServiceImpl implements HotelRoomStockService {
         try {
             initializeStockIfAbsent(stockKey, dbAvailableRooms);
 
-            Long result = executePreDeduct(stockKey);
+            Long result = executePreDeduct(stockKey, deductCount);
             if (result != null && result == STOCK_NOT_INITIALIZED) {
                 initializeStockIfAbsent(stockKey, dbAvailableRooms);
-                result = executePreDeduct(stockKey);
+                result = executePreDeduct(stockKey, deductCount);
             }
 
             if (result == null) {
@@ -74,10 +76,10 @@ public class HotelRoomStockServiceImpl implements HotelRoomStockService {
     }
 
     @Override
-    public void rollbackPreDeduct(Long roomId) {
+    public void rollbackPreDeduct(Long roomId, Integer count) {
         String stockKey = Objects.requireNonNull(buildStockKey(roomId));
         try {
-            redisTemplate.opsForValue().increment(stockKey);
+            redisTemplate.opsForValue().increment(stockKey, count == null ? 1 : count);
         } catch (RedisConnectionFailureException e) {
             log.warn("Redis unavailable, skip rollback stock cache for room {}", roomId);
         }
@@ -109,9 +111,9 @@ public class HotelRoomStockServiceImpl implements HotelRoomStockService {
     }
 
     @SuppressWarnings("null")
-    private Long executePreDeduct(@NonNull String stockKey) {
+    private Long executePreDeduct(@NonNull String stockKey, Integer count) {
         List<String> keys = Collections.singletonList(Objects.requireNonNull(stockKey));
-        return redisTemplate.execute(PRE_DEDUCT_SCRIPT, keys);
+        return redisTemplate.execute(PRE_DEDUCT_SCRIPT, keys, String.valueOf(count));
     }
 
     private @NonNull String buildStockKey(Long roomId) {

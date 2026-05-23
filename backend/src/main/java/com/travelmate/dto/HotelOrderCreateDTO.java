@@ -15,6 +15,9 @@ public class HotelOrderCreateDTO {
     /** 房型ID */
     private Long roomId;
 
+    /** 预订房间数 */
+    private Integer roomCount;
+
     /** 入住日期 */
     private LocalDate checkInDate;
 

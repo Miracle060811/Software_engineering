@@ -67,14 +67,15 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
             throw new RuntimeException("房型与酒店不匹配");
         }
 
+        int roomCount = normalizeRoomCount(dto.getRoomCount());
         StockPreDeductResult preDeductResult = hotelRoomStockService.preDeductRoom(dto.getRoomId(),
-                room.getAvailableRooms());
+                room.getAvailableRooms(), roomCount);
         if (preDeductResult == StockPreDeductResult.NO_STOCK) {
             throw new RuntimeException("该房型暂无可用房间，预订失败");
         }
 
         try {
-            int updated = hotelRoomMapper.deductRoom(dto.getRoomId());
+            int updated = hotelRoomMapper.deductRoom(dto.getRoomId(), roomCount);
             if (updated == 0) {
                 throw new RuntimeException("该房型暂无可用房间，预订失败");
             }
@@ -83,7 +84,9 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
             if (room.getPrice() == null) {
                 throw new RuntimeException("房型价格缺失，暂不可预订");
             }
-            BigDecimal amount = room.getPrice().multiply(BigDecimal.valueOf(nights));
+            BigDecimal amount = room.getPrice()
+                    .multiply(BigDecimal.valueOf(nights))
+                    .multiply(BigDecimal.valueOf(roomCount));
             BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), amount, "hotel");
 
             HotelOrder order = new HotelOrder();
@@ -95,6 +98,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
             order.setRoomId(dto.getRoomId());
             order.setHotelName(hotel != null ? hotel.getName() : "");
             order.setRoomType(room.getRoomType());
+            order.setRoomCount(roomCount);
             order.setCheckInDate(checkIn);
             order.setCheckOutDate(checkOut);
             order.setNights((int) nights);
@@ -117,7 +121,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
             return orderNo;
         } catch (Exception e) {
             if (preDeductResult == StockPreDeductResult.DEDUCTED_IN_REDIS) {
-                hotelRoomStockService.rollbackPreDeduct(dto.getRoomId());
+                hotelRoomStockService.rollbackPreDeduct(dto.getRoomId(), roomCount);
             }
             throw e;
         }
@@ -172,7 +176,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
         }
 
         // 2. 归还房间库存
-        hotelRoomMapper.returnRoom(order.getRoomId());
+        hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());
         hotelRoomStockService.syncWithDatabase(order.getRoomId());
         notificationCenterService.createNotification(
                 userId,
@@ -207,5 +211,13 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
         if (!StringUtils.hasText(dto.getGuestPhone())) {
             throw new RuntimeException("联系电话不能为空");
         }
+    }
+
+    private int normalizeRoomCount(Integer roomCount) {
+        int count = roomCount == null ? 1 : roomCount;
+        if (count <= 0 || count > 10) {
+            throw new RuntimeException("预订房间数必须在1-10之间");
+        }
+        return count;
     }
 }

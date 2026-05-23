@@ -12,6 +12,40 @@ const routes = [
     component: () => import("../views/Home.vue"),
   },
   {
+    path: "/destinations",
+    name: "DestinationList",
+    component: () => import("../views/destination/DestinationList.vue"),
+  },
+  {
+    path: "/destination/:slug",
+    name: "DestinationDetail",
+    component: () => import("../views/destination/DestinationDetail.vue"),
+  },
+  {
+    path: "/about",
+    name: "About",
+    component: () => import("../views/info/InfoPage.vue"),
+    meta: { pageKey: "about" },
+  },
+  {
+    path: "/terms",
+    name: "Terms",
+    component: () => import("../views/info/InfoPage.vue"),
+    meta: { pageKey: "terms" },
+  },
+  {
+    path: "/privacy",
+    name: "Privacy",
+    component: () => import("../views/info/InfoPage.vue"),
+    meta: { pageKey: "privacy" },
+  },
+  {
+    path: "/help",
+    name: "Help",
+    component: () => import("../views/info/InfoPage.vue"),
+    meta: { pageKey: "help" },
+  },
+  {
     path: "/flight-search",
     name: "FlightSearch",
     component: () => import("../views/flight/FlightSearch.vue"),

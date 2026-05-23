@@ -31,10 +31,16 @@ public class AttractionServiceImpl extends ServiceImpl<AttractionMapper, Attract
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String buyTicket(Long userId, Long attractionId, Integer count,
+    public String buyTicket(Long userId, Long attractionId, Integer adultCount, Integer childCount,
             String guestName, String guestPhone) {
-        if (count == null || count <= 0) {
+        int adults = adultCount == null ? 0 : adultCount;
+        int children = childCount == null ? 0 : childCount;
+        int count = adults + children;
+        if (count <= 0 || count > 10) {
             throw new RuntimeException("购买数量不合法");
+        }
+        if (adults < 0 || children < 0) {
+            throw new RuntimeException("票数不能为负数");
         }
 
         // 查询景点信息
@@ -55,7 +61,9 @@ public class AttractionServiceImpl extends ServiceImpl<AttractionMapper, Attract
 
         System.out.println("====== [Attraction] 购票成功，订单号: " + orderNo
                 + "，景点: " + attraction.getName()
-                + "，数量: " + count + " ======");
+                + "，成人票: " + adults
+                + "，儿童票: " + children
+                + "，总数: " + count + " ======");
 
         return orderNo;
     }

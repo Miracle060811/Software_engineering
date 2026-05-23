@@ -58,8 +58,10 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
             throw new RuntimeException("航班不存在或已取消");
         }
 
-        // 2. 扣减航班库存 (乐观扣减, 利用 MySQL 行级锁和 where available_seats > 0)
-        int updated = flightMapper.deductSeat(dto.getFlightId());
+        int ticketCount = normalizeCount(dto.getTicketCount(), "购票数量");
+
+        // 2. 扣减航班库存 (乐观扣减, 利用 MySQL 行级锁和 where available_seats >= count)
+        int updated = flightMapper.deductSeat(dto.getFlightId(), ticketCount);
         if (updated == 0) {
             // 抛出异常会自动触发 spring 的事务回滚(@Transactional)
             throw new RuntimeException("库存不足或航班已取消，下单失败 (已超卖)");
@@ -73,7 +75,8 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         if (price == null) {
             throw new RuntimeException("该舱位暂不可售");
         }
-        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), price, "flight");
+        BigDecimal amount = price.multiply(BigDecimal.valueOf(ticketCount));
+        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), amount, "flight");
 
         // 4. 构建订单对象并落表生成
         TrafficOrder order = new TrafficOrder();
@@ -84,6 +87,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         order.setOrderType(0); // 0 代表航班机票
         order.setTicketId(dto.getFlightId());
         order.setSeatType(seatType);
+        order.setTicketCount(ticketCount);
         order.setPassengerName(passenger.getName());
         order.setPassengerIdCard(passenger.getIdCard());
         order.setAmount(payableAmount);
@@ -112,11 +116,12 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
 
         // 判断席位并进行并发防超卖扣减
         String seatType = normalizeTrainSeatType(dto.getSeatType());
+        int ticketCount = normalizeCount(dto.getTicketCount(), "购票数量");
         int updated;
         if ("FirstClass".equals(seatType)) {
-            updated = trainMapper.deductFirstClassSeat(dto.getTrainId());
+            updated = trainMapper.deductFirstClassSeat(dto.getTrainId(), ticketCount);
         } else {
-            updated = trainMapper.deductSecondClassSeat(dto.getTrainId());
+            updated = trainMapper.deductSecondClassSeat(dto.getTrainId(), ticketCount);
         }
 
         if (updated == 0) {
@@ -129,7 +134,8 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         if (price == null) {
             throw new RuntimeException("该席别暂不可售");
         }
-        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), price, "train");
+        BigDecimal amount = price.multiply(BigDecimal.valueOf(ticketCount));
+        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), amount, "train");
 
         TrafficOrder order = new TrafficOrder();
         String orderNo = "TR" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
@@ -138,6 +144,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         order.setOrderType(1); // 1 = 火车票
         order.setTicketId(dto.getTrainId());
         order.setSeatType(seatType);
+        order.setTicketCount(ticketCount);
         order.setPassengerName(passenger.getName());
         order.setPassengerIdCard(passenger.getIdCard());
         order.setAmount(payableAmount);
@@ -190,13 +197,14 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         }
 
         // 2. 归还被锁定的库存(余票 + 1)
+        int ticketCount = order.getTicketCount() == null ? 1 : order.getTicketCount();
         if (order.getOrderType() == 0) {
-            flightMapper.returnSeat(order.getTicketId());
+            flightMapper.returnSeat(order.getTicketId(), ticketCount);
         } else if (order.getOrderType() == 1) {
             if ("FirstClass".equalsIgnoreCase(order.getSeatType())) {
-                trainMapper.returnFirstClassSeat(order.getTicketId());
+                trainMapper.returnFirstClassSeat(order.getTicketId(), ticketCount);
             } else {
-                trainMapper.returnSecondClassSeat(order.getTicketId());
+                trainMapper.returnSecondClassSeat(order.getTicketId(), ticketCount);
             }
         }
 
@@ -281,5 +289,13 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
             return "SecondClass";
         }
         throw new RuntimeException("未知的席别");
+    }
+
+    private int normalizeCount(Integer count, String fieldName) {
+        int value = count == null ? 1 : count;
+        if (value <= 0 || value > 10) {
+            throw new RuntimeException(fieldName + "必须在1-10之间");
+        }
+        return value;
     }
 }

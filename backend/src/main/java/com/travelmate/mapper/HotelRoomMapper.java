@@ -16,14 +16,14 @@ public interface HotelRoomMapper extends BaseMapper<HotelRoom> {
      * @param roomId 房型ID
      * @return 影响行数, 0 表示房间不足
      */
-    @Update("UPDATE tm_hotel_room SET available_rooms = available_rooms - 1 WHERE id = #{roomId} AND status = 1 AND available_rooms > 0")
-    int deductRoom(@Param("roomId") Long roomId);
+    @Update("UPDATE tm_hotel_room SET available_rooms = available_rooms - #{count} WHERE id = #{roomId} AND status = 1 AND available_rooms >= #{count}")
+    int deductRoom(@Param("roomId") Long roomId, @Param("count") Integer count);
 
     /**
      * 归还房间库存 (用于取消订单)
      *
      * @param roomId 房型ID
      */
-    @Update("UPDATE tm_hotel_room SET available_rooms = available_rooms + 1 WHERE id = #{roomId} AND available_rooms < total_rooms")
-    int returnRoom(@Param("roomId") Long roomId);
+    @Update("UPDATE tm_hotel_room SET available_rooms = LEAST(available_rooms + #{count}, total_rooms) WHERE id = #{roomId}")
+    int returnRoom(@Param("roomId") Long roomId, @Param("count") Integer count);
 }

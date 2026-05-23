@@ -13,6 +13,7 @@
               "
               class="hotel-cover"
               :alt="hotel.name"
+              referrerpolicy="no-referrer"
             />
           </el-col>
           <el-col :span="14">
@@ -20,7 +21,7 @@
             <div class="hotel-star">
               <el-icon v-for="i in hotel.starRating" :key="i" class="star-icon"><StarFilled /></el-icon>
               <el-tag type="warning" style="margin-left: 12px; font-size: 16px">
-                {{ hotel.rating || "—" }} 分
+                {{ hotel.score || hotel.rating || "暂无" }} 分
               </el-tag>
             </div>
             <div class="hotel-meta"><el-icon><LocationFilled /></el-icon> {{ hotel.address }}</div>
@@ -138,6 +139,13 @@
         <el-form-item label="房型">
           <span>{{ selectedRoom?.roomType }}</span>
         </el-form-item>
+        <el-form-item label="房间数">
+          <el-input-number
+            v-model="bookForm.roomCount"
+            :min="1"
+            :max="selectedRoom?.availableRooms || 1"
+          />
+        </el-form-item>
         <el-form-item label="入住日期">
           <el-date-picker
             v-model="bookForm.checkIn"
@@ -204,6 +212,7 @@ import request from "@/utils/request";
 const route = useRoute();
 const router = useRouter();
 const hotelId = route.params.id;
+const HOTEL_REVIEW_TARGET_TYPE = 0;
 const hotel = ref(null);
 const rooms = ref([]);
 const reviews = ref([]);
@@ -229,6 +238,7 @@ const uploadHeaders = computed(() => ({
 const bookForm = ref({
   checkIn: "",
   checkOut: "",
+  roomCount: 1,
   guestName: "",
   guestPhone: "",
   userCouponId: null,
@@ -245,7 +255,7 @@ const calcTotalPrice = computed(() => {
     (new Date(bookForm.value.checkOut) - new Date(bookForm.value.checkIn)) /
       86400000,
   );
-  return days > 0 ? days * selectedRoom.value.price : 0;
+  return days > 0 ? days * selectedRoom.value.price * (bookForm.value.roomCount || 1) : 0;
 });
 
 const usableCoupons = computed(() =>
@@ -269,7 +279,8 @@ const fetchHotelDetail = async () => {
       request.get(`/api/hotel/${hotelId}`),
       request.get(`/api/hotel/${hotelId}/rooms`),
       request.get("/api/review/list", {
-        params: { targetId: hotelId, targetType: "hotel" },
+        params: { targetId: hotelId, targetType: HOTEL_REVIEW_TARGET_TYPE },
+        skipErrorMessage: true,
       }),
     ]);
     const detail = hotelData.status === "fulfilled" ? hotelData.value : null;
@@ -294,6 +305,7 @@ const openBookDialog = async (room) => {
   bookForm.value = {
     checkIn: "",
     checkOut: "",
+    roomCount: 1,
     guestName: "",
     guestPhone: "",
     userCouponId: null,
@@ -316,6 +328,7 @@ const confirmBook = async () => {
     await request.post("/api/hotel/order/create", {
       hotelId: hotel.value.id,
       roomId: selectedRoom.value.id,
+      roomCount: bookForm.value.roomCount,
       checkInDate: bookForm.value.checkIn,
       checkOutDate: bookForm.value.checkOut,
       guestName: bookForm.value.guestName,
@@ -402,7 +415,7 @@ const submitReview = async () => {
   try {
     const body = {
       targetId: hotelId,
-      targetType: "hotel",
+      targetType: HOTEL_REVIEW_TARGET_TYPE,
       rating: newReview.value.rating,
       content: newReview.value.content,
       tags: newReview.value.tags.join(","),
@@ -432,7 +445,8 @@ const reportReview = async (reviewId) => {
 const fetchReviews = async () => {
   try {
     const data = await request.get("/api/review/list", {
-      params: { targetId: hotelId, targetType: "hotel" },
+      params: { targetId: hotelId, targetType: HOTEL_REVIEW_TARGET_TYPE },
+      skipErrorMessage: true,
     });
     const revs = Array.isArray(data) ? data : [];
     for (const rev of revs) {
@@ -451,7 +465,6 @@ const fetchReviews = async () => {
 
 onMounted(() => {
   fetchHotelDetail();
-  fetchReviews();
 });
 </script>
 

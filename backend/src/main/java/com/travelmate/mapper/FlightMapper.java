@@ -16,14 +16,14 @@ public interface FlightMapper extends BaseMapper<Flight> {
      * @param id 航班ID
      * @return 影响的行数, 如果为0说明余票不足
      */
-    @Update("UPDATE tm_flight SET available_seats = available_seats - 1 WHERE id = #{id} AND status = 1 AND available_seats > 0")
-    int deductSeat(@Param("id") Long id);
+    @Update("UPDATE tm_flight SET available_seats = available_seats - #{count} WHERE id = #{id} AND status = 1 AND available_seats >= #{count}")
+    int deductSeat(@Param("id") Long id, @Param("count") Integer count);
 
     /**
      * 归还余票 (用于取消订单或退票)
      * 
      * @param id 航班ID
      */
-    @Update("UPDATE tm_flight SET available_seats = available_seats + 1 WHERE id = #{id} AND available_seats < total_seats")
-    int returnSeat(@Param("id") Long id);
+    @Update("UPDATE tm_flight SET available_seats = LEAST(available_seats + #{count}, total_seats) WHERE id = #{id}")
+    int returnSeat(@Param("id") Long id, @Param("count") Integer count);
 }
