@@ -87,18 +87,27 @@ mysql -u root -p -e "USE travelmate; SHOW TABLES LIKE 'tm_user'; SHOW TABLES LIK
 
 ```bat
 start.bat
+start.bat -DbPassword 你的MySQL密码
+start.bat -BackendOnly
+start.bat -FrontendOnly
+start.bat -SkipRedis
+start.bat -SkipFrontendInstall
+start.bat -DryRun
 ```
 
 常用参数：
 
 ```powershell
 .\start.ps1 -DbPassword 你的MySQL密码
+.\start.ps1 -DeepseekApiKey 你的DeepSeek密钥
 .\start.ps1 -BackendOnly
 .\start.ps1 -FrontendOnly
 .\start.ps1 -SkipRedis
 .\start.ps1 -SkipFrontendInstall
 .\start.ps1 -DryRun
 ```
+
+`start.bat` 是 `start.ps1` 的 CMD/双击入口，会自动寻找 PowerShell 7 或 Windows PowerShell，并把命令行参数原样传给 `start.ps1`。需要查看参数时可运行 `start.bat /?`。
 
 `start.ps1` 会先检查 `127.0.0.1:6379`。如果 Redis 已运行则直接复用；如果检测到 Windows Redis 服务或 `redis-server.exe`，会尝试自动启动。若本机未安装 Redis，会给出警告，后端仍会启动，但 Redis 限流/酒店房态缓存会降级。
 
@@ -109,6 +118,7 @@ start.bat
 已覆盖的社区交互：
 
 - 游记列表支持关键词搜索，推荐流按热度和时间衰减排序。
+- 游记发布后进入待审核，后端可通过 AI 审核任务自动判断通过/拒绝；失败时保留人工审核兜底。
 - 关注流需要登录；关注/取消关注后会同步刷新关注状态和粉丝数。
 - 社区页增加 `我的` 标签，展示草稿、待审核、已发布、已拒绝内容。
 - 个人主页支持查看关注/粉丝列表，并可跳转到用户主页。
@@ -176,12 +186,15 @@ npm run dev
 - 后端已具备：用户认证、航班/火车、交通订单、酒店/景点、AI 行程、AI 聊天、社区、管理后台等基础接口。
 - 前端已具备：[frontend/src/views/Home.vue](frontend/src/views/Home.vue)、[frontend/src/views/Login.vue](frontend/src/views/Login.vue)、[frontend/src/views/destination/DestinationList.vue](frontend/src/views/destination/DestinationList.vue)、[frontend/src/views/destination/DestinationDetail.vue](frontend/src/views/destination/DestinationDetail.vue)、[frontend/src/views/info/InfoPage.vue](frontend/src/views/info/InfoPage.vue)、[frontend/src/views/flight/FlightSearch.vue](frontend/src/views/flight/FlightSearch.vue)、[frontend/src/views/train/TrainSearch.vue](frontend/src/views/train/TrainSearch.vue)、[frontend/src/views/hotel/HotelSearch.vue](frontend/src/views/hotel/HotelSearch.vue)、[frontend/src/views/hotel/HotelDetail.vue](frontend/src/views/hotel/HotelDetail.vue)、[frontend/src/views/hotel/AttractionList.vue](frontend/src/views/hotel/AttractionList.vue)、[frontend/src/views/ai/AiPlan.vue](frontend/src/views/ai/AiPlan.vue)、[frontend/src/views/community/Community.vue](frontend/src/views/community/Community.vue)、[frontend/src/views/community/PostCreate.vue](frontend/src/views/community/PostCreate.vue)、[frontend/src/views/community/PostDetail.vue](frontend/src/views/community/PostDetail.vue)、[frontend/src/views/order/CouponCenter.vue](frontend/src/views/order/CouponCenter.vue)、[frontend/src/views/order/MyOrders.vue](frontend/src/views/order/MyOrders.vue)、[frontend/src/views/user/NotificationCenter.vue](frontend/src/views/user/NotificationCenter.vue)、[frontend/src/views/user/UserProfile.vue](frontend/src/views/user/UserProfile.vue)、[frontend/src/views/admin/AdminDashboard.vue](frontend/src/views/admin/AdminDashboard.vue) 等基础页面。
 - Windows 根目录已提供一键启动脚本：[start.ps1](start.ps1) 和 [start.bat](start.bat)。
+- 数据库种子已补充真实酒店/景点图片、热门城市资料、一日游/周边游、优惠券、订单、日志、评价等演示数据；景点封面避免使用随机占位图。
+- 订单链路已支持机票/火车票多张购买、酒店多间房预订，库存预扣减和超时取消会按实际数量回补。
 
 ## 当前待完善项
 
 - Redis 限流已覆盖大部分关键写接口，仍有少量非核心接口待补齐。
 - 管理后台中的 QPS、延迟和告警已基于本地 `sys_log` 做轻量统计，尚未接入真实 APM / 链路追踪系统。
 - AI 行程与订单的更深度联动、同行人共享行程等扩展能力待后续补充。
+- 外链图片依赖 Wikimedia Commons、酒店官网或 OTA 图库，若校园/本地网络拦截外链，建议后续改成本地静态资源或自建 CDN。
 - 更深层的并发压测与端到端自动化回归仍需继续完善。
 
 ---
@@ -206,28 +219,30 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 
 - 航班搜索（出发城市、到达城市、日期，多维度筛选）
 - 火车票搜索（出发站、到达站、日期、中转方案推荐）
-- 订单管理（下单、模拟支付、取消，乐观锁防超卖）
+- 订单管理（多张票下单、模拟支付、取消，乐观锁 + Redis 预扣减防超卖）
 - 常用旅客管理
 - 历史价格趋势（ECharts 折线图，近 7 天模拟数据）
 - 退改签规则展示（各舱位退改费用说明）
 - 行程单下载（文本格式订单回执）
-- 优惠券中心（可领取满减券/折扣券，我的优惠券）
+- 优惠券中心（可领取满减券/折扣券，按交通/酒店/通用分类筛选）
 
 ### 目的地住宿与本地生活（成员 B - 莫谨瑞）
 
 - 酒店多条件搜索（城市、星级、价格区间）
 - 酒店详情与房型展示
-- 酒店预订（Redis Lua 预减 + MySQL 乐观锁双重防超卖）
-- 景点搜索与门票购买
+- 酒店预订（支持多房间预订，Redis Lua 预减 + MySQL 乐观锁双重防超卖）
+- 景点搜索与门票购买（成人票/儿童票分项计数）
 - 一日游 / 周边游产品推荐
 - 评价系统（星级评分、图片上传、标签选择、商家回复、举报）
 - 酒店订单扫码核销（二维码出示）
+- 热门城市资料页（真实目的地介绍、代表景点、出行建议）
 
 ### AI 智能规划与 Agent 服务（成员 C - 陈一鸿）
 
 - AI 行程规划（调用 DeepSeek API，强制 JSON 结构化输出）
 - API 超时/失败时自动降级为模板方案
 - AI 客服多轮对话（Function Calling Tools: 天气/航班/酒店查询）
+- AI 游记审核（定时扫描待审核内容，输出通过/拒绝与原因）
 - 站内通知查询 / 已读 / 未读数接口
 - 航班延误预警模拟（定时任务随机推送通知）
 - 行程导出（文本格式，含每日路线和费用明细）
@@ -236,6 +251,7 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 
 - 用户注册/登录（BCrypt + JWT 认证）
 - 游记发布（图片上传、标签、可见范围、草稿箱）
+- 游记 AI 审核 + 人工审核兜底（待审核、已发布、已拒绝状态）
 - 双列瀑布流社区浏览（推荐 + 关注信息流）
 - 点赞、收藏、评论（二级评论树）
 - 关注/粉丝社交关系
@@ -247,7 +263,7 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 - RBAC 权限控制（后端 `/api/admin/**` 要求 `ROLE_ADMIN`，前端 `requiresAdmin` 二次拦截）
 - ECharts 可观测仪表盘（真实订单趋势、类型分布、热门目的地、用户增长、今日订单、本地请求量、接口延迟、报错日志告警）
 - 资源管理（航班 CRUD、火车 CRUD、酒店 CRUD、房型库存/价格/上下架干预）
-- 优惠券配置（满减券/折扣券新增、编辑、删除）
+- 优惠券配置（满减券/折扣券新增、编辑、删除，支持业务类型分类）
 - 内容审核（游记默认进入待审核、通过/拒绝原因记录、评价举报工单处理备注）
 - 用户管理（启用/禁用、用户画像侧边查看）
 - 全平台订单流水（按类型/状态筛选、分页查看、交通与酒店退款审批闭环）
@@ -287,6 +303,8 @@ Software_engineering/
 │       ├── views/
 │       │   ├── Home.vue                ← 首页（三合一搜索）
 │       │   ├── Login.vue               ← 登录/注册
+│       │   ├── destination/            ← 热门城市列表 + 城市详情
+│       │   ├── info/                   ← 关于/条款/隐私/帮助
 │       │   ├── flight/FlightSearch.vue ← 航班搜索 + 价格趋势
 │       │   ├── train/TrainSearch.vue   ← 火车票搜索 + 价格趋势
 │       │   ├── hotel/                  ← 酒店搜索/详情 + 景点 + 评价
@@ -297,7 +315,8 @@ Software_engineering/
 │       │   └── admin/AdminDashboard.vue ← ECharts 仪表盘 + 资源/审核/订单管理
 │       ├── components/                ← PageHeader, SkeletonBox, EmptyState, CountUp, PriceTrend
 │       ├── stores/user.js             ← Pinia 用户状态
-│       ├── router/index.js            ← 路由配置（18 路由）
+│       ├── data/                      ← destinations + infoPages 静态资料
+│       ├── router/index.js            ← 路由配置（23 路由）
 │       └── utils/request.js           ← Axios 封装（含 JWT 自动注入）
 └── docs/
     └── sql/init.sql                   ← 数据库初始化（含 Mock 数据）

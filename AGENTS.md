@@ -16,6 +16,9 @@ This file provides guidance to coding assistants when working with code in this 
 # Windows: 启动前后端（推荐）
 .\start.ps1
 
+# CMD/双击入口，参数会透传给 start.ps1
+.\start.bat
+
 # 首次初始化数据库
 .\setup.ps1 -InitDb
 
@@ -54,6 +57,22 @@ npm run dev        # 开发服务器，端口 3000
 npm run build      # 生产构建
 ```
 
+### 启动脚本参数
+
+`start.ps1` 和 `start.bat` 支持同一组参数，`start.bat` 只是 CMD/双击入口：
+
+```powershell
+.\start.ps1 -DbPassword 你的MySQL密码
+.\start.ps1 -DeepseekApiKey 你的DeepSeek密钥
+.\start.ps1 -BackendOnly
+.\start.ps1 -FrontendOnly
+.\start.ps1 -SkipRedis
+.\start.ps1 -SkipFrontendInstall
+.\start.ps1 -DryRun
+```
+
+`start.bat /?` 可查看帮助。改动启动逻辑时优先维护 `start.ps1`，再同步 `start.bat` 的帮助文本；不要在 `start.bat` 里复制一套独立启动逻辑。
+
 ### 数据库
 
 ```powershell
@@ -71,6 +90,11 @@ mysql --default-character-set=utf8mb4 -u root -p < docs/sql/init.sql
 
 不要使用 PowerShell 的 `Get-Content | mysql` 管道导入；这会把中文种子数据写成 `?`。
 `setup.ps1` 会自动查找 `mysql.exe` 并直接执行 `SOURCE` 导入，不依赖 `cmd.exe`。
+景点、酒店、热门城市等种子数据已尽量使用真实图片 URL；不要再引入 `picsum.photos` 这类随机占位图。若外链图片在页面无法渲染，需要同步更新：
+
+1. `docs/sql/init.sql` 中对应 `cover_img` 或媒体资源 URL
+2. 已初始化本地库中的对应记录（否则旧库不会自动变化）
+3. 前端兜底映射（如 `AttractionList.vue` 中按景点名覆盖的图片映射）
 
 ## 架构概览
 
@@ -148,10 +172,12 @@ AOP 环绕通知自动拦截 `com.travelmate.controller..*.*` 所有方法，记
 ### 防超卖机制
 
 订单创建使用**乐观锁**（version 字段 + Redis 预减库存），适用于航班、火车票、酒店房型。
+交通订单支持 `ticketCount`，酒店订单支持 `roomCount`；库存预扣减、订单金额、超时取消回补都必须按实际数量处理，不能再默认只扣 1。
 
 ### AI 降级
 
 AI 行程规划和客服调用 DeepSeek API（OpenAI 兼容协议，默认模型为 `deepseek-v4-flash`），API 超时或失败时自动降级为预设模板/兜底回复，不会报错。
+社区游记支持 AI 审核：`PostAuditScheduler` 定时扫描待审核内容，`AiServiceImpl` 输出通过/拒绝与原因。AI 失败时应保留人工审核或兜底路径，不能阻塞发帖主流程。
 
 ### 敏感词过滤
 
@@ -182,6 +208,16 @@ Vue Router 通过 `meta.requiresAuth` 和 `meta.requiresAdmin` 控制访问：
 
 Vite dev server 将 `/api` 和 `/user` 代理到 `http://localhost:8080`，开发时无需跨域配置。
 
+### 热门城市与静态信息页
+
+- `frontend/src/data/destinations.js` — 热门城市资料源
+- `frontend/src/views/destination/DestinationList.vue` — 热门城市列表
+- `frontend/src/views/destination/DestinationDetail.vue` — 城市详情页
+- `frontend/src/data/infoPages.js` — 关于/条款/隐私/帮助文案
+- `frontend/src/views/info/InfoPage.vue` — 静态信息页渲染
+
+修改首页、导航或页脚入口时，要同步检查这些路由与 `App.vue` 面包屑配置。
+
 ### User 实体映射
 
 `User` 实体的 `@TableName` 注解值为 `"tm_user"`（非默认表名 `"user"`），这是之前踩过的坑。
@@ -204,9 +240,15 @@ Vite dev server 将 `/api` 和 `/user` 代理到 `http://localhost:8080`，开�
 - `ReviewReport` / `tm_review_report` — 评价举报表
 - `TourProduct` / `tm_tour_product` — 一日游/周边游产品表
 - `Review` 新增 `tags` 字段（评价标签，逗号分隔）
+- `TrafficOrder` 新增 `ticket_count` 字段（交通票数量）
+- `HotelOrder` 新增 `room_count` 字段（酒店房间数）
+- `Coupon` 新增业务类型/分类字段，用于交通、酒店、通用优惠券筛选
 
 ### 新增前端页面/组件
 
 - `views/order/CouponCenter.vue` — 优惠券中心（可领取 + 我的优惠券）
 - `views/admin/AdminDashboard.vue` — 管理后台（仪表盘、房态库存、优惠券、订单流水、举报工单、敏感词、日志、用户管理）
 - `components/PriceTrend.vue` — ECharts 价格趋势图弹窗组件
+- `views/destination/DestinationList.vue` — 热门城市列表
+- `views/destination/DestinationDetail.vue` — 热门城市详情
+- `views/info/InfoPage.vue` — 关于、条款、隐私、帮助等静态信息页
