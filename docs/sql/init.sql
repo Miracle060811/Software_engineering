@@ -732,6 +732,7 @@ CREATE TABLE IF NOT EXISTS `tm_coupon` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NOT NULL COMMENT '优惠券名称',
   `description` VARCHAR(200) DEFAULT NULL COMMENT '描述',
+  `category` VARCHAR(20) DEFAULT 'all' COMMENT '使用类别：all=通用, flight=机票, train=火车票, hotel=酒店',
   `discount_type` TINYINT(1) DEFAULT '0' COMMENT '0=满减, 1=折扣',
   `discount_value` DECIMAL(10,2) DEFAULT '0.00' COMMENT '减免金额或折扣比例',
   `min_amount` DECIMAL(10,2) DEFAULT '0.00' COMMENT '最低消费金额',
@@ -742,12 +743,15 @@ CREATE TABLE IF NOT EXISTS `tm_coupon` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券表';
 
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_coupon` ADD COLUMN `category` VARCHAR(20) DEFAULT ''all'' COMMENT ''使用类别：all=通用, flight=机票, train=火车票, hotel=酒店'' AFTER `description`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_coupon' AND COLUMN_NAME = 'category');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- 示例优惠券数据
-INSERT IGNORE INTO `tm_coupon` (`name`, `description`, `discount_type`, `discount_value`, `min_amount`, `expire_date`, `stock`, `status`) VALUES
-('新用户专享', '新用户首单立减50元', 0, 50.00, 200.00, '2026-12-31 23:59:59', 200, 0),
-('机票满减券', '机票订单满500减30', 0, 30.00, 500.00, '2026-12-31 23:59:59', 150, 0),
-('酒店9折券', '酒店订单享9折优惠', 1, 0.90, 0.00, '2026-12-31 23:59:59', 100, 0),
-('火车票85折', '火车票订单享85折', 1, 0.85, 100.00, '2026-12-31 23:59:59', 80, 0);
+INSERT IGNORE INTO `tm_coupon` (`name`, `description`, `category`, `discount_type`, `discount_value`, `min_amount`, `expire_date`, `stock`, `status`) VALUES
+('新用户专享', '新用户首单立减50元', 'all', 0, 50.00, 200.00, '2026-12-31 23:59:59', 200, 0),
+('机票满减券', '机票订单满500减30', 'flight', 0, 30.00, 500.00, '2026-12-31 23:59:59', 150, 0),
+('酒店9折券', '酒店订单享9折优惠', 'hotel', 1, 0.90, 0.00, '2026-12-31 23:59:59', 100, 0),
+('火车票85折', '火车票订单享85折', 'train', 1, 0.85, 100.00, '2026-12-31 23:59:59', 80, 0);
 
 -- ============================================================
 -- 用户已领取优惠券表
@@ -1260,22 +1264,3 @@ INSERT IGNORE INTO `tm_like` (`user_id`, `target_id`, `target_type`) VALUES
 (2, 13, 0), (4, 13, 0),
 (3, 14, 0), (4, 14, 0),
 (3, 15, 0), (4, 15, 0);
-
-
--- ============================================================
--- 增量迁移：优惠券适用类型 + 订单优惠快照字段（可重复执行）
--- ============================================================
-SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE 	m_coupon ADD COLUMN pplicable_type TINYINT(1) DEFAULT ''0'' COMMENT ''适用类型: 0=全场通用, 1=机票, 2=火车票, 3=酒店'' AFTER status', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_coupon' AND COLUMN_NAME = 'applicable_type');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
-SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE 	m_traffic_order ADD COLUMN original_amount DECIMAL(10,2) DEFAULT NULL COMMENT ''优惠前原始金额'' AFTER mount', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_traffic_order' AND COLUMN_NAME = 'original_amount');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
-SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE 	m_traffic_order ADD COLUMN coupon_info VARCHAR(100) DEFAULT NULL COMMENT ''使用的优惠券名称'' AFTER original_amount', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_traffic_order' AND COLUMN_NAME = 'coupon_info');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
-SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE 	m_hotel_order ADD COLUMN original_amount DECIMAL(10,2) DEFAULT NULL COMMENT ''优惠前原始金额'' AFTER mount', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_hotel_order' AND COLUMN_NAME = 'original_amount');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
-SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE 	m_hotel_order ADD COLUMN coupon_info VARCHAR(100) DEFAULT NULL COMMENT ''使用的优惠券名称'' AFTER original_amount', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_hotel_order' AND COLUMN_NAME = 'coupon_info');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

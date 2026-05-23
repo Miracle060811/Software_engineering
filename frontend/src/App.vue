@@ -13,16 +13,43 @@
 
         <!-- 桌面端导航链接 -->
         <nav class="nav-links desktop-only">
-          <el-button
-            v-for="link in navLinks"
-            :key="link.path"
-            :type="isNavActive(link) ? 'primary' : ''"
-            :text="!isNavActive(link)"
-            class="nav-link-btn"
-            @click="$router.push(link.path)"
-          >
-            {{ link.label }}
-          </el-button>
+          <template v-for="link in navLinks" :key="link.path || link.label">
+            <el-dropdown
+              v-if="link.children"
+              trigger="click"
+              class="nav-dropdown"
+              @command="handleNavCommand"
+            >
+              <el-button
+                :type="isNavActive(link) ? 'primary' : ''"
+                :text="!isNavActive(link)"
+                class="nav-link-btn"
+              >
+                {{ link.label }}
+                <el-icon class="nav-link-arrow"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    v-for="child in link.children"
+                    :key="child.path"
+                    :command="child.path"
+                  >
+                    {{ child.label }}
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+            <el-button
+              v-else
+              :type="isNavActive(link) ? 'primary' : ''"
+              :text="!isNavActive(link)"
+              class="nav-link-btn"
+              @click="$router.push(link.path)"
+            >
+              {{ link.label }}
+            </el-button>
+          </template>
 
           <!-- 全局搜索按钮 -->
           <el-button
@@ -138,7 +165,7 @@
       <div class="mobile-menu">
         <div
           class="mobile-menu-item"
-          v-for="link in navLinks"
+          v-for="link in mobileNavLinks"
           :key="link.path"
           :class="{ active: isNavActive(link) }"
           @click="mobileNav(link.path)"
@@ -349,7 +376,7 @@
             <a @click="footerNav('/flight-search')">机票预订</a>
             <a @click="footerNav('/train-search')">火车票预订</a>
             <a @click="footerNav('/hotel-search')">酒店预订</a>
-            <a @click="footerNav('/attractions')">景点门票</a>
+            <a @click="footerNav('/attractions')">热门景点</a>
           </div>
           <div class="footer-col">
             <h4>发现更多</h4>
@@ -522,13 +549,28 @@ const gsHotel = ref({ city: "" });
 
 const navLinks = [
   { path: "/", label: "首页" },
-  { path: "/flight-search", label: "机票" },
-  { path: "/train-search", label: "火车票" },
-  { path: "/hotel-search", label: "酒店" },
+  {
+    label: "交通",
+    children: [
+      { path: "/flight-search", label: "机票" },
+      { path: "/train-search", label: "火车票" },
+    ],
+  },
+  {
+    label: "出游",
+    children: [
+      { path: "/hotel-search", label: "酒店" },
+      { path: "/attractions", label: "热门景点" },
+    ],
+  },
   { path: "/community", label: "社区", activePaths: ["/community", "/post"] },
   { path: "/ai-plan", label: "AI规划" },
   { path: "/coupons", label: "优惠券" },
 ];
+
+const mobileNavLinks = computed(() =>
+  navLinks.flatMap((link) => link.children || [link]),
+);
 
 const isAuthPage = computed(() => route.path === "/login");
 
@@ -543,7 +585,7 @@ const breadcrumbRouteMap = {
     { label: "酒店搜索", to: "/hotel-search" },
     { label: "酒店详情" },
   ],
-  AttractionList: [{ label: "首页", to: "/" }, { label: "景点列表" }],
+  AttractionList: [{ label: "首页", to: "/" }, { label: "热门景点" }],
   AiPlan: [{ label: "首页", to: "/" }, { label: "AI 行程规划" }],
   Community: [{ label: "首页", to: "/" }, { label: "旅行社区" }],
   PostCreate: [
@@ -557,6 +599,7 @@ const breadcrumbRouteMap = {
     { label: "游记详情" },
   ],
   MyOrders: [{ label: "首页", to: "/" }, { label: "我的订单" }],
+  CouponCenter: [{ label: "首页", to: "/" }, { label: "优惠券中心" }],
   NotificationCenter: [{ label: "首页", to: "/" }, { label: "通知中心" }],
   UserProfile: [{ label: "首页", to: "/" }, { label: "用户主页" }],
   AdminDashboard: [{ label: "首页", to: "/" }, { label: "管理后台" }],
@@ -607,7 +650,12 @@ const mobileNav = (path) => {
   showMobileMenu.value = false;
 };
 
+const handleNavCommand = (path) => {
+  if (path) router.push(path);
+};
+
 const isNavActive = (link) => {
+  if (link.children) return link.children.some((child) => isNavActive(child));
   if (link.path === "/") return route.path === "/";
   if (link.activePaths) {
     return link.activePaths.some((path) => route.path.startsWith(path));
@@ -759,6 +807,15 @@ watch(
 .nav-link-btn {
   min-width: 64px;
   font-weight: 700;
+}
+
+.nav-dropdown {
+  display: inline-flex;
+}
+
+.nav-link-arrow {
+  margin-left: 4px;
+  font-size: 12px;
 }
 
 .nav-badge {

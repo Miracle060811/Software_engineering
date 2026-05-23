@@ -1,12 +1,5 @@
 <template>
   <div class="page-header">
-    <!-- 面包屑 -->
-    <el-breadcrumb v-if="breadcrumbs.length" class="page-breadcrumb" separator="/">
-      <el-breadcrumb-item v-for="(crumb, idx) in breadcrumbs" :key="idx" :to="crumb.to">
-        {{ crumb.label }}
-      </el-breadcrumb-item>
-    </el-breadcrumb>
-
     <div class="page-header-main">
       <div class="page-header-left">
         <h1 class="page-title">
@@ -42,22 +35,6 @@ defineProps({
 .page-header {
   margin-bottom: 28px;
   animation: fadeInUp 0.45s ease;
-}
-
-.page-breadcrumb {
-  margin-bottom: 12px;
-}
-
-.page-breadcrumb :deep(.el-breadcrumb__inner) {
-  color: #A0A0B8;
-  transition: color 0.2s;
-}
-.page-breadcrumb :deep(.el-breadcrumb__inner:hover) {
-  color: var(--el-color-primary);
-}
-.page-breadcrumb :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
-  color: var(--el-text-color-primary);
-  font-weight: 600;
 }
 
 .page-header-main {

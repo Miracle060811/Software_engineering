@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.travelmate.dto.AiChatDTO;
 import com.travelmate.dto.AiPlanCreateDTO;
+import com.travelmate.dto.PostAuditResult;
 import com.travelmate.entity.*;
 import com.travelmate.mapper.AiChatMapper;
 import com.travelmate.mapper.AiPlanMapper;
+import com.travelmate.mapper.SysSensitiveWordMapper;
 import com.travelmate.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +28,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Comparator;
 
 @Service
 public class AiServiceImpl implements AiService {
@@ -60,6 +63,9 @@ public class AiServiceImpl implements AiService {
     @Autowired
     private NotificationCenterService notificationCenterService;
 
+    @Autowired
+    private SysSensitiveWordMapper sensitiveWordMapper;
+
     @Autowired(required = false)
     private FlightService flightService;
 
@@ -92,6 +98,14 @@ public class AiServiceImpl implements AiService {
             "3. 费用估算要合理，参考中国旅游实际消费水平\n" +
             "4. 行程要符合逻辑，考虑景点间距离和交通时间\n" +
             "5. totalEstimatedCost 为所有活动费用总和（不含酒店）";
+
+    private static final String POST_AUDIT_SYSTEM_PROMPT = "你是 TravelMate 社区游记内容审核 AI。请只返回严格 JSON，不要输出 markdown。" +
+            "审核目标：判断用户发布的旅行笔记是否可直接发布。" +
+            "审核优先级：1) 命中 level=3 严重敏感词时必须 reject；" +
+            "2) 命中 level=2 中度敏感词时从严审核，除非上下文明确无害；" +
+            "3) level=1 轻度敏感词作为风险提示；" +
+            "4) 再判断违法违规、辱骂仇恨、色情低俗、广告引流、诈骗、隐私泄露、明显非旅行内容。" +
+            "返回格式：{\"decision\":\"approve|reject\",\"reason\":\"20字以内中文原因\"}。";
 
     // ======================== AI 行程生成 ========================
 
@@ -320,6 +334,132 @@ public class AiServiceImpl implements AiService {
             log.warn("AI 对话失败: {}", e.getMessage());
         }
         return "抱歉，AI助手暂时不可用，请稍后再试。您也可以尝试在社区中搜索相关旅行攻略。";
+    }
+
+    // ======================== 游记自动审核 ========================
+
+    @Override
+    public PostAuditResult auditPost(String title, String content, String tags, String destination) {
+        List<SysSensitiveWord> matchedWords = findMatchedSensitiveWords(title, content, tags, destination);
+
+        checkApiKey();
+        if (!isApiKeyMissing()) {
+            try {
+                String response = doHttpPost(baseUrl + "/v1/chat/completions",
+                        buildPostAuditRequestBody(title, content, tags, destination, matchedWords));
+                String auditJson = extractContent(response);
+                PostAuditResult result = parsePostAuditResult(auditJson);
+                if (result != null) {
+                    return result;
+                }
+                log.warn("AI 游记审核响应解析失败，使用本地等级规则降级");
+            } catch (Exception e) {
+                log.warn("AI 游记审核失败: {}，使用本地等级规则降级", e.getMessage());
+            }
+        }
+
+        return fallbackPostAudit(matchedWords);
+    }
+
+    private boolean isApiKeyMissing() {
+        return apiKey == null || apiKey.isBlank() || "sk-demo-placeholder".equals(apiKey);
+    }
+
+    private List<SysSensitiveWord> findMatchedSensitiveWords(String... values) {
+        StringBuilder text = new StringBuilder();
+        for (String value : values) {
+            if (value != null) {
+                text.append(value).append('\n');
+            }
+        }
+        String allText = text.toString();
+        if (allText.isBlank()) {
+            return List.of();
+        }
+        return sensitiveWordMapper.selectList(null).stream()
+                .filter(word -> word.getWord() != null && !word.getWord().isBlank())
+                .filter(word -> allText.contains(word.getWord()))
+                .sorted(Comparator.comparing((SysSensitiveWord word) -> word.getLevel() == null ? 1 : word.getLevel())
+                        .reversed())
+                .toList();
+    }
+
+    private String buildPostAuditRequestBody(String title, String content, String tags, String destination,
+            List<SysSensitiveWord> matchedWords) {
+        String userPrompt = "请审核以下旅行笔记：\n" +
+                "标题：" + safeAuditText(title, 200) + "\n" +
+                "目的地：" + safeAuditText(destination, 100) + "\n" +
+                "标签：" + safeAuditText(tags, 300) + "\n" +
+                "正文：" + safeAuditText(content, 4000) + "\n" +
+                "命中的敏感词及优先级：" + buildMatchedWordsJson(matchedWords);
+        String messagesJson = "[{\"role\":\"system\",\"content\":\"" + escapeJson(POST_AUDIT_SYSTEM_PROMPT) + "\"}," +
+                "{\"role\":\"user\",\"content\":\"" + escapeJson(userPrompt) + "\"}]";
+        return "{\"model\":\"" + escapeJson(resolveModel(chatModel)) + "\",\"messages\":" + messagesJson +
+                buildThinkingConfigJson() +
+                ",\"response_format\":{\"type\":\"json_object\"}}";
+    }
+
+    private String safeAuditText(String text, int maxLength) {
+        if (text == null) {
+            return "";
+        }
+        String normalized = text.trim();
+        if (normalized.length() <= maxLength) {
+            return normalized;
+        }
+        return normalized.substring(0, maxLength) + "...";
+    }
+
+    private String buildMatchedWordsJson(List<SysSensitiveWord> matchedWords) {
+        if (matchedWords.isEmpty()) {
+            return "[]";
+        }
+        StringBuilder json = new StringBuilder("[");
+        for (int i = 0; i < matchedWords.size(); i++) {
+            SysSensitiveWord word = matchedWords.get(i);
+            if (i > 0) {
+                json.append(',');
+            }
+            json.append("{\"word\":\"").append(escapeJson(word.getWord())).append("\",\"level\":")
+                    .append(word.getLevel() == null ? 1 : word.getLevel()).append('}');
+        }
+        json.append(']');
+        return json.toString();
+    }
+
+    private PostAuditResult parsePostAuditResult(String auditJson) {
+        if (auditJson == null || auditJson.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(auditJson);
+            String decision = root.path("decision").asText("");
+            String reason = root.path("reason").asText("AI自动审核");
+            if ("approve".equalsIgnoreCase(decision)) {
+                return new PostAuditResult(true, null);
+            }
+            if ("reject".equalsIgnoreCase(decision)) {
+                return new PostAuditResult(false, safeAuditText(reason, 300));
+            }
+        } catch (Exception e) {
+            log.warn("解析 AI 游记审核 JSON 失败: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    private PostAuditResult fallbackPostAudit(List<SysSensitiveWord> matchedWords) {
+        if (matchedWords.isEmpty()) {
+            return new PostAuditResult(true, null);
+        }
+        int maxLevel = matchedWords.stream()
+                .map(SysSensitiveWord::getLevel)
+                .filter(level -> level != null)
+                .max(Integer::compareTo)
+                .orElse(1);
+        if (maxLevel >= 2) {
+            return new PostAuditResult(false, "命中中高风险敏感词");
+        }
+        return new PostAuditResult(true, null);
     }
 
     /**

@@ -84,7 +84,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
                 throw new RuntimeException("房型价格缺失，暂不可预订");
             }
             BigDecimal amount = room.getPrice().multiply(BigDecimal.valueOf(nights));
-            BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), amount);
+            BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), amount, "hotel");
 
             HotelOrder order = new HotelOrder();
             String orderNo = "HT" + System.currentTimeMillis()

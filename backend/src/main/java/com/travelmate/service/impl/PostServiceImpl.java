@@ -9,7 +9,6 @@ import com.travelmate.entity.Post;
 import com.travelmate.mapper.FollowMapper;
 import com.travelmate.mapper.PostMapper;
 import com.travelmate.service.PostService;
-import com.travelmate.service.SensitiveWordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,9 +26,6 @@ public class PostServiceImpl implements PostService {
 
     @Autowired
     private UserMapper userMapper;
-
-    @Autowired
-    private SensitiveWordService sensitiveWordService;
 
     @Override
     public List<Map<String, Object>> listPosts(int page, int size, String keyword) {
@@ -88,17 +84,20 @@ public class PostServiceImpl implements PostService {
         boolean draft = isDraft(body);
         String title = normalizePostText(body.get("title"), draft, "未命名草稿", "标题不能为空", 100, "标题不能超过100个字符");
         String content = normalizePostText(body.get("content"), draft, "", "内容不能为空", 10000, "内容不能超过10000个字符");
-        checkSensitiveWords(title, content);
+        String images = limitString(body.get("images"), 2000, "图片地址过长");
+        String destination = limitString(body.get("destination"), 100, "目的地不能超过100个字符");
+        String tags = limitString(body.get("tags"), 500, "标签不能超过500个字符");
 
         Post post = new Post();
         post.setUserId(userId);
         post.setTitle(title);
         post.setContent(content);
-        post.setImages(limitString(body.get("images"), 2000, "图片地址过长"));
-        post.setDestination(limitString(body.get("destination"), 100, "目的地不能超过100个字符"));
-        post.setTags(limitString(body.get("tags"), 500, "标签不能超过500个字符"));
-        // 普通发布默认进入后台审核；草稿仍保留为草稿。
+        post.setImages(images);
+        post.setDestination(destination);
+        post.setTags(tags);
+        // 非草稿进入 AI 审核队列，由定时任务按限流窗口处理。
         post.setStatus(draft ? 3 : 0);
+        post.setRejectReason(null);
         // 可见范围: 0=公开, 1=仅关注者, 2=私密 (默认公开)
         Integer visibility = body.get("visibility") != null ? Integer.valueOf(body.get("visibility").toString()) : 0;
         post.setVisibility(visibility);
@@ -127,13 +126,15 @@ public class PostServiceImpl implements PostService {
         boolean draft = isDraft(body);
         String title = normalizePostText(body.get("title"), draft, "未命名草稿", "标题不能为空", 100, "标题不能超过100个字符");
         String content = normalizePostText(body.get("content"), draft, "", "内容不能为空", 10000, "内容不能超过10000个字符");
-        checkSensitiveWords(title, content);
+        String images = limitString(body.get("images"), 2000, "图片地址过长");
+        String destination = limitString(body.get("destination"), 100, "目的地不能超过100个字符");
+        String tags = limitString(body.get("tags"), 500, "标签不能超过500个字符");
 
         post.setTitle(title);
         post.setContent(content);
-        post.setImages(limitString(body.get("images"), 2000, "图片地址过长"));
-        post.setDestination(limitString(body.get("destination"), 100, "目的地不能超过100个字符"));
-        post.setTags(limitString(body.get("tags"), 500, "标签不能超过500个字符"));
+        post.setImages(images);
+        post.setDestination(destination);
+        post.setTags(tags);
         post.setStatus(draft ? 3 : 0);
         Integer visibility = body.get("visibility") != null ? Integer.valueOf(body.get("visibility").toString()) : 0;
         post.setVisibility(visibility);
@@ -161,7 +162,9 @@ public class PostServiceImpl implements PostService {
         LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Post::getUserId, userId)
                 .orderByDesc(Post::getCreateTime);
-        return postMapper.selectList(wrapper);
+        List<Post> posts = postMapper.selectList(wrapper);
+        posts.forEach(this::fillAuthor);
+        return posts;
     }
 
     @Override
@@ -214,12 +217,4 @@ public class PostServiceImpl implements PostService {
         return text;
     }
 
-    private void checkSensitiveWords(String title, String content) {
-        if (sensitiveWordService.containsSensitiveWord(title)) {
-            throw new RuntimeException("标题包含敏感词，请修改后发布");
-        }
-        if (sensitiveWordService.containsSensitiveWord(content)) {
-            throw new RuntimeException("内容包含敏感词，请修改后发布");
-        }
-    }
 }

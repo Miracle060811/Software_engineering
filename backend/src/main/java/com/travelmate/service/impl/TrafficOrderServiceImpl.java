@@ -73,7 +73,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         if (price == null) {
             throw new RuntimeException("该舱位暂不可售");
         }
-        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), price);
+        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), price, "flight");
 
         // 4. 构建订单对象并落表生成
         TrafficOrder order = new TrafficOrder();
@@ -129,7 +129,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         if (price == null) {
             throw new RuntimeException("该席别暂不可售");
         }
-        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), price);
+        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), price, "train");
 
         TrafficOrder order = new TrafficOrder();
         String orderNo = "TR" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 4).toUpperCase();

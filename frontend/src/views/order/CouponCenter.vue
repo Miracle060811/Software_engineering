@@ -33,6 +33,7 @@
               <div class="coupon-name">{{ c.name }}</div>
               <div class="coupon-desc">{{ c.description }}</div>
               <div class="coupon-meta">
+                <span>{{ couponCategoryLabel(c.category) }}</span>
                 <span v-if="c.minAmount">满¥{{ c.minAmount }}可用</span>
                 <span>剩余 {{ c.stock }} 张</span>
               </div>
@@ -72,6 +73,7 @@
               <div class="coupon-name">{{ c.couponName }}</div>
               <div class="coupon-desc">{{ c.description }}</div>
               <div class="coupon-meta">
+                <span>{{ couponCategoryLabel(c.category) }}</span>
                 <span v-if="c.minAmount">满¥{{ c.minAmount }}可用</span>
               </div>
               <div class="coupon-expire">有效期至 {{ formatDate(c.expireDate) }}</div>
@@ -166,11 +168,25 @@ const normalizeDecimal = (value) => {
   return Number(value).toString();
 };
 
+const normalizeCouponCategory = (category) => {
+  const value = String(category || "all").toLowerCase();
+  return ["all", "flight", "train", "hotel"].includes(value) ? value : "all";
+};
+
+const couponCategoryLabel = (category) =>
+  ({
+    all: "全部通用",
+    flight: "机票",
+    train: "火车票",
+    hotel: "酒店",
+  }[normalizeCouponCategory(category)]);
+
 const couponRuleKey = (coupon) => {
   if (!coupon) return "";
   return [
     coupon.name || coupon.couponName || "",
     coupon.description || "",
+    normalizeCouponCategory(coupon.category),
     coupon.discountType ?? "",
     normalizeDecimal(coupon.discountValue),
     normalizeDecimal(coupon.minAmount),

@@ -21,5 +21,5 @@ public interface CouponService extends IService<Coupon> {
     List<Map<String, Object>> listMyCoupons(Long userId);
 
     /** 使用用户优惠券并返回优惠后的金额 */
-    BigDecimal useCoupon(Long userId, Long userCouponId, BigDecimal originalAmount);
+    BigDecimal useCoupon(Long userId, Long userCouponId, BigDecimal originalAmount, String orderCategory);
 }

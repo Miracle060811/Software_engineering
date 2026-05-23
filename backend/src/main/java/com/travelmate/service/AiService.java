@@ -2,6 +2,7 @@ package com.travelmate.service;
 
 import com.travelmate.dto.AiChatDTO;
 import com.travelmate.dto.AiPlanCreateDTO;
+import com.travelmate.dto.PostAuditResult;
 import com.travelmate.entity.AiChat;
 import com.travelmate.entity.AiPlan;
 import com.travelmate.entity.Notification;
@@ -17,6 +18,8 @@ public interface AiService {
     AiPlan getPlanById(Long id, Long userId);
 
     AiChat chat(AiChatDTO dto, Long userId);
+
+    PostAuditResult auditPost(String title, String content, String tags, String destination);
 
     List<Notification> listNotifications(Long userId);
 

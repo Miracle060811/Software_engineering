@@ -33,6 +33,9 @@
             <el-tab-pane name="hotel">
               <template #label><el-icon style="margin-right:4px"><House /></el-icon>酒店</template>
             </el-tab-pane>
+            <el-tab-pane name="attraction">
+              <template #label><el-icon style="margin-right:4px"><Aim /></el-icon>热门景点</template>
+            </el-tab-pane>
           </el-tabs>
 
           <div class="search-row" v-if="searchTab === 'flight'">
@@ -150,6 +153,27 @@
             >
               <el-icon><Search /></el-icon>
               <span>搜索酒店</span>
+            </el-button>
+          </div>
+
+          <div class="search-row" v-if="searchTab === 'attraction'">
+            <div class="search-field">
+              <el-input
+                v-model="attractionForm.city"
+                placeholder="目的城市"
+                size="large"
+                :prefix-icon="LocationFilled"
+                class="search-input"
+              />
+            </div>
+            <el-button
+              type="primary"
+              size="large"
+              class="search-btn"
+              @click="searchAttraction"
+            >
+              <el-icon><Search /></el-icon>
+              <span>搜索景点</span>
             </el-button>
           </div>
 
@@ -344,6 +368,7 @@ const searchTab = ref("flight");
 const flightForm = ref({ depCity: "", arrCity: "", date: "" });
 const trainForm = ref({ depStation: "", arrStation: "", date: "" });
 const hotelForm = ref({ city: "", dateRange: [] });
+const attractionForm = ref({ city: "" });
 
 const hotSearches = ["北京", "上海", "三亚", "成都", "杭州", "西安"];
 
@@ -455,6 +480,13 @@ const searchHotel = () => {
   });
 };
 
+const searchAttraction = () => {
+  router.push({
+    path: "/attractions",
+    query: { city: attractionForm.value.city },
+  });
+};
+
 const goDestination = (dest) => {
   router.push({ path: "/hotel-search", query: { city: dest.name } });
 };
@@ -466,8 +498,10 @@ const quickSearch = (hint) => {
   } else if (searchTab.value === "train") {
     trainForm.value.depStation = "上海";
     trainForm.value.arrStation = hint;
-  } else {
+  } else if (searchTab.value === "hotel") {
     hotelForm.value.city = hint;
+  } else {
+    attractionForm.value.city = hint;
   }
   router.push({
     path:
@@ -475,7 +509,9 @@ const quickSearch = (hint) => {
         ? "/flight-search"
         : searchTab.value === "train"
           ? "/train-search"
-          : "/hotel-search",
+          : searchTab.value === "hotel"
+            ? "/hotel-search"
+            : "/attractions",
     query:
       searchTab.value === "flight"
         ? { depCity: "上海", arrCity: hint }

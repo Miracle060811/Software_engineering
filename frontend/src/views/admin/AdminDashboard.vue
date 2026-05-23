@@ -321,6 +321,11 @@
           </div>
           <el-table :data="coupons" v-loading="couponLoading" stripe>
             <el-table-column prop="name" label="名称" min-width="160" />
+            <el-table-column label="适用类别" width="100">
+              <template #default="scope">{{
+                couponCategoryLabel(scope.row.category)
+              }}</template>
+            </el-table-column>
             <el-table-column label="类型" width="90">
               <template #default="scope">{{
                 scope.row.discountType === 0 ? "满减" : "折扣"
@@ -1019,6 +1024,17 @@
                   :value="1" /></el-select></el-form-item
           ></el-col>
           <el-col :span="12"
+            ><el-form-item label="适用类别"
+              ><el-select v-model="couponForm.category" style="width: 100%"
+                ><el-option label="全部通用" value="all" /><el-option
+                  label="机票"
+                  value="flight" /><el-option
+                  label="火车票"
+                  value="train" /><el-option
+                  label="酒店"
+                  value="hotel" /></el-select></el-form-item
+          ></el-col>
+          <el-col :span="12"
             ><el-form-item label="优惠值"
               ><el-input-number
                 v-model="couponForm.discountValue"
@@ -1263,6 +1279,7 @@ const createCouponForm = () => ({
   id: null,
   name: "",
   description: "",
+  category: "all",
   discountType: 0,
   discountValue: 0,
   minAmount: 0,
@@ -1333,12 +1350,26 @@ const normalizeRoom = (row = {}) => ({
 const normalizeCoupon = (row = {}) => ({
   ...createCouponForm(),
   ...row,
+  category: normalizeCouponCategory(row.category),
   discountType: parseNumberish(row.discountType, 0),
   discountValue: parseNumberish(row.discountValue, 0),
   minAmount: parseNumberish(row.minAmount, 0),
   stock: parseNumberish(row.stock, 100),
   status: parseNumberish(row.status, 0),
 });
+
+const normalizeCouponCategory = (category) => {
+  const value = String(category || "all").toLowerCase();
+  return ["all", "flight", "train", "hotel"].includes(value) ? value : "all";
+};
+
+const couponCategoryLabel = (category) =>
+  ({
+    all: "全部通用",
+    flight: "机票",
+    train: "火车票",
+    hotel: "酒店",
+  }[normalizeCouponCategory(category)]);
 
 const latestMetricValue = (key) => {
   const list = dashboardData.value[key];

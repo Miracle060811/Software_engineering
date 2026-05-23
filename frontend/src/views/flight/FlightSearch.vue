@@ -265,7 +265,12 @@ const currentOriginalPrice = computed(() => {
 });
 
 const usableCoupons = computed(() =>
-  myCoupons.value.filter((coupon) => coupon.status === 0 && currentOriginalPrice.value >= Number(coupon.minAmount || 0)),
+  myCoupons.value.filter(
+    (coupon) =>
+      coupon.status === 0 &&
+      isCouponUsableFor(coupon, "flight") &&
+      currentOriginalPrice.value >= Number(coupon.minAmount || 0),
+  ),
 );
 
 const currentPayablePrice = computed(() => {
@@ -380,8 +385,26 @@ const couponLabel = (coupon) => {
     coupon.discountType === 1
       ? `${Number(coupon.discountValue) * 10}折`
       : `减¥${coupon.discountValue}`;
-  return `${coupon.couponName || coupon.name}（${discount}，满¥${coupon.minAmount || 0}可用）`;
+  return `${coupon.couponName || coupon.name}（${couponCategoryLabel(coupon.category)}，${discount}，满¥${coupon.minAmount || 0}可用）`;
 };
+
+const normalizeCouponCategory = (category) => {
+  const value = String(category || "all").toLowerCase();
+  return ["all", "flight", "train", "hotel"].includes(value) ? value : "all";
+};
+
+const isCouponUsableFor = (coupon, category) => {
+  const couponCategory = normalizeCouponCategory(coupon?.category);
+  return couponCategory === "all" || couponCategory === category;
+};
+
+const couponCategoryLabel = (category) =>
+  ({
+    all: "通用",
+    flight: "机票",
+    train: "火车票",
+    hotel: "酒店",
+  }[normalizeCouponCategory(category)]);
 
 watch(currentOriginalPrice, () => {
   if (

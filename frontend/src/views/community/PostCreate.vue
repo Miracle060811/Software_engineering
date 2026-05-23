@@ -196,12 +196,19 @@ const submitPost = async () => {
   if (!valid) return;
   submitting.value = true;
   try {
+    let result;
     if (editingPostId.value) {
-      await request.put(`/api/post/${editingPostId.value}`, buildPostData());
+      result = await request.put(`/api/post/${editingPostId.value}`, buildPostData());
     } else {
-      await request.post("/api/post/create", buildPostData());
+      result = await request.post("/api/post/create", buildPostData());
     }
-    ElMessage.success("游记已提交审核");
+    if (result?.status === 2) {
+      ElMessage.warning(result.rejectReason || "游记未通过 AI 审核");
+    } else if (result?.status === 1) {
+      ElMessage.success("游记已通过 AI 审核并发布");
+    } else {
+      ElMessage.info("游记已提交 AI 审核");
+    }
     router.push("/community");
   } catch (e) {
   } finally {

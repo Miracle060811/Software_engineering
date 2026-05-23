@@ -1,17 +1,17 @@
 <template>
   <div class="attraction-page">
     <PageHeader
-      title="景点门票"
+      title="热门景点"
       subtitle="搜索并预订热门景点门票"
       :icon="Clock"
       :breadcrumbs="[
         { label: '首页', to: '/' },
-        { label: '景点门票' }
+        { label: '热门景点' }
       ]"
     />
 
     <el-tabs v-model="activeTab" class="tab-nav">
-      <el-tab-pane label="景点门票" name="attraction" />
+      <el-tab-pane label="热门景点" name="attraction" />
       <el-tab-pane label="一日游" name="daytour" />
       <el-tab-pane label="周边游" name="neartour" />
     </el-tabs>
@@ -147,6 +147,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
+import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Clock, Search } from "@element-plus/icons-vue";
 import request from "@/utils/request";
@@ -154,6 +155,7 @@ import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 
+const route = useRoute();
 const activeTab = ref("attraction");
 const attractions = ref([]);
 const loading = ref(false);
@@ -233,7 +235,16 @@ watch(activeTab, (val) => {
   if (val === "neartour" && nearTours.value.length === 0) fetchTours(1);
 });
 
+watch(
+  () => route.query.city,
+  (city) => {
+    searchForm.value.city = typeof city === "string" ? city : "";
+    fetchAttractions();
+  },
+);
+
 onMounted(() => {
+  searchForm.value.city = typeof route.query.city === "string" ? route.query.city : "";
   fetchAttractions();
 });
 </script>

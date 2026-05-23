@@ -728,6 +728,7 @@ public class AdminController {
     @PostMapping("/coupons")
     public Result<Coupon> addCoupon(@RequestBody Coupon coupon) {
         checkAdmin();
+        coupon.setCategory(normalizeCouponCategory(coupon.getCategory()));
         if (coupon.getCreateTime() == null) {
             coupon.setCreateTime(LocalDateTime.now());
         }
@@ -739,6 +740,7 @@ public class AdminController {
     public Result<Void> updateCoupon(@PathVariable Long id, @RequestBody Coupon coupon) {
         checkAdmin();
         coupon.setId(id);
+        coupon.setCategory(normalizeCouponCategory(coupon.getCategory()));
         couponMapper.updateById(coupon);
         return Result.success();
     }
@@ -748,6 +750,17 @@ public class AdminController {
         checkAdmin();
         couponMapper.deleteById(id);
         return Result.success();
+    }
+
+    private String normalizeCouponCategory(String category) {
+        if (category == null || category.isBlank()) {
+            return "all";
+        }
+        String value = category.trim().toLowerCase();
+        if ("flight".equals(value) || "train".equals(value) || "hotel".equals(value)) {
+            return value;
+        }
+        return "all";
     }
 
     @GetMapping("/review-reports")

@@ -20,6 +20,9 @@ public class Coupon {
     /** 描述 */
     private String description;
 
+    /** 使用类别：all=通用, flight=机票, train=火车票, hotel=酒店 */
+    private String category;
+
     /** 0=满减, 1=折扣 */
     private Integer discountType;
 

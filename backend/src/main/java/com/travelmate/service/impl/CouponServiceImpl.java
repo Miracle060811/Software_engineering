@@ -112,6 +112,7 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
                 item.put("couponId", c.getId());
                 item.put("couponName", c.getName());
                 item.put("description", c.getDescription());
+                item.put("category", normalizeCategory(c.getCategory()));
                 item.put("discountType", c.getDiscountType());
                 item.put("discountValue", c.getDiscountValue());
                 item.put("minAmount", c.getMinAmount());
@@ -127,7 +128,7 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BigDecimal useCoupon(Long userId, Long userCouponId, BigDecimal originalAmount) {
+    public BigDecimal useCoupon(Long userId, Long userCouponId, BigDecimal originalAmount, String orderCategory) {
         if (userCouponId == null) {
             return normalizeAmount(originalAmount);
         }
@@ -147,6 +148,9 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         if (coupon.getExpireDate() != null && coupon.getExpireDate().isBefore(LocalDateTime.now())) {
             userCouponMapper.markExpired(userCouponId, userId);
             throw new RuntimeException("优惠券已过期");
+        }
+        if (!isCategoryAllowed(coupon.getCategory(), orderCategory)) {
+            throw new RuntimeException("该优惠券不适用于当前订单类型");
         }
         if (coupon.getMinAmount() != null && amount.compareTo(coupon.getMinAmount()) < 0) {
             throw new RuntimeException("订单金额未达到优惠券使用门槛");
@@ -207,9 +211,28 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         return String.join("|",
                 String.valueOf(coupon.getName()),
                 String.valueOf(coupon.getDescription()),
+                normalizeCategory(coupon.getCategory()),
                 String.valueOf(coupon.getDiscountType()),
                 normalizeDecimal(coupon.getDiscountValue()),
                 normalizeDecimal(coupon.getMinAmount()));
+    }
+
+    private boolean isCategoryAllowed(String couponCategory, String orderCategory) {
+        String normalizedCouponCategory = normalizeCategory(couponCategory);
+        String normalizedOrderCategory = normalizeCategory(orderCategory);
+        return "all".equals(normalizedCouponCategory)
+                || normalizedCouponCategory.equals(normalizedOrderCategory);
+    }
+
+    private String normalizeCategory(String category) {
+        if (category == null || category.trim().isEmpty()) {
+            return "all";
+        }
+        String value = category.trim().toLowerCase();
+        if ("flight".equals(value) || "train".equals(value) || "hotel".equals(value)) {
+            return value;
+        }
+        return "all";
     }
 
     private String normalizeDecimal(BigDecimal value) {
