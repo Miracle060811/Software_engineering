@@ -90,7 +90,8 @@
             @click="$router.push(`/hotel/${hotel.id}`)"
           >
             <SafeImage
-              :src="hotel.coverImage || hotel.coverImg || localSeedImage(hotel.name, 'hotel')"
+              :src="hotelCoverImage(hotel)"
+              :fallback="localSeedImage(hotel.name, 'hotel')"
               image-class="hotel-img"
               :alt="hotel.name"
             />
@@ -126,7 +127,7 @@ import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import SafeImage from "@/components/SafeImage.vue";
-import { localSeedImage } from "@/utils/image";
+import { hotelCoverImage, localSeedImage } from "@/utils/image";
 
 const route = useRoute();
 const hotels = ref([]);

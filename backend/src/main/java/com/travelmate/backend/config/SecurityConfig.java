@@ -25,7 +25,11 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(
                                                                 "/user/register", "/user/login",
-                                                                "/user/reset-password")
+                                                                "/user/reset-password",
+                                                                "/favicon.ico",
+                                                                "/assets/**",
+                                                                "/images/**",
+                                                                "/vite.svg")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/flight/**",

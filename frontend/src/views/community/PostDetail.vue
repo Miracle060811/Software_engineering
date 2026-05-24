@@ -71,7 +71,7 @@
           :initial-index="idx"
         >
           <template #error>
-            <img src="/images/seed/fallback.svg" class="post-image-fallback" alt="图片暂不可用" />
+            <img :src="FALLBACK_IMAGE" class="post-image-fallback" alt="图片暂不可用" />
           </template>
         </el-image>
       </el-card>
@@ -191,6 +191,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { LocationFilled, StarFilled, Star } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import { useUserStore } from "@/stores/user";
+import { FALLBACK_IMAGE } from "@/utils/image";
 
 const route = useRoute();
 const router = useRouter();

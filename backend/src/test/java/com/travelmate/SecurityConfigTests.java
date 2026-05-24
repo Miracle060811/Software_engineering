@@ -56,4 +56,10 @@ class SecurityConfigTests {
         mockMvc.perform(get("/api/admin/dashboard/data"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void unauthenticatedStaticImageRequestIsServed() throws Exception {
+        mockMvc.perform(get("/images/seed/beijing.svg"))
+                .andExpect(status().isOk());
+    }
 }

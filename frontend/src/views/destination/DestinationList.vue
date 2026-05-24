@@ -1,6 +1,6 @@
 <template>
   <div class="destination-list-page">
-    <section class="list-hero">
+    <section class="list-hero" :style="heroStyle">
       <div>
         <div class="eyebrow">热门城市</div>
         <h1>从城市开始，找到下一段旅程</h1>
@@ -41,9 +41,17 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
 import { ArrowRight, MagicStick } from "@element-plus/icons-vue";
 import SafeImage from "@/components/SafeImage.vue";
 import { destinations } from "@/data/destinations";
+
+const heroStyle = computed(() => ({
+  background:
+    "linear-gradient(135deg, rgba(13, 148, 136, 0.94), rgba(14, 165, 233, 0.88)), url('" +
+    destinations.find((item) => item.slug === "hangzhou")?.img +
+    "') center/cover",
+}));
 </script>
 
 <style scoped>
@@ -55,9 +63,6 @@ import { destinations } from "@/data/destinations";
   min-height: 260px;
   padding: 44px;
   border-radius: 24px;
-  background:
-    linear-gradient(135deg, rgba(13, 148, 136, 0.94), rgba(14, 165, 233, 0.88)),
-    url("/images/seed/hangzhou.svg") center/cover;
   color: #fff;
   display: flex;
   align-items: flex-end;

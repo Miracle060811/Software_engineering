@@ -1,4 +1,8 @@
-export const FALLBACK_IMAGE = "/images/seed/fallback.svg";
+const seedAsset = (file) => `${import.meta.env.BASE_URL}images/seed/${file}`;
+
+export const FALLBACK_IMAGE = seedAsset("fallback.svg");
+
+export const seedImage = (file) => seedAsset(file);
 
 export const localSeedImage = (name, type = "attraction") => {
   const text = String(name || "").toLowerCase();
@@ -25,8 +29,42 @@ export const localSeedImage = (name, type = "attraction") => {
   ];
 
   const matched = rules.find(([pattern]) => pattern.test(text));
-  if (matched) return `/images/seed/${matched[1]}.svg`;
-  return `/images/seed/${type === "hotel" ? "hotel" : "attraction"}.svg`;
+  if (matched) return seedAsset(`${matched[1]}.svg`);
+  return seedAsset(`${type === "hotel" ? "hotel" : "attraction"}.svg`);
+};
+
+const hotelImageRules = [
+  [/北京国贸大酒店/, "https://dimg04.c-ctrip.com/images//200l1g000001hgwwk8DB1_R_550_412.jpg"],
+  [/上海外滩华尔道夫酒店/, "https://ak-d.tripcdn.com/images/1mc3d12000rs1ln328F37.jpg"],
+  [/广州白天鹅宾馆/, "https://ak-d.tripcdn.com/images/1mc6f12000hrejeww92B0.jpg"],
+  [/成都锦江宾馆/, "https://dimg04.c-ctrip.com/images/220i1b000001aohx93B7F_R_960_660_R5_D.jpg"],
+  [/西安大唐芙蓉园精品酒店/, "https://ak-d.tripcdn.com/images/200w13000000vir8yDBA5_R_960_660_R5_D.jpg"],
+  [/三亚亚龙湾万豪度假酒店/, "https://ak-d.tripcdn.com/images/200q050000000ghm177AC.jpg"],
+  [/丽江古城铂尔曼大酒店/, "https://ak-d.tripcdn.com/images/1mc0f12000iw62mfx8BDD.jpg"],
+  [/杭州西湖喜来登大酒店/, "https://ak-d.tripcdn.com/images/fd/hotel/g4/M08/FC/23/CggYHlX__YOAVc9JAAP-iECj334734_R_960_660_R5_D.jpg"],
+  [/重庆解放碑威斯汀酒店/, "https://ak-d.tripcdn.com/images/0220t12000plokdzi4C79_R_960_660_R5_D.jpg"],
+  [/北京王府井万豪酒店/, "https://ak-d.tripcdn.com/images/200v14000000w7mnt5A2C.jpg"],
+  [/上海静安香格里拉大酒店/, "https://ak-d.tripcdn.com/images/hotel/452000/451368/00f6bba719044a4394311d9aaf47eeb7.jpg"],
+  [/厦门悦华酒店/, "https://ak-d.tripcdn.com/images/1mc1f12000b9nz5c03B02_R_960_660_R5_D.jpg"],
+  [/桂林香格里拉大酒店/, "https://ak-d.tripcdn.com/images/1mc0m12000aq6mt0h4457.jpg"],
+  [/青岛海景花园大酒店/, "https://ak-d.tripcdn.com/images/200m0800000034723792B_R_960_660_R5_D.jpg"],
+  [/全季酒店.*成都太古里春熙路/, "https://ak-d.tripcdn.com/images/1mc4r12000repen2v8026.jpg"],
+  [/成都太古里春熙美居酒店/, "https://ak-d.tripcdn.com/images/20060v000000jo62xE3EB.jpg"],
+  [/成都瑞城名人酒店/, "https://ak-d.tripcdn.com/images/200m1e000001fvyd2AB3D_R_960_660_R5_D.jpg"],
+  [/成都东大明宇豪雅饭店/, "https://ak-d.tripcdn.com/images/1mc1712000epu78z56B04_R_960_660_R5_D.jpg"],
+  [/南京金陵饭店/, "https://ak-d.tripcdn.com/images/02064120008bk81fz92B1_R_960_660_R5_D.jpg"],
+  [/苏州吴宫泛太平洋酒店/, "https://ak-d.tripcdn.com/images/1mc6o12000br4n333F7C1_R_960_660_R5_D.jpg"],
+];
+
+const isSeedImageUrl = (url) => String(url || "").includes("/images/seed/");
+
+export const hotelCoverImage = (hotel) => {
+  const cover = hotel?.coverImage || hotel?.coverImg;
+  if (cover && !isSeedImageUrl(cover)) return cover;
+
+  const name = String(hotel?.name || "");
+  const matched = hotelImageRules.find(([pattern]) => pattern.test(name));
+  return matched ? matched[1] : localSeedImage(name, "hotel");
 };
 
 export const normalizeImageUrl = (url, fallback = FALLBACK_IMAGE) => {

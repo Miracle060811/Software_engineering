@@ -34,7 +34,30 @@
       "PowerShell($deadline = \\(Get-Date\\).AddSeconds\\(120\\); while \\(\\(Get-Date\\) -lt $deadline\\) { try { $null = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/post/list?page=1&size=1&keyword=' -Method Get -TimeoutSec 3 -ErrorAction Stop; Write-Host \"后端就绪\"; break } catch { Write-Host \".\" -NoNewline; Start-Sleep -Seconds 3 } })",
       "Bash(Select-Object FullName)",
       "Bash(Select-Object Name)",
-      "PowerShell($key = \"sk-51cdd801fff7432c83562b77a69bbde2\"; $body = '{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"user\",\"content\":\"回复1即可\"}],\"max_tokens\":10}'; try { $r = Invoke-RestMethod -Uri \"https://api.deepseek.com/v1/chat/completions\" -Method Post -Headers @{\"Authorization\"=\"Bearer $key\";\"Content-Type\"=\"application/json\"} -Body $body -TimeoutSec 15; Write-Host \"SUCCESS:\" $r.choices[0].message.content } catch { Write-Host \"FAILED:\" $_.Exception.Message; Write-Host \"StatusCode:\" $_.Exception.Response.StatusCode.value__ })"
+      "PowerShell($key = \"sk-51cdd801fff7432c83562b77a69bbde2\"; $body = '{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"user\",\"content\":\"回复1即可\"}],\"max_tokens\":10}'; try { $r = Invoke-RestMethod -Uri \"https://api.deepseek.com/v1/chat/completions\" -Method Post -Headers @{\"Authorization\"=\"Bearer $key\";\"Content-Type\"=\"application/json\"} -Body $body -TimeoutSec 15; Write-Host \"SUCCESS:\" $r.choices[0].message.content } catch { Write-Host \"FAILED:\" $_.Exception.Message; Write-Host \"StatusCode:\" $_.Exception.Response.StatusCode.value__ })",
+      "Bash(echo 'Plugin root: C:/Users/28603/.claude/plugins/cache/understand-anything/understand-anything/2.7.4')",
+      "Bash([ -f \"$PLUGIN_ROOT/packages/core/dist/index.js\" ])",
+      "Bash(echo \"BUILT\")",
+      "Bash(echo \"NEEDS_BUILD\")",
+      "Read(//c/Users/28603/.claude/plugins/cache/understand-anything/understand-anything/2.7.4/packages/core/**)",
+      "PowerShell(node \".understand-anything/tmp/ua-project-scan.js\" \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\" \".understand-anything/tmp/ua-scan-results.json\")",
+      "PowerShell(node \"C:\\\\Users\\\\28603\\\\.claude\\\\plugins\\\\cache\\\\understand-anything\\\\understand-anything\\\\2.7.4\\\\skills\\\\understand\\\\extract-structure.mjs\" *)",
+      "Bash(node \"C:/Users/28603/.claude/plugins/cache/understand-anything/understand-anything/2.7.4/skills/understand/extract-structure.mjs\" *)",
+      "PowerShell(node *)",
+      "Bash(node *)",
+      "PowerShell(ls *)",
+      "Bash(ls *)",
+      "PowerShell(cat *)",
+      "Bash(cat *)",
+      "PowerShell(mkdir *)",
+      "PowerShell(Get-ChildItem -Recurse -File *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Select-Object *)",
+      "PowerShell(Write-Output *)",
+      "Bash(echo *)",
+      "Bash(git *)",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\28603\\\\.claude\\\\plugins\\\\cache\\\\understand-anything\\\\understand-anything\\\\2.7.4\\\\packages\\\\dashboard\"; $env:GRAPH_DIR = \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\"; npx vite --host 127.0.0.1)",
+      "PowerShell($content = Get-Content \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\.understand-anything\\\\knowledge-graph.json\" -Raw; $utf8NoBom = New-Object System.Text.UTF8Encoding $false; [System.IO.File]::WriteAllText\\(\"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\.understand-anything\\\\knowledge-graph.json\", $content, $utf8NoBom\\))"
     ]
   }
 }

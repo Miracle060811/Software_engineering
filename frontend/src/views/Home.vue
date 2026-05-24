@@ -340,6 +340,7 @@ import {
 import CountUp from "../components/CountUp.vue";
 import SafeImage from "@/components/SafeImage.vue";
 import { destinations } from "@/data/destinations";
+import { seedImage } from "@/utils/image";
 import aiPlannerIcon from "@/assets/feature-icons/ai-planner.png";
 import communityIcon from "@/assets/feature-icons/travel-community.png";
 import attractionIcon from "@/assets/feature-icons/attraction-ticket.png";
@@ -386,10 +387,10 @@ const hotDestinations = [...destinations]
   .slice(0, 6);
 
 const travelerAvatars = [
-  { name: "旅行者头像 1", src: "/images/seed/avatar-1.svg" },
-  { name: "旅行者头像 2", src: "/images/seed/avatar-2.svg" },
-  { name: "旅行者头像 3", src: "/images/seed/avatar-3.svg" },
-  { name: "旅行者头像 4", src: "/images/seed/avatar-4.svg" },
+  { name: "旅行者头像 1", src: seedImage("avatar-1.svg") },
+  { name: "旅行者头像 2", src: seedImage("avatar-2.svg") },
+  { name: "旅行者头像 3", src: seedImage("avatar-3.svg") },
+  { name: "旅行者头像 4", src: seedImage("avatar-4.svg") },
 ];
 
 const searchFlight = () => {

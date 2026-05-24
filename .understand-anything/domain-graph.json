@@ -1,0 +1,3084 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "travelmate",
+    "languages": [
+      "java",
+      "javascript",
+      "vue",
+      "html",
+      "css",
+      "xml",
+      "yaml",
+      "json",
+      "sql",
+      "markdown"
+    ],
+    "frameworks": [
+      "Spring Boot",
+      "Vue 3",
+      "Element Plus",
+      "MyBatis-Plus",
+      "Spring Security",
+      "Redis",
+      "Pinia",
+      "Vite",
+      "ECharts"
+    ],
+    "description": "TravelMate（伴游）全栈出行旅游平台，涵盖机票/火车票预订、酒店住宿、景点门票、AI 智能行程规划与客服、社区论坛互动和管理后台等核心业务，采用前后端分离架构。",
+    "analyzedAt": "2026-05-23T18:52:33.476Z",
+    "gitCommitHash": "06cfe1ca09ebad6793cbd724d3a1d20cba103ac5"
+  },
+  "nodes": [
+    {
+      "id": "domain:user-authentication",
+      "type": "domain",
+      "name": "用户认证",
+      "summary": "处理用户注册、登录、密码管理和账号管理，采用 Spring Security + JWT（HS256 对称密钥，24h 过期）实现认证鉴权，密码使用 BCrypt 加密存储。",
+      "tags": [
+        "authentication",
+        "user-management",
+        "security",
+        "jwt"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entities": [
+          "User"
+        ],
+        "businessRules": [
+          "密码使用 BCrypt 加密存储",
+          "JWT Token 24 小时过期，服务器重启后旧 Token 全部失效",
+          "注册时用户名和手机号必须唯一"
+        ],
+        "crossDomainInteractions": [
+          "为所有业务域提供当前登录用户身份上下文",
+          "UserContext 被所有 Controller/Service 引用获取当前用户"
+        ]
+      }
+    },
+    {
+      "id": "domain:transportation-ticketing",
+      "type": "domain",
+      "name": "大交通票务",
+      "summary": "提供航班和火车的搜索查询、价格趋势预测、订单创建（含防超卖）、模拟支付和取消退款等全流程票务服务。使用 Redis 预减库存 + 乐观锁 version 字段防止超卖。",
+      "tags": [
+        "flight",
+        "train",
+        "ticketing",
+        "order",
+        "payment",
+        "inventory"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "Flight",
+          "Train",
+          "TrafficOrder",
+          "Passenger",
+          "PriceHistory"
+        ],
+        "businessRules": [
+          "下单接口受 @RateLimiter 限流保护",
+          "Redis 预减库存 + 乐观锁 version 字段防超卖",
+          "超时 15 分钟未支付自动取消并归还库存"
+        ],
+        "crossDomainInteractions": [
+          "优惠券可应用于交通订单",
+          "价格趋势数据对接前端 ECharts 可视化",
+          "订单超时取消通过定时任务 OrderTimeoutScheduler 实现"
+        ]
+      }
+    },
+    {
+      "id": "domain:accommodation-and-local-services",
+      "type": "domain",
+      "name": "住宿与本地生活",
+      "summary": "涵盖酒店搜索与预订、景点门票购买、一日游/周边游产品浏览、用户评价与商家回复、评价举报等住宿和本地生活服务。",
+      "tags": [
+        "hotel",
+        "attraction",
+        "tour",
+        "review",
+        "booking"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "Hotel",
+          "HotelRoom",
+          "HotelOrder",
+          "Attraction",
+          "TourProduct",
+          "Review",
+          "Reply",
+          "ReviewReport"
+        ],
+        "businessRules": [
+          "酒店订单下单接口限流每秒 3 次",
+          "支付接口限流每秒 5 次",
+          "评分范围为 1-5",
+          "重复评价举报被拦截"
+        ],
+        "crossDomainInteractions": [
+          "评价系统与酒店/景点关联",
+          "通知中心发送订单状态变更通知",
+          "管理后台可处理评价举报工单"
+        ]
+      }
+    },
+    {
+      "id": "domain:ai-planning",
+      "type": "domain",
+      "name": "AI 智能规划",
+      "summary": "基于 DeepSeek API 提供智能行程规划生成、AI 客服对话和游记内容自动审核。API 超时或失败时自动降级为预设模板/兜底回复，保障服务可用性。",
+      "tags": [
+        "ai",
+        "deepseek",
+        "travel-planning",
+        "chatbot",
+        "content-moderation"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "AiPlan",
+          "AiChat",
+          "Notification"
+        ],
+        "businessRules": [
+          "DeepSeek API 调用失败自动降级为预设模板",
+          "AI 审核游记通过/拒绝后发送通知给作者",
+          "定时任务 AtomicBoolean 互斥控制防止并发审核"
+        ],
+        "crossDomainInteractions": [
+          "AI 审核结果影响社区帖子状态",
+          "通知中心管理 AI 审核结果的通知",
+          "行程规划可引用交通/住宿数据"
+        ]
+      }
+    },
+    {
+      "id": "domain:community-and-user-center",
+      "type": "domain",
+      "name": "社区与用户中心",
+      "summary": "提供游记帖子的完整 CRUD、评论互动、点赞/收藏、用户关注和用户个人主页等社交功能。帖子创建受限流保护，支持敏感词过滤和关注动态流。",
+      "tags": [
+        "community",
+        "post",
+        "comment",
+        "like",
+        "follow",
+        "social"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "Post",
+          "Comment",
+          "Like",
+          "Follow",
+          "File"
+        ],
+        "businessRules": [
+          "帖子创建接口受 @RateLimiter 限流",
+          "帖子支持审核状态和可见性控制",
+          "评论支持嵌套回复结构",
+          "点赞通过 targetType 区分游记/评论/收藏"
+        ],
+        "crossDomainInteractions": [
+          "AI 服务自动审核新创建的帖子",
+          "文件上传服务提供图片支持",
+          "通知中心发送互动通知"
+        ]
+      }
+    },
+    {
+      "id": "domain:admin-backend",
+      "type": "domain",
+      "name": "管理后台",
+      "summary": "集中管理平台所有业务，提供运营仪表盘、订单审核与退款审批、游记审核、被举报评价处理、敏感词管理、CSV 批量数据导入和操作日志查看等。",
+      "tags": [
+        "admin",
+        "dashboard",
+        "moderation",
+        "order-management",
+        "data-import"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "SysLog",
+          "SysSensitiveWord"
+        ],
+        "businessRules": [
+          "仅管理员角色可访问（role=1）",
+          "删除航班前需检查关联订单",
+          "退款审批需归还对应库存",
+          "CSV 导入支持 flights/trains/hotels/rooms/attractions 五种类型"
+        ],
+        "crossDomainInteractions": [
+          "覆盖交通、住宿、社区等全业务域的管理操作",
+          "操作日志由 AOP 切面自动记录",
+          "敏感词库用于全平台内容过滤"
+        ]
+      }
+    },
+    {
+      "id": "flow:user-registration-and-login",
+      "type": "flow",
+      "name": "用户注册与登录",
+      "summary": "用户注册账号（BCrypt 加密密码）和登录获取 JWT Token 的完整认证流程。",
+      "tags": [
+        "registration",
+        "login",
+        "jwt",
+        "security"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /user/register, POST /user/login",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:account-management",
+      "type": "flow",
+      "name": "账号管理",
+      "summary": "用户修改密码、重置密码、删除账号和获取当前登录用户信息等账号维护操作。",
+      "tags": [
+        "password",
+        "account",
+        "profile"
+      ],
+      "complexity": "simple",
+      "domainMeta": {
+        "entryPoint": "POST /user/resetPassword, POST /user/changePassword, DELETE /user/deleteAccount, GET /user/me",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:flight-search-and-price-trend",
+      "type": "flow",
+      "name": "航班搜索与价格趋势",
+      "summary": "按城市、日期等条件搜索航班列表，并提供未来 7 天最低价趋势数据，对接 ECharts 折线图展示。",
+      "tags": [
+        "flight",
+        "search",
+        "price-trend",
+        "echarts"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "GET /flight/search, GET /price/history/trend",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:train-search-and-transfer",
+      "type": "flow",
+      "name": "火车搜索与中转推荐",
+      "summary": "按出发站、到达站和日期搜索火车班次，并提供智能中转路线推荐算法。",
+      "tags": [
+        "train",
+        "search",
+        "transfer"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "GET /train/search, GET /train/transfer",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:create-traffic-order",
+      "type": "flow",
+      "name": "交通订单创建",
+      "summary": "创建机票或火车票订单，含 RateLimiter 限流、Redis 预扣库存、乐观锁防超卖和乘客信息绑定。",
+      "tags": [
+        "order",
+        "flight",
+        "train",
+        "inventory",
+        "rate-limited"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "POST /traffic-order/createFlight, POST /traffic-order/createTrain",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:traffic-order-lifecycle",
+      "type": "flow",
+      "name": "交通订单支付与生命周期管理",
+      "summary": "处理交通订单的模拟支付、主动取消（归还库存）、超时自动取消（15 分钟定时任务）以及订单列表和收据查询。",
+      "tags": [
+        "payment",
+        "cancellation",
+        "timeout",
+        "order-list",
+        "receipt"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /traffic-order/pay, POST /traffic-order/cancel, GET /traffic-order/list, GET /traffic-order/receipt",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:passenger-management",
+      "type": "flow",
+      "name": "乘客管理",
+      "summary": "管理常用乘车人（乘客）信息，支持添加、删除和列表查询。",
+      "tags": [
+        "passenger",
+        "crud",
+        "contact"
+      ],
+      "complexity": "simple",
+      "domainMeta": {
+        "entryPoint": "POST /passenger/add, DELETE /passenger/delete, GET /passenger/list",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:hotel-booking",
+      "type": "flow",
+      "name": "酒店预订",
+      "summary": "搜索酒店（城市/日期/星级/价格多条件筛选）、查看房型详情、创建订单（限流 3次/秒）、模拟支付、取消订单和收据查询的完整预订流程。",
+      "tags": [
+        "hotel",
+        "booking",
+        "order",
+        "payment",
+        "rate-limited"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "GET /hotel/search, POST /hotel/createOrder, POST /hotel/payOrder, POST /hotel/cancelOrder, GET /hotel/receipt",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:attraction-ticketing",
+      "type": "flow",
+      "name": "景点门票",
+      "summary": "搜索景点列表、查看景点详情并购买门票（支持成人/儿童数量选择）。",
+      "tags": [
+        "attraction",
+        "ticket",
+        "search",
+        "purchase"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "GET /attraction/search, POST /attraction/buyTicket",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:review-system",
+      "type": "flow",
+      "name": "评价系统",
+      "summary": "用户对酒店或景点进行评分评价（1-5 分），商家回复评价，其他用户可举报不当评价。",
+      "tags": [
+        "review",
+        "rating",
+        "reply",
+        "report"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /review/add, GET /review/list, POST /reply/add, POST /reviewReport/report",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:tour-product-browsing",
+      "type": "flow",
+      "name": "旅游产品浏览",
+      "summary": "按产品类型分类查询一日游和周边游产品列表。",
+      "tags": [
+        "tour",
+        "product",
+        "listing"
+      ],
+      "complexity": "simple",
+      "domainMeta": {
+        "entryPoint": "GET /tourProduct/list",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:ai-travel-planning",
+      "type": "flow",
+      "name": "AI 行程规划",
+      "summary": "输入目的地、日期和预算，调用 DeepSeek API 生成定制旅行计划，API 失败时自动降级为预设模板行程。",
+      "tags": [
+        "ai",
+        "travel-plan",
+        "deepseek",
+        "fallback"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /ai/generatePlan, GET /ai/listPlans, GET /ai/getPlan",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:ai-customer-service",
+      "type": "flow",
+      "name": "AI 客服对话",
+      "summary": "用户与 AI 助手进行旅游相关的对话咨询，调用 DeepSeek API 智能回复，异常时兜底回复。",
+      "tags": [
+        "ai",
+        "chat",
+        "customer-service",
+        "deepseek"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /ai/chat",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:ai-post-audit",
+      "type": "flow",
+      "name": "AI 游记审核",
+      "summary": "定时任务逐条取出待审核游记，调用 DeepSeek API 进行内容安全审核，根据结果自动通过或拒绝并通知作者。AtomicBoolean 互斥防止并发。",
+      "tags": [
+        "ai",
+        "audit",
+        "content-moderation",
+        "scheduler"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "Scheduled cron job (PostAuditScheduler)",
+        "entryType": "cron"
+      }
+    },
+    {
+      "id": "flow:post-management",
+      "type": "flow",
+      "name": "游记管理",
+      "summary": "用户发布游记帖子（含限流和敏感词过滤）、浏览帖子列表、查看详情、更新和删除自己的帖子，以及查看关注用户动态流。",
+      "tags": [
+        "post",
+        "community",
+        "crud",
+        "timeline"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /post/create, GET /post/list, GET /post/detail, PUT /post/update, DELETE /post/delete, GET /post/following",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:social-interaction",
+      "type": "flow",
+      "name": "社交互动",
+      "summary": "用户对游记进行评论、删除评论、切换点赞/收藏状态、关注/取消关注其他用户及查看粉丝/关注列表。",
+      "tags": [
+        "comment",
+        "like",
+        "follow",
+        "social",
+        "interaction"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /comment/add, GET /comment/list, DELETE /comment/delete, POST /like/toggle, POST /follow/toggle, GET /follow/fans, GET /follow/following",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:user-profile",
+      "type": "flow",
+      "name": "用户个人主页",
+      "summary": "查看任意用户主页信息（含帖子数、关注数、粉丝数统计）、查看他人帖子列表以及当前用户选择性更新个人资料。",
+      "tags": [
+        "profile",
+        "user",
+        "statistics",
+        "update"
+      ],
+      "complexity": "simple",
+      "domainMeta": {
+        "entryPoint": "GET /userProfile/get, GET /userProfile/posts, PUT /userProfile/update",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:admin-dashboard",
+      "type": "flow",
+      "name": "运营仪表盘",
+      "summary": "聚合展示核心运营指标（用户数、订单数、GMV、在线用户等）和趋势图表（日订单趋势、热门目的地等）。",
+      "tags": [
+        "admin",
+        "dashboard",
+        "statistics",
+        "analytics"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "GET /admin/stats, GET /admin/dashboardData",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:order-and-refund-management",
+      "type": "flow",
+      "name": "订单与退款管理",
+      "summary": "管理员分页查询全平台订单（机票/火车票/酒店），审批或驳回退款请求并归还对应库存。",
+      "tags": [
+        "admin",
+        "order",
+        "refund",
+        "approval"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "GET /admin/listOrders, POST /admin/approveRefund, POST /admin/rejectRefund",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:content-moderation",
+      "type": "flow",
+      "name": "内容审核与治理",
+      "summary": "管理员人工审核通过/驳回游记、处理被举报评价（删除+标记工单）、管理敏感词库和查看操作日志。",
+      "tags": [
+        "admin",
+        "moderation",
+        "audit",
+        "sensitive-word",
+        "log"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /admin/approvePost, POST /admin/rejectPost, POST /admin/deleteReportedReview, GET /admin/listLogs, POST /admin/addReviewReply",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "flow:data-import-and-management",
+      "type": "flow",
+      "name": "数据导入与管理",
+      "summary": "管理员通过 CSV 文件批量导入航班/火车/酒店/房型/景点数据，以及删除航班等资源管理操作。",
+      "tags": [
+        "admin",
+        "import",
+        "csv",
+        "data-management"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "POST /admin/importCsv, DELETE /admin/deleteFlight, GET /admin/listCouponClaims",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:user-registration-and-login:validate-registration-input",
+      "type": "step",
+      "name": "校验注册参数",
+      "summary": "验证注册请求的用户名、密码、手机号等参数合法性，确保不重复。",
+      "tags": [
+        "validation",
+        "registration"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "lineRange": [
+        22,
+        35
+      ]
+    },
+    {
+      "id": "step:user-registration-and-login:encrypt-password-and-create-user",
+      "type": "step",
+      "name": "加密密码并创建用户",
+      "summary": "使用 BCrypt 对密码进行加密哈希，创建 User 实体并持久化到数据库。",
+      "tags": [
+        "bcrypt",
+        "encryption",
+        "persistence"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/backend/service/UserService.java",
+      "lineRange": [
+        38,
+        50
+      ]
+    },
+    {
+      "id": "step:user-registration-and-login:return-registration-result",
+      "type": "step",
+      "name": "返回注册结果",
+      "summary": "返回注册成功响应，包含用户基本信息。",
+      "tags": [
+        "response",
+        "registration"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "lineRange": [
+        36,
+        42
+      ]
+    },
+    {
+      "id": "step:user-registration-and-login:validate-login-credentials",
+      "type": "step",
+      "name": "验证登录凭证",
+      "summary": "接收用户名和密码，通过 Spring Security 验证用户名密码匹配。",
+      "tags": [
+        "login",
+        "authentication",
+        "validation"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/backend/service/UserService.java",
+      "lineRange": [
+        52,
+        65
+      ]
+    },
+    {
+      "id": "step:user-registration-and-login:generate-jwt-token",
+      "type": "step",
+      "name": "生成 JWT Token",
+      "summary": "使用 jjwt 0.11.5 生成 HS256 签名的 JWT Token，设置 24 小时过期时间。",
+      "tags": [
+        "jwt",
+        "token",
+        "authentication"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/backend/config/JwtUtil.java",
+      "lineRange": [
+        12,
+        28
+      ]
+    },
+    {
+      "id": "step:user-registration-and-login:set-security-context-and-return",
+      "type": "step",
+      "name": "设置安全上下文并返回",
+      "summary": "将认证信息设置到 SecurityContextHolder，返回 Token 和用户信息给前端。",
+      "tags": [
+        "security-context",
+        "response"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "lineRange": [
+        44,
+        58
+      ]
+    },
+    {
+      "id": "step:account-management:verify-old-password",
+      "type": "step",
+      "name": "验证旧密码",
+      "summary": "修改密码时验证用户输入的旧密码是否正确。",
+      "tags": [
+        "password",
+        "verification"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/backend/service/UserService.java",
+      "lineRange": [
+        67,
+        80
+      ]
+    },
+    {
+      "id": "step:account-management:encrypt-and-update-password",
+      "type": "step",
+      "name": "加密并更新密码",
+      "summary": "BCrypt 加密新密码后更新数据库，或管理员重置密码时直接更新。",
+      "tags": [
+        "password",
+        "bcrypt",
+        "update"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/backend/service/UserService.java",
+      "lineRange": [
+        82,
+        95
+      ]
+    },
+    {
+      "id": "step:account-management:handle-account-deletion",
+      "type": "step",
+      "name": "处理账号删除",
+      "summary": "删除用户账号及其关联数据，支持软删除或物理删除。",
+      "tags": [
+        "account",
+        "deletion"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "lineRange": [
+        60,
+        72
+      ]
+    },
+    {
+      "id": "step:account-management:fetch-current-user-info",
+      "type": "step",
+      "name": "获取当前用户信息",
+      "summary": "从 SecurityContextHolder 获取当前登录用户并返回完整用户对象。",
+      "tags": [
+        "user-info",
+        "security-context"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "lineRange": [
+        74,
+        82
+      ]
+    },
+    {
+      "id": "step:flight-search-and-price-trend:receive-flight-query-params",
+      "type": "step",
+      "name": "接收航班查询参数",
+      "summary": "接收出发城市、到达城市、出发日期等查询参数并进行基础校验。",
+      "tags": [
+        "flight",
+        "query",
+        "validation"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/FlightController.java",
+      "lineRange": [
+        16,
+        28
+      ]
+    },
+    {
+      "id": "step:flight-search-and-price-trend:search-flight-list",
+      "type": "step",
+      "name": "搜索航班列表",
+      "summary": "根据条件从数据库搜索匹配的航班班次，返回航班号、起降时间、价格、余票等信息。",
+      "tags": [
+        "flight",
+        "search",
+        "database"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/service/FlightService.java",
+      "lineRange": [
+        24,
+        40
+      ]
+    },
+    {
+      "id": "step:flight-search-and-price-trend:query-price-trend-data",
+      "type": "step",
+      "name": "查询价格趋势数据",
+      "summary": "获取指定航班未来 7 天最低价历史数据或预测曲线，供前端 ECharts 折线图渲染。",
+      "tags": [
+        "price",
+        "trend",
+        "echarts",
+        "forecast"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/service/PriceHistoryService.java",
+      "lineRange": [
+        18,
+        32
+      ]
+    },
+    {
+      "id": "step:flight-search-and-price-trend:return-search-results",
+      "type": "step",
+      "name": "返回搜索结果",
+      "summary": "组装航班列表和价格趋势数据，以统一响应格式返回给前端。",
+      "tags": [
+        "flight",
+        "response"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/FlightController.java",
+      "lineRange": [
+        30,
+        42
+      ]
+    },
+    {
+      "id": "step:train-search-and-transfer:receive-train-query-params",
+      "type": "step",
+      "name": "接收火车查询参数",
+      "summary": "接收出发站、到达站、出发日期等查询参数。",
+      "tags": [
+        "train",
+        "query",
+        "validation"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/TrainController.java",
+      "lineRange": [
+        16,
+        28
+      ]
+    },
+    {
+      "id": "step:train-search-and-transfer:search-train-list",
+      "type": "step",
+      "name": "搜索列车列表",
+      "summary": "根据条件查询列车班次，返回车次号、时刻、座型票价和余票信息。",
+      "tags": [
+        "train",
+        "search",
+        "database"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/service/TrainService.java",
+      "lineRange": [
+        22,
+        38
+      ]
+    },
+    {
+      "id": "step:train-search-and-transfer:intelligent-transfer-recommendation",
+      "type": "step",
+      "name": "智能中转路线推荐",
+      "summary": "当无直达列车时，算法推荐合理的中转换乘方案（中间站、接续时间等）。",
+      "tags": [
+        "train",
+        "transfer",
+        "algorithm"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/service/TrainService.java",
+      "lineRange": [
+        40,
+        58
+      ]
+    },
+    {
+      "id": "step:train-search-and-transfer:return-search-results",
+      "type": "step",
+      "name": "返回搜索结果",
+      "summary": "组装列车列表和中转方案数据，返回给前端。",
+      "tags": [
+        "train",
+        "response"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/TrainController.java",
+      "lineRange": [
+        30,
+        44
+      ]
+    },
+    {
+      "id": "step:create-traffic-order:rate-limiter-check",
+      "type": "step",
+      "name": "限流校验",
+      "summary": "@RateLimiter 拦截器基于 Redis 计数器 + IP 维度校验请求频率，超限返回 429。",
+      "tags": [
+        "rate-limiting",
+        "redis",
+        "interceptor"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/interceptor/RateLimiterInterceptor.java",
+      "lineRange": [
+        34,
+        73
+      ]
+    },
+    {
+      "id": "step:create-traffic-order:pre-deduct-inventory",
+      "type": "step",
+      "name": "Redis 预扣库存",
+      "summary": "使用 Redis 原子操作预扣减航班/火车座位库存，并记录 version 字段用于后续乐观锁校验。",
+      "tags": [
+        "inventory",
+        "redis",
+        "overselling",
+        "optimistic-lock"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/travelmate/service/TrafficOrderService.java",
+      "lineRange": [
+        38,
+        55
+      ]
+    },
+    {
+      "id": "step:create-traffic-order:create-order-record",
+      "type": "step",
+      "name": "创建订单记录",
+      "summary": "在 tm_traffic_order 表创建订单记录，写入订单类型（flight/train）、金额、状态等信息。",
+      "tags": [
+        "order",
+        "persistence",
+        "traffic-order"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/TrafficOrderServiceImpl.java",
+      "lineRange": [
+        78,
+        95
+      ]
+    },
+    {
+      "id": "step:create-traffic-order:bind-passenger-info",
+      "type": "step",
+      "name": "绑定乘客信息",
+      "summary": "将订单关联到指定的乘客/乘车人信息（姓名、证件号、旅客类型等）。",
+      "tags": [
+        "passenger",
+        "order-association"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/TrafficOrderServiceImpl.java",
+      "lineRange": [
+        56,
+        72
+      ]
+    },
+    {
+      "id": "step:create-traffic-order:return-order-number",
+      "type": "step",
+      "name": "返回订单号",
+      "summary": "创建成功后返回订单号和订单金额等信息给前端。",
+      "tags": [
+        "order",
+        "response"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "lineRange": [
+        35,
+        44
+      ]
+    },
+    {
+      "id": "step:traffic-order-lifecycle:mock-payment",
+      "type": "step",
+      "name": "模拟支付",
+      "summary": "模拟支付处理，更新订单状态为已支付，限流每秒 5 次。",
+      "tags": [
+        "payment",
+        "mock",
+        "rate-limited"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "lineRange": [
+        61,
+        71
+      ]
+    },
+    {
+      "id": "step:traffic-order-lifecycle:cancel-order-return-inventory",
+      "type": "step",
+      "name": "取消订单并归还库存",
+      "summary": "用户主动取消或超时取消订单，归还航班/火车座位库存（Redis 回滚 + 数据库 version 恢复）。",
+      "tags": [
+        "cancellation",
+        "inventory",
+        "rollback"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "lineRange": [
+        80,
+        90
+      ]
+    },
+    {
+      "id": "step:traffic-order-lifecycle:timeout-auto-cancel",
+      "type": "step",
+      "name": "超时自动取消",
+      "summary": "定时任务每周期扫描超过 15 分钟未支付的交通订单，自动取消并归还库存，发送通知给用户。",
+      "tags": [
+        "scheduler",
+        "timeout",
+        "auto-cancel",
+        "notification"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/travelmate/scheduler/OrderTimeoutScheduler.java",
+      "lineRange": [
+        52,
+        105
+      ]
+    },
+    {
+      "id": "step:traffic-order-lifecycle:query-order-list",
+      "type": "step",
+      "name": "查询订单列表",
+      "summary": "分页查询当前用户的交通订单列表，支持按订单类型和状态过滤。",
+      "tags": [
+        "order",
+        "query",
+        "pagination"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/TrafficOrderService.java",
+      "lineRange": [
+        60,
+        78
+      ]
+    },
+    {
+      "id": "step:traffic-order-lifecycle:get-order-receipt",
+      "type": "step",
+      "name": "获取订单收据",
+      "summary": "从用户订单列表匹配指定订单号返回详情作为核销凭证。",
+      "tags": [
+        "receipt",
+        "order",
+        "verification"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "lineRange": [
+        109,
+        121
+      ]
+    },
+    {
+      "id": "step:passenger-management:add-passenger",
+      "type": "step",
+      "name": "添加乘客",
+      "summary": "校验姓名和证件号非空，设置当前用户 ID 后持久化乘客信息。",
+      "tags": [
+        "passenger",
+        "create",
+        "validation"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/PassengerController.java",
+      "lineRange": [
+        37,
+        45
+      ]
+    },
+    {
+      "id": "step:passenger-management:delete-passenger",
+      "type": "step",
+      "name": "删除乘客",
+      "summary": "根据乘客 ID 删除常用联系人。",
+      "tags": [
+        "passenger",
+        "delete"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/PassengerService.java",
+      "lineRange": [
+        28,
+        35
+      ]
+    },
+    {
+      "id": "step:passenger-management:list-passengers",
+      "type": "step",
+      "name": "查询乘客列表",
+      "summary": "获取当前用户的所有常用联系人列表。",
+      "tags": [
+        "passenger",
+        "list",
+        "query"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/PassengerService.java",
+      "lineRange": [
+        20,
+        26
+      ]
+    },
+    {
+      "id": "step:hotel-booking:search-hotels",
+      "type": "step",
+      "name": "搜索酒店",
+      "summary": "根据城市、入住/离店日期、星级和价格范围等多条件筛选酒店列表。",
+      "tags": [
+        "hotel",
+        "search",
+        "filter"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/HotelController.java",
+      "lineRange": [
+        47,
+        59
+      ]
+    },
+    {
+      "id": "step:hotel-booking:view-room-details",
+      "type": "step",
+      "name": "查看房型详情",
+      "summary": "查看酒店下各房型信息，包括床型、价格、可用房间数和设施。",
+      "tags": [
+        "hotel-room",
+        "details",
+        "availability"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/HotelService.java",
+      "lineRange": [
+        38,
+        52
+      ]
+    },
+    {
+      "id": "step:hotel-booking:create-hotel-order",
+      "type": "step",
+      "name": "创建酒店订单",
+      "summary": "RateLimiter 限流（3次/秒），Redis 预扣房型库存，创建酒店订单并记录入住信息。",
+      "tags": [
+        "hotel",
+        "order",
+        "rate-limited",
+        "inventory"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/travelmate/controller/HotelController.java",
+      "lineRange": [
+        91,
+        104
+      ]
+    },
+    {
+      "id": "step:hotel-booking:pay-hotel-order",
+      "type": "step",
+      "name": "支付酒店订单",
+      "summary": "模拟支付处理酒店订单，限流每秒 5 次，更新订单状态为已支付。",
+      "tags": [
+        "hotel",
+        "payment",
+        "rate-limited"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/HotelController.java",
+      "lineRange": [
+        110,
+        123
+      ]
+    },
+    {
+      "id": "step:hotel-booking:cancel-or-timeout-hotel-order",
+      "type": "step",
+      "name": "取消或超时取消订单",
+      "summary": "用户主动取消或定时任务超时取消酒店订单，归还房间库存。",
+      "tags": [
+        "hotel",
+        "cancellation",
+        "inventory",
+        "timeout"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/HotelController.java",
+      "lineRange": [
+        129,
+        141
+      ]
+    },
+    {
+      "id": "step:hotel-booking:get-hotel-receipt",
+      "type": "step",
+      "name": "获取酒店收据",
+      "summary": "从用户酒店订单列表匹配指定订单号返回详情作为入住核销凭证。",
+      "tags": [
+        "hotel",
+        "receipt",
+        "verification"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/HotelController.java",
+      "lineRange": [
+        160,
+        172
+      ]
+    },
+    {
+      "id": "step:attraction-ticketing:search-attractions",
+      "type": "step",
+      "name": "搜索景点",
+      "summary": "按关键词搜索景点列表，包含票价、库存、位置坐标等信息。",
+      "tags": [
+        "attraction",
+        "search"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/AttractionService.java",
+      "lineRange": [
+        20,
+        32
+      ]
+    },
+    {
+      "id": "step:attraction-ticketing:view-attraction-detail",
+      "type": "step",
+      "name": "查看景点详情",
+      "summary": "查看景点详细信息包括开放时间、位置坐标和票价说明。",
+      "tags": [
+        "attraction",
+        "detail"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/AttractionService.java",
+      "lineRange": [
+        34,
+        45
+      ]
+    },
+    {
+      "id": "step:attraction-ticketing:buy-attraction-ticket",
+      "type": "step",
+      "name": "购买门票",
+      "summary": "选择成人/儿童数量，填写游客信息，创建门票订单返回订单号。",
+      "tags": [
+        "attraction",
+        "ticket",
+        "purchase",
+        "order"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AttractionController.java",
+      "lineRange": [
+        58,
+        87
+      ]
+    },
+    {
+      "id": "step:attraction-ticketing:return-ticket-order-result",
+      "type": "step",
+      "name": "返回购票结果",
+      "summary": "返回门票订单创建结果和订单号。",
+      "tags": [
+        "attraction",
+        "response"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AttractionController.java",
+      "lineRange": [
+        88,
+        96
+      ]
+    },
+    {
+      "id": "step:review-system:add-review",
+      "type": "step",
+      "name": "添加评价",
+      "summary": "对酒店或景点进行评分（1-5 分）和文字评价，强制使用当前登录用户 ID 防止篡改。",
+      "tags": [
+        "review",
+        "rating",
+        "validation"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/ReviewController.java",
+      "lineRange": [
+        34,
+        56
+      ]
+    },
+    {
+      "id": "step:review-system:query-reviews",
+      "type": "step",
+      "name": "查询评价列表",
+      "summary": "按目标类型（酒店/景点）和目标 ID 查询评价列表，含用户信息和标签。",
+      "tags": [
+        "review",
+        "query",
+        "list"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/ReviewService.java",
+      "lineRange": [
+        22,
+        38
+      ]
+    },
+    {
+      "id": "step:review-system:merchant-reply",
+      "type": "step",
+      "name": "商家回复评价",
+      "summary": "商家或管理员对用户的评价进行回复，创建 Reply 实体。",
+      "tags": [
+        "reply",
+        "merchant"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/ReplyController.java",
+      "lineRange": [
+        24,
+        40
+      ]
+    },
+    {
+      "id": "step:review-system:report-review",
+      "type": "step",
+      "name": "举报评价",
+      "summary": "用户提交评价举报，检查登录状态和必填参数，防止重复举报。",
+      "tags": [
+        "review",
+        "report",
+        "moderation",
+        "duplicate-check"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/ReviewReportController.java",
+      "lineRange": [
+        27,
+        42
+      ]
+    },
+    {
+      "id": "step:review-system:handle-reported-review",
+      "type": "step",
+      "name": "处理被举报评价",
+      "summary": "管理员处理举报工单，软删除违规评价并标记工单为已处理。",
+      "tags": [
+        "review",
+        "report",
+        "admin",
+        "moderation"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        1097,
+        1118
+      ]
+    },
+    {
+      "id": "step:tour-product-browsing:query-by-type",
+      "type": "step",
+      "name": "按类型查询产品",
+      "summary": "根据产品类型（一日游/周边游）分类查询旅游产品列表。",
+      "tags": [
+        "tour",
+        "product",
+        "query"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/TourProductService.java",
+      "lineRange": [
+        16,
+        28
+      ]
+    },
+    {
+      "id": "step:tour-product-browsing:return-product-list",
+      "type": "step",
+      "name": "返回产品列表",
+      "summary": "返回旅游产品列表数据，含产品名称、价格和上下架状态。",
+      "tags": [
+        "tour",
+        "product",
+        "response"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/TourProductController.java",
+      "lineRange": [
+        12,
+        21
+      ]
+    },
+    {
+      "id": "step:tour-product-browsing:file-upload-support",
+      "type": "step",
+      "name": "文件上传支持",
+      "summary": "通用的文件上传服务，校验文件大小（10MB）和扩展名白名单，生成 UUID 文件名保存。",
+      "tags": [
+        "upload",
+        "file",
+        "image"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/FileController.java",
+      "lineRange": [
+        22,
+        54
+      ]
+    },
+    {
+      "id": "step:ai-travel-planning:receive-plan-request",
+      "type": "step",
+      "name": "接收行程规划请求",
+      "summary": "接收目的地、出行日期、预算等行程规划参数。",
+      "tags": [
+        "ai",
+        "travel-plan",
+        "request"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AiController.java",
+      "lineRange": [
+        22,
+        40
+      ]
+    },
+    {
+      "id": "step:ai-travel-planning:call-deepseek-for-plan",
+      "type": "step",
+      "name": "调用 DeepSeek 生成行程",
+      "summary": "调用 DeepSeek API（OpenAI 兼容协议）生成定制旅行计划，含 DayPlan 结构。",
+      "tags": [
+        "ai",
+        "deepseek",
+        "api-call",
+        "travel-plan"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/AiServiceImpl.java",
+      "lineRange": [
+        124,
+        145
+      ]
+    },
+    {
+      "id": "step:ai-travel-planning:save-plan-to-database",
+      "type": "step",
+      "name": "保存行程规划",
+      "summary": "将 AI 生成的行程规划持久化到 tm_ai_plan 表。",
+      "tags": [
+        "ai",
+        "travel-plan",
+        "persistence"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/AiService.java",
+      "lineRange": [
+        24,
+        36
+      ]
+    },
+    {
+      "id": "step:ai-travel-planning:fallback-to-template",
+      "type": "step",
+      "name": "降级为预设模板",
+      "summary": "API 调用超时或失败时自动降级，返回目的地特色的预设行程模板。",
+      "tags": [
+        "ai",
+        "fallback",
+        "resilience"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/AiServiceImpl.java",
+      "lineRange": [
+        174,
+        195
+      ]
+    },
+    {
+      "id": "step:ai-travel-planning:return-plan-result",
+      "type": "step",
+      "name": "返回行程结果",
+      "summary": "返回 AI 生成的完整行程规划或降级模板给前端展示。",
+      "tags": [
+        "ai",
+        "travel-plan",
+        "response"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AiController.java",
+      "lineRange": [
+        42,
+        58
+      ]
+    },
+    {
+      "id": "step:ai-customer-service:receive-user-message",
+      "type": "step",
+      "name": "接收用户消息",
+      "summary": "接收用户在 AI 客服窗口发送的咨询消息。",
+      "tags": [
+        "ai",
+        "chat",
+        "message"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AiController.java",
+      "lineRange": [
+        60,
+        72
+      ]
+    },
+    {
+      "id": "step:ai-customer-service:call-deepseek-chat",
+      "type": "step",
+      "name": "调用 DeepSeek 对话",
+      "summary": "将用户消息发送给 DeepSeek API 获取智能回复。",
+      "tags": [
+        "ai",
+        "deepseek",
+        "chat",
+        "api-call"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/AiServiceImpl.java",
+      "lineRange": [
+        94,
+        118
+      ]
+    },
+    {
+      "id": "step:ai-customer-service:fallback-and-return-reply",
+      "type": "step",
+      "name": "兜底回复并返回",
+      "summary": "API 失败时返回预设兜底回复，保证服务不报错。",
+      "tags": [
+        "ai",
+        "fallback",
+        "response"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/AiServiceImpl.java",
+      "lineRange": [
+        174,
+        195
+      ]
+    },
+    {
+      "id": "step:ai-post-audit:scheduler-fetch-pending-posts",
+      "type": "step",
+      "name": "定时获取待审核帖子",
+      "summary": "定时任务从数据库取出最多 50 篇待审核游记，AtomicBoolean 防止并发执行。",
+      "tags": [
+        "scheduler",
+        "audit",
+        "post",
+        "concurrency-control"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/scheduler/PostAuditScheduler.java",
+      "lineRange": [
+        36,
+        58
+      ]
+    },
+    {
+      "id": "step:ai-post-audit:call-ai-content-audit",
+      "type": "step",
+      "name": "调用 AI 内容审核",
+      "summary": "将游记文本发送给 DeepSeek API 进行内容安全和质量审核。",
+      "tags": [
+        "ai",
+        "audit",
+        "content-moderation",
+        "deepseek"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/AiServiceImpl.java",
+      "lineRange": [
+        80,
+        92
+      ]
+    },
+    {
+      "id": "step:ai-post-audit:update-post-status",
+      "type": "step",
+      "name": "更新帖子审核状态",
+      "summary": "根据 AI 审核结果更新帖子状态为通过或拒绝，失败时保留队列等待下次。",
+      "tags": [
+        "audit",
+        "post",
+        "status-update"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/scheduler/PostAuditScheduler.java",
+      "lineRange": [
+        60,
+        88
+      ]
+    },
+    {
+      "id": "step:ai-post-audit:send-audit-notification",
+      "type": "step",
+      "name": "发送审核通知",
+      "summary": "审核通过或拒绝后发送系统通知给帖子作者。",
+      "tags": [
+        "notification",
+        "audit",
+        "user"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/NotificationCenterService.java",
+      "lineRange": [
+        28,
+        42
+      ]
+    },
+    {
+      "id": "step:ai-post-audit:sensitive-word-filter",
+      "type": "step",
+      "name": "敏感词过滤",
+      "summary": "使用 SensitiveWordService 对帖子内容进行敏感词检测和过滤。",
+      "tags": [
+        "sensitive-word",
+        "filter",
+        "content-moderation"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/service/SensitiveWordService.java",
+      "lineRange": [
+        22,
+        38
+      ]
+    },
+    {
+      "id": "step:post-management:create-post",
+      "type": "step",
+      "name": "创建游记帖子",
+      "summary": "用户发布游记帖子，受 @RateLimiter 限流保护，经敏感词过滤后写入数据库。",
+      "tags": [
+        "post",
+        "create",
+        "rate-limited",
+        "sensitive-word"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/PostServiceImpl.java",
+      "lineRange": [
+        28,
+        42
+      ]
+    },
+    {
+      "id": "step:post-management:list-posts",
+      "type": "step",
+      "name": "浏览帖子列表",
+      "summary": "分页浏览已发布的游记帖子列表，支持按时间排序。",
+      "tags": [
+        "post",
+        "list",
+        "pagination"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/PostService.java",
+      "lineRange": [
+        22,
+        36
+      ]
+    },
+    {
+      "id": "step:post-management:view-post-detail",
+      "type": "step",
+      "name": "查看帖子详情",
+      "summary": "查看游记完整内容，包含作者信息、图文和互动数据。",
+      "tags": [
+        "post",
+        "detail",
+        "author"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/PostServiceImpl.java",
+      "lineRange": [
+        18,
+        26
+      ]
+    },
+    {
+      "id": "step:post-management:update-post",
+      "type": "step",
+      "name": "更新帖子",
+      "summary": "作者更新自己的游记内容，需重新进入审核流程。",
+      "tags": [
+        "post",
+        "update"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/PostServiceImpl.java",
+      "lineRange": [
+        44,
+        58
+      ]
+    },
+    {
+      "id": "step:post-management:delete-post",
+      "type": "step",
+      "name": "删除帖子",
+      "summary": "作者删除自己的游记帖子。",
+      "tags": [
+        "post",
+        "delete"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/PostService.java",
+      "lineRange": [
+        44,
+        52
+      ]
+    },
+    {
+      "id": "step:post-management:view-following-feed",
+      "type": "step",
+      "name": "查看关注动态流",
+      "summary": "拉取所关注用户的最新帖子动态流。",
+      "tags": [
+        "post",
+        "feed",
+        "following",
+        "social"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/PostServiceImpl.java",
+      "lineRange": [
+        60,
+        76
+      ]
+    },
+    {
+      "id": "step:social-interaction:add-comment",
+      "type": "step",
+      "name": "添加评论",
+      "summary": "对游记添加评论或进行嵌套回复。",
+      "tags": [
+        "comment",
+        "create"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/CommentService.java",
+      "lineRange": [
+        28,
+        42
+      ]
+    },
+    {
+      "id": "step:social-interaction:delete-comment",
+      "type": "step",
+      "name": "删除评论",
+      "summary": "删除自己的评论，支持逻辑删除。",
+      "tags": [
+        "comment",
+        "delete"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/CommentService.java",
+      "lineRange": [
+        44,
+        52
+      ]
+    },
+    {
+      "id": "step:social-interaction:toggle-like",
+      "type": "step",
+      "name": "切换点赞/收藏",
+      "summary": "对游记或评论进行点赞/取消点赞，或收藏/取消收藏操作。",
+      "tags": [
+        "like",
+        "toggle",
+        "collect"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/LikeService.java",
+      "lineRange": [
+        22,
+        38
+      ]
+    },
+    {
+      "id": "step:social-interaction:toggle-follow",
+      "type": "step",
+      "name": "切换关注",
+      "summary": "关注或取消关注其他用户。",
+      "tags": [
+        "follow",
+        "toggle",
+        "social"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/FollowService.java",
+      "lineRange": [
+        20,
+        36
+      ]
+    },
+    {
+      "id": "step:social-interaction:view-fans-and-following",
+      "type": "step",
+      "name": "查看粉丝和关注列表",
+      "summary": "查看用户的粉丝列表和关注列表。",
+      "tags": [
+        "follow",
+        "fans",
+        "list"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/FollowService.java",
+      "lineRange": [
+        38,
+        55
+      ]
+    },
+    {
+      "id": "step:social-interaction:view-collections",
+      "type": "step",
+      "name": "查看收藏列表",
+      "summary": "查看当前用户收藏的内容列表。",
+      "tags": [
+        "like",
+        "collect",
+        "list"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/LikeService.java",
+      "lineRange": [
+        40,
+        55
+      ]
+    },
+    {
+      "id": "step:user-profile:get-user-profile",
+      "type": "step",
+      "name": "查看用户主页",
+      "summary": "查询用户基本资料并统计帖子数、关注数和粉丝数。",
+      "tags": [
+        "profile",
+        "statistics",
+        "query"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/UserProfileController.java",
+      "lineRange": [
+        37,
+        68
+      ]
+    },
+    {
+      "id": "step:user-profile:view-user-posts",
+      "type": "step",
+      "name": "查看用户帖子列表",
+      "summary": "获取指定用户已发布的游记帖子列表。",
+      "tags": [
+        "post",
+        "query",
+        "user"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/UserProfileController.java",
+      "lineRange": [
+        71,
+        84
+      ]
+    },
+    {
+      "id": "step:user-profile:update-profile",
+      "type": "step",
+      "name": "更新个人资料",
+      "summary": "当前用户选择性更新个人资料信息。",
+      "tags": [
+        "profile",
+        "update"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/UserProfileController.java",
+      "lineRange": [
+        86,
+        100
+      ]
+    },
+    {
+      "id": "step:user-profile:file-upload-for-avatar",
+      "type": "step",
+      "name": "上传头像文件",
+      "summary": "用户上传头像图片，经文件服务校验后保存。",
+      "tags": [
+        "upload",
+        "avatar",
+        "file"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/FileController.java",
+      "lineRange": [
+        22,
+        54
+      ]
+    },
+    {
+      "id": "step:admin-dashboard:collect-core-statistics",
+      "type": "step",
+      "name": "收集核心统计指标",
+      "summary": "聚合总用户数、总订单数、今日订单、待审核游记等核心运营指标。",
+      "tags": [
+        "admin",
+        "statistics",
+        "metrics"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        552,
+        567
+      ]
+    },
+    {
+      "id": "step:admin-dashboard:aggregate-dashboard-data",
+      "type": "step",
+      "name": "聚合仪表盘完整数据",
+      "summary": "整合趋势图表数据（日订单趋势/热门目的地/订单分布/用户增长/QPS延迟）、错误日志和系统告警。",
+      "tags": [
+        "admin",
+        "dashboard",
+        "analytics",
+        "chart"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        569,
+        589
+      ]
+    },
+    {
+      "id": "step:admin-dashboard:return-dashboard-response",
+      "type": "step",
+      "name": "返回仪表盘数据",
+      "summary": "将完整的仪表盘数据以统一格式返回给管理后台前端。",
+      "tags": [
+        "admin",
+        "dashboard",
+        "response"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        591,
+        600
+      ]
+    },
+    {
+      "id": "step:order-and-refund-management:list-all-orders",
+      "type": "step",
+      "name": "分页查询全平台订单",
+      "summary": "管理员分页查询机票、火车票和酒店订单，支持按类型和状态过滤。",
+      "tags": [
+        "admin",
+        "order",
+        "pagination"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        855,
+        917
+      ]
+    },
+    {
+      "id": "step:order-and-refund-management:approve-refund",
+      "type": "step",
+      "name": "审批退款",
+      "summary": "通过退款请求，归还酒店房间或航班/火车座位库存。",
+      "tags": [
+        "admin",
+        "refund",
+        "approval",
+        "inventory"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        919,
+        947
+      ]
+    },
+    {
+      "id": "step:order-and-refund-management:reject-refund",
+      "type": "step",
+      "name": "驳回退款",
+      "summary": "拒绝退款请求，将订单状态标记为退款已拒绝。",
+      "tags": [
+        "admin",
+        "refund",
+        "rejection"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        949,
+        970
+      ]
+    },
+    {
+      "id": "step:order-and-refund-management:view-coupon-claims",
+      "type": "step",
+      "name": "查看优惠券领取记录",
+      "summary": "查看指定优惠券的领取记录，含用户信息、领取时间和使用状态。",
+      "tags": [
+        "admin",
+        "coupon",
+        "claims"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        1029,
+        1047
+      ]
+    },
+    {
+      "id": "step:content-moderation:approve-post-manually",
+      "type": "step",
+      "name": "人工审核通过游记",
+      "summary": "管理员人工审核通过游记，更新状态为已发布并通知作者。",
+      "tags": [
+        "admin",
+        "audit",
+        "post",
+        "approval"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        790,
+        807
+      ]
+    },
+    {
+      "id": "step:content-moderation:reject-post-manually",
+      "type": "step",
+      "name": "人工审核驳回游记",
+      "summary": "管理员驳回游记申请，附带驳回原因并通知作者。",
+      "tags": [
+        "admin",
+        "audit",
+        "post",
+        "rejection"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        809,
+        827
+      ]
+    },
+    {
+      "id": "step:content-moderation:handle-reported-reviews",
+      "type": "step",
+      "name": "处理被举报评价",
+      "summary": "管理员删除违规评价并标记举报工单为已处理。",
+      "tags": [
+        "admin",
+        "review",
+        "report",
+        "moderation"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        1097,
+        1118
+      ]
+    },
+    {
+      "id": "step:content-moderation:manage-sensitive-words",
+      "type": "step",
+      "name": "管理敏感词库",
+      "summary": "管理全平台的敏感词列表，用于内容发布时的自动过滤。",
+      "tags": [
+        "admin",
+        "sensitive-word",
+        "moderation"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/service/SensitiveWordService.java",
+      "lineRange": [
+        16,
+        32
+      ]
+    },
+    {
+      "id": "step:content-moderation:view-system-logs",
+      "type": "step",
+      "name": "查看操作日志",
+      "summary": "分页查看系统操作日志，含方法名、参数、耗时、用户和 IP 等审计信息。",
+      "tags": [
+        "admin",
+        "log",
+        "audit"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        1361,
+        1375
+      ]
+    },
+    {
+      "id": "step:data-import-and-management:parse-csv-file",
+      "type": "step",
+      "name": "解析 CSV 文件",
+      "summary": "上传并逐行解析 CSV 文件，支持 flights/trains/hotels/rooms/attractions 五种类型。",
+      "tags": [
+        "admin",
+        "csv",
+        "parse",
+        "upload"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        1186,
+        1220
+      ]
+    },
+    {
+      "id": "step:data-import-and-management:bulk-import-data",
+      "type": "step",
+      "name": "批量导入数据",
+      "summary": "将解析后的数据逐条写入对应数据库表，返回成功和失败统计。",
+      "tags": [
+        "admin",
+        "import",
+        "bulk",
+        "database"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        1186,
+        1220
+      ]
+    },
+    {
+      "id": "step:data-import-and-management:delete-flight-resource",
+      "type": "step",
+      "name": "删除航班资源",
+      "summary": "删除航班前检查是否存在关联订单，有订单则拒绝删除。",
+      "tags": [
+        "admin",
+        "flight",
+        "delete",
+        "validation"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        614,
+        624
+      ]
+    },
+    {
+      "id": "step:data-import-and-management:add-admin-review-reply",
+      "type": "step",
+      "name": "管理员回复评价",
+      "summary": "管理员直接回复用户评价，创建 Reply 记录。",
+      "tags": [
+        "admin",
+        "reply",
+        "review"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
+      "lineRange": [
+        1129,
+        1142
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "domain:user-authentication",
+      "target": "flow:user-registration-and-login",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:user-authentication",
+      "target": "flow:account-management",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:transportation-ticketing",
+      "target": "flow:flight-search-and-price-trend",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:transportation-ticketing",
+      "target": "flow:train-search-and-transfer",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:transportation-ticketing",
+      "target": "flow:create-traffic-order",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:transportation-ticketing",
+      "target": "flow:traffic-order-lifecycle",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:transportation-ticketing",
+      "target": "flow:passenger-management",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:accommodation-and-local-services",
+      "target": "flow:hotel-booking",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:accommodation-and-local-services",
+      "target": "flow:attraction-ticketing",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:accommodation-and-local-services",
+      "target": "flow:review-system",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:accommodation-and-local-services",
+      "target": "flow:tour-product-browsing",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:ai-planning",
+      "target": "flow:ai-travel-planning",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:ai-planning",
+      "target": "flow:ai-customer-service",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:ai-planning",
+      "target": "flow:ai-post-audit",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:community-and-user-center",
+      "target": "flow:post-management",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:community-and-user-center",
+      "target": "flow:social-interaction",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:community-and-user-center",
+      "target": "flow:user-profile",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:admin-backend",
+      "target": "flow:admin-dashboard",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:admin-backend",
+      "target": "flow:order-and-refund-management",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:admin-backend",
+      "target": "flow:content-moderation",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:admin-backend",
+      "target": "flow:data-import-and-management",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:user-registration-and-login",
+      "target": "step:user-registration-and-login:validate-registration-input",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:user-registration-and-login",
+      "target": "step:user-registration-and-login:encrypt-password-and-create-user",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:user-registration-and-login",
+      "target": "step:user-registration-and-login:return-registration-result",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:user-registration-and-login",
+      "target": "step:user-registration-and-login:validate-login-credentials",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "flow:user-registration-and-login",
+      "target": "step:user-registration-and-login:generate-jwt-token",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:user-registration-and-login",
+      "target": "step:user-registration-and-login:set-security-context-and-return",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:account-management",
+      "target": "step:account-management:verify-old-password",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:account-management",
+      "target": "step:account-management:encrypt-and-update-password",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:account-management",
+      "target": "step:account-management:handle-account-deletion",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:account-management",
+      "target": "step:account-management:fetch-current-user-info",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:flight-search-and-price-trend",
+      "target": "step:flight-search-and-price-trend:receive-flight-query-params",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:flight-search-and-price-trend",
+      "target": "step:flight-search-and-price-trend:search-flight-list",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:flight-search-and-price-trend",
+      "target": "step:flight-search-and-price-trend:query-price-trend-data",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:flight-search-and-price-trend",
+      "target": "step:flight-search-and-price-trend:return-search-results",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:train-search-and-transfer",
+      "target": "step:train-search-and-transfer:receive-train-query-params",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:train-search-and-transfer",
+      "target": "step:train-search-and-transfer:search-train-list",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:train-search-and-transfer",
+      "target": "step:train-search-and-transfer:intelligent-transfer-recommendation",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:train-search-and-transfer",
+      "target": "step:train-search-and-transfer:return-search-results",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:create-traffic-order",
+      "target": "step:create-traffic-order:rate-limiter-check",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:create-traffic-order",
+      "target": "step:create-traffic-order:pre-deduct-inventory",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:create-traffic-order",
+      "target": "step:create-traffic-order:create-order-record",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:create-traffic-order",
+      "target": "step:create-traffic-order:bind-passenger-info",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:create-traffic-order",
+      "target": "step:create-traffic-order:return-order-number",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:traffic-order-lifecycle",
+      "target": "step:traffic-order-lifecycle:mock-payment",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:traffic-order-lifecycle",
+      "target": "step:traffic-order-lifecycle:cancel-order-return-inventory",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:traffic-order-lifecycle",
+      "target": "step:traffic-order-lifecycle:timeout-auto-cancel",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:traffic-order-lifecycle",
+      "target": "step:traffic-order-lifecycle:query-order-list",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:traffic-order-lifecycle",
+      "target": "step:traffic-order-lifecycle:get-order-receipt",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:passenger-management",
+      "target": "step:passenger-management:add-passenger",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:passenger-management",
+      "target": "step:passenger-management:delete-passenger",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "flow:passenger-management",
+      "target": "step:passenger-management:list-passengers",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:hotel-booking",
+      "target": "step:hotel-booking:search-hotels",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:hotel-booking",
+      "target": "step:hotel-booking:view-room-details",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:hotel-booking",
+      "target": "step:hotel-booking:create-hotel-order",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:hotel-booking",
+      "target": "step:hotel-booking:pay-hotel-order",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "flow:hotel-booking",
+      "target": "step:hotel-booking:cancel-or-timeout-hotel-order",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:hotel-booking",
+      "target": "step:hotel-booking:get-hotel-receipt",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:attraction-ticketing",
+      "target": "step:attraction-ticketing:search-attractions",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:attraction-ticketing",
+      "target": "step:attraction-ticketing:view-attraction-detail",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:attraction-ticketing",
+      "target": "step:attraction-ticketing:buy-attraction-ticket",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:attraction-ticketing",
+      "target": "step:attraction-ticketing:return-ticket-order-result",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:review-system",
+      "target": "step:review-system:add-review",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:review-system",
+      "target": "step:review-system:query-reviews",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:review-system",
+      "target": "step:review-system:merchant-reply",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:review-system",
+      "target": "step:review-system:report-review",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:review-system",
+      "target": "step:review-system:handle-reported-review",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:tour-product-browsing",
+      "target": "step:tour-product-browsing:query-by-type",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:tour-product-browsing",
+      "target": "step:tour-product-browsing:return-product-list",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "flow:tour-product-browsing",
+      "target": "step:tour-product-browsing:file-upload-support",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:ai-travel-planning",
+      "target": "step:ai-travel-planning:receive-plan-request",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:ai-travel-planning",
+      "target": "step:ai-travel-planning:call-deepseek-for-plan",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:ai-travel-planning",
+      "target": "step:ai-travel-planning:save-plan-to-database",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:ai-travel-planning",
+      "target": "step:ai-travel-planning:fallback-to-template",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:ai-travel-planning",
+      "target": "step:ai-travel-planning:return-plan-result",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:ai-customer-service",
+      "target": "step:ai-customer-service:receive-user-message",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:ai-customer-service",
+      "target": "step:ai-customer-service:call-deepseek-chat",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "flow:ai-customer-service",
+      "target": "step:ai-customer-service:fallback-and-return-reply",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:ai-post-audit",
+      "target": "step:ai-post-audit:scheduler-fetch-pending-posts",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:ai-post-audit",
+      "target": "step:ai-post-audit:call-ai-content-audit",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:ai-post-audit",
+      "target": "step:ai-post-audit:update-post-status",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:ai-post-audit",
+      "target": "step:ai-post-audit:send-audit-notification",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:ai-post-audit",
+      "target": "step:ai-post-audit:sensitive-word-filter",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:post-management",
+      "target": "step:post-management:create-post",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:post-management",
+      "target": "step:post-management:list-posts",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:post-management",
+      "target": "step:post-management:view-post-detail",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:post-management",
+      "target": "step:post-management:update-post",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "flow:post-management",
+      "target": "step:post-management:delete-post",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:post-management",
+      "target": "step:post-management:view-following-feed",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:social-interaction",
+      "target": "step:social-interaction:add-comment",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:social-interaction",
+      "target": "step:social-interaction:delete-comment",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:social-interaction",
+      "target": "step:social-interaction:toggle-like",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:social-interaction",
+      "target": "step:social-interaction:toggle-follow",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "flow:social-interaction",
+      "target": "step:social-interaction:view-fans-and-following",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:social-interaction",
+      "target": "step:social-interaction:view-collections",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:user-profile",
+      "target": "step:user-profile:get-user-profile",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:user-profile",
+      "target": "step:user-profile:view-user-posts",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:user-profile",
+      "target": "step:user-profile:update-profile",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:user-profile",
+      "target": "step:user-profile:file-upload-for-avatar",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:admin-dashboard",
+      "target": "step:admin-dashboard:collect-core-statistics",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:admin-dashboard",
+      "target": "step:admin-dashboard:aggregate-dashboard-data",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "flow:admin-dashboard",
+      "target": "step:admin-dashboard:return-dashboard-response",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:order-and-refund-management",
+      "target": "step:order-and-refund-management:list-all-orders",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:order-and-refund-management",
+      "target": "step:order-and-refund-management:approve-refund",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:order-and-refund-management",
+      "target": "step:order-and-refund-management:reject-refund",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:order-and-refund-management",
+      "target": "step:order-and-refund-management:view-coupon-claims",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:content-moderation",
+      "target": "step:content-moderation:approve-post-manually",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:content-moderation",
+      "target": "step:content-moderation:reject-post-manually",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:content-moderation",
+      "target": "step:content-moderation:handle-reported-reviews",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:content-moderation",
+      "target": "step:content-moderation:manage-sensitive-words",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:content-moderation",
+      "target": "step:content-moderation:view-system-logs",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:data-import-and-management",
+      "target": "step:data-import-and-management:parse-csv-file",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:data-import-and-management",
+      "target": "step:data-import-and-management:bulk-import-data",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:data-import-and-management",
+      "target": "step:data-import-and-management:delete-flight-resource",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:data-import-and-management",
+      "target": "step:data-import-and-management:add-admin-review-reply",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:user-authentication",
+      "target": "domain:community-and-user-center",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "UserContext 提供社区模块的当前登录用户身份",
+      "weight": 0.6
+    },
+    {
+      "source": "domain:user-authentication",
+      "target": "domain:transportation-ticketing",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "JWT 认证保护交通订单创建和支付接口",
+      "weight": 0.6
+    },
+    {
+      "source": "domain:user-authentication",
+      "target": "domain:accommodation-and-local-services",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "JWT 认证保护酒店订单和评价接口",
+      "weight": 0.6
+    },
+    {
+      "source": "domain:user-authentication",
+      "target": "domain:admin-backend",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "管理员角色身份由 User 实体 role 字段控制",
+      "weight": 0.6
+    },
+    {
+      "source": "domain:ai-planning",
+      "target": "domain:community-and-user-center",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "AI 服务自动审核社区游记内容",
+      "weight": 0.6
+    },
+    {
+      "source": "domain:ai-planning",
+      "target": "domain:admin-backend",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "管理后台可查看 AI 审核结果和通知记录",
+      "weight": 0.6
+    },
+    {
+      "source": "domain:transportation-ticketing",
+      "target": "domain:accommodation-and-local-services",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "用户可对交通服务进行评价",
+      "weight": 0.6
+    },
+    {
+      "source": "domain:transportation-ticketing",
+      "target": "domain:admin-backend",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "管理后台统一管理交通订单和退款审批",
+      "weight": 0.6
+    },
+    {
+      "source": "domain:accommodation-and-local-services",
+      "target": "domain:admin-backend",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "管理后台处理酒店订单、评价举报和商家回复",
+      "weight": 0.6
+    },
+    {
+      "source": "domain:accommodation-and-local-services",
+      "target": "domain:community-and-user-center",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "用户可查看景点和酒店的游记与评价",
+      "weight": 0.6
+    },
+    {
+      "source": "domain:community-and-user-center",
+      "target": "domain:admin-backend",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "管理后台审核游记、管理敏感词库",
+      "weight": 0.6
+    }
+  ],
+  "layers": [],
+  "tour": []
+}
