@@ -35,12 +35,13 @@ public class FileController {
         if (!ALLOWED_EXTENSIONS.contains(ext))
             return Result.error("不支持的文件类型，仅允许: " + String.join(",", ALLOWED_EXTENSIONS));
 
-        File dir = new File(uploadDir);
-        if (!dir.exists()) dir.mkdirs();
-
         String newName = UUID.randomUUID().toString().replace("-", "") + "." + ext;
-        File dest = new File(dir, newName);
         try {
+            File dir = new File(uploadDir).getCanonicalFile();
+            if (!dir.exists() && !dir.mkdirs()) {
+                return Result.error("上传目录创建失败");
+            }
+            File dest = new File(dir, newName);
             file.transferTo(dest);
         } catch (IOException e) {
             return Result.error("上传失败: " + e.getMessage());

@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -72,32 +73,52 @@ public class AiServiceImpl implements AiService {
     @Autowired(required = false)
     private HotelService hotelService;
 
+    @Autowired(required = false)
+    private AttractionService attractionService;
+
     private boolean apiKeyWarningLogged = false;
 
-    private static final String PLAN_SYSTEM_PROMPT = "你是一个专业的旅游规划师。请根据用户的需求，生成一份详细的旅游行程规划。\n" +
-            "必须以严格的JSON格式返回，不要包含markdown代码块标记，结构如下：\n" +
-            "{\n" +
-            "  \"title\": \"行程标题（需包含目的地名称）\",\n" +
-            "  \"summary\": \"行程摘要（100字以内，概括行程亮点）\",\n" +
-            "  \"days\": [\n" +
-            "    {\n" +
-            "      \"day\": 1,\n" +
-            "      \"date\": \"2026-06-01\",\n" +
-            "      \"theme\": \"当天主题\",\n" +
-            "      \"activities\": [\n" +
-            "        {\"time\": \"09:00\", \"name\": \"活动名称\", \"description\": \"详细描述\", " +
-            "\"type\": \"景点/餐厅/酒店/交通/购物/娱乐\", \"cost\": 100}\n" +
-            "      ]\n" +
-            "    }\n" +
-            "  ],\n" +
-            "  \"totalEstimatedCost\": 3000\n" +
-            "}\n" +
-            "要求：\n" +
-            "1. 每天至少包含4-5个活动（上午、中午、下午、晚上各至少1个），涵盖景点、餐饮、交通等\n" +
-            "2. 活动描述要具体，包含地点名称和实用信息\n" +
-            "3. 费用估算要合理，参考中国旅游实际消费水平\n" +
-            "4. 行程要符合逻辑，考虑景点间距离和交通时间\n" +
-            "5. totalEstimatedCost 为所有活动费用总和（不含酒店）";
+    private static final String PLAN_SYSTEM_PROMPT = """
+            你是 TravelMate 的资深中文自由行规划师。目标不是堆景点，而是生成能真实执行的行程。
+            必须只返回严格 JSON，不要 markdown，不要解释文字。结构如下：
+            {
+              "title": "包含目的地和天数的行程标题",
+              "summary": "100字以内，说明节奏、适合人群和主要亮点",
+              "pace": "轻松/适中/紧凑",
+              "budgetNote": "说明费用口径，必须写明是否不含往返大交通和住宿",
+              "days": [
+                {
+                  "day": 1,
+                  "date": "2026-06-01",
+                  "theme": "当天主题",
+                  "area": "当天主要活动区域",
+                  "dayEstimatedCost": 500,
+                  "tips": "当天预约、天气、体力或交通提醒",
+                  "activities": [
+                    {
+                      "time": "09:30",
+                      "name": "活动名称",
+                      "description": "为什么这样安排，以及现场注意事项",
+                      "type": "景点/餐饮/交通/酒店/休息/购物/娱乐",
+                      "duration": "约2小时",
+                      "transfer": "上一站到此约20分钟",
+                      "bookingTip": "是否需要预约或购票",
+                      "cost": 120
+                    }
+                  ]
+                }
+              ],
+              "totalEstimatedCost": 3000
+            }
+            规划硬约束：
+            1. 每天 3-5 个活动即可，最多 2 个重体力/长排队景点；必须安排午餐或休息缓冲。
+            2. 每天尽量围绕同一区域或顺路区域组织，不要跨城折返；跨区域必须写出交通时间。
+            3. 首日默认有抵达、入住或行李寄存缓冲；末日默认有返程和购物/轻量景点缓冲。
+            4. 有老人、亲子、海岛、高原、雨季、热门博物馆/景区等场景时，主动降低强度并写预约/安全提醒。
+            5. 预算是整团总预算。费用按人数估算，totalEstimatedCost 只统计当地门票、餐饮、市内交通和体验项目，不含往返大交通及住宿，除非用户明确要求。
+            6. 优先使用用户提供的本地景点参考；没有参考时也只能使用真实常见景点，不要编造不存在的地点。
+            7. 如果预算明显不足，给出低成本替代和取舍，不要硬塞高价项目。
+            """;
 
     private static final String POST_AUDIT_SYSTEM_PROMPT = "你是 TravelMate 社区游记内容审核 AI。请只返回严格 JSON，不要输出 markdown。" +
             "审核目标：判断用户发布的旅行笔记是否可直接发布。" +
@@ -112,12 +133,29 @@ public class AiServiceImpl implements AiService {
     @Override
     public AiPlan generatePlan(AiPlanCreateDTO dto, Long userId) {
         checkApiKey();
+        normalizePlanRequest(dto);
 
         String userPrompt = String.format(
-                "目的地：%s，出行天数：%d天，预算：%.0f元，出行人数：%d人，出行偏好：%s，出发日期：%s",
+                """
+                        目的地：%s
+                        出行天数：%d天
+                        出发日期：%s
+                        出行人数：%d人
+                        总预算：%.0f元
+                        人均每日可用预算参考：%.0f元
+                        出行偏好：%s
+
+                        本地景点参考：
+                        %s
+
+                        请按“真实可走、少折返、有缓冲”的原则规划。若景点参考不足，可以补充该目的地真实常见景点，但不要编造。
+                        """,
                 dto.getDestination(), dto.getDays(),
+                dto.getStartDate(),
+                dto.getPeopleCount(),
                 dto.getBudget() != null ? dto.getBudget().doubleValue() : 0.0,
-                dto.getPeopleCount(), dto.getPreferences(), dto.getStartDate());
+                estimatePerPersonDailyBudget(dto),
+                dto.getPreferences(), buildTravelContext(dto.getDestination()));
 
         String planContent = callDeepSeekForPlan(userPrompt, dto);
 
@@ -156,6 +194,76 @@ public class AiServiceImpl implements AiService {
                 String.format("您的 %s %d 天行程已生成，可在行程列表中查看详情。", dto.getDestination(), dto.getDays()),
                 "/ai-plan");
         return plan;
+    }
+
+    private void normalizePlanRequest(AiPlanCreateDTO dto) {
+        if (dto == null) {
+            throw new RuntimeException("行程参数不能为空");
+        }
+        String destination = dto.getDestination() == null ? "" : dto.getDestination().trim();
+        if (destination.isBlank()) {
+            throw new RuntimeException("请输入目的地");
+        }
+        dto.setDestination(destination);
+        dto.setDays(clamp(dto.getDays() <= 0 ? 3 : dto.getDays(), 1, 15));
+        dto.setPeopleCount(clamp(dto.getPeopleCount() <= 0 ? 1 : dto.getPeopleCount(), 1, 20));
+        if (dto.getBudget() == null || dto.getBudget().doubleValue() <= 0) {
+            dto.setBudget(BigDecimal.valueOf(dto.getPeopleCount() * dto.getDays() * 450L));
+        }
+        dto.setPreferences(dto.getPreferences() == null || dto.getPreferences().isBlank()
+                ? "经典必游,美食体验,节奏适中"
+                : dto.getPreferences().trim());
+        dto.setStartDate(normalizeStartDate(dto.getStartDate()));
+    }
+
+    private String normalizeStartDate(String startDate) {
+        if (startDate != null && !startDate.isBlank()) {
+            try {
+                return LocalDate.parse(startDate.trim()).toString();
+            } catch (Exception ignored) {
+            }
+        }
+        return LocalDate.now().toString();
+    }
+
+    private double estimatePerPersonDailyBudget(AiPlanCreateDTO dto) {
+        return dto.getBudget().doubleValue() / Math.max(dto.getPeopleCount(), 1) / Math.max(dto.getDays(), 1);
+    }
+
+    private String buildTravelContext(String destination) {
+        if (attractionService == null) {
+            return "暂无本地景点库参考，请使用真实常见景点并控制同日距离。";
+        }
+        try {
+            List<Attraction> attractions = attractionService.searchAttractions(destination);
+            if ((attractions == null || attractions.isEmpty()) && destination.endsWith("市")) {
+                attractions = attractionService.searchAttractions(destination.substring(0, destination.length() - 1));
+            }
+            if (attractions == null || attractions.isEmpty()) {
+                return "暂无本地景点库参考，请使用真实常见景点并控制同日距离。";
+            }
+            StringBuilder context = new StringBuilder();
+            int limit = Math.min(attractions.size(), 8);
+            for (int i = 0; i < limit; i++) {
+                Attraction a = attractions.get(i);
+                context.append(i + 1).append(". ")
+                        .append(a.getName());
+                if (a.getAddress() != null && !a.getAddress().isBlank()) {
+                    context.append("，地址：").append(a.getAddress());
+                }
+                if (a.getOpenTime() != null && !a.getOpenTime().isBlank()) {
+                    context.append("，开放时间：").append(a.getOpenTime());
+                }
+                if (a.getAdultPrice() != null) {
+                    context.append("，成人票：").append(a.getAdultPrice()).append("元");
+                }
+                context.append("\n");
+            }
+            return context.toString().trim();
+        } catch (Exception e) {
+            log.debug("读取本地景点参考失败: {}", e.getMessage());
+            return "暂无本地景点库参考，请使用真实常见景点并控制同日距离。";
+        }
     }
 
     private void checkApiKey() {
@@ -210,14 +318,37 @@ public class AiServiceImpl implements AiService {
             String response = doHttpPost(baseUrl + "/v1/chat/completions", body);
             String content = extractContent(response);
             if (content != null) {
-                log.info("AI 行程生成成功");
-                return content;
+                String normalized = normalizePlanContent(content);
+                if (normalized != null) {
+                    log.info("AI 行程生成成功");
+                    return normalized;
+                }
             }
-            log.warn("AI 返回内容解析失败，使用降级模板");
+            log.warn("AI 返回内容结构不完整，使用降级模板");
         } catch (Exception e) {
             log.warn("AI 行程生成失败: {}，使用降级模板", e.getMessage());
         }
         return generateFallbackPlan(dto);
+    }
+
+    private String normalizePlanContent(String content) {
+        try {
+            JsonNode root = objectMapper.readTree(content);
+            JsonNode days = root.path("days");
+            if (!days.isArray() || days.isEmpty()) {
+                return null;
+            }
+            for (JsonNode day : days) {
+                JsonNode activities = day.path("activities");
+                if (!activities.isArray() || activities.isEmpty()) {
+                    return null;
+                }
+            }
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            log.warn("AI 行程 JSON 校验失败: {}", e.getMessage());
+            return null;
+        }
     }
 
     @Override
@@ -663,7 +794,9 @@ public class AiServiceImpl implements AiService {
 
         return switch (configuredEffort.trim().toLowerCase()) {
             case "xhigh", "max" -> "max";
-            case "low", "medium", "high" -> "high";
+            case "low" -> "low";
+            case "medium" -> "medium";
+            case "high" -> "high";
             default -> "high";
         };
     }
@@ -709,23 +842,26 @@ public class AiServiceImpl implements AiService {
      */
     private String generateFallbackPlan(AiPlanCreateDTO dto) {
         String dest = dto.getDestination();
-        int days = Math.min(dto.getDays(), 7);
+        int days = dto.getDays();
         int people = Math.max(dto.getPeopleCount(), 1);
         double budget = dto.getBudget() != null ? dto.getBudget().doubleValue() : 5000;
         String prefs = dto.getPreferences() != null ? dto.getPreferences() : "";
+        LocalDate startDate = LocalDate.parse(normalizeStartDate(dto.getStartDate()));
 
         StringBuilder json = new StringBuilder();
-        json.append("{\"title\":\"").append(escapeJson(dest)).append(" ").append(days).append("日深度游\",");
+        json.append("{\"title\":\"").append(escapeJson(dest)).append(" ").append(days).append("日松弛自由行\",");
         json.append("\"summary\":\"")
-                .append(escapeJson("AI服务暂时不可用，以下是我们为您精心准备的" + dest + days + "日行程模板，涵盖经典景点、特色美食与实用贴士。实际行程可根据您的偏好灵活调整。"))
+                .append(escapeJson("AI服务暂时不可用，先给出一份按同区顺路、每天留缓冲的" + dest + days + "日行程。费用按" + people + "人估算，不含往返大交通和住宿。"))
                 .append("\",");
+        json.append("\"pace\":\"适中\",");
+        json.append("\"budgetNote\":\"费用仅估算当地门票、餐饮、市内交通和体验项目，不含往返大交通及住宿。\",");
         json.append("\"days\":[");
 
         double totalCost = 0;
         for (int d = 1; d <= days; d++) {
             if (d > 1)
                 json.append(",");
-            DayPlan dayPlan = buildDayPlan(dest, d, days, prefs, people, budget / days);
+            DayPlan dayPlan = buildDayPlan(dest, d, days, prefs, people, budget / days, startDate.plusDays(d - 1));
             json.append(dayPlan.json);
             totalCost += dayPlan.cost;
         }
@@ -747,25 +883,43 @@ public class AiServiceImpl implements AiService {
         }
     }
 
-    private DayPlan buildDayPlan(String dest, int day, int totalDays, String prefs, int people, double dayBudget) {
+    private DayPlan buildDayPlan(String dest, int day, int totalDays, String prefs, int people, double dayBudget,
+            LocalDate date) {
         String[] themes = getThemesForDestination(dest);
         String theme = themes[(day - 1) % themes.length];
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"day\":").append(day).append(",\"theme\":\"").append(escapeJson(theme))
-                .append("\",\"activities\":[");
+                .append("\",\"date\":\"").append(date).append("\",");
+        sb.append("\"area\":\"").append(escapeJson(getAreaHint(dest, day))).append("\",");
+        sb.append("\"tips\":\"").append(escapeJson(buildDayTip(dest, prefs, day, totalDays))).append("\",");
+        sb.append("\"activities\":[");
 
         double dayCost = 0;
         String[] activities = getActivitiesForDestination(dest, day, totalDays);
-        String[] times = { "08:00", "10:00", "12:00", "14:30", "17:00", "19:00" };
-        String[] types = { "交通", "景点", "餐饮", "景点", "购物", "餐饮" };
-        int[] costs = { 50, 100, 60, 80, 100, 80 };
+        String[] times = day == 1
+                ? new String[] { "10:30", "12:30", "15:00", "18:30" }
+                : day == totalDays
+                        ? new String[] { "09:30", "11:00", "13:00", "15:30" }
+                        : new String[] { "09:00", "12:00", "14:30", "18:30" };
+        String[] types = day == 1
+                ? new String[] { "交通", "餐饮", "景点", "餐饮" }
+                : day == totalDays
+                        ? new String[] { "酒店", "景点", "餐饮", "交通" }
+                        : new String[] { "景点", "餐饮", "景点", "餐饮" };
+        int[] baseCosts = day == 1
+                ? new int[] { 30, 70, 90, 90 }
+                : day == totalDays
+                        ? new int[] { 0, 80, 70, 35 }
+                        : new int[] { 120, 75, 90, 95 };
+        String[] durations = { "约1小时", "约1小时", "约2小时", "约1.5小时" };
+        String[] transfers = { "从住宿或交通枢纽出发", "上一站到此约15-25分钟", "午后留30分钟缓冲", "傍晚避开高峰出行" };
 
         for (int i = 0; i < activities.length; i++) {
             if (i > 0)
                 sb.append(",");
-            int cost = (int) (costs[i] * people * (dayBudget / 500.0));
-            if (cost < 10)
+            int cost = estimateActivityCost(baseCosts[i], people, dayBudget);
+            if (baseCosts[i] > 0 && cost < 10)
                 cost = 10;
             dayCost += cost;
             sb.append("{\"time\":\"").append(times[i]).append("\",");
@@ -773,11 +927,51 @@ public class AiServiceImpl implements AiService {
             sb.append("\"description\":\"").append(escapeJson(getActivityDescription(activities[i], dest)))
                     .append("\",");
             sb.append("\"type\":\"").append(types[i]).append("\",");
+            sb.append("\"duration\":\"").append(durations[i]).append("\",");
+            sb.append("\"transfer\":\"").append(escapeJson(transfers[i])).append("\",");
+            sb.append("\"bookingTip\":\"").append(escapeJson(getBookingTip(activities[i]))).append("\",");
             sb.append("\"cost\":").append(cost).append("}");
         }
 
-        sb.append("]}");
+        sb.append("],\"dayEstimatedCost\":").append((int) dayCost).append("}");
         return new DayPlan(sb.toString(), dayCost);
+    }
+
+    private int estimateActivityCost(int basePerPerson, int people, double dayBudget) {
+        if (basePerPerson <= 0) {
+            return 0;
+        }
+        double dayReference = Math.max(people, 1) * 420.0;
+        double scale = clampDouble(dayBudget / dayReference, 0.45, 1.25);
+        return (int) Math.round(basePerPerson * Math.max(people, 1) * scale);
+    }
+
+    private String getAreaHint(String dest, int day) {
+        if (dest.contains("北京")) return day == 1 ? "天安门-故宫-前门片区" : day == 2 ? "八达岭长城方向" : "市区顺路片区";
+        if (dest.contains("上海")) return day == 1 ? "南京路-外滩-陆家嘴" : "法租界/老城厢片区";
+        if (dest.contains("成都")) return day == 1 ? "宽窄巷子-武侯祠-锦里" : "熊猫基地-市区茶馆";
+        if (dest.contains("西安")) return day == 1 ? "钟鼓楼-城墙-大雁塔" : "临潼/市区历史线";
+        if (dest.contains("三亚")) return day == 1 ? "酒店海湾周边" : "离岛或雨林方向";
+        return "同区顺路安排";
+    }
+
+    private String buildDayTip(String dest, String prefs, int day, int totalDays) {
+        if (day == 1) {
+            return "首日按抵达和入住留缓冲，不建议排需要早起预约的重景点。";
+        }
+        if (day == totalDays) {
+            return "末日控制在半日轻量活动，返程前至少预留2小时机动时间。";
+        }
+        if (prefs.contains("亲子")) {
+            return "亲子行程建议午后安排休息，晚间不超过21:00返回酒店。";
+        }
+        if (dest.contains("丽江") || dest.contains("云南")) {
+            return "高原地区避免连续剧烈活动，注意保暖、防晒和补水。";
+        }
+        if (dest.contains("三亚")) {
+            return "海岛行程看天气调整，防晒、防水袋和换洗衣物要提前准备。";
+        }
+        return "当天景点集中在相邻片区，午后留出排队和交通缓冲。";
     }
 
     private String[] getThemesForDestination(String dest) {
@@ -803,40 +997,40 @@ public class AiServiceImpl implements AiService {
     private String[] getActivitiesForDestination(String dest, int day, int totalDays) {
         if (day == 1) {
             if (dest.contains("北京"))
-                return new String[] { "抵达北京，办理入住", "天安门广场+故宫博物院", "前门大街品尝烤鸭", "景山公园俯瞰故宫全景", "南锣鼓巷逛街", "簋街夜市美食" };
+                return new String[] { "抵达北京，办理入住或寄存行李", "前门大街简餐", "天安门广场+故宫博物院", "景山公园或前门烤鸭二选一" };
             if (dest.contains("上海"))
-                return new String[] { "抵达上海，办理入住", "南京路步行街", "上海本帮菜午餐", "外滩万国建筑群", "和平饭店下午茶", "陆家嘴夜景" };
+                return new String[] { "抵达上海，办理入住或寄存行李", "南京路附近本帮菜午餐", "外滩万国建筑群慢走", "陆家嘴夜景或黄浦江轮渡" };
             if (dest.contains("成都"))
-                return new String[] { "抵达成都，办理入住", "宽窄巷子漫步", "地道川菜午餐", "武侯祠+锦里古街", "春熙路逛街", "九眼桥酒吧街" };
+                return new String[] { "抵达成都，办理入住或寄存行李", "宽窄巷子简餐", "武侯祠+锦里古街", "春熙路或太古里轻松晚餐" };
             if (dest.contains("西安"))
-                return new String[] { "抵达西安，办理入住", "钟楼+鼓楼", "回民街品尝小吃", "西安城墙骑行", "大雁塔北广场", "大唐不夜城" };
+                return new String[] { "抵达西安，办理入住或寄存行李", "钟鼓楼周边午餐", "西安城墙轻量骑行", "大唐不夜城夜游" };
             if (dest.contains("杭州"))
-                return new String[] { "抵达杭州，办理入住", "断桥残雪+白堤", "楼外楼杭帮菜", "乘船游西湖", "雷峰塔观日落", "河坊街夜市" };
+                return new String[] { "抵达杭州，办理入住或寄存行李", "湖滨或白堤附近午餐", "西湖白堤+断桥慢走", "河坊街晚餐和夜逛" };
             if (dest.contains("三亚"))
-                return new String[] { "抵达三亚，办理入住", "亚龙湾沙滩漫步", "海鲜大排档午餐", "热带天堂森林公园", "第一市场采购", "沙滩日落晚餐" };
+                return new String[] { "抵达三亚，办理入住", "酒店周边海鲜午餐", "亚龙湾沙滩适应节奏", "沙滩日落晚餐" };
             if (dest.contains("丽江"))
-                return new String[] { "抵达丽江，办理入住", "大研古城漫步", "纳西烤鱼午餐", "木府参观", "四方街购物", "古城酒吧听民谣" };
+                return new String[] { "抵达丽江，办理入住", "纳西风味午餐", "大研古城慢走", "四方街周边晚餐" };
             if (dest.contains("广州"))
-                return new String[] { "抵达广州，办理入住", "沙面岛+上下九", "地道粤式茶点", "陈家祠参观", "北京路步行街", "珠江夜游" };
-            return new String[] { "抵达" + dest + "，办理入住", "游览市区地标", "品尝当地特色美食", "参观热门景点", "逛街购物", "夜市或夜景体验" };
+                return new String[] { "抵达广州，办理入住", "地道粤式茶点午餐", "沙面岛+上下九慢走", "珠江夜游或北京路晚餐" };
+            return new String[] { "抵达" + dest + "，办理入住或寄存行李", "品尝当地特色午餐", "游览市区地标", "夜市或夜景轻体验" };
         }
         if (day == 2) {
             if (dest.contains("北京"))
-                return new String[] { "前往八达岭长城", "长城徒步游览", "长城脚下农家菜", "明十三陵参观", "奥林匹克公园", "水立方+鸟巢夜景" };
+                return new String[] { "前往八达岭长城", "长城徒步或缆车游览", "长城脚下简餐", "返城后奥林匹克公园夜景" };
             if (dest.contains("上海"))
-                return new String[] { "田子坊艺术区", "艺术展览参观", "法租界西餐", "思南路老洋房", "新天地逛街", "外滩夜景游船" };
+                return new String[] { "武康路和安福路citywalk", "法租界简餐", "思南路老洋房慢走", "新天地或外滩夜景" };
             if (dest.contains("成都"))
-                return new String[] { "前往大熊猫基地", "近距离看熊猫", "成都小吃合集", "人民公园喝茶", "太古里逛街", "火锅晚餐" };
-            return new String[] { "前往热门景区", "游览自然/人文景观", "景区周边午餐", "参观特色博物馆", "当地特产采购", "特色晚餐" };
+                return new String[] { "前往大熊猫基地", "看熊猫并避开午后人流", "成都小吃午餐", "人民公园喝茶+火锅晚餐" };
+            return new String[] { "前往核心景区", "游览自然或人文景观", "景区周边午餐", "回到住宿片区特色晚餐" };
         }
         if (day == totalDays) {
             if (dest.contains("北京"))
-                return new String[] { "颐和园晨练", "颐和园游湖", "最后一顿烤鸭", "798艺术区", "购买伴手礼", "前往机场/车站" };
+                return new String[] { "退房并寄存行李", "颐和园或恭王府二选一", "最后一顿烤鸭或京味午餐", "前往机场/车站" };
             if (dest.contains("上海"))
-                return new String[] { "城隍庙+豫园", "南翔小笼包", "上海博物馆", "购买伴手礼", "最后一杯咖啡", "前往机场/车站" };
-            return new String[] { "最后一天早起", "最后一个景点打卡", "告别午餐", "购买伴手礼", "整理行装", "前往机场/车站返程" };
+                return new String[] { "退房并寄存行李", "豫园或上海博物馆二选一", "南翔小笼包或本帮菜午餐", "前往机场/车站" };
+            return new String[] { "退房并寄存行李", "最后一个轻量景点", "告别午餐和伴手礼", "前往机场/车站返程" };
         }
-        return new String[] { "新一天出发", "游览特色景点", "品尝当地美食", "参观文化地标", "自由探索时间", "享受当地夜生活" };
+        return new String[] { "上午游览特色景点", "品尝当地午餐", "下午参观文化地标或自然景观", "住宿片区附近轻松晚餐" };
     }
 
     private String getActivityDescription(String activity, String dest) {
@@ -863,5 +1057,27 @@ public class AiServiceImpl implements AiService {
         if (activity.contains("博物馆"))
             return "馆藏丰富，建议租语音导览器，游览约2小时";
         return "深度体验" + dest + "的特色，留下美好回忆";
+    }
+
+    private String getBookingTip(String activity) {
+        if (activity.contains("故宫") || activity.contains("博物馆") || activity.contains("长城")
+                || activity.contains("熊猫") || activity.contains("玉龙雪山")) {
+            return "建议提前预约或购票，并确认当天开放时间";
+        }
+        if (activity.contains("退房") || activity.contains("抵达") || activity.contains("机场") || activity.contains("车站")) {
+            return "预留行李寄存和交通缓冲";
+        }
+        if (activity.contains("晚餐") || activity.contains("烤鸭") || activity.contains("火锅")) {
+            return "热门餐厅建议提前取号或预约";
+        }
+        return "按当天客流和天气灵活调整";
+    }
+
+    private int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private double clampDouble(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 }

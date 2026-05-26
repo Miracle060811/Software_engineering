@@ -122,7 +122,11 @@ public class AdminController {
     @Autowired
     private NotificationCenterService notificationCenterService;
 
-    private static final int STATUS_REFUND_REJECTED = 5;
+    private static final int STATUS_TRAFFIC_CANCELLED = 3;
+    private static final int STATUS_TRAFFIC_REFUNDED = 4;
+    private static final int STATUS_HOTEL_PAID = 1;
+    private static final int STATUS_HOTEL_COMPLETED = 3;
+    private static final int STATUS_HOTEL_CANCELLED_OR_REFUNDED = 4;
 
     private User checkAdmin() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -925,23 +929,37 @@ public class AdminController {
             if (order == null) {
                 return Result.error("订单不存在");
             }
-            if (!Objects.equals(order.getStatus(), 4)) {
-                order.setStatus(4);
-                hotelOrderMapper.updateById(order);
-                hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());
-                hotelRoomStockService.syncWithDatabase(order.getRoomId());
+            if (Objects.equals(order.getStatus(), STATUS_HOTEL_CANCELLED_OR_REFUNDED)) {
+                return Result.success("订单已取消或已退款，无需重复处理");
             }
+            if (Objects.equals(order.getStatus(), STATUS_HOTEL_COMPLETED)) {
+                return Result.error("已完成的酒店订单不能直接退款");
+            }
+            if (!Objects.equals(order.getStatus(), STATUS_HOTEL_PAID)) {
+                return Result.error("只有已支付且未入住的酒店订单可以退款");
+            }
+            order.setStatus(STATUS_HOTEL_CANCELLED_OR_REFUNDED);
+            hotelOrderMapper.updateById(order);
+            hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());
+            hotelRoomStockService.syncWithDatabase(order.getRoomId());
         } else {
             TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper<TrafficOrder>()
                     .eq(TrafficOrder::getOrderNo, orderNo));
             if (order == null) {
                 return Result.error("订单不存在");
             }
-            if (!Objects.equals(order.getStatus(), 4)) {
-                order.setStatus(4);
-                trafficOrderMapper.updateById(order);
-                returnTrafficStock(order);
+            if (Objects.equals(order.getStatus(), STATUS_TRAFFIC_REFUNDED)) {
+                return Result.success("订单已退票，无需重复处理");
             }
+            if (Objects.equals(order.getStatus(), STATUS_TRAFFIC_CANCELLED)) {
+                return Result.error("已取消的待支付订单库存已归还，不能再次退款");
+            }
+            if (!Objects.equals(order.getStatus(), 1) && !Objects.equals(order.getStatus(), 2)) {
+                return Result.error("只有出票中或已出票的订单可以退票");
+            }
+            order.setStatus(STATUS_TRAFFIC_REFUNDED);
+            trafficOrderMapper.updateById(order);
+            returnTrafficStock(order);
         }
         return Result.success("退款审批已通过");
     }
@@ -955,18 +973,15 @@ public class AdminController {
             if (order == null) {
                 return Result.error("订单不存在");
             }
-            order.setStatus(STATUS_REFUND_REJECTED);
-            hotelOrderMapper.updateById(order);
+            return Result.error("当前没有独立的退款申请状态，不能将酒店订单标记为拒绝退款");
         } else {
             TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper<TrafficOrder>()
                     .eq(TrafficOrder::getOrderNo, orderNo));
             if (order == null) {
                 return Result.error("订单不存在");
             }
-            order.setStatus(STATUS_REFUND_REJECTED);
-            trafficOrderMapper.updateById(order);
+            return Result.error("当前没有独立的退款申请状态，不能将票务订单标记为拒绝退款");
         }
-        return Result.success("退款申请已拒绝");
     }
 
     private void returnTrafficStock(TrafficOrder order) {
@@ -1022,6 +1037,15 @@ public class AdminController {
     @DeleteMapping("/coupons/{id}")
     public Result<Void> deleteCoupon(@PathVariable Long id) {
         checkAdmin();
+        long claimedCount = userCouponMapper.selectCount(new LambdaQueryWrapper<UserCoupon>()
+                .eq(UserCoupon::getCouponId, id));
+        if (claimedCount > 0) {
+            couponMapper.update(null, new LambdaUpdateWrapper<Coupon>()
+                    .eq(Coupon::getId, id)
+                    .set(Coupon::getStatus, 1)
+                    .set(Coupon::getStock, 0));
+            return Result.success();
+        }
         couponMapper.deleteById(id);
         return Result.success();
     }
@@ -1226,6 +1250,11 @@ public class AdminController {
         for (int i = 0; i < line.length(); i++) {
             char ch = line.charAt(i);
             if (ch == '"') {
+                if (quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    current.append('"');
+                    i++;
+                    continue;
+                }
                 quoted = !quoted;
             } else if (ch == ',' && !quoted) {
                 values.add(current.toString().trim());

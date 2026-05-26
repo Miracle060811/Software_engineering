@@ -48,8 +48,9 @@ watch(normalizedSrc, (value) => {
 });
 
 const useFallback = () => {
-  if (currentSrc.value !== props.fallback) {
-    currentSrc.value = props.fallback;
+  const normalizedFallback = normalizeImageUrl(props.fallback, FALLBACK_IMAGE);
+  if (currentSrc.value !== normalizedFallback) {
+    currentSrc.value = normalizedFallback;
   }
 };
 </script>

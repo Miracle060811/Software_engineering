@@ -15,9 +15,9 @@ export const useUserStore = defineStore("user", () => {
     await fetchUserInfo();
   }
 
-  async function register(username, password, role = 0) {
+  async function register(username, password) {
     await request.post("/user/register", null, {
-      params: { username, password, role },
+      params: { username, password },
     });
   }
 

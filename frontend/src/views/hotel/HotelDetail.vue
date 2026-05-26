@@ -114,10 +114,10 @@
           </div>
           <div v-if="review.images" class="review-images">
             <el-image
-              v-for="(img, i) in JSON.parse(review.images)"
+              v-for="(img, i) in parseImages(review.images)"
               :key="i"
               :src="img"
-              :preview-src-list="JSON.parse(review.images)"
+              :preview-src-list="parseImages(review.images)"
               style="width:80px;height:80px;border-radius:8px;margin-right:8px;object-fit:cover"
             >
               <template #error>
@@ -209,7 +209,7 @@ import { ElMessage } from "element-plus";
 import { StarFilled, LocationFilled, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import SafeImage from "@/components/SafeImage.vue";
-import { hotelCoverImage, localSeedImage } from "@/utils/image";
+import { hotelCoverImage, localSeedImage, parseImageList } from "@/utils/image";
 
 const route = useRoute();
 const router = useRouter();
@@ -399,12 +399,13 @@ watch(calcTotalPrice, () => {
   }
 });
 
-const onUploadSuccess = (res, file) => {
-  if (res.url) uploadedImageUrls.value.push(res.url);
+const onUploadSuccess = (res) => {
+  const url = res?.url || res?.data?.url || (typeof res?.data === "string" ? res.data : "");
+  if (url) uploadedImageUrls.value.push(url);
 };
 
 const onUploadRemove = (file) => {
-  const url = file.response?.url || file.url;
+  const url = file.response?.url || file.response?.data?.url || file.response?.data || file.url;
   uploadedImageUrls.value = uploadedImageUrls.value.filter((u) => u !== url);
 };
 
@@ -464,6 +465,8 @@ const fetchReviews = async () => {
     reviews.value = [];
   }
 };
+
+const parseImages = (images) => parseImageList(images);
 
 onMounted(() => {
   fetchHotelDetail();

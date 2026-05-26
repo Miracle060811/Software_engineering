@@ -200,6 +200,7 @@ import { StarFilled } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import { useUserStore } from "@/stores/user";
 import SafeImage from "@/components/SafeImage.vue";
+import { parseImageList } from "@/utils/image";
 
 const route = useRoute();
 const router = useRouter();
@@ -413,8 +414,7 @@ const deleteAccount = async () => {
 };
 
 const getFirstImage = (images) => {
-  const arr = typeof images === "string" ? images.split(",") : images;
-  return arr?.[0]?.trim() || "";
+  return parseImageList(images)[0] || "";
 };
 
 const hasImages = (images) => !!getFirstImage(images);

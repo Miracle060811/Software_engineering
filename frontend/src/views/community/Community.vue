@@ -72,15 +72,17 @@
         <el-card
           v-for="post in posts"
           :key="post.id"
-          :class="['post-card', { 'text-only-card': !hasImages(post.images), 'my-post-card': activeTab === 'mine' }]"
+          :class="['post-card', { 'my-post-card': activeTab === 'mine' }]"
           :body-style="{ padding: 0 }"
           @click="openPost(post)"
         >
-          <div v-if="hasImages(post.images)" class="post-img-wrap">
+          <div class="post-img-wrap">
             <SafeImage
-              :src="getFirstImage(post.images)"
+              :src="getFirstImage(post)"
+              :fallback="getPostFallbackImage(post)"
               image-class="post-cover"
               :alt="post.title"
+              loading="eager"
             />
             <div class="post-img-overlay"></div>
           </div>
@@ -105,7 +107,6 @@
               </div>
             </div>
             <div class="post-title">{{ post.title }}</div>
-            <div v-if="!hasImages(post.images)" class="post-excerpt">{{ post.content }}</div>
             <div v-if="post.status === 2 && post.rejectReason" class="reject-reason">
               未通过原因：{{ post.rejectReason }}
             </div>
@@ -153,6 +154,7 @@ import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import SafeImage from "@/components/SafeImage.vue";
 import { useUserStore } from "@/stores/user";
+import { FALLBACK_IMAGE, localSeedImage, normalizeImageUrl, parseImageList } from "@/utils/image";
 
 const posts = ref([]);
 const loading = ref(false);
@@ -235,13 +237,20 @@ const loadMore = async () => {
   }
 };
 
-const getFirstImage = (images) => {
-  const arr = typeof images === "string" ? images.split(",") : images;
-  return arr?.[0]?.trim() || "";
+const splitImages = (images) => {
+  return parseImageList(images);
 };
 
-const hasImages = (images) => {
-  return !!getFirstImage(images);
+const getPostFallbackImage = (post) => {
+  const hint = `${post?.title || ""} ${post?.destination || ""} ${post?.tags || ""}`;
+  return localSeedImage(hint, "attraction") || FALLBACK_IMAGE;
+};
+
+const getFirstImage = (post) => {
+  const first = splitImages(post?.images)
+    .map((item) => String(item || "").trim())
+    .find(Boolean);
+  return normalizeImageUrl(first, getPostFallbackImage(post));
 };
 
 const getAuthorName = (post) =>
@@ -345,9 +354,6 @@ onMounted(() => {
   display: inline-block;
   width: 100%;
 }
-.text-only-card .post-info {
-  min-height: 128px;
-}
 .my-post-card {
   position: relative;
 }
@@ -359,6 +365,8 @@ onMounted(() => {
 .post-img-wrap {
   position: relative;
   overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: #f3f6fb;
 }
 .post-img-overlay {
   position: absolute;
@@ -373,9 +381,9 @@ onMounted(() => {
 
 .post-cover {
   width: 100%;
+  height: 100%;
   object-fit: cover;
   display: block;
-  max-height: 280px;
   transition: transform 0.5s ease;
 }
 .post-card:hover .post-cover {

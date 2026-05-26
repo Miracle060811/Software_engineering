@@ -12,6 +12,13 @@ node_modules/
 frontend/node_modules/
 .vite/
 frontend/node_modules/.vite/
+frontend/vite-dev*.log
+frontend-vite-dev*.log
+backend-dev*.log
+
+# 本地上传文件
+uploads/
+backend/uploads/
 
 # IDE / OS
 .idea/

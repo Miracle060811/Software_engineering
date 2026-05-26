@@ -116,9 +116,17 @@
           <el-card class="plan-summary-card">
             <h2 class="plan-title">{{ currentPlan.title }}</h2>
             <p class="plan-summary">{{ currentPlan.summary }}</p>
-            <el-tag type="success" size="large">
-              总预估费用：¥{{ currentPlan.totalEstimatedCost }}
-            </el-tag>
+            <div class="summary-tags">
+              <el-tag v-if="currentPlan.pace" type="primary" effect="plain">
+                节奏：{{ currentPlan.pace }}
+              </el-tag>
+              <el-tag type="success" size="large">
+                总预估费用：¥{{ currentPlan.totalEstimatedCost }}
+              </el-tag>
+            </div>
+            <p v-if="currentPlan.budgetNote" class="budget-note">
+              {{ currentPlan.budgetNote }}
+            </p>
             <div style="margin-top: 12px; display: flex; gap: 8px">
               <el-button type="primary" size="small" plain @click="exportPlan"
                 ><el-icon><Download /></el-icon>导出行程</el-button
@@ -140,10 +148,20 @@
           >
             <template #header>
               <div class="day-header">
-                <span class="day-num">第 {{ dayPlan.day }} 天</span>
-                <span class="day-theme">{{ dayPlan.theme }}</span>
+                <div>
+                  <span class="day-num">第 {{ dayPlan.day }} 天</span>
+                  <span class="day-theme">{{ dayPlan.theme }}</span>
+                </div>
+                <div class="day-meta">
+                  <span v-if="dayPlan.date">{{ dayPlan.date }}</span>
+                  <span v-if="dayPlan.area">{{ dayPlan.area }}</span>
+                  <span v-if="dayPlan.dayEstimatedCost">
+                    约 ¥{{ dayPlan.dayEstimatedCost }}
+                  </span>
+                </div>
               </div>
             </template>
+            <div v-if="dayPlan.tips" class="day-tip">{{ dayPlan.tips }}</div>
             <el-timeline>
               <el-timeline-item
                 v-for="(activity, idx) in dayPlan.activities"
@@ -153,8 +171,18 @@
                 type="primary"
               >
                 <el-card class="activity-card" shadow="never">
-                  <div class="activity-name">{{ activity.name }}</div>
+                  <div class="activity-heading">
+                    <div class="activity-name">{{ activity.name }}</div>
+                    <el-tag v-if="activity.type" size="small" effect="plain">
+                      {{ activity.type }}
+                    </el-tag>
+                  </div>
                   <div class="activity-desc">{{ activity.description }}</div>
+                  <div class="activity-meta">
+                    <span v-if="activity.duration">{{ activity.duration }}</span>
+                    <span v-if="activity.transfer">{{ activity.transfer }}</span>
+                    <span v-if="activity.bookingTip">{{ activity.bookingTip }}</span>
+                  </div>
                   <div class="activity-cost" v-if="activity.cost">
                     预估费用：¥{{ activity.cost }}
                   </div>
@@ -255,6 +283,7 @@ const generatePlan = async () => {
       destination: planForm.value.destination,
       days: planForm.value.days,
       people: planForm.value.people,
+      peopleCount: planForm.value.people,
       budget: planForm.value.budget,
       startDate: planForm.value.startDate,
       preferences: planForm.value.preferences.join(","),
@@ -433,6 +462,18 @@ onMounted(() => {
   line-height: 1.7;
   margin-bottom: 12px;
 }
+.summary-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.budget-note {
+  margin: 10px 0 0;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
 .day-card {
   margin-bottom: 16px;
   border-radius: 12px;
@@ -440,7 +481,9 @@ onMounted(() => {
 .day-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 .day-num {
   font-size: 16px;
@@ -451,19 +494,50 @@ onMounted(() => {
   font-size: 14px;
   color: var(--el-text-color-regular);
 }
+.day-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+.day-tip {
+  margin: 0 0 14px 0;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-left: 3px solid var(--el-color-primary);
+  border-radius: 6px;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+  line-height: 1.6;
+}
 .activity-card {
   border: 1px solid #e8e8e8;
+}
+.activity-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 .activity-name {
   font-size: 15px;
   font-weight: 600;
   color: var(--el-text-color-primary);
-  margin-bottom: 6px;
 }
 .activity-desc {
   font-size: 13px;
   color: var(--el-text-color-regular);
   line-height: 1.6;
+}
+.activity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
 }
 .activity-cost {
   font-size: 12px;

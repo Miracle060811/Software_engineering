@@ -21,9 +21,8 @@ public class UserController {
     @PostMapping("/register")
     public Result<String> register(
             @RequestParam String username,
-            @RequestParam String password,
-            @RequestParam(defaultValue = "0") Integer role) {
-        boolean success = userService.register(username, password, role);
+            @RequestParam String password) {
+        boolean success = userService.register(username, password, 0);
         return success ? Result.success("注册成功") : Result.error("用户名已存在");
     }
 
@@ -36,9 +35,10 @@ public class UserController {
     @PostMapping("/reset-password")
     public Result<String> resetPassword(
             @RequestParam String username,
+            @RequestParam String oldPassword,
             @RequestParam String newPassword) {
-        boolean ok = userService.resetPassword(username, newPassword);
-        return ok ? Result.success("密码重置成功") : Result.error("用户不存在或已禁用");
+        boolean ok = userService.resetPassword(username, oldPassword, newPassword);
+        return ok ? Result.success("密码修改成功") : Result.error("用户名或原密码错误");
     }
 
     @PostMapping("/password")

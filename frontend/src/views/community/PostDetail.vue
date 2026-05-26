@@ -191,7 +191,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { LocationFilled, StarFilled, Star } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import { useUserStore } from "@/stores/user";
-import { FALLBACK_IMAGE } from "@/utils/image";
+import { FALLBACK_IMAGE, parseImageList } from "@/utils/image";
 
 const route = useRoute();
 const router = useRouter();
@@ -220,12 +220,7 @@ const commentTotal = computed(() => {
 });
 
 const parseImages = (images) => {
-  if (!images) return [];
-  if (Array.isArray(images)) return images;
-  return images
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  return parseImageList(images);
 };
 
 const parseTags = (tags) => {

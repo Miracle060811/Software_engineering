@@ -433,7 +433,7 @@
             <el-tab-pane label="酒店" name="hotel" />
           </el-tabs>
           <div class="toolbar toolbar-inline">
-            <div class="muted-text">按订单状态筛选退款和流水。</div>
+            <div class="muted-text">按订单状态筛选流水，可对仍占库存的已支付订单办理退款。</div>
             <el-select
               v-model="orderStatusFilter"
               placeholder="全部状态"
@@ -444,9 +444,9 @@
               <el-option label="待支付" :value="0" />
               <el-option label="已支付/出票中" :value="1" />
               <el-option label="已出票/入住中" :value="2" />
-              <el-option label="已取消/申请退款" :value="3" />
-              <el-option label="已退款" :value="4" />
-              <el-option label="拒绝退款" :value="5" />
+              <el-option label="已取消/已完成" :value="3" />
+              <el-option label="已退票/已退款/已取消" :value="4" />
+              <el-option label="拒绝退款（历史）" :value="5" />
             </el-select>
           </div>
           <el-table :data="orders" v-loading="orderLoading" stripe>
@@ -473,14 +473,7 @@
                   size="small"
                   type="success"
                   @click="approveRefund(scope.row.orderNo)"
-                  >通过退款</el-button
-                >
-                <el-button
-                  v-if="canReviewRefund(scope.row)"
-                  size="small"
-                  type="danger"
-                  @click="rejectRefund(scope.row.orderNo)"
-                  >拒绝</el-button
+                  >办理退款</el-button
                 >
                 <span v-else class="muted-text">无人工操作</span>
               </template>
@@ -2271,7 +2264,7 @@ const removeCoupon = async (row) => {
   });
   try {
     await request.delete(`/api/admin/coupons/${row.id}`);
-    ElMessage.success("优惠券已删除");
+    ElMessage.success("优惠券已删除或下架");
     await fetchCoupons();
   } catch (error) {}
 };
@@ -2476,25 +2469,22 @@ const approveRefund = async (orderNo) => {
   } catch (error) {}
 };
 
-const rejectRefund = async (orderNo) => {
-  try {
-    await request.post(`/api/admin/orders/${orderNo}/refund/reject`);
-    ElMessage.success("退款申请已拒绝");
-    await fetchOrders();
-  } catch (error) {}
+const canReviewRefund = (row) => {
+  if (row.type === "酒店") {
+    return row.status === 1;
+  }
+  return row.status === 1 || row.status === 2;
 };
-
-const canReviewRefund = (row) => row.status === 3;
 
 const orderStatusLabel = (row) => {
   if (row.type === "酒店") {
     return (
-      ["待支付", "已支付", "入住中", "已完成", "已退款/已取消", "拒绝退款"][row.status] ||
+      ["待支付", "已支付", "入住中", "已完成", "已取消/已退款", "拒绝退款（历史）"][row.status] ||
       `状态${row.status}`
     );
   }
   return (
-    ["待支付", "出票中", "已出票", "已取消/申请退款", "已退票", "拒绝退款"][row.status] ||
+    ["待支付", "出票中", "已出票", "已取消", "已退票/已退款", "拒绝退款（历史）"][row.status] ||
     `状态${row.status}`
   );
 };
@@ -2503,8 +2493,11 @@ const orderStatusType = (row) => {
   if (row.status === 0) {
     return "warning";
   }
-  if (row.status === 1 || row.status === 2 || row.status === 4) {
+  if (row.status === 1 || row.status === 2) {
     return "success";
+  }
+  if (row.status === 4) {
+    return "info";
   }
   if (row.status === 5) {
     return "danger";

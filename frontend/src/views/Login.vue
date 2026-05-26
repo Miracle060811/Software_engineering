@@ -55,7 +55,7 @@
             </el-button>
             <div class="form-actions">
               <el-button link type="primary" @click="openResetDialog">
-                忘记密码？
+                修改密码
               </el-button>
             </div>
           </el-form>
@@ -120,7 +120,7 @@
 
     <el-dialog
       v-model="resetDialogVisible"
-      title="重置密码"
+      title="修改密码"
       width="420px"
       class="reset-dialog"
       :close-on-click-modal="false"
@@ -138,6 +138,17 @@
             placeholder="请输入用户名"
             size="large"
             :prefix-icon="User"
+            class="auth-input"
+          />
+        </el-form-item>
+        <el-form-item prop="oldPassword">
+          <el-input
+            v-model="resetForm.oldPassword"
+            type="password"
+            placeholder="请输入原密码"
+            size="large"
+            :prefix-icon="Lock"
+            show-password
             class="auth-input"
           />
         </el-form-item>
@@ -172,7 +183,7 @@
           :loading="resetLoading"
           @click="handleResetPassword"
         >
-          确认重置
+          确认修改
         </el-button>
       </template>
     </el-dialog>
@@ -200,7 +211,7 @@ const resetFormRef = ref(null);
 
 const loginForm = ref({ username: "", password: "" });
 const registerForm = ref({ username: "", password: "", confirmPassword: "" });
-const resetForm = ref({ username: "", newPassword: "", confirmPassword: "" });
+const resetForm = ref({ username: "", oldPassword: "", newPassword: "", confirmPassword: "" });
 
 const loginRules = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
@@ -233,6 +244,7 @@ const registerRules = {
 
 const resetRules = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+  oldPassword: [{ required: true, message: "请输入原密码", trigger: "blur" }],
   newPassword: [
     { required: true, message: "请输入新密码", trigger: "blur" },
     { min: 6, message: "密码至少6位", trigger: "blur" },
@@ -255,6 +267,7 @@ const resetRules = {
 const openResetDialog = () => {
   resetForm.value = {
     username: loginForm.value.username,
+    oldPassword: "",
     newPassword: "",
     confirmPassword: "",
   };
@@ -304,10 +317,11 @@ const handleResetPassword = async () => {
     await request.post("/user/reset-password", null, {
       params: {
         username: resetForm.value.username,
+        oldPassword: resetForm.value.oldPassword,
         newPassword: resetForm.value.newPassword,
       },
     });
-    ElMessage.success("密码重置成功，请使用新密码登录");
+    ElMessage.success("密码修改成功，请使用新密码登录");
     loginForm.value.username = resetForm.value.username;
     loginForm.value.password = "";
     resetDialogVisible.value = false;

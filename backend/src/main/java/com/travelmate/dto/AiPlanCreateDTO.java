@@ -1,5 +1,6 @@
 package com.travelmate.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -9,6 +10,7 @@ public class AiPlanCreateDTO {
     private String destination;
     private int days;
     private BigDecimal budget;
+    @JsonAlias("people")
     private int peopleCount;
     private String preferences;
     private String startDate;

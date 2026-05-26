@@ -29,6 +29,7 @@ public class SecurityConfig {
                                                                 "/favicon.ico",
                                                                 "/assets/**",
                                                                 "/images/**",
+                                                                "/uploads/**",
                                                                 "/vite.svg")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET,

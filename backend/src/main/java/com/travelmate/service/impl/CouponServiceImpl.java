@@ -73,8 +73,10 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         if (getClaimedCouponRules(claimed).contains(couponRuleKey(coupon)))
             throw new RuntimeException("已领取过该优惠券");
 
-        coupon.setStock(coupon.getStock() - 1);
-        updateById(coupon);
+        int updated = baseMapper.deductStock(couponId);
+        if (updated == 0) {
+            throw new RuntimeException("该优惠券已被领完");
+        }
 
         UserCoupon uc = new UserCoupon();
         uc.setUserId(userId);

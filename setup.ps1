@@ -1,4 +1,4 @@
-<#
+﻿<#
   TravelMate 一键环境配置脚本
   用法: .\setup.ps1
     功能: 从 .env 文件加载环境变量，可选重建数据库，并启动后端服务
@@ -91,13 +91,27 @@ if ($InitDb) {
     try {
         if ($ResetDb) {
             Write-Warning "ResetDb 已启用：将删除并重建数据库 $databaseName，用于修复中文导入乱码。"
-            & $mysqlExecutable --default-character-set=utf8mb4 -u root -e "DROP DATABASE IF EXISTS $databaseName; CREATE DATABASE $databaseName CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+            $resetArgs = @(
+                "--default-character-set=utf8mb4",
+                "-u",
+                "root",
+                "-e",
+                "DROP DATABASE IF EXISTS $databaseName; CREATE DATABASE $databaseName CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+            )
+            & $mysqlExecutable @resetArgs
             if ($LASTEXITCODE -ne 0) {
                 throw "数据库重建失败，请检查 MySQL root 密码和服务状态。"
             }
         }
         $sourcePath = $initSql -replace '\\', '/'
-        & $mysqlExecutable --default-character-set=utf8mb4 -u root -e "SOURCE $sourcePath;"
+        $sourceArgs = @(
+            "--default-character-set=utf8mb4",
+            "-u",
+            "root",
+            "-e",
+            "SOURCE $sourcePath;"
+        )
+        & $mysqlExecutable @sourceArgs
     } finally {
         [Environment]::SetEnvironmentVariable("MYSQL_PWD", $previousMysqlPwd, "Process")
     }

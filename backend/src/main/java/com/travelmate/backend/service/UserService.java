@@ -20,15 +20,19 @@ public class UserService {
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
     public boolean register(String username, String password, Integer role) {
-        Long count = userMapper.selectCount(new QueryWrapper<User>().eq("username", username));
+        if (username == null || username.trim().isEmpty() || password == null || password.length() < 6) {
+            return false;
+        }
+        String normalizedUsername = username.trim();
+        Long count = userMapper.selectCount(new QueryWrapper<User>().eq("username", normalizedUsername));
         if (count > 0) {
             return false;
         }
         String encodedPassword = passwordEncoder.encode(password);
         User user = new User();
-        user.setUsername(username);
+        user.setUsername(normalizedUsername);
         user.setPassword(encodedPassword);
-        user.setRole(role);
+        user.setRole(0);
         userMapper.insert(user);
         return true;
     }
@@ -60,12 +64,17 @@ public class UserService {
         return true;
     }
 
-    public boolean resetPassword(String username, String newPassword) {
+    public boolean resetPassword(String username, String oldPassword, String newPassword) {
+        if (username == null || username.trim().isEmpty()
+                || oldPassword == null || newPassword == null || newPassword.length() < 6) {
+            return false;
+        }
         User user = userMapper.selectOne(new QueryWrapper<User>()
-                .eq("username", username)
+                .eq("username", username.trim())
                 .eq("status", 1)
                 .eq("deleted", 0));
         if (user == null) return false;
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) return false;
         user.setPassword(passwordEncoder.encode(newPassword));
         userMapper.updateById(user);
         return true;
