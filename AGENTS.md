@@ -72,6 +72,7 @@ npm run build      # 生产构建
 ```
 
 `start.bat /?` 可查看帮助。改动启动逻辑时优先维护 `start.ps1`，再同步 `start.bat` 的帮助文本；不要在 `start.bat` 里复制一套独立启动逻辑。
+最近一次 `start.ps1` 调整仅涉及文件编码标记，没有改变启动流程、参数透传、Redis 检查或前后端启动顺序。
 
 ### 数据库
 
@@ -89,7 +90,7 @@ mysql --default-character-set=utf8mb4 -u root -p < docs/sql/init.sql
 ```
 
 不要使用 PowerShell 的 `Get-Content | mysql` 管道导入；这会把中文种子数据写成 `?`。
-`setup.ps1` 会自动查找 `mysql.exe` 并直接执行 `SOURCE` 导入，不依赖 `cmd.exe`。
+`setup.ps1` 会自动查找 `mysql.exe`，并通过 PowerShell 参数数组执行数据库重建和 `SOURCE` 导入，不依赖 `cmd.exe`，可避免空格、引号或分号导致参数被错误拆分。
 景点、酒店、热门城市等种子数据已尽量使用真实图片 URL；不要再引入 `picsum.photos` 这类随机占位图。若外链图片在页面无法渲染，需要同步更新：
 
 1. `docs/sql/init.sql` 中对应 `cover_img` 或媒体资源 URL

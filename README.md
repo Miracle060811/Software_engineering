@@ -19,6 +19,8 @@ Windows 下优先推荐直接使用仓库脚本，脚本会自动加载 `.env`�
 .\setup.ps1 -InitDb
 ```
 
+`setup.ps1` 现在会用 PowerShell 参数数组调用 `mysql.exe`，用于数据库重建和 `SOURCE docs/sql/init.sql` 导入，避免命令参数中的空格、引号或分号被 PowerShell 错误拆分。
+
 ```bat
 mysql --default-character-set=utf8mb4 -u root -p < docs\sql\init.sql
 ```
@@ -110,6 +112,8 @@ start.bat -DryRun
 `start.bat` 是 `start.ps1` 的 CMD/双击入口，会自动寻找 PowerShell 7 或 Windows PowerShell，并把命令行参数原样传给 `start.ps1`。需要查看参数时可运行 `start.bat /?`。
 
 `start.ps1` 会先检查 `127.0.0.1:6379`。如果 Redis 已运行则直接复用；如果检测到 Windows Redis 服务或 `redis-server.exe`，会尝试自动启动。若本机未安装 Redis，会给出警告，后端仍会启动，但 Redis 限流/酒店房态缓存会降级。
+
+最近一次脚本调整没有改变 `start.ps1` 的启动流程；前后端、Redis 检查、参数透传和等待后端可访问后再启动前端的行为保持不变。
 
 ### 社区模块说明
 

@@ -57,7 +57,13 @@
       "Bash(echo *)",
       "Bash(git *)",
       "PowerShell(Set-Location \"C:\\\\Users\\\\28603\\\\.claude\\\\plugins\\\\cache\\\\understand-anything\\\\understand-anything\\\\2.7.4\\\\packages\\\\dashboard\"; $env:GRAPH_DIR = \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\"; npx vite --host 127.0.0.1)",
-      "PowerShell($content = Get-Content \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\.understand-anything\\\\knowledge-graph.json\" -Raw; $utf8NoBom = New-Object System.Text.UTF8Encoding $false; [System.IO.File]::WriteAllText\\(\"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\.understand-anything\\\\knowledge-graph.json\", $content, $utf8NoBom\\))"
+      "PowerShell($content = Get-Content \"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\.understand-anything\\\\knowledge-graph.json\" -Raw; $utf8NoBom = New-Object System.Text.UTF8Encoding $false; [System.IO.File]::WriteAllText\\(\"E:\\\\SoftEngneeringHomework\\\\Software_engineering\\\\.understand-anything\\\\knowledge-graph.json\", $content, $utf8NoBom\\))",
+      "Bash(pnpm install *)",
+      "Read(//c/Users/28603/.claude/plugins/cache/understand-anything/understand-anything/2.7.4/**)",
+      "Bash(pnpm --filter @understand-anything/core build)",
+      "Bash(GRAPH_DIR=\"E:/SoftEngneeringHomework/Software_engineering\" npx vite --host 127.0.0.1)",
+      "Bash(powershell *)",
+      "Bash(Select-Object -First 50)"
     ]
   }
 }
