@@ -41,17 +41,25 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { ArrowRight, MagicStick } from "@element-plus/icons-vue";
 import SafeImage from "@/components/SafeImage.vue";
-import { destinations } from "@/data/destinations";
+import { fallbackDestinations, fetchDestinationList } from "@/utils/destinations";
+
+const destinations = ref(fallbackDestinations);
 
 const heroStyle = computed(() => ({
   background:
     "linear-gradient(135deg, rgba(13, 148, 136, 0.94), rgba(14, 165, 233, 0.88)), url('" +
-    destinations.find((item) => item.slug === "hangzhou")?.img +
+    (destinations.value.find((item) => item.slug === "hangzhou")?.img ||
+      destinations.value[0]?.img ||
+      "") +
     "') center/cover",
 }));
+
+onMounted(async () => {
+  destinations.value = await fetchDestinationList();
+});
 </script>
 
 <style scoped>

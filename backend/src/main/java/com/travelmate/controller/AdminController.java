@@ -9,6 +9,7 @@ import com.travelmate.common.Result;
 import com.travelmate.entity.Attraction;
 import com.travelmate.entity.Comment;
 import com.travelmate.entity.Coupon;
+import com.travelmate.entity.Destination;
 import com.travelmate.entity.Flight;
 import com.travelmate.entity.Hotel;
 import com.travelmate.entity.HotelOrder;
@@ -25,6 +26,7 @@ import com.travelmate.entity.UserCoupon;
 import com.travelmate.mapper.AttractionMapper;
 import com.travelmate.mapper.CommentMapper;
 import com.travelmate.mapper.CouponMapper;
+import com.travelmate.mapper.DestinationMapper;
 import com.travelmate.mapper.FlightMapper;
 import com.travelmate.mapper.HotelMapper;
 import com.travelmate.mapper.HotelOrderMapper;
@@ -91,6 +93,9 @@ public class AdminController {
 
     @Autowired
     private CouponMapper couponMapper;
+
+    @Autowired
+    private DestinationMapper destinationMapper;
 
     @Autowired
     private ReviewReportMapper reviewReportMapper;
@@ -232,6 +237,22 @@ public class AdminController {
         }
         if (coupon.getDiscountType() == 1 && coupon.getDiscountValue().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("折扣比例必须大于 0");
+        }
+    }
+
+    private void validateDestination(Destination destination) {
+        requireText(destination.getSlug(), "城市标识");
+        requireText(destination.getName(), "城市名称");
+        requireText(destination.getCountry(), "国家/地区");
+        requireText(destination.getTag(), "城市标签");
+        requireText(destination.getImg(), "封面图");
+        requireText(destination.getDesc(), "短描述");
+        requireText(destination.getIntro(), "城市介绍");
+        if (destination.getStatus() == null) {
+            destination.setStatus(1);
+        }
+        if (destination.getSortOrder() == null) {
+            destination.setSortOrder(100);
         }
     }
 
@@ -791,6 +812,34 @@ public class AdminController {
                 .toList());
     }
 
+    @GetMapping("/destinations")
+    public Result<List<Destination>> listAdminDestinations() {
+        checkAdmin();
+        return Result.success(destinationMapper.selectList(new LambdaQueryWrapper<Destination>()
+                .orderByAsc(Destination::getSortOrder)
+                .orderByDesc(Destination::getId)));
+    }
+
+    @PutMapping("/destinations/{id}")
+    public Result<Void> updateDestination(@PathVariable Long id, @RequestBody Destination destination) {
+        checkAdmin();
+        destination.setId(id);
+        validateDestination(destination);
+        destination.setUpdateTime(LocalDateTime.now());
+        destinationMapper.updateById(destination);
+        return Result.success();
+    }
+
+    @DeleteMapping("/destinations/{id}")
+    public Result<Void> deleteDestination(@PathVariable Long id) {
+        checkAdmin();
+        destinationMapper.update(null, new LambdaUpdateWrapper<Destination>()
+                .eq(Destination::getId, id)
+                .set(Destination::getStatus, 0)
+                .set(Destination::getUpdateTime, LocalDateTime.now()));
+        return Result.success();
+    }
+
     @PostMapping("/posts/{id}/approve")
     public Result<Void> approvePost(@PathVariable Long id) {
         checkAdmin();
@@ -798,7 +847,8 @@ public class AdminController {
         postMapper.update(null, new LambdaUpdateWrapper<Post>()
                 .eq(Post::getId, id)
                 .set(Post::getStatus, 1)
-                .set(Post::getRejectReason, null));
+                .set(Post::getRejectReason, null)
+                .set(Post::getUpdateTime, LocalDateTime.now()));
         if (post != null) {
             notificationCenterService.createNotification(
                     post.getUserId(),
@@ -818,7 +868,8 @@ public class AdminController {
         postMapper.update(null, new LambdaUpdateWrapper<Post>()
                 .eq(Post::getId, id)
                 .set(Post::getStatus, 2)
-                .set(Post::getRejectReason, reason));
+                .set(Post::getRejectReason, reason)
+                .set(Post::getUpdateTime, LocalDateTime.now()));
         if (post != null) {
             notificationCenterService.createNotification(
                     post.getUserId(),
@@ -1356,6 +1407,38 @@ public class AdminController {
                 attraction.setStatus(optionalInteger(row, "status", 1));
                 validateAttraction(attraction);
                 attractionMapper.insert(attraction);
+            }
+            case "destinations" -> {
+                Destination destination = new Destination();
+                destination.setSlug(csv(row, "slug"));
+                destination.setName(csv(row, "name"));
+                destination.setCountry(row.getOrDefault("country", "中国"));
+                destination.setTag(csv(row, "tag"));
+                destination.setKeywords(row.getOrDefault("keywords", ""));
+                destination.setImg(csv(row, "img"));
+                destination.setDesc(csv(row, "desc"));
+                destination.setIntro(csv(row, "intro"));
+                destination.setHighlights(row.getOrDefault("highlights", ""));
+                destination.setCulture(row.getOrDefault("culture", ""));
+                destination.setBestSeason(row.getOrDefault("bestSeason", ""));
+                destination.setTransport(row.getOrDefault("transport", ""));
+                destination.setSourceName(row.getOrDefault("sourceName", ""));
+                destination.setSourceUrl(row.getOrDefault("sourceUrl", ""));
+                destination.setSortOrder(optionalInteger(row, "sortOrder", 100));
+                destination.setStatus(optionalInteger(row, "status", 1));
+                validateDestination(destination);
+                Destination exists = destinationMapper.selectOne(new LambdaQueryWrapper<Destination>()
+                        .eq(Destination::getSlug, destination.getSlug())
+                        .last("LIMIT 1"));
+                destination.setUpdateTime(LocalDateTime.now());
+                if (exists == null) {
+                    destination.setCreateTime(LocalDateTime.now());
+                    destinationMapper.insert(destination);
+                } else {
+                    destination.setId(exists.getId());
+                    destination.setCreateTime(exists.getCreateTime());
+                    destinationMapper.updateById(destination);
+                }
             }
             default -> throw new RuntimeException("不支持的导入类型：" + type);
         }

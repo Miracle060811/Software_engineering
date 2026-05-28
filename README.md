@@ -255,7 +255,7 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 - 一日游 / 周边游产品推荐
 - 基础评价系统（星级评分、图片上传、标签选择、评价列表）
 - 酒店订单扫码核销（内置不可用示例二维码，避免外链破图）
-- 热门城市资料页（真实目的地介绍、代表景点、出行建议）
+- 热门城市资料页（真实目的地介绍、代表景点、出行建议），优先读取后端城市资料表，后端为空时回退到前端静态资料
 
 ### AI 智能规划与 Agent 服务（成员 C - 陈一鸿）
 
@@ -280,10 +280,10 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 
 - RBAC 权限控制（后端 `/api/admin/**` 要求 `ROLE_ADMIN`，前端 `requiresAdmin` 二次拦截）
 - ECharts 可观测仪表盘（真实订单趋势、类型分布、热门目的地、用户增长、今日 GMV、近 15 分钟活跃用户、本地请求量、接口延迟、报错日志告警）
-- 资源管理（航班 CRUD、火车 CRUD、酒店 CRUD、房型库存/价格/上下架干预、景点 CRUD）
-- 资源批量导入（航班、火车、酒店、房型、景点 CSV 导入，格式见 [docs/admin-csv-import.md](docs/admin-csv-import.md)）
+- 资源管理（航班 CRUD、火车 CRUD、酒店 CRUD、房型库存/价格/上下架干预、景点 CRUD、城市资料下线）
+- 资源批量导入（航班、火车、酒店、房型、景点、城市资料 CSV 导入，格式见 [docs/admin-csv-import.md](docs/admin-csv-import.md)）
 - 优惠券配置（满减券/折扣券新增、编辑、删除，支持业务类型分类和用户领券记录查看）
-- 内容与安全审核（敏感词新增/编辑/删除、游记人工审核、AI 审核建议复核、通过 / 拒绝原因记录、一键封禁作者）
+- 内容与安全审核（敏感词新增/编辑/删除、游记人工审核、AI 审核建议复核、通过 / 拒绝原因记录、审核完成后可随时改判、一键封禁作者）
 - 商家回复与评价举报工单处理（驳回举报、删除被举报评价、查看/新增/删除商家回复）
 - 用户管理（启用/禁用、用户画像侧边查看，含订单、发帖、评论、评价、举报和最近操作统计）
 - 全平台订单流水（按类型/状态筛选、分页查看、交通与酒店退款审批闭环）
@@ -335,7 +335,7 @@ Software_engineering/
 │       │   └── admin/AdminDashboard.vue ← ECharts 仪表盘 + 资源/审核/订单管理
 │       ├── components/                ← PageHeader, SkeletonBox, EmptyState, CountUp, PriceTrend
 │       ├── stores/user.js             ← Pinia 用户状态
-│       ├── data/                      ← destinations + infoPages 静态资料
+│       ├── data/                      ← destinations 兜底资料 + infoPages 静态资料
 │       ├── router/index.js            ← 路由配置（23 路由）
 │       └── utils/request.js           ← Axios 封装（含 JWT 自动注入）
 └── docs/

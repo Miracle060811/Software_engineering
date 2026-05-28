@@ -67,14 +67,21 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { ArrowLeft, Link } from "@element-plus/icons-vue";
 import SafeImage from "@/components/SafeImage.vue";
-import { destinationMap } from "@/data/destinations";
+import { fetchDestinationBySlug } from "@/utils/destinations";
 
 const route = useRoute();
-const destination = computed(() => destinationMap[route.params.slug]);
+const destination = ref(null);
+
+const loadDestination = async () => {
+  destination.value = await fetchDestinationBySlug(route.params.slug);
+};
+
+onMounted(loadDestination);
+watch(() => route.params.slug, loadDestination);
 </script>
 
 <style scoped>

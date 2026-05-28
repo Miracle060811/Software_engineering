@@ -27,9 +27,11 @@
             把交通、住宿、景点与 AI 行程规划收进一处，让出发前的安排安静、有序，也更接近你想要的旅行节奏。
           </p>
           <div class="hero-chips" aria-label="TravelMate 服务">
-            <span>实时票务</span>
-            <span>酒店房型</span>
-            <span>AI 行程</span>
+            <span>交通</span>
+            <span>出游</span>
+            <span>社区</span>
+            <span>AI规划</span>
+            <span>优惠券</span>
           </div>
           <div class="hero-actions">
             <el-button type="primary" size="large" round @click="$router.push('/ai-plan')">
@@ -732,7 +734,7 @@ const quickSearch = (hint) => {
 }
 
 .hero-copy {
-  max-width: 610px;
+  max-width: 560px;
 }
 
 .hero-badge {
@@ -761,11 +763,11 @@ const quickSearch = (hint) => {
 
 .hero-title {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(58px, 6.5vw, 92px);
+  font-size: clamp(62px, 5.7vw, 86px);
   font-weight: 500;
   color: var(--tm-ink);
-  margin-bottom: 26px;
-  line-height: 0.95;
+  margin-bottom: 30px;
+  line-height: 0.98;
   letter-spacing: 0;
   animation: fadeInUp 0.65s ease 0.05s both;
   text-shadow: none;
@@ -781,28 +783,55 @@ const quickSearch = (hint) => {
   max-width: 50ch;
   font-size: 17px;
   color: var(--tm-ink-soft);
-  margin-bottom: 28px;
+  margin-bottom: 34px;
   line-height: 1.9;
   animation: fadeInUp 0.65s ease 0.1s both;
 }
 
 .hero-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: flex-start;
+  gap: 0;
+  padding-top: 20px;
+  border-top: 1px solid oklch(0.78 0.018 100 / 0.62);
 }
 
 .hero-chips span {
+  position: relative;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 999px;
-  color: var(--tm-bark);
-  background: oklch(0.985 0.002 248 / 0.72);
-  border: 1px solid oklch(0.86 0.018 180 / 0.42);
-  font-size: 13px;
-  font-weight: 650;
+  gap: 14px;
+  min-width: 0;
+  padding: 0 12px;
+  box-sizing: border-box;
+  color: var(--tm-ink);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-size: 19px;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.hero-chips span::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tm-olive);
+}
+
+.hero-chips span + span::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 1px;
+  height: 18px;
+  background: oklch(0.74 0.018 100 / 0.72);
+  transform: rotate(14deg);
 }
 
 .hero-actions {
@@ -1689,6 +1718,7 @@ const quickSearch = (hint) => {
   color: var(--tm-muted);
   margin-bottom: 10px;
   line-height: 1.5;
+  min-height: 3em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

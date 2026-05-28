@@ -24,6 +24,9 @@
           <el-menu-item index="attractions"
             ><el-icon><Promotion /></el-icon><span>景点资源</span></el-menu-item
           >
+          <el-menu-item index="destinations"
+            ><el-icon><Promotion /></el-icon><span>城市资源</span></el-menu-item
+          >
           <el-menu-item index="coupons"
             ><el-icon><Tickets /></el-icon><span>促销券配置</span></el-menu-item
           >
@@ -362,6 +365,38 @@
           </el-table>
         </section>
 
+        <section v-else-if="activeMenu === 'destinations'">
+          <div class="toolbar">
+            <h2 class="section-title">城市资源管理</h2>
+            <div>
+              <el-button @click="triggerImport('destinations')">导入 CSV</el-button>
+            </div>
+          </div>
+          <div class="toolbar toolbar-inline">
+            <div class="muted-text">
+              CSV 字段：slug、name、country、tag、keywords、img、desc、intro、highlights、culture、bestSeason、transport、sourceName、sourceUrl、sortOrder、status。keywords 和 highlights 可用竖线分隔。
+            </div>
+          </div>
+          <el-table :data="destinations" v-loading="destinationLoading" stripe>
+            <el-table-column prop="slug" label="标识" width="120" />
+            <el-table-column prop="name" label="城市" width="100" />
+            <el-table-column prop="tag" label="标签" width="120" />
+            <el-table-column prop="keywords" label="关键词" min-width="160" show-overflow-tooltip />
+            <el-table-column prop="desc" label="短描述" min-width="240" show-overflow-tooltip />
+            <el-table-column prop="sortOrder" label="排序" width="80" />
+            <el-table-column label="状态" width="90">
+              <template #default="scope">
+                <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">{{ scope.row.status === 1 ? "展示" : "下线" }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="scope">
+                <el-button size="small" type="danger" @click="removeDestination(scope.row)">下线</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </section>
+
         <section v-else-if="activeMenu === 'coupons'">
           <div class="toolbar">
             <h2 class="section-title">促销券配置</h2>
@@ -550,18 +585,16 @@
                 <el-table-column label="操作" width="250" fixed="right">
                   <template #default="scope">
                     <el-button
-                      v-if="scope.row.status === 0"
                       size="small"
                       type="success"
                       @click="approvePost(scope.row.id)"
-                      >通过</el-button
+                      >{{ scope.row.status === 1 ? "保持通过" : "改为通过" }}</el-button
                     >
                     <el-button
-                      v-if="scope.row.status === 0"
                       size="small"
                       type="danger"
                       @click="rejectPost(scope.row.id)"
-                      >拒绝</el-button
+                      >{{ scope.row.status === 2 ? "修改原因" : "改为拒绝" }}</el-button
                     >
                     <el-button
                       size="small"
@@ -570,7 +603,6 @@
                       @click="disablePostAuthor(scope.row)"
                       >封禁作者</el-button
                     >
-                    <span v-if="scope.row.status !== 0" class="muted-text">已处理</span>
                   </template>
                 </el-table-column>
               </el-table>
@@ -1377,6 +1409,7 @@ const trains = ref([]);
 const hotels = ref([]);
 const hotelRooms = ref([]);
 const attractions = ref([]);
+const destinations = ref([]);
 const coupons = ref([]);
 const couponClaims = ref([]);
 const orders = ref([]);
@@ -1392,6 +1425,7 @@ const trainLoading = ref(false);
 const hotelLoading = ref(false);
 const roomLoading = ref(false);
 const attractionLoading = ref(false);
+const destinationLoading = ref(false);
 const couponLoading = ref(false);
 const couponClaimsLoading = ref(false);
 const orderLoading = ref(false);
@@ -1894,6 +1928,18 @@ const fetchAttractions = async () => {
   }
 };
 
+const fetchDestinations = async () => {
+  destinationLoading.value = true;
+  try {
+    const data = await request.get("/api/admin/destinations");
+    destinations.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    destinations.value = [];
+  } finally {
+    destinationLoading.value = false;
+  }
+};
+
 const fetchCoupons = async () => {
   couponLoading.value = true;
   try {
@@ -2197,6 +2243,19 @@ const removeAttraction = async (row) => {
   } catch (error) {}
 };
 
+const removeDestination = async (row) => {
+  await ElMessageBox.confirm(`确认下线城市 ${row.name} 吗？`, "下线确认", {
+    type: "warning",
+    confirmButtonText: "确认下线",
+    cancelButtonText: "取消",
+  });
+  try {
+    await request.delete(`/api/admin/destinations/${row.id}`);
+    ElMessage.success("城市已下线");
+    await fetchDestinations();
+  } catch (error) {}
+};
+
 const triggerImport = (type) => {
   const input = document.createElement("input");
   input.type = "file";
@@ -2228,6 +2287,7 @@ const refreshResourceAfterImport = async (type) => {
   if (type === "hotels") return fetchHotels();
   if (type === "rooms") return fetchHotelRooms(activeHotel.value?.id);
   if (type === "attractions") return fetchAttractions();
+  if (type === "destinations") return fetchDestinations();
 };
 
 const openCouponDialog = (row = null) => {
@@ -2539,6 +2599,8 @@ const handleMenuSelect = (menu) => {
     fetchHotels();
   } else if (menu === "attractions") {
     fetchAttractions();
+  } else if (menu === "destinations") {
+    fetchDestinations();
   } else if (menu === "coupons") {
     fetchCoupons();
   } else if (menu === "orders") {
@@ -2584,6 +2646,8 @@ onUnmounted(() => {
 .admin-page {
   margin: -24px -40px;
   min-height: calc(100vh - 60px);
+  background:
+    linear-gradient(180deg, #f6fbff 0%, #ffffff 46%, #f8fbff 100%);
 }
 
 .reply-editor {
@@ -2593,35 +2657,45 @@ onUnmounted(() => {
 }
 
 .admin-aside {
-  background: #0f172a;
+  background: linear-gradient(180deg, #ffffff 0%, #f3fbff 100%);
   min-height: calc(100vh - 60px);
+  border-right: 1px solid #dbeafe;
+  box-shadow: 10px 0 30px rgba(59, 130, 246, 0.08);
 }
 
 .admin-logo {
-  color: #fff;
+  color: #0f766e;
   font-size: 18px;
   font-weight: 700;
   padding: 20px 20px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid #dbeafe;
 }
 
 .admin-menu {
-  background: #0f172a;
+  background: transparent;
   border-right: none;
+  padding: 8px 10px;
 }
 
 .admin-menu :deep(.el-menu-item) {
-  color: rgba(255, 255, 255, 0.6);
+  height: 44px;
+  margin: 4px 0;
+  color: #475569;
+  border-radius: 10px;
+  font-weight: 600;
 }
 
 .admin-menu :deep(.el-menu-item:hover),
 .admin-menu :deep(.el-menu-item.is-active) {
-  background: linear-gradient(135deg, #0d9488, #10b981);
-  color: #fff;
+  background: linear-gradient(135deg, #e0f7fa, #ecfdf5);
+  color: #0f766e;
+  box-shadow: inset 3px 0 0 #14b8a6;
 }
 
 .admin-main {
-  background: #f8fafc;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(20, 184, 166, 0.12), transparent 28%),
+    linear-gradient(180deg, #f7fcff 0%, #ffffff 56%, #f8fbff 100%);
   padding: 24px;
 }
 
@@ -2654,6 +2728,13 @@ onUnmounted(() => {
   border-radius: 12px;
 }
 
+.stat-card,
+.panel-card,
+.alert-card {
+  border: 1px solid #dbeafe;
+  box-shadow: 0 14px 36px rgba(15, 118, 110, 0.08);
+}
+
 .stat-value {
   font-size: 30px;
   font-weight: 700;
@@ -2672,6 +2753,50 @@ onUnmounted(() => {
 .panel-card,
 .alert-card {
   border-radius: 16px;
+}
+
+:deep(.el-table) {
+  --el-table-header-bg-color: #eff8ff;
+  --el-table-header-text-color: #0f172a;
+  --el-table-row-hover-bg-color: #eefcf8;
+  --el-table-border-color: #e5eef8;
+  color: #334155;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+:deep(.el-table th.el-table__cell) {
+  font-weight: 700;
+}
+
+:deep(.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell) {
+  background: #fbfdff;
+}
+
+:deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 18px rgba(15, 23, 42, 0.05);
+}
+
+:deep(.el-button--primary) {
+  --el-button-bg-color: #14b8a6;
+  --el-button-border-color: #14b8a6;
+  --el-button-hover-bg-color: #0d9488;
+  --el-button-hover-border-color: #0d9488;
+}
+
+:deep(.el-button--warning) {
+  --el-button-bg-color: #f4b860;
+  --el-button-border-color: #f4b860;
+  --el-button-hover-bg-color: #e59e35;
+  --el-button-hover-border-color: #e59e35;
+}
+
+:deep(.el-button--danger) {
+  --el-button-bg-color: #e60012;
+  --el-button-border-color: #e60012;
+  --el-button-hover-bg-color: #c7000b;
+  --el-button-hover-border-color: #c7000b;
 }
 
 .chart-panel {

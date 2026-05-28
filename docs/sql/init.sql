@@ -205,6 +205,32 @@ CREATE TABLE IF NOT EXISTS `tm_attraction` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='景点门票表';
 
+-- 10.1 热门城市资料表
+CREATE TABLE IF NOT EXISTS `tm_destination` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `slug` VARCHAR(80) NOT NULL COMMENT '城市URL标识',
+  `name` VARCHAR(80) NOT NULL COMMENT '城市名称',
+  `country` VARCHAR(80) DEFAULT '中国' COMMENT '国家/地区',
+  `tag` VARCHAR(80) NOT NULL COMMENT '城市标签',
+  `keywords` VARCHAR(300) DEFAULT NULL COMMENT '关键词，逗号或竖线分隔',
+  `img` VARCHAR(500) NOT NULL COMMENT '封面图URL',
+  `desc` VARCHAR(500) NOT NULL COMMENT '短描述',
+  `intro` TEXT NOT NULL COMMENT '城市介绍',
+  `highlights` TEXT DEFAULT NULL COMMENT '城市亮点，竖线或换行分隔',
+  `culture` TEXT DEFAULT NULL COMMENT '旅行气质',
+  `best_season` VARCHAR(500) DEFAULT NULL COMMENT '推荐季节',
+  `transport` VARCHAR(500) DEFAULT NULL COMMENT '交通建议',
+  `source_name` VARCHAR(255) DEFAULT NULL COMMENT '资料来源名称',
+  `source_url` VARCHAR(500) DEFAULT NULL COMMENT '资料来源URL',
+  `sort_order` INT DEFAULT 100 COMMENT '排序值',
+  `status` TINYINT(1) DEFAULT '1' COMMENT '0-下线, 1-展示',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_destination_slug` (`slug`),
+  KEY `idx_destination_status_sort` (`status`, `sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='热门城市资料表';
+
 -- 兼容已初始化过的旧库：补充景点数据来源字段
 SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction` ADD COLUMN `official_url` VARCHAR(500) DEFAULT NULL COMMENT ''官方/政府来源URL'' AFTER `status`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction' AND COLUMN_NAME = 'official_url');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

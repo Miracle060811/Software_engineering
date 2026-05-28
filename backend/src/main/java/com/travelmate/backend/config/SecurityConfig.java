@@ -25,6 +25,7 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(
                                                                 "/user/register", "/user/login",
+                                                                "/user/admin-register",
                                                                 "/user/reset-password",
                                                                 "/favicon.ico",
                                                                 "/assets/**",
@@ -35,6 +36,8 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/flight/**",
                                                                 "/api/train/**",
+                                                                "/api/destinations",
+                                                                "/api/destinations/**",
                                                                 "/api/hotel/search",
                                                                 "/api/attraction/search",
                                                                 "/api/review/list",

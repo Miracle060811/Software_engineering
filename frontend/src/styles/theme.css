@@ -759,12 +759,17 @@ body {
 .el-button--primary {
   background: var(--tm-olive);
   border-color: var(--tm-olive);
+  color: #fff;
+  --el-button-text-color: #fff;
+  --el-button-hover-text-color: #fff;
+  --el-button-active-text-color: #fff;
   box-shadow: 0 10px 22px oklch(0.42 0.085 180 / 0.16);
 }
 
 .el-button--primary:hover {
   background: var(--tm-bark);
   border-color: var(--tm-bark);
+  color: #fff;
   box-shadow: 0 14px 28px oklch(0.32 0.050 180 / 0.18);
 }
 
