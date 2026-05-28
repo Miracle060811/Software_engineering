@@ -98,13 +98,17 @@
             >
             <el-col :span="3"
               ><el-card class="stat-card"
-                ><div class="stat-value">¥{{ dashboardData.todayGmv || 0 }}</div>
+                ><div class="stat-value">
+                  ¥{{ dashboardData.todayGmv || 0 }}
+                </div>
                 <div class="stat-label">今日 GMV</div></el-card
               ></el-col
             >
             <el-col :span="3"
               ><el-card class="stat-card"
-                ><div class="stat-value">{{ dashboardData.onlineUsers || 0 }}</div>
+                ><div class="stat-value">
+                  {{ dashboardData.onlineUsers || 0 }}
+                </div>
                 <div class="stat-label">近 15 分钟活跃</div></el-card
               ></el-col
             >
@@ -170,7 +174,9 @@
             <h2 class="section-title">航班资源管理</h2>
             <div>
               <el-button @click="triggerImport('flights')">导入 CSV</el-button>
-              <el-button type="primary" @click="openFlightDialog()">新增航班</el-button>
+              <el-button type="primary" @click="openFlightDialog()"
+                >新增航班</el-button
+              >
             </div>
           </div>
           <el-table :data="flights" v-loading="flightLoading" stripe>
@@ -202,21 +208,10 @@
                 }}</el-tag></template
               >
             </el-table-column>
-            <el-table-column label="操作" width="220" fixed="right">
+            <el-table-column label="操作" width="150" fixed="right">
               <template #default="scope">
                 <el-button size="small" @click="openFlightDialog(scope.row)"
                   >编辑</el-button
-                >
-                <el-button
-                  size="small"
-                  type="warning"
-                  @click="
-                    openFlightDialog({
-                      ...scope.row,
-                      availableSeats: scope.row.availableSeats,
-                    })
-                  "
-                  >改库存</el-button
                 >
                 <el-button
                   size="small"
@@ -234,7 +229,9 @@
             <h2 class="section-title">火车资源管理</h2>
             <div>
               <el-button @click="triggerImport('trains')">导入 CSV</el-button>
-              <el-button type="primary" @click="openTrainDialog()">新增车次</el-button>
+              <el-button type="primary" @click="openTrainDialog()"
+                >新增车次</el-button
+              >
             </div>
           </div>
           <el-table :data="trains" v-loading="trainLoading" stripe>
@@ -292,7 +289,9 @@
             <h2 class="section-title">酒店与房态管理</h2>
             <div>
               <el-button @click="triggerImport('hotels')">导入 CSV</el-button>
-              <el-button type="primary" @click="openHotelDialog()">新增酒店</el-button>
+              <el-button type="primary" @click="openHotelDialog()"
+                >新增酒店</el-button
+              >
             </div>
           </div>
           <el-table :data="hotels" v-loading="hotelLoading" stripe>
@@ -337,29 +336,54 @@
           <div class="toolbar">
             <h2 class="section-title">景点资源管理</h2>
             <div>
-              <el-button @click="triggerImport('attractions')">导入 CSV</el-button>
-              <el-button type="primary" @click="openAttractionDialog()">新增景点</el-button>
+              <el-button @click="triggerImport('attractions')"
+                >导入 CSV</el-button
+              >
+              <el-button type="primary" @click="openAttractionDialog()"
+                >新增景点</el-button
+              >
             </div>
           </div>
           <el-table :data="attractions" v-loading="attractionLoading" stripe>
             <el-table-column prop="name" label="景点名称" min-width="180" />
             <el-table-column prop="city" label="城市" width="100" />
             <el-table-column label="门票" width="150">
-              <template #default="scope">成人 ¥{{ scope.row.adultPrice }} / 儿童 ¥{{ scope.row.childPrice }}</template>
+              <template #default="scope"
+                >成人 ¥{{ scope.row.adultPrice }} / 儿童 ¥{{
+                  scope.row.childPrice
+                }}</template
+              >
             </el-table-column>
             <el-table-column label="余票" width="130">
-              <template #default="scope">{{ scope.row.availableTickets }} / {{ scope.row.totalTickets }}</template>
+              <template #default="scope"
+                >{{ scope.row.availableTickets }} /
+                {{ scope.row.totalTickets }}</template
+              >
             </el-table-column>
-            <el-table-column prop="openTime" label="开放时间" min-width="160" show-overflow-tooltip />
+            <el-table-column
+              prop="openTime"
+              label="开放时间"
+              min-width="160"
+              show-overflow-tooltip
+            />
             <el-table-column label="状态" width="90">
               <template #default="scope">
-                <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">{{ scope.row.status === 1 ? "开放" : "下线" }}</el-tag>
+                <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">{{
+                  scope.row.status === 1 ? "开放" : "下线"
+                }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="160" fixed="right">
               <template #default="scope">
-                <el-button size="small" @click="openAttractionDialog(scope.row)">编辑</el-button>
-                <el-button size="small" type="danger" @click="removeAttraction(scope.row)">删除</el-button>
+                <el-button size="small" @click="openAttractionDialog(scope.row)"
+                  >编辑</el-button
+                >
+                <el-button
+                  size="small"
+                  type="danger"
+                  @click="removeAttraction(scope.row)"
+                  >删除</el-button
+                >
               </template>
             </el-table-column>
           </el-table>
@@ -369,29 +393,50 @@
           <div class="toolbar">
             <h2 class="section-title">城市资源管理</h2>
             <div>
-              <el-button @click="triggerImport('destinations')">导入 CSV</el-button>
+              <el-button @click="triggerImport('destinations')"
+                >导入 CSV</el-button
+              >
             </div>
           </div>
           <div class="toolbar toolbar-inline">
             <div class="muted-text">
-              CSV 字段：slug、name、country、tag、keywords、img、desc、intro、highlights、culture、bestSeason、transport、sourceName、sourceUrl、sortOrder、status。keywords 和 highlights 可用竖线分隔。
+              CSV
+              字段：slug、name、country、tag、keywords、img、desc、intro、highlights、culture、bestSeason、transport、sourceName、sourceUrl、sortOrder、status。keywords
+              和 highlights 可用竖线分隔。
             </div>
           </div>
           <el-table :data="destinations" v-loading="destinationLoading" stripe>
             <el-table-column prop="slug" label="标识" width="120" />
             <el-table-column prop="name" label="城市" width="100" />
             <el-table-column prop="tag" label="标签" width="120" />
-            <el-table-column prop="keywords" label="关键词" min-width="160" show-overflow-tooltip />
-            <el-table-column prop="desc" label="短描述" min-width="240" show-overflow-tooltip />
+            <el-table-column
+              prop="keywords"
+              label="关键词"
+              min-width="160"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              prop="desc"
+              label="短描述"
+              min-width="240"
+              show-overflow-tooltip
+            />
             <el-table-column prop="sortOrder" label="排序" width="80" />
             <el-table-column label="状态" width="90">
               <template #default="scope">
-                <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">{{ scope.row.status === 1 ? "展示" : "下线" }}</el-tag>
+                <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">{{
+                  scope.row.status === 1 ? "展示" : "下线"
+                }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="120" fixed="right">
               <template #default="scope">
-                <el-button size="small" type="danger" @click="removeDestination(scope.row)">下线</el-button>
+                <el-button
+                  size="small"
+                  type="danger"
+                  @click="removeDestination(scope.row)"
+                  >下线</el-button
+                >
               </template>
             </el-table-column>
           </el-table>
@@ -437,7 +482,11 @@
             </el-table-column>
             <el-table-column label="操作" width="220" fixed="right">
               <template #default="scope">
-                <el-button size="small" type="primary" plain @click="openCouponClaims(scope.row)"
+                <el-button
+                  size="small"
+                  type="primary"
+                  plain
+                  @click="openCouponClaims(scope.row)"
                   >领取记录</el-button
                 >
                 <el-button size="small" @click="openCouponDialog(scope.row)"
@@ -468,7 +517,9 @@
             <el-tab-pane label="酒店" name="hotel" />
           </el-tabs>
           <div class="toolbar toolbar-inline">
-            <div class="muted-text">按订单状态筛选流水，可对仍占库存的已支付订单办理退款。</div>
+            <div class="muted-text">
+              按订单状态筛选流水，可对仍占库存的已支付订单办理退款。
+            </div>
             <el-select
               v-model="orderStatusFilter"
               placeholder="全部状态"
@@ -588,13 +639,17 @@
                       size="small"
                       type="success"
                       @click="approvePost(scope.row.id)"
-                      >{{ scope.row.status === 1 ? "保持通过" : "改为通过" }}</el-button
+                      >{{
+                        scope.row.status === 1 ? "保持通过" : "改为通过"
+                      }}</el-button
                     >
                     <el-button
                       size="small"
                       type="danger"
                       @click="rejectPost(scope.row.id)"
-                      >{{ scope.row.status === 2 ? "修改原因" : "改为拒绝" }}</el-button
+                      >{{
+                        scope.row.status === 2 ? "修改原因" : "改为拒绝"
+                      }}</el-button
                     >
                     <el-button
                       size="small"
@@ -688,7 +743,9 @@
                       @click="openReplyDrawer(scope.row)"
                       >商家回复</el-button
                     >
-                    <span v-if="scope.row.status !== 0" class="muted-text">已完成</span>
+                    <span v-if="scope.row.status !== 0" class="muted-text"
+                      >已完成</span
+                    >
                   </template>
                 </el-table-column>
               </el-table>
@@ -1049,7 +1106,9 @@
         <div class="muted-text">成员 E 可在此干预房态、价格和上下架。</div>
         <div>
           <el-button @click="triggerImport('rooms')">导入 CSV</el-button>
-          <el-button type="primary" @click="openRoomDialog()">新增房型</el-button>
+          <el-button type="primary" @click="openRoomDialog()"
+            >新增房型</el-button
+          >
         </div>
       </div>
       <el-table :data="hotelRooms" v-loading="roomLoading" stripe>
@@ -1148,22 +1207,100 @@
     >
       <el-form :model="attractionForm" label-width="110px" class="entity-form">
         <el-row :gutter="16">
-          <el-col :span="12"><el-form-item label="景点名称"><el-input v-model="attractionForm.name" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="城市"><el-input v-model="attractionForm.city" /></el-form-item></el-col>
-          <el-col :span="24"><el-form-item label="地址"><el-input v-model="attractionForm.address" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="成人票价"><el-input-number v-model="attractionForm.adultPrice" :min="0" :precision="2" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="儿童票价"><el-input-number v-model="attractionForm.childPrice" :min="0" :precision="2" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="总票数"><el-input-number v-model="attractionForm.totalTickets" :min="0" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="可售票数"><el-input-number v-model="attractionForm.availableTickets" :min="0" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="开放时间"><el-input v-model="attractionForm.openTime" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="状态"><el-select v-model="attractionForm.status" style="width: 100%"><el-option label="开放" :value="1" /><el-option label="下线" :value="0" /></el-select></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="纬度"><el-input-number v-model="attractionForm.lat" :precision="6" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="经度"><el-input-number v-model="attractionForm.lng" :precision="6" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="24"><el-form-item label="封面图"><el-input v-model="attractionForm.coverImg" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="来源名称"><el-input v-model="attractionForm.sourceName" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="核验日期"><el-date-picker v-model="attractionForm.dataCheckedDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="24"><el-form-item label="来源URL"><el-input v-model="attractionForm.officialUrl" /></el-form-item></el-col>
-          <el-col :span="24"><el-form-item label="描述"><el-input v-model="attractionForm.description" type="textarea" :rows="3" /></el-form-item></el-col>
+          <el-col :span="12"
+            ><el-form-item label="景点名称"
+              ><el-input v-model="attractionForm.name" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="城市"
+              ><el-input v-model="attractionForm.city" /></el-form-item
+          ></el-col>
+          <el-col :span="24"
+            ><el-form-item label="地址"
+              ><el-input v-model="attractionForm.address" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="成人票价"
+              ><el-input-number
+                v-model="attractionForm.adultPrice"
+                :min="0"
+                :precision="2"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="儿童票价"
+              ><el-input-number
+                v-model="attractionForm.childPrice"
+                :min="0"
+                :precision="2"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="总票数"
+              ><el-input-number
+                v-model="attractionForm.totalTickets"
+                :min="0"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="可售票数"
+              ><el-input-number
+                v-model="attractionForm.availableTickets"
+                :min="0"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="开放时间"
+              ><el-input v-model="attractionForm.openTime" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="状态"
+              ><el-select v-model="attractionForm.status" style="width: 100%"
+                ><el-option label="开放" :value="1" /><el-option
+                  label="下线"
+                  :value="0" /></el-select></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="纬度"
+              ><el-input-number
+                v-model="attractionForm.lat"
+                :precision="6"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="经度"
+              ><el-input-number
+                v-model="attractionForm.lng"
+                :precision="6"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="24"
+            ><el-form-item label="封面图"
+              ><el-input v-model="attractionForm.coverImg" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="来源名称"
+              ><el-input v-model="attractionForm.sourceName" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="核验日期"
+              ><el-date-picker
+                v-model="attractionForm.dataCheckedDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="24"
+            ><el-form-item label="来源URL"
+              ><el-input v-model="attractionForm.officialUrl" /></el-form-item
+          ></el-col>
+          <el-col :span="24"
+            ><el-form-item label="描述"
+              ><el-input
+                v-model="attractionForm.description"
+                type="textarea"
+                :rows="3" /></el-form-item
+          ></el-col>
         </el-row>
       </el-form>
       <template #footer>
@@ -1286,7 +1423,9 @@
         <el-table-column prop="username" label="用户名" width="140" />
         <el-table-column prop="nickname" label="昵称" width="140" />
         <el-table-column label="状态" width="90">
-          <template #default="scope">{{ couponClaimStatusLabel(scope.row.status) }}</template>
+          <template #default="scope">{{
+            couponClaimStatusLabel(scope.row.status)
+          }}</template>
         </el-table-column>
         <el-table-column prop="receivedTime" label="领取时间" width="180" />
         <el-table-column prop="usedTime" label="使用时间" width="180" />
@@ -1295,15 +1434,26 @@
 
     <el-drawer
       v-model="replyDrawerVisible"
-      :title="activeReport ? `评价 ${activeReport.reviewId} · 商家回复` : '商家回复'"
+      :title="
+        activeReport ? `评价 ${activeReport.reviewId} · 商家回复` : '商家回复'
+      "
       size="620px"
     >
       <el-descriptions v-if="activeReport" :column="1" border>
-        <el-descriptions-item label="评价对象">{{ activeReport.targetName }}</el-descriptions-item>
-        <el-descriptions-item label="评价内容">{{ activeReport.reviewContent }}</el-descriptions-item>
+        <el-descriptions-item label="评价对象">{{
+          activeReport.targetName
+        }}</el-descriptions-item>
+        <el-descriptions-item label="评价内容">{{
+          activeReport.reviewContent
+        }}</el-descriptions-item>
       </el-descriptions>
       <div class="reply-editor">
-        <el-input v-model="replyContent" type="textarea" :rows="3" placeholder="输入商家回复内容" />
+        <el-input
+          v-model="replyContent"
+          type="textarea"
+          :rows="3"
+          placeholder="输入商家回复内容"
+        />
         <el-button type="primary" @click="saveReply">发布回复</el-button>
       </div>
       <el-table :data="reviewReplies" v-loading="replyLoading" stripe>
@@ -1311,7 +1461,12 @@
         <el-table-column prop="createTime" label="时间" width="180" />
         <el-table-column label="操作" width="90">
           <template #default="scope">
-            <el-button size="small" type="danger" @click="removeReply(scope.row)">删除</el-button>
+            <el-button
+              size="small"
+              type="danger"
+              @click="removeReply(scope.row)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -1621,8 +1776,14 @@ const normalizeAttraction = (row = {}) => ({
   childPrice: parseNumberish(row.childPrice, 0),
   totalTickets: parseNumberish(row.totalTickets, 1000),
   availableTickets: parseNumberish(row.availableTickets, 1000),
-  lat: row.lat === null || row.lat === undefined ? null : parseNumberish(row.lat, null),
-  lng: row.lng === null || row.lng === undefined ? null : parseNumberish(row.lng, null),
+  lat:
+    row.lat === null || row.lat === undefined
+      ? null
+      : parseNumberish(row.lat, null),
+  lng:
+    row.lng === null || row.lng === undefined
+      ? null
+      : parseNumberish(row.lng, null),
   status: parseNumberish(row.status, 1),
 });
 
@@ -1796,7 +1957,7 @@ const renderCharts = () => {
 
   setChartOption(qpsChartRef.value, {
     title: {
-              text: "本地请求量监控",
+      text: "本地请求量监控",
       left: "center",
       textStyle: { fontSize: 14 },
     },
@@ -1821,7 +1982,7 @@ const renderCharts = () => {
 
   setChartOption(latencyChartRef.value, {
     title: {
-              text: "接口平均延迟监控",
+      text: "接口平均延迟监控",
       left: "center",
       textStyle: { fontSize: 14 },
     },
@@ -2231,11 +2392,15 @@ const saveAttraction = async () => {
 };
 
 const removeAttraction = async (row) => {
-  await ElMessageBox.confirm(`确认删除或下线景点 ${row.name} 吗？`, "删除确认", {
-    type: "warning",
-    confirmButtonText: "确认",
-    cancelButtonText: "取消",
-  });
+  await ElMessageBox.confirm(
+    `确认删除或下线景点 ${row.name} 吗？`,
+    "删除确认",
+    {
+      type: "warning",
+      confirmButtonText: "确认",
+      cancelButtonText: "取消",
+    },
+  );
   try {
     await request.delete(`/api/admin/attractions/${row.id}`);
     ElMessage.success("景点已删除或下线");
@@ -2272,7 +2437,11 @@ const triggerImport = (type) => {
       const failures = result?.failures || [];
       ElMessageBox.alert(
         `成功 ${result?.success || 0} 行，失败 ${result?.failed || 0} 行` +
-          (failures.length ? `\n${failures.map((f) => `第 ${f.line} 行：${f.reason}`).join("\n")}` : ""),
+          (failures.length
+            ? `\n${failures
+                .map((f) => `第 ${f.line} 行：${f.reason}`)
+                .join("\n")}`
+            : ""),
         "导入结果",
       );
       await refreshResourceAfterImport(type);
@@ -2381,17 +2550,13 @@ const approvePost = async (id) => {
 
 const rejectPost = async (id) => {
   try {
-    const { value } = await ElMessageBox.prompt(
-      "请输入拒绝原因",
-      "审核拒绝",
-      {
-        inputValue: "内容不符合社区规范",
-        inputPattern: /\S+/,
-        inputErrorMessage: "拒绝原因不能为空",
-        confirmButtonText: "确认拒绝",
-        cancelButtonText: "暂不处理",
-      },
-    );
+    const { value } = await ElMessageBox.prompt("请输入拒绝原因", "审核拒绝", {
+      inputValue: "内容不符合社区规范",
+      inputPattern: /\S+/,
+      inputErrorMessage: "拒绝原因不能为空",
+      confirmButtonText: "确认拒绝",
+      cancelButtonText: "暂不处理",
+    });
     await request.post(`/api/admin/posts/${id}/reject`, { reason: value });
     ElMessage.success("审核已拒绝");
     await fetchPosts();
@@ -2403,11 +2568,15 @@ const rejectPost = async (id) => {
 
 const disablePostAuthor = async (row) => {
   if (!row.userId) return;
-  await ElMessageBox.confirm(`确认封禁作者 ${row.authorUsername || row.userId} 吗？`, "封禁确认", {
-    type: "warning",
-    confirmButtonText: "确认封禁",
-    cancelButtonText: "取消",
-  });
+  await ElMessageBox.confirm(
+    `确认封禁作者 ${row.authorUsername || row.userId} 吗？`,
+    "封禁确认",
+    {
+      type: "warning",
+      confirmButtonText: "确认封禁",
+      cancelButtonText: "取消",
+    },
+  );
   try {
     await request.post(`/api/admin/users/${row.userId}/disable`);
     ElMessage.success("作者已封禁");
@@ -2417,17 +2586,13 @@ const disablePostAuthor = async (row) => {
 
 const resolveReviewReport = async (id) => {
   try {
-    const { value } = await ElMessageBox.prompt(
-      "请输入处理备注",
-      "举报处理",
-      {
-        inputValue: "已人工复核",
-        inputPattern: /\S+/,
-        inputErrorMessage: "处理备注不能为空",
-        confirmButtonText: "确认处理",
-        cancelButtonText: "暂不处理",
-      },
-    );
+    const { value } = await ElMessageBox.prompt("请输入处理备注", "举报处理", {
+      inputValue: "已人工复核",
+      inputPattern: /\S+/,
+      inputErrorMessage: "处理备注不能为空",
+      confirmButtonText: "确认处理",
+      cancelButtonText: "暂不处理",
+    });
     await request.post(`/api/admin/review-reports/${id}/resolve`, {
       remark: value,
     });
@@ -2478,9 +2643,12 @@ const openReplyDrawer = async (row) => {
 const saveReply = async () => {
   if (!activeReport.value?.reviewId) return;
   try {
-    await request.post(`/api/admin/reviews/${activeReport.value.reviewId}/replies`, {
-      content: replyContent.value,
-    });
+    await request.post(
+      `/api/admin/reviews/${activeReport.value.reviewId}/replies`,
+      {
+        content: replyContent.value,
+      },
+    );
     ElMessage.success("商家回复已发布");
     replyContent.value = "";
     await fetchReviewReplies(activeReport.value.reviewId);
@@ -2539,13 +2707,25 @@ const canReviewRefund = (row) => {
 const orderStatusLabel = (row) => {
   if (row.type === "酒店") {
     return (
-      ["待支付", "已支付", "入住中", "已完成", "已取消/已退款", "拒绝退款（历史）"][row.status] ||
-      `状态${row.status}`
+      [
+        "待支付",
+        "已支付",
+        "入住中",
+        "已完成",
+        "已取消/已退款",
+        "拒绝退款（历史）",
+      ][row.status] || `状态${row.status}`
     );
   }
   return (
-    ["待支付", "出票中", "已出票", "已取消", "已退票/已退款", "拒绝退款（历史）"][row.status] ||
-    `状态${row.status}`
+    [
+      "待支付",
+      "出票中",
+      "已出票",
+      "已取消",
+      "已退票/已退款",
+      "拒绝退款（历史）",
+    ][row.status] || `状态${row.status}`
   );
 };
 
@@ -2646,8 +2826,7 @@ onUnmounted(() => {
 .admin-page {
   margin: -24px -40px;
   min-height: calc(100vh - 60px);
-  background:
-    linear-gradient(180deg, #f6fbff 0%, #ffffff 46%, #f8fbff 100%);
+  background: linear-gradient(180deg, #f6fbff 0%, #ffffff 46%, #f8fbff 100%);
 }
 
 .reply-editor {
@@ -2693,8 +2872,11 @@ onUnmounted(() => {
 }
 
 .admin-main {
-  background:
-    radial-gradient(circle at 88% 8%, rgba(20, 184, 166, 0.12), transparent 28%),
+  background: radial-gradient(
+      circle at 88% 8%,
+      rgba(20, 184, 166, 0.12),
+      transparent 28%
+    ),
     linear-gradient(180deg, #f7fcff 0%, #ffffff 56%, #f8fbff 100%);
   padding: 24px;
 }
@@ -2770,7 +2952,12 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
-:deep(.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell) {
+:deep(
+    .el-table--striped
+      .el-table__body
+      tr.el-table__row--striped
+      td.el-table__cell
+  ) {
   background: #fbfdff;
 }
 
