@@ -491,7 +491,7 @@ const teamMembers = [
     bio: "负责后台运营管理、内容审核、系统日志与数据看板相关设计。",
     contact: "微信号待补充",
     avatar: yfanAvatar,
-    gradient: "linear-gradient(135deg, #0f766e, #2563eb)",
+    gradient: "linear-gradient(135deg, oklch(0.551 0.097 180), oklch(0.72 0.060 190))",
   },
   {
     name: "YangYouth",
@@ -501,7 +501,7 @@ const teamMembers = [
     bio: "负责机票、火车票、库存防超卖和订单预占流程相关设计。",
     contact: "微信号待补充",
     avatar: yangYouthAvatar,
-    gradient: "linear-gradient(135deg, #dc2626, #f59e0b)",
+    gradient: "linear-gradient(135deg, oklch(0.62 0.080 180), oklch(0.78 0.045 205))",
   },
   {
     name: "Sylphira",
@@ -511,7 +511,7 @@ const teamMembers = [
     bio: "负责 AI 行程生成、智能客服、Prompt 设计和工具调用相关能力。",
     contact: "微信号待补充",
     avatar: sylphiraAvatar,
-    gradient: "linear-gradient(135deg, #7c3aed, #db2777)",
+    gradient: "linear-gradient(135deg, oklch(0.58 0.070 205), oklch(0.70 0.055 180))",
   },
   {
     name: "Mojiree",
@@ -521,7 +521,7 @@ const teamMembers = [
     bio: "负责酒店、房型、景点、本地玩乐和评价体系相关设计。",
     contact: "微信号待补充",
     avatar: mojireeAvatar,
-    gradient: "linear-gradient(135deg, #16a34a, #0ea5e9)",
+    gradient: "linear-gradient(135deg, oklch(0.64 0.075 180), oklch(0.84 0.034 180))",
   },
   {
     name: "DXC",
@@ -531,7 +531,7 @@ const teamMembers = [
     bio: "负责旅行社区、互动关系、评论收藏和用户中心相关设计。",
     contact: "微信号待补充",
     avatar: dxcAvatar,
-    gradient: "linear-gradient(135deg, #334155, #0891b2)",
+    gradient: "linear-gradient(135deg, oklch(0.32 0.050 180), oklch(0.551 0.097 180))",
   },
 ];
 
@@ -755,12 +755,12 @@ watch(
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.03);
-  transition: all 0.3s ease;
+  background: oklch(0.985 0.002 248 / 0.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--tm-line);
+  box-shadow: 0 10px 34px oklch(0.239 0.006 180 / 0.045);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .nav-inner {
@@ -770,7 +770,7 @@ watch(
   max-width: var(--tm-page-max-width);
   margin: 0 auto;
   padding: 0 var(--tm-page-padding);
-  height: 64px;
+  height: 62px;
 }
 
 /* Logo */
@@ -786,26 +786,27 @@ watch(
 .logo-icon {
   display: inline-flex;
   align-items: center;
-  color: var(--el-color-primary);
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: oklch(0.935 0.030 180);
+  color: var(--tm-olive);
+  transition: transform 0.18s ease;
 }
 .nav-logo:hover .logo-icon {
-  transform: scale(1.15) rotate(-8deg);
+  transform: translateY(-1px);
 }
 
 .logo-text {
-  font-size: 20px;
-  color: var(--el-text-color-primary);
-  letter-spacing: 0.2px;
+  font-size: 18px;
+  color: var(--tm-ink);
+  letter-spacing: 0;
 }
 .logo-text strong {
-  font-weight: 800;
-  background: var(--tm-gradient-brand);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradientShift 4s ease infinite;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  color: var(--tm-olive);
 }
 
 /* 桌面端导航 */
@@ -816,8 +817,22 @@ watch(
 }
 
 .nav-link-btn {
-  min-width: 64px;
-  font-weight: 700;
+  min-width: 58px;
+  font-weight: 650;
+  border-radius: 8px;
+  color: var(--tm-ink-soft);
+}
+
+.nav-link-btn.el-button--primary {
+  background: var(--tm-olive);
+  border-color: var(--tm-olive);
+  color: oklch(0.985 0.002 248);
+  box-shadow: none;
+}
+
+.nav-link-btn.el-button.is-text:not(.is-disabled):hover {
+  background: oklch(0.935 0.030 180);
+  color: var(--tm-olive);
 }
 
 .nav-dropdown {
@@ -835,12 +850,12 @@ watch(
 
 .nav-search-btn {
   margin: 0 6px;
-  color: var(--el-text-color-secondary);
+  color: var(--tm-ink-soft);
   transition: all 0.3s ease;
 }
 .nav-search-btn:hover {
-  color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
+  color: var(--tm-olive);
+  background: oklch(0.935 0.030 180);
 }
 
 /* 用户头像区 */
@@ -849,20 +864,20 @@ watch(
   align-items: center;
   gap: 8px;
   padding: 4px 14px 4px 4px;
-  border-radius: 24px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.18s ease, border-color 0.18s ease;
   border: 1px solid transparent;
   margin-left: 4px;
 }
 .user-chip:hover {
-  background: var(--el-color-primary-light-9);
-  border-color: var(--el-color-primary-light-8);
+  background: oklch(0.935 0.030 180);
+  border-color: oklch(0.78 0.047 180);
 }
 
 .user-avatar {
-  background: linear-gradient(135deg, #0d9488, #0ea5e9);
-  color: #fff;
+  background: var(--tm-gradient-brand);
+  color: oklch(0.985 0.002 248);
   font-weight: 700;
   font-size: 14px;
 }
@@ -870,7 +885,7 @@ watch(
 .user-name {
   font-size: 14px;
   font-weight: 600;
-  color: #334155;
+  color: var(--tm-ink);
   max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -879,7 +894,7 @@ watch(
 
 .user-arrow {
   font-size: 12px;
-  color: var(--el-text-color-placeholder);
+  color: var(--tm-muted);
   transition: transform 0.3s ease;
 }
 .user-chip:hover .user-arrow {
@@ -894,7 +909,7 @@ watch(
   display: flex;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1040px) {
   .mobile-only {
     display: flex;
   }
@@ -913,6 +928,15 @@ watch(
 
   .mobile-nav-actions {
     gap: 2px;
+  }
+
+  .mobile-nav-actions .el-button {
+    color: var(--tm-ink-soft);
+  }
+
+  .mobile-nav-actions .el-button:hover {
+    background: oklch(0.935 0.030 180);
+    color: var(--tm-olive);
   }
 }
 
@@ -1010,8 +1034,8 @@ watch(
 
 /* ==================== 面包屑 ==================== */
 .breadcrumb-bar {
-  border-bottom: 1px solid var(--el-border-color-light);
-  background: #fff;
+  border-bottom: 1px solid var(--tm-line-soft);
+  background: oklch(0.985 0.002 248 / 0.82);
 }
 
 .breadcrumb-inner {
@@ -1023,7 +1047,7 @@ watch(
 /* ==================== 主内容区 ==================== */
 .main-content {
   flex: 1;
-  padding: 28px var(--tm-page-padding);
+  padding: 30px var(--tm-page-padding);
   max-width: var(--tm-page-max-width);
   margin: 0 auto;
   width: 100%;
@@ -1049,8 +1073,8 @@ watch(
 
 /* ==================== Footer ==================== */
 .app-footer {
-  background: #fff;
-  border-top: 1px solid var(--el-border-color-light);
+  background: linear-gradient(180deg, oklch(0.985 0.002 248), oklch(0.964 0.008 197));
+  border-top: 1px solid var(--tm-line-soft);
   margin-top: auto;
 }
 
@@ -1070,14 +1094,14 @@ watch(
 .footer-col h3 {
   font-size: 18px;
   font-weight: 700;
-  color: var(--el-text-color-primary);
+  color: var(--tm-ink);
   margin-bottom: 12px;
 }
 
 .footer-col h4 {
   font-size: 14px;
   font-weight: 700;
-  color: var(--el-text-color-primary);
+  color: var(--tm-ink);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 16px;
@@ -1114,8 +1138,8 @@ watch(
   height: 38px;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid #f0f2f5;
-  background: #fff;
+  border: 1px solid var(--tm-line-soft);
+  background: var(--tm-surface);
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -1125,15 +1149,15 @@ watch(
 
 .team-avatar-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 18px oklch(0.239 0.006 180 / 0.10);
   border-color: var(--el-color-primary-light-5);
 }
 
 .team-avatar {
-  color: #fff;
+  color: oklch(0.985 0.002 248);
   font-size: 13px;
   font-weight: 800;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 2px oklch(0.985 0.002 248 / 0.72);
 }
 
 .team-dialog :deep(.el-dialog) {
@@ -1147,7 +1171,7 @@ watch(
 }
 
 .team-dialog-avatar {
-  color: #fff;
+  color: oklch(0.985 0.002 248);
   font-size: 20px;
   font-weight: 800;
 }
@@ -1190,7 +1214,7 @@ watch(
   justify-content: space-between;
   align-items: center;
   padding-top: 20px;
-  border-top: 1px solid var(--el-border-color-light);
+  border-top: 1px solid var(--tm-line-soft);
   font-size: 13px;
   color: var(--el-text-color-placeholder);
 }

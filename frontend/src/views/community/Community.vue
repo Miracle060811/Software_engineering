@@ -320,9 +320,11 @@ onMounted(() => {
 }
 .feed-tabs {
   margin-bottom: 16px;
+  padding: 0 4px;
 }
 .audit-alert {
   margin-bottom: 16px;
+  border-radius: 8px;
 }
 .mine-filters {
   margin-bottom: 16px;
@@ -347,10 +349,11 @@ onMounted(() => {
   break-inside: avoid;
   margin-bottom: 20px;
   cursor: pointer;
-  border-radius: 16px;
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #F0F2F5;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--tm-line-soft);
+  background: var(--tm-surface);
+  transition: all 0.28s ease;
   display: inline-block;
   width: 100%;
 }
@@ -358,20 +361,21 @@ onMounted(() => {
   position: relative;
 }
 .post-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  border-color: oklch(0.82 0.055 190);
+  box-shadow: var(--tm-shadow-hover);
 }
 
 .post-img-wrap {
   position: relative;
   overflow: hidden;
   aspect-ratio: 16 / 9;
-  background: #f3f6fb;
+  background: var(--tm-primary-soft);
 }
 .post-img-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.3), transparent 40%);
+  background: linear-gradient(to top, oklch(0.24 0.026 215 / 0.36), transparent 44%);
   opacity: 0;
   transition: opacity 0.35s ease;
 }
@@ -408,7 +412,7 @@ onMounted(() => {
 .post-title {
   font-size: 16px;
   font-weight: 700;
-  color: #1A1A2E;
+  color: var(--tm-ink);
   margin-bottom: 10px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -418,7 +422,7 @@ onMounted(() => {
 }
 .post-excerpt {
   font-size: 13px;
-  color: #71718B;
+  color: var(--tm-ink-soft);
   line-height: 1.7;
   margin-bottom: 12px;
   display: -webkit-box;
@@ -428,9 +432,9 @@ onMounted(() => {
 }
 .reject-reason {
   font-size: 13px;
-  color: #B91C1C;
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
+  color: var(--tm-danger);
+  background: oklch(0.975 0.018 28);
+  border: 1px solid oklch(0.90 0.055 28);
   border-radius: 8px;
   padding: 8px 10px;
   line-height: 1.5;
@@ -446,7 +450,7 @@ onMounted(() => {
 
 .post-author {
   font-size: 13px;
-  color: #71718B;
+  color: var(--tm-muted);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -454,7 +458,7 @@ onMounted(() => {
 
 .post-likes {
   font-size: 13px;
-  color: #FB7185;
+  color: var(--tm-accent);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -463,7 +467,7 @@ onMounted(() => {
 
 .post-location {
   font-size: 13px;
-  color: #A0A0B8;
+  color: var(--tm-muted);
   display: flex;
   align-items: center;
   gap: 4px;

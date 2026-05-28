@@ -427,40 +427,45 @@ onMounted(() => {
 
 <style scoped>
 .flight-search-page {
-  max-width: 960px;
+  max-width: 1040px;
   margin: 0 auto;
 }
 .search-box {
-  margin-bottom: 20px;
-  border-radius: 16px;
-  border: 1px solid #F0F2F5;
+  margin-bottom: 22px;
+  border-radius: 8px;
+  border: 1px solid var(--tm-line-soft);
+  background: linear-gradient(135deg, var(--tm-surface), var(--tm-primary-soft));
+  box-shadow: var(--tm-shadow-card);
 }
 .flight-card {
   margin-bottom: 12px;
-  border-radius: 16px;
-  border: 1px solid #F0F2F5;
+  border-radius: 8px;
+  border: 1px solid var(--tm-line-soft);
+  background: var(--tm-surface);
   transition: all 0.3s ease;
 }
 .flight-card:hover {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  border-color: oklch(0.82 0.055 190);
+  box-shadow: var(--tm-shadow-hover);
   transform: translateY(-2px);
 }
 .flight-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 140px minmax(260px, 1fr) 92px 172px;
   align-items: center;
-  gap: 24px;
+  gap: 22px;
 }
 .flight-airline {
-  width: 120px;
+  min-width: 0;
 }
 .airline-name {
   font-weight: 700;
   font-size: 16px;
-  color: #1A1A2E;
+  color: var(--tm-ink);
 }
 .flight-no {
   font-size: 12px;
-  color: #A0A0B8;
+  color: var(--tm-muted);
   margin-top: 2px;
   font-family: "SF Mono", "Menlo", monospace;
 }
@@ -472,60 +477,59 @@ onMounted(() => {
 .time-arrive {
   font-size: 20px;
   font-weight: 700;
-  color: #1A1A2E;
+  color: var(--tm-ink);
 }
 .flight-route {
   font-size: 13px;
-  color: #A0A0B8;
-  margin: 4px 0;
+  color: var(--el-color-primary);
+  margin: 6px 0;
 }
 .flight-seats {
-  width: 80px;
   text-align: center;
 }
 .flight-price-col {
-  width: 150px;
   text-align: right;
 }
 .price-num {
   font-size: 24px;
   font-weight: 800;
-  color: #EF4444;
+  color: var(--tm-accent);
 }
 .price-label {
   font-size: 11px;
-  color: #A0A0B8;
+  color: var(--tm-muted);
   margin-left: 4px;
 }
 .price-num-sm {
   font-size: 16px;
   font-weight: 700;
-  color: #F59E0B;
+  color: oklch(0.54 0.12 165);
 }
 .price-business {
   margin-bottom: 8px;
 }
 .book-flight-info {
   padding: 14px;
-  background: #ECFDFA;
-  border-radius: 12px;
+  background: var(--tm-primary-soft);
+  border: 1px solid var(--tm-line-soft);
+  border-radius: 8px;
   margin-bottom: 4px;
 }
 .total-price {
   font-size: 24px;
   font-weight: 800;
-  color: #EF4444;
+  color: var(--tm-accent);
 }
 .origin-price {
   margin-right: 8px;
   font-size: 14px;
-  color: #a0a0b8;
+  color: var(--tm-muted);
   text-decoration: line-through;
 }
 
 @media (max-width: 768px) {
   .flight-row {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     gap: 12px;
     align-items: flex-start;
   }

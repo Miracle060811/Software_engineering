@@ -1,15 +1,38 @@
 <template>
   <div class="ai-plan-page">
-    <el-row :gutter="24">
-      <!-- 左侧输入区 -->
-      <el-col :span="8">
-        <el-card class="input-card">
-          <template #header>
-            <span class="card-header-title"
-              ><el-icon style="margin-right: 6px"><Cpu /></el-icon>AI
-              行程规划</span
-            >
-          </template>
+    <section class="planner-hero">
+      <div class="planner-hero-copy">
+        <span class="section-kicker">AI TRAVEL STUDIO</span>
+        <h1>把旅行想法整理成可执行路线</h1>
+        <p>
+          输入目的地、人数、预算和偏好，TravelMate 会把每日节奏、交通衔接、住宿建议和费用估算放进一份清晰行程。
+        </p>
+      </div>
+      <div class="hero-route-card" aria-label="规划流程">
+        <div class="route-node active">
+          <span>01</span>
+          <strong>输入偏好</strong>
+        </div>
+        <div class="route-line"></div>
+        <div class="route-node">
+          <span>02</span>
+          <strong>生成路线</strong>
+        </div>
+        <div class="route-line"></div>
+        <div class="route-node">
+          <span>03</span>
+          <strong>导出执行</strong>
+        </div>
+      </div>
+    </section>
+
+    <div class="planner-layout">
+      <aside class="planner-sidebar">
+        <section class="input-card">
+          <div class="panel-head">
+            <span><el-icon><Cpu /></el-icon> 智能规划</span>
+            <strong>先定旅行轮廓</strong>
+          </div>
           <el-form :model="planForm" label-position="top" label-width="auto">
             <el-form-item label="目的地">
               <el-input
@@ -51,41 +74,61 @@
               />
             </el-form-item>
             <el-form-item label="出行偏好">
-              <el-checkbox-group v-model="planForm.preferences">
-                <el-checkbox value="文化历史">文化历史</el-checkbox>
-                <el-checkbox value="自然风光">自然风光</el-checkbox>
-                <el-checkbox value="美食体验">美食体验</el-checkbox>
-                <el-checkbox value="购物娱乐">购物娱乐</el-checkbox>
-                <el-checkbox value="亲子游">亲子游</el-checkbox>
+              <el-checkbox-group v-model="planForm.preferences" class="preference-grid">
+                <el-checkbox
+                  v-for="item in preferenceOptions"
+                  :key="item"
+                  :value="item"
+                >
+                  {{ item }}
+                </el-checkbox>
               </el-checkbox-group>
             </el-form-item>
             <el-button
               type="primary"
               :loading="generating"
-              style="width: 100%"
+              class="generate-btn"
               @click="generatePlan"
             >
+              <el-icon><MagicStick /></el-icon>
               {{ generating ? "正在生成..." : "生成行程" }}
             </el-button>
           </el-form>
-        </el-card>
+        </section>
 
-        <!-- 历史行程 -->
-        <el-card class="history-card" style="margin-top: 20px">
-          <template #header>
-            <span class="card-header-title"
-              ><el-icon style="margin-right: 6px"><Tickets /></el-icon
-              >历史行程</span
+        <section class="preset-panel">
+          <div class="panel-head compact">
+            <span>推荐起点</span>
+            <strong>快速填充</strong>
+          </div>
+          <div class="preset-list">
+            <button
+              v-for="preset in destinationPresets"
+              :key="preset.name"
+              type="button"
+              class="preset-chip"
+              @click="applyDestinationPreset(preset)"
             >
-          </template>
+              <span>{{ preset.name }}</span>
+              <small>{{ preset.days }}天 · ¥{{ preset.budget }}</small>
+            </button>
+          </div>
+        </section>
+
+        <section class="history-card">
+          <div class="panel-head compact">
+            <span><el-icon><Tickets /></el-icon> 历史行程</span>
+            <strong>{{ historyPlans.length }} 条</strong>
+          </div>
           <el-empty
             v-if="historyPlans.length === 0"
             description="暂无历史行程"
             :image-size="60"
           />
-          <div
+          <button
             v-for="plan in historyPlans"
             :key="plan.id"
+            type="button"
             class="history-item"
             @click="viewHistoryPlan(plan)"
           >
@@ -98,23 +141,56 @@
                 {{ getCountdown(plan.startDate) }}
               </span>
             </div>
-          </div>
-        </el-card>
-      </el-col>
+          </button>
+        </section>
+      </aside>
 
-      <!-- 右侧行程展示区 -->
-      <el-col :span="16">
+      <main class="planner-main">
         <div v-if="generating" class="loading-area">
           <el-skeleton :rows="8" animated />
         </div>
-        <el-empty
-          v-else-if="!currentPlan"
-          description="输入行程信息，点击「生成行程」开始规划"
-          :image-size="120"
-        />
+        <section v-else-if="!currentPlan" class="empty-plan">
+          <div class="empty-plan-copy">
+            <span class="section-kicker">ROUTE BUILDER</span>
+            <h2>先填左侧偏好，这里会生成每日路线</h2>
+            <p>
+              生成后会按天展示主题、区域、时间安排、交通衔接和预算，方便直接导出或继续订票订酒店。
+            </p>
+          </div>
+          <div class="sample-route">
+            <div class="sample-route-head">
+              <span>示例结构</span>
+              <strong>4 Days</strong>
+            </div>
+            <div
+              v-for="item in sampleDays"
+              :key="item.day"
+              class="sample-day"
+            >
+              <span>{{ item.day }}</span>
+              <div>
+                <strong>{{ item.title }}</strong>
+                <small>{{ item.meta }}</small>
+              </div>
+            </div>
+          </div>
+        </section>
         <div v-else class="plan-result">
-          <el-card class="plan-summary-card">
-            <h2 class="plan-title">{{ currentPlan.title }}</h2>
+          <section class="plan-summary-card">
+            <div class="plan-summary-head">
+              <div>
+                <span class="section-kicker">GENERATED PLAN</span>
+                <h2 class="plan-title">{{ currentPlan.title }}</h2>
+              </div>
+              <div class="summary-actions">
+                <el-button type="primary" plain @click="exportPlan">
+                  <el-icon><Download /></el-icon>导出行程
+                </el-button>
+                <el-button plain @click="$router.push('/my-orders')">
+                  <el-icon><Tickets /></el-icon>关联订单
+                </el-button>
+              </div>
+            </div>
             <p class="plan-summary">{{ currentPlan.summary }}</p>
             <div class="summary-tags">
               <el-tag v-if="currentPlan.pace" type="primary" effect="plain">
@@ -127,40 +203,26 @@
             <p v-if="currentPlan.budgetNote" class="budget-note">
               {{ currentPlan.budgetNote }}
             </p>
-            <div style="margin-top: 12px; display: flex; gap: 8px">
-              <el-button type="primary" size="small" plain @click="exportPlan"
-                ><el-icon><Download /></el-icon>导出行程</el-button
-              >
-              <el-button
-                type="info"
-                size="small"
-                plain
-                @click="$router.push('/my-orders')"
-                ><el-icon><Tickets /></el-icon>查看关联订单</el-button
-              >
-            </div>
-          </el-card>
+          </section>
 
-          <el-card
-            v-for="dayPlan in currentPlan.days"
+          <section
+            v-for="dayPlan in currentPlan.days || []"
             :key="dayPlan.day"
             class="day-card"
           >
-            <template #header>
-              <div class="day-header">
-                <div>
-                  <span class="day-num">第 {{ dayPlan.day }} 天</span>
-                  <span class="day-theme">{{ dayPlan.theme }}</span>
-                </div>
-                <div class="day-meta">
-                  <span v-if="dayPlan.date">{{ dayPlan.date }}</span>
-                  <span v-if="dayPlan.area">{{ dayPlan.area }}</span>
-                  <span v-if="dayPlan.dayEstimatedCost">
-                    约 ¥{{ dayPlan.dayEstimatedCost }}
-                  </span>
-                </div>
+            <div class="day-header">
+              <div>
+                <span class="day-num">第 {{ dayPlan.day }} 天</span>
+                <span class="day-theme">{{ dayPlan.theme }}</span>
               </div>
-            </template>
+              <div class="day-meta">
+                <span v-if="dayPlan.date">{{ dayPlan.date }}</span>
+                <span v-if="dayPlan.area">{{ dayPlan.area }}</span>
+                <span v-if="dayPlan.dayEstimatedCost">
+                  约 ¥{{ dayPlan.dayEstimatedCost }}
+                </span>
+              </div>
+            </div>
             <div v-if="dayPlan.tips" class="day-tip">{{ dayPlan.tips }}</div>
             <el-timeline>
               <el-timeline-item
@@ -170,7 +232,7 @@
                 placement="top"
                 type="primary"
               >
-                <el-card class="activity-card" shadow="never">
+                <div class="activity-card">
                   <div class="activity-heading">
                     <div class="activity-name">{{ activity.name }}</div>
                     <el-tag v-if="activity.type" size="small" effect="plain">
@@ -186,18 +248,23 @@
                   <div class="activity-cost" v-if="activity.cost">
                     预估费用：¥{{ activity.cost }}
                   </div>
-                </el-card>
+                </div>
               </el-timeline-item>
             </el-timeline>
-          </el-card>
+          </section>
         </div>
-      </el-col>
-    </el-row>
+      </main>
+    </div>
 
     <!-- AI 客服浮窗按钮 -->
-    <div class="chat-fab" @click="chatDrawerVisible = true">
+    <button
+      class="chat-fab"
+      type="button"
+      aria-label="打开 AI 旅行助手"
+      @click="chatDrawerVisible = true"
+    >
       <el-icon :size="24"><ChatDotSquare /></el-icon>
-    </div>
+    </button>
 
     <!-- AI 客服抽屉 -->
     <el-drawer
@@ -246,12 +313,64 @@ import {
 } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const addDays = (days) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return formatDate(date);
+};
+
+const preferenceOptions = [
+  "文化历史",
+  "自然风光",
+  "美食体验",
+  "购物娱乐",
+  "亲子游",
+  "轻松慢行",
+];
+
+const destinationPresets = [
+  {
+    name: "云南大理",
+    days: 4,
+    people: 2,
+    budget: "4200",
+    preferences: ["自然风光", "美食体验", "轻松慢行"],
+  },
+  {
+    name: "杭州",
+    days: 3,
+    people: 2,
+    budget: "2600",
+    preferences: ["文化历史", "美食体验"],
+  },
+  {
+    name: "成都",
+    days: 5,
+    people: 3,
+    budget: "5200",
+    preferences: ["美食体验", "亲子游", "文化历史"],
+  },
+];
+
+const sampleDays = [
+  { day: "D1", title: "抵达与城市散步", meta: "机场/车站衔接 · 老街区 · 晚餐" },
+  { day: "D2", title: "核心景点深度游", meta: "上午景点 · 下午咖啡/博物馆" },
+  { day: "D3", title: "周边自然路线", meta: "轻徒步 · 当地餐厅 · 返程准备" },
+];
+
 const planForm = ref({
   destination: "",
   days: 3,
   people: 2,
   budget: "",
-  startDate: "",
+  startDate: addDays(1),
   preferences: [],
 });
 
@@ -270,6 +389,17 @@ const chatInput = ref("");
 const chatLoading = ref(false);
 const chatMessagesRef = ref(null);
 const sessionId = ref(`session_${Date.now()}`);
+
+const applyDestinationPreset = (preset) => {
+  planForm.value.destination = preset.name;
+  planForm.value.days = preset.days;
+  planForm.value.people = preset.people;
+  planForm.value.budget = preset.budget;
+  planForm.value.preferences = [...preset.preferences];
+  if (!planForm.value.startDate) {
+    planForm.value.startDate = addDays(1);
+  }
+};
 
 const generatePlan = async () => {
   if (!planForm.value.destination) {
@@ -411,57 +541,401 @@ onMounted(() => {
 
 <style scoped>
 .ai-plan-page {
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
+  padding-bottom: 28px;
+}
+
+.planner-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 0.55fr);
+  gap: 36px;
+  align-items: end;
+  margin-bottom: 22px;
+  padding: 42px;
+  border: 1px solid var(--tm-line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, oklch(0.985 0.002 248), oklch(0.962 0.010 197));
+  box-shadow: var(--tm-shadow-card);
+}
+
+.section-kicker {
+  display: inline-flex;
+  margin-bottom: 12px;
+  color: var(--tm-olive);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.planner-hero h1 {
+  max-width: 10em;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 48px;
+  font-weight: 500;
+  line-height: 1.06;
+  color: var(--tm-ink);
+  margin-bottom: 16px;
+}
+
+.planner-hero p {
+  max-width: 62ch;
+  color: var(--tm-muted);
+  font-size: 16px;
+  line-height: 1.9;
+}
+
+.hero-route-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid var(--tm-line);
+  border-radius: 8px;
+  background: oklch(0.985 0.002 248 / 0.76);
+}
+
+.route-node {
+  display: grid;
+  gap: 8px;
+  min-width: 74px;
+}
+
+.route-node span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: oklch(0.935 0.030 180);
+  color: var(--tm-olive);
+  font-weight: 800;
+}
+
+.route-node strong {
+  color: var(--tm-ink);
+  font-size: 13px;
+}
+
+.route-node.active span {
+  background: var(--tm-olive);
+  color: oklch(0.985 0.002 248);
+}
+
+.route-line {
+  height: 1px;
+  background: var(--tm-line);
+}
+
+.planner-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.planner-sidebar {
+  display: grid;
+  gap: 16px;
+  position: sticky;
+  top: 84px;
+}
+
+.input-card,
+.preset-panel,
+.history-card,
+.loading-area,
+.empty-plan,
+.plan-summary-card,
+.day-card {
+  border-radius: 8px;
+  border: 1px solid var(--tm-line-soft);
+  background: var(--tm-surface);
+  box-shadow: var(--tm-shadow-card);
+}
+
+.input-card,
+.preset-panel,
+.history-card {
+  padding: 20px;
 }
 .card-header-title {
   font-size: 16px;
   font-weight: 600;
+  color: var(--tm-ink);
 }
-.input-card,
-.history-card {
-  border-radius: 12px;
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
 }
-.history-item {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--el-border-color-light);
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.history-item:hover {
-  color: var(--el-color-primary);
-}
-.history-item:last-child {
-  border-bottom: none;
-}
-.history-title {
-  font-size: 14px;
-  font-weight: 500;
-}
-.history-meta {
+
+.panel-head span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tm-olive);
   font-size: 12px;
-  color: var(--el-text-color-secondary);
-  margin-top: 2px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
 }
-.loading-area {
-  padding: 20px;
+
+.panel-head strong {
+  color: var(--tm-ink);
+  font-size: 18px;
+  font-weight: 760;
 }
-.plan-summary-card {
-  margin-bottom: 16px;
-  border-radius: 12px;
-}
-.plan-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--el-text-color-primary);
-  margin-bottom: 10px;
-}
-.plan-summary {
-  font-size: 14px;
-  color: var(--el-text-color-regular);
-  line-height: 1.7;
+
+.panel-head.compact {
+  align-items: center;
   margin-bottom: 12px;
 }
+
+.panel-head.compact strong {
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+
+.input-card :deep(.el-form-item) {
+  margin-bottom: 16px;
+}
+
+.input-card :deep(.el-form-item__label) {
+  color: var(--tm-ink-soft);
+  font-weight: 700;
+}
+
+.input-card :deep(.el-input__wrapper),
+.input-card :deep(.el-input-number),
+.input-card :deep(.el-date-editor) {
+  width: 100%;
+}
+
+.preference-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.preference-grid :deep(.el-checkbox) {
+  height: 38px;
+  margin-right: 0;
+  padding: 0 10px;
+  border: 1px solid var(--tm-line);
+  border-radius: 8px;
+  background: oklch(0.985 0.002 248);
+}
+
+.preference-grid :deep(.el-checkbox__label) {
+  color: var(--tm-ink-soft);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.generate-btn {
+  width: 100%;
+  height: 44px;
+  font-weight: 760;
+}
+
+.preset-list {
+  display: grid;
+  gap: 8px;
+}
+
+.preset-chip,
+.history-item {
+  width: 100%;
+  border: 1px solid var(--tm-line);
+  border-radius: 8px;
+  padding: 12px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  appearance: none;
+  background: oklch(0.985 0.002 248);
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.preset-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.preset-chip span,
+.history-title {
+  color: var(--tm-ink);
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.preset-chip small,
+.history-meta {
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+
+.preset-chip:hover,
+.history-item:hover,
+.preset-chip:focus-visible,
+.history-item:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--tm-olive);
+  background: oklch(0.965 0.008 197);
+  outline: none;
+}
+.history-item {
+  margin-top: 8px;
+}
+
+.countdown {
+  display: inline-flex;
+  margin-left: 6px;
+  color: var(--tm-olive);
+  font-weight: 700;
+}
+
+.planner-main {
+  min-width: 0;
+}
+
+.loading-area {
+  padding: 24px;
+}
+
+.empty-plan {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 0.7fr);
+  gap: 36px;
+  align-items: center;
+  min-height: 560px;
+  padding: 42px;
+  background:
+    linear-gradient(135deg, oklch(0.985 0.002 248), oklch(0.964 0.008 197));
+}
+
+.empty-plan h2 {
+  max-width: 11em;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 1.08;
+  color: var(--tm-ink);
+  margin-bottom: 14px;
+}
+
+.empty-plan p {
+  max-width: 54ch;
+  color: var(--tm-muted);
+  line-height: 1.9;
+}
+
+.sample-route {
+  padding: 24px;
+  border-radius: 8px;
+  border: 1px solid var(--tm-line);
+  background: oklch(0.985 0.002 248 / 0.82);
+}
+
+.sample-route-head,
+.plan-summary-head,
+.day-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sample-route-head {
+  padding-bottom: 16px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--tm-line);
+}
+
+.sample-route-head span {
+  color: var(--tm-muted);
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.sample-route-head strong {
+  color: var(--tm-olive);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  font-weight: 500;
+}
+
+.sample-day {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--tm-line-soft);
+}
+
+.sample-day:last-child {
+  border-bottom: 0;
+}
+
+.sample-day > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--tm-primary-soft);
+  color: var(--tm-olive);
+  font-weight: 800;
+}
+
+.sample-day strong {
+  display: block;
+  color: var(--tm-ink);
+  margin-bottom: 4px;
+}
+
+.sample-day small {
+  color: var(--tm-muted);
+}
+
+.plan-summary-card {
+  margin-bottom: 16px;
+  padding: 26px;
+}
+
+.plan-title {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--tm-ink);
+  margin-bottom: 0;
+}
+
+.summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.plan-summary {
+  max-width: 66ch;
+  font-size: 15px;
+  color: var(--el-text-color-regular);
+  line-height: 1.8;
+  margin: 18px 0 14px;
+}
+
 .summary-tags {
   display: flex;
   flex-wrap: wrap;
@@ -469,51 +943,89 @@ onMounted(() => {
   align-items: center;
 }
 .budget-note {
-  margin: 10px 0 0;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--tm-line);
+  border-radius: 8px;
+  background: oklch(0.965 0.008 197);
   color: var(--el-text-color-secondary);
   font-size: 13px;
   line-height: 1.6;
 }
+
 .day-card {
   margin-bottom: 16px;
-  border-radius: 12px;
+  padding: 24px 24px 8px;
 }
-.day-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+
 .day-num {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--el-color-primary);
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--tm-primary-soft);
+  color: var(--tm-olive);
+  font-size: 13px;
+  font-weight: 800;
 }
+
 .day-theme {
-  font-size: 14px;
+  margin-left: 10px;
+  font-size: 17px;
+  font-weight: 760;
   color: var(--el-text-color-regular);
 }
+
 .day-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: flex-end;
   color: var(--el-text-color-secondary);
   font-size: 12px;
 }
+
+.day-meta span {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: oklch(0.965 0.008 197);
+}
+
 .day-tip {
-  margin: 0 0 14px 0;
-  padding: 10px 12px;
-  background: #f8fafc;
-  border-left: 3px solid var(--el-color-primary);
-  border-radius: 6px;
+  margin: 16px 0;
+  padding: 12px 14px;
+  background: var(--tm-primary-soft);
+  border: 1px solid oklch(0.84 0.034 180);
+  border-radius: 8px;
   color: var(--el-text-color-regular);
   font-size: 13px;
   line-height: 1.6;
 }
-.activity-card {
-  border: 1px solid #e8e8e8;
+
+.day-card :deep(.el-timeline) {
+  padding-left: 3px;
+  margin-top: 18px;
 }
+
+.day-card :deep(.el-timeline-item__timestamp) {
+  color: var(--tm-olive);
+  font-weight: 760;
+}
+
+.activity-card {
+  border: 1px solid var(--tm-line-soft);
+  border-radius: 8px;
+  background: oklch(0.985 0.002 248);
+  padding: 15px;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.activity-card:hover {
+  border-color: var(--tm-line);
+  background: oklch(0.995 0.004 197);
+}
+
 .activity-heading {
   display: flex;
   align-items: center;
@@ -523,14 +1035,16 @@ onMounted(() => {
 }
 .activity-name {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 760;
   color: var(--el-text-color-primary);
 }
+
 .activity-desc {
   font-size: 13px;
   color: var(--el-text-color-regular);
   line-height: 1.6;
 }
+
 .activity-meta {
   display: flex;
   flex-wrap: wrap;
@@ -539,37 +1053,52 @@ onMounted(() => {
   color: var(--el-text-color-secondary);
   font-size: 12px;
 }
+
+.activity-meta span {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: oklch(0.965 0.008 197);
+}
+
 .activity-cost {
   font-size: 12px;
-  color: #f59e0b;
+  color: var(--tm-accent);
   margin-top: 6px;
+  font-weight: 700;
 }
+
 .chat-fab {
   position: fixed;
   bottom: 40px;
   right: 40px;
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, #0d9488, #10b981);
+  background: var(--tm-gradient-brand);
   border-radius: 50%;
+  border: 0;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: oklch(0.996 0.004 205);
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(13, 148, 136, 0.4);
+  box-shadow: 0 10px 28px oklch(0.55 0.12 190 / 0.32);
   z-index: 999;
   transition: all 0.3s ease;
 }
-.chat-fab:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 28px rgba(13, 148, 136, 0.5);
+.chat-fab:hover,
+.chat-fab:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px oklch(0.55 0.12 190 / 0.38);
+  outline: none;
 }
+
 .chat-container {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 120px);
 }
+
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -578,40 +1107,113 @@ onMounted(() => {
   flex-direction: column;
   gap: 12px;
 }
+
 .chat-bubble {
   display: flex;
 }
+
 .chat-bubble.user {
   justify-content: flex-end;
 }
+
 .chat-bubble.assistant {
   justify-content: flex-start;
 }
+
 .bubble-content {
   max-width: 80%;
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 14px;
   line-height: 1.6;
 }
+
 .chat-bubble.user .bubble-content {
-  background: linear-gradient(135deg, #0d9488, #10b981);
-  color: #fff;
+  background: var(--tm-gradient-brand);
+  color: oklch(0.996 0.004 205);
   border-bottom-right-radius: 4px;
 }
+
 .chat-bubble.assistant .bubble-content {
-  background: #f1f5f9;
-  color: #1e293b;
+  background: var(--tm-primary-soft);
+  color: var(--tm-ink);
   border-bottom-left-radius: 4px;
 }
+
 .typing {
   color: var(--el-text-color-secondary);
   font-style: italic;
 }
+
 .chat-input-area {
   padding: 16px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--tm-line-soft);
   display: flex;
   gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .planner-hero,
+  .planner-layout,
+  .empty-plan {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-sidebar {
+    position: static;
+  }
+
+  .chat-fab {
+    right: 22px;
+    bottom: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .planner-hero {
+    padding: 28px 20px;
+  }
+
+  .planner-hero h1,
+  .empty-plan h2 {
+    font-size: 34px;
+  }
+
+  .hero-route-card {
+    grid-template-columns: 1fr;
+  }
+
+  .route-line {
+    width: 1px;
+    height: 18px;
+    margin-left: 18px;
+  }
+
+  .empty-plan,
+  .plan-summary-card,
+  .day-card {
+    padding: 20px;
+  }
+
+  .sample-route {
+    padding: 18px;
+  }
+
+  .plan-summary-head,
+  .day-header {
+    flex-direction: column;
+  }
+
+  .summary-actions {
+    width: 100%;
+  }
+
+  .summary-actions :deep(.el-button) {
+    flex: 1;
+  }
+
+  .preference-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

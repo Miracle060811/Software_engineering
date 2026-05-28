@@ -33,8 +33,14 @@ defineProps({
 
 <style scoped>
 .page-header {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   animation: fadeInUp 0.45s ease;
+  padding: 22px 24px;
+  border: 1px solid oklch(0.78 0.026 82 / 0.44);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, oklch(0.975 0.018 82), oklch(0.915 0.030 82));
+  box-shadow: var(--tm-shadow-card);
 }
 
 .page-header-main {
@@ -46,24 +52,30 @@ defineProps({
 }
 
 .page-title {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--el-text-color-primary);
-  letter-spacing: -0.3px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--tm-ink);
+  letter-spacing: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .page-title-icon {
   display: inline-flex;
   align-items: center;
-  color: var(--el-color-primary);
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: oklch(0.90 0.032 82);
+  color: var(--tm-bark);
 }
 
 .page-subtitle {
   font-size: 15px;
-  color: var(--el-text-color-secondary);
+  color: var(--tm-muted);
   margin-top: 6px;
   line-height: 1.5;
 }
