@@ -49,8 +49,10 @@
             @click="goDestination(showcaseDestinations[0])"
           >
             <SafeImage :src="showcaseDestinations[0].img" :alt="showcaseDestinations[0].name" image-class="hero-gallery-img" />
-            <span>{{ showcaseDestinations[0].tag }}</span>
-            <strong>{{ showcaseDestinations[0].name }}</strong>
+            <div class="hero-image-caption">
+              <span>{{ showcaseDestinations[0].tag }}</span>
+              <strong>{{ showcaseDestinations[0].name }}</strong>
+            </div>
           </button>
           <div class="hero-mini-grid">
             <button
@@ -61,8 +63,10 @@
               @click="goDestination(dest)"
             >
               <SafeImage :src="dest.img" :alt="dest.name" image-class="hero-gallery-img" />
-              <span>{{ dest.tag }}</span>
-              <strong>{{ dest.name }}</strong>
+              <div class="hero-image-caption">
+                <span>{{ dest.tag }}</span>
+                <strong>{{ dest.name }}</strong>
+              </div>
             </button>
           </div>
         </div>
@@ -878,26 +882,29 @@ const quickSearch = (hint) => {
     linear-gradient(135deg, oklch(0.551 0.097 180 / 0.18), transparent 52%);
 }
 
-.hero-image-card span,
-.hero-image-card strong {
+.hero-image-caption {
   position: absolute;
   left: 18px;
+  bottom: 18px;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   text-align: left;
 }
 
 .hero-image-card span {
-  bottom: 50px;
   font-size: 12px;
   font-weight: 800;
+  line-height: 1.2;
   letter-spacing: 0.12em;
 }
 
 .hero-image-card strong {
-  bottom: 18px;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 34px;
   font-weight: 500;
+  line-height: 1;
 }
 
 .hero-mini-grid .hero-image-card strong {
