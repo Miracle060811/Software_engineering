@@ -5,7 +5,7 @@
       <div class="hero-bg">
         <SafeImage
           :src="heroPhoto"
-          :fallback="seedImage('coast.svg')"
+          :fallback="FALLBACK_IMAGE"
           image-class="hero-photo-img"
           alt="海岛旅行风景"
           loading="eager"
@@ -330,7 +330,7 @@
           <div class="retreat-image-wrap">
             <SafeImage
               :src="retreatPhoto"
-              :fallback="seedImage('garden.svg')"
+              :fallback="FALLBACK_IMAGE"
               image-class="retreat-photo"
               alt="安静旅行规划"
             />
@@ -423,7 +423,7 @@
       <div class="feature-grid">
         <button class="feature-card" type="button" @click="$router.push('/ai-plan')">
           <div class="feat-visual feat-visual-ai">
-            <SafeImage :src="featurePhotos.ai" :fallback="seedImage('lake.svg')" image-class="feat-photo" alt="AI 智能规划" />
+            <SafeImage :src="featurePhotos.ai" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="AI 智能规划" />
             <div class="feat-photo-overlay"></div>
             <span class="feat-number">01</span>
           </div>
@@ -436,7 +436,7 @@
 
         <button class="feature-card" type="button" @click="$router.push('/community')">
           <div class="feat-visual feat-visual-community">
-            <SafeImage :src="featurePhotos.community" :fallback="seedImage('garden.svg')" image-class="feat-photo" alt="旅行社区" />
+            <SafeImage :src="featurePhotos.community" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="旅行社区" />
             <div class="feat-photo-overlay"></div>
             <span class="feat-number">02</span>
           </div>
@@ -449,7 +449,7 @@
 
         <button class="feature-card" type="button" @click="$router.push('/attractions')">
           <div class="feat-visual feat-visual-attraction">
-            <SafeImage :src="featurePhotos.attraction" :fallback="seedImage('mountain.svg')" image-class="feat-photo" alt="景点门票" />
+            <SafeImage :src="featurePhotos.attraction" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="景点门票" />
             <div class="feat-photo-overlay"></div>
             <span class="feat-number">03</span>
           </div>
@@ -507,7 +507,7 @@ import {
 import CountUp from "../components/CountUp.vue";
 import SafeImage from "@/components/SafeImage.vue";
 import { destinations } from "@/data/destinations";
-import { seedImage } from "@/utils/image";
+import { FALLBACK_IMAGE } from "@/utils/image";
 
 const router = useRouter();
 const searchTab = ref("flight");
@@ -531,7 +531,7 @@ const hotelForm = ref({ city: "", dateRange: [addDays(1), addDays(3)] });
 
 const hotSearches = ["北京", "上海", "三亚", "成都", "杭州", "西安"];
 const heroPhoto =
-  destinations.find((item) => item.slug === "guilin")?.img || seedImage("mountain.svg");
+  destinations.find((item) => item.slug === "guilin")?.img || FALLBACK_IMAGE;
 
 const showcaseDestinations = ["guilin", "hangzhou", "chengdu"]
   .map((slug) => destinations.find((item) => item.slug === slug))

@@ -154,7 +154,7 @@ import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import SafeImage from "@/components/SafeImage.vue";
 import { useUserStore } from "@/stores/user";
-import { FALLBACK_IMAGE, localSeedImage, normalizeImageUrl, parseImageList } from "@/utils/image";
+import { FALLBACK_IMAGE, normalizeImageUrl, parseImageList } from "@/utils/image";
 
 const posts = ref([]);
 const loading = ref(false);
@@ -242,8 +242,7 @@ const splitImages = (images) => {
 };
 
 const getPostFallbackImage = (post) => {
-  const hint = `${post?.title || ""} ${post?.destination || ""} ${post?.tags || ""}`;
-  return localSeedImage(hint, "attraction") || FALLBACK_IMAGE;
+  return FALLBACK_IMAGE;
 };
 
 const getFirstImage = (post) => {

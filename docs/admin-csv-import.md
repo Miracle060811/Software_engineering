@@ -19,8 +19,8 @@ G1001,G,北京南,上海虹桥,2026-06-01T08:00:00,2026-06-01T12:30:00,880,553,8
 ## 酒店 hotels
 
 ```csv
-name,city,address,description,starRating,avgPrice,score,status
-城市花园酒店,上海,上海市黄浦区示例路1号,近地铁商务酒店,4,520,4.6,1
+name,city,address,description,coverImg,starRating,avgPrice,score,status
+城市花园酒店,上海,上海市黄浦区示例路1号,近地铁商务酒店,https://example.com/hotel.jpg,4,520,4.6,1
 ```
 
 ## 房型 rooms
@@ -34,7 +34,7 @@ hotelId,roomType,bedType,area,price,totalRooms,availableRooms,status
 
 ```csv
 name,city,address,description,coverImg,adultPrice,childPrice,totalTickets,availableTickets,openTime,lat,lng,officialUrl,sourceName,dataCheckedDate,status
-示例景区,杭州,杭州市示例路1号,城市观光景区,/images/seed/city.svg,80,40,1000,800,08:00-18:00,30.2741,120.1551,https://example.com,景区官网,2026-05-23,1
+示例景区,杭州,杭州市示例路1号,城市观光景区,https://example.com/scenic.jpg,80,40,1000,800,08:00-18:00,30.2741,120.1551,https://example.com,景区官网,2026-05-23,1
 ```
 
 ## 城市 destinations

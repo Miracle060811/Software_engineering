@@ -43,7 +43,7 @@
       <el-row v-else :gutter="20">
         <el-col :span="8" v-for="attr in attractions" :key="attr.id" style="margin-bottom:20px">
           <el-card class="attr-card" :body-style="{ padding: 0 }">
-            <SafeImage :src="getAttractionImage(attr)" image-class="attr-img" :alt="attr.name" />
+            <SafeImage :src="attr.coverImg" image-class="attr-img" :alt="attr.name" />
             <div class="attr-info">
               <div class="attr-name">{{ attr.name }}</div>
               <div class="attr-desc">{{ attr.description }}</div>
@@ -155,7 +155,6 @@ import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import SafeImage from "@/components/SafeImage.vue";
-import { localSeedImage } from "@/utils/image";
 
 const route = useRoute();
 const activeTab = ref("attraction");
@@ -168,10 +167,6 @@ const selectedAttraction = ref(null);
 const bookForm = ref({ adultCount: 1, childCount: 0, guestName: "", guestPhone: "" });
 const dayTours = ref([]);
 const nearTours = ref([]);
-
-const getAttractionImage = (attr) => {
-  return attr.coverImg || localSeedImage(attr.name, "attraction");
-};
 
 const totalTicketPrice = computed(() => {
   if (!selectedAttraction.value) return 0;

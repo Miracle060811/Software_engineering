@@ -6,8 +6,7 @@
         <el-row :gutter="24">
           <el-col :span="10">
             <SafeImage
-              :src="hotelCoverImage(hotel)"
-              :fallback="localSeedImage(hotel.name, 'hotel')"
+              :src="hotel.coverImg"
               image-class="hotel-cover"
               :alt="hotel.name"
             />
@@ -121,7 +120,7 @@
               style="width:80px;height:80px;border-radius:8px;margin-right:8px;object-fit:cover"
             >
               <template #error>
-                <img :src="localSeedImage(hotel.name, 'hotel')" class="review-image-fallback" alt="图片暂不可用" />
+                <img :src="FALLBACK_IMAGE" class="review-image-fallback" alt="图片暂不可用" />
               </template>
             </el-image>
           </div>
@@ -209,7 +208,7 @@ import { ElMessage } from "element-plus";
 import { StarFilled, LocationFilled, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import SafeImage from "@/components/SafeImage.vue";
-import { hotelCoverImage, localSeedImage, parseImageList } from "@/utils/image";
+import { FALLBACK_IMAGE, parseImageList } from "@/utils/image";
 
 const route = useRoute();
 const router = useRouter();

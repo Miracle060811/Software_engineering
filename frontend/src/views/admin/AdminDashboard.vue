@@ -1074,6 +1074,12 @@
               ><el-input v-model="hotelForm.address" /></el-form-item
           ></el-col>
           <el-col :span="24"
+            ><el-form-item label="封面图"
+              ><el-input
+                v-model="hotelForm.coverImg"
+                placeholder="真实图片 URL 或 /uploads/... 本地路径" /></el-form-item
+          ></el-col>
+          <el-col :span="24"
             ><el-form-item label="描述"
               ><el-input
                 v-model="hotelForm.description"
@@ -1652,6 +1658,7 @@ const createHotelForm = () => ({
   address: "",
   starRating: 4,
   description: "",
+  coverImg: "",
   avgPrice: 0,
   score: 4.5,
   status: 1,

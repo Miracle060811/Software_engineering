@@ -1366,6 +1366,7 @@ public class AdminController {
                 hotel.setCity(csv(row, "city"));
                 hotel.setAddress(csv(row, "address"));
                 hotel.setDescription(row.getOrDefault("description", ""));
+                hotel.setCoverImg(row.getOrDefault("coverImg", ""));
                 hotel.setStarRating(integer(row, "starRating"));
                 hotel.setAvgPrice(decimal(row, "avgPrice"));
                 hotel.setScore(new BigDecimal(row.getOrDefault("score", "4.5")));

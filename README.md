@@ -199,15 +199,15 @@ npm run dev
 
 ## 图片资源策略
 
-核心演示图片统一放在 [frontend/public/images/seed](frontend/public/images/seed)，数据库 `cover_img`、媒体资源 URL 和热门城市封面保存 `/images/seed/...` 这类本地路径。前端使用 [SafeImage.vue](frontend/src/components/SafeImage.vue) 做统一兜底，空地址或加载失败会显示 `/images/seed/fallback.svg`。
+酒店和景点封面应使用真实图片 URL 或真实本地图片路径（如 `/uploads/...`、非 seed 的 `/images/...`）。`/images/seed/...` 仅保留普通失败占位图 `/images/seed/fallback.svg`，业务图片为空、加载失败或仍指向其他 seed 图片时，前端会统一回退到该占位图。
 
-新增或修改种子图片后建议执行：
+新增或修改本地图片后建议执行：
 
 ```powershell
 npm run check:images
 ```
 
-该命令会检查 `docs/sql/init.sql` 和主要前端入口，避免重新引入 `picsum.photos`、Wikimedia 图片直链等高风险外链，并确认本地 seed 图片文件存在。
+该命令会检查 `docs/sql/init.sql` 和主要前端入口，避免重新引入随机占位图，并确认本地图片文件存在。
 
 ## 当前待完善项
 
