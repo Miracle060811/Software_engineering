@@ -53,7 +53,7 @@ public class UserController {
             @RequestParam String username,
             @RequestParam String newPassword) {
         boolean ok = userService.resetPassword(username, newPassword);
-        return ok ? Result.success("密码重置成功") : Result.error("用户名不存在或新密码不合法");
+        return ok ? Result.success("密码重置成功") : Result.error("用户名不存在、新密码不合法或管理员账号不允许重置");
     }
 
     @PostMapping("/password")

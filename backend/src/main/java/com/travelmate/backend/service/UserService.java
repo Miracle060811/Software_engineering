@@ -74,6 +74,7 @@ public class UserService {
                 .eq("status", 1)
                 .eq("deleted", 0));
         if (user == null) return false;
+        if (Integer.valueOf(1).equals(user.getRole())) return false;
         user.setPassword(passwordEncoder.encode(newPassword));
         userMapper.updateById(user);
         return true;
