@@ -310,15 +310,19 @@
         <div class="retreat-copy">
           <div class="retreat-heading">
             <span class="section-kicker">CALM PLANNING</span>
-            <h2>把复杂行程，拆成三段安静的准备</h2>
+            <h2>
+              <span>把复杂行程</span>
+              <span>拆成三段</span>
+              <span>安静地准备</span>
+            </h2>
           </div>
           <p>
             参考自然 retreat 的慢节奏，把票务、住宿和路线从拥挤流程里拆开。每一步都保留明确入口，也留出足够的呼吸感。
           </p>
-          <div class="retreat-art-notes">
-            <span>Tickets</span>
-            <span>Stay</span>
-            <span>AI Route</span>
+          <div class="retreat-actions" aria-label="旅行准备入口">
+            <button type="button" @click="$router.push('/flight-search')">查票价</button>
+            <button type="button" @click="$router.push('/hotel-search')">选住宿</button>
+            <button type="button" @click="$router.push('/ai-plan')">生成路线</button>
           </div>
         </div>
 
@@ -534,15 +538,13 @@ const showcaseDestinations = ["guilin", "hangzhou", "chengdu"]
   .filter(Boolean);
 
 const featurePhotos = {
-  ai: destinations.find((item) => item.slug === "hangzhou")?.img || seedImage("lake.svg"),
-  community: destinations.find((item) => item.slug === "chengdu")?.img || seedImage("garden.svg"),
-  attraction: destinations.find((item) => item.slug === "zhangjiajie")?.img || seedImage("mountain.svg"),
+  ai: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&h=620&q=80",
+  community: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&h=620&q=80",
+  attraction: "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?auto=format&fit=crop&w=1200&h=620&q=80",
 };
 
 const retreatPhoto =
-  destinations.find((item) => item.slug === "dali")?.img ||
-  destinations.find((item) => item.slug === "hangzhou")?.img ||
-  seedImage("garden.svg");
+  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&h=760&q=80";
 
 const stats = [
   {
@@ -590,10 +592,22 @@ const recommendedTrip = {
 };
 
 const travelerAvatars = [
-  { name: "旅行者头像 1", src: seedImage("avatar-1.svg") },
-  { name: "旅行者头像 2", src: seedImage("avatar-2.svg") },
-  { name: "旅行者头像 3", src: seedImage("avatar-3.svg") },
-  { name: "旅行者头像 4", src: seedImage("avatar-4.svg") },
+  {
+    name: "旅行者头像 1",
+    src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
+  },
+  {
+    name: "旅行者头像 2",
+    src: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
+  },
+  {
+    name: "旅行者头像 3",
+    src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
+  },
+  {
+    name: "旅行者头像 4",
+    src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
+  },
 ];
 
 const swapFlightCities = () => {
@@ -1191,16 +1205,19 @@ const quickSearch = (hint) => {
 /* ==================== 安静规划步骤 ==================== */
 .itinerary-section {
   padding: 54px var(--tm-page-padding) 0;
+  display: flex;
+  justify-content: center;
 }
 
 .itinerary-panel {
+  width: min(100%, 1320px);
   display: grid;
-  grid-template-columns: minmax(0, 0.88fr) minmax(340px, 0.7fr);
-  gap: clamp(28px, 5vw, 70px);
+  grid-template-columns: minmax(360px, 0.9fr) minmax(500px, 0.98fr);
+  gap: clamp(40px, 4.8vw, 70px);
   align-items: center;
-  padding: 52px;
+  padding: clamp(42px, 4vw, 58px);
   border: 1px solid var(--tm-line);
-  min-height: 520px;
+  min-height: 500px;
   border-radius: 10px;
   background:
     linear-gradient(135deg, oklch(0.985 0.002 248), oklch(0.950 0.018 112));
@@ -1363,17 +1380,20 @@ const quickSearch = (hint) => {
 }
 
 .retreat-section {
-  padding: 24px var(--tm-page-padding) 12px;
+  padding: 34px var(--tm-page-padding) 18px;
+  display: flex;
+  justify-content: center;
 }
 
 .retreat-panel {
+  width: min(100%, 1320px);
   display: grid;
-  grid-template-columns: minmax(0, 0.88fr) minmax(340px, 0.7fr);
-  gap: clamp(28px, 5vw, 70px);
+  grid-template-columns: minmax(360px, 0.9fr) minmax(500px, 0.98fr);
+  gap: clamp(40px, 4.8vw, 70px);
   align-items: center;
-  padding: 52px;
+  padding: clamp(42px, 4vw, 58px);
   border: 1px solid var(--tm-line);
-  min-height: 520px;
+  min-height: 500px;
   border-radius: 10px;
   background:
     linear-gradient(135deg, oklch(0.985 0.002 248), oklch(0.950 0.018 112));
@@ -1397,6 +1417,11 @@ const quickSearch = (hint) => {
 .retreat-copy {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 560px;
+  min-height: 390px;
 }
 
 .retreat-heading {
@@ -1405,7 +1430,7 @@ const quickSearch = (hint) => {
 
 .section-kicker {
   display: inline-flex;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   color: var(--tm-olive);
   font-size: 12px;
   font-weight: 800;
@@ -1413,44 +1438,60 @@ const quickSearch = (hint) => {
 }
 
 .retreat-copy h2 {
-  max-width: 10.4em;
+  max-width: 8.2em;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(36px, 4vw, 56px);
+  font-size: clamp(36px, 3.5vw, 50px);
   font-weight: 500;
-  line-height: 1.04;
+  line-height: 1.1;
   color: var(--tm-ink);
-  margin: 0 0 18px;
+  margin: 0 0 22px;
+}
+
+.retreat-copy h2 span {
+  display: block;
 }
 
 .retreat-copy p {
-  max-width: 58ch;
+  max-width: 52ch;
   margin: 0;
   color: var(--tm-muted);
   font-size: 16px;
-  line-height: 1.85;
+  line-height: 1.9;
 }
 
-.retreat-art-notes {
+.retreat-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 30px;
 }
 
-.retreat-art-notes span {
-  padding: 7px 12px;
+.retreat-actions button {
+  min-width: 82px;
+  padding: 9px 16px;
   border-radius: 999px;
   border: 1px solid var(--tm-line);
-  background: oklch(0.985 0.002 248 / 0.68);
+  background: oklch(0.985 0.002 248 / 0.82);
   color: var(--tm-bark);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 760;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 10px 24px oklch(0.24 0.026 82 / 0.06);
+  transition: transform 0.22s ease, border-color 0.22s ease, color 0.22s ease, background 0.22s ease;
+}
+
+.retreat-actions button:hover {
+  transform: translateY(-2px);
+  border-color: oklch(0.70 0.060 180);
+  background: oklch(0.955 0.022 180);
+  color: var(--tm-olive);
 }
 
 .retreat-visual {
   position: relative;
   z-index: 1;
-  min-height: 380px;
+  min-height: 390px;
   overflow: hidden;
   border-radius: 10px;
 }
@@ -1469,49 +1510,49 @@ const quickSearch = (hint) => {
   height: 100%;
   object-fit: cover;
   display: block;
-  filter: saturate(0.82) contrast(0.96) brightness(1.06);
+  filter: saturate(0.92) contrast(0.94) brightness(1.08);
   transition: transform 0.7s ease, filter 0.7s ease;
 }
 
 .retreat-panel:hover .retreat-photo {
   transform: scale(1.035);
-  filter: saturate(0.9) contrast(0.98) brightness(1.08);
+  filter: saturate(0.98) contrast(0.96) brightness(1.1);
 }
 
 .retreat-image-overlay {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, oklch(0.985 0.002 248 / 0.08), oklch(0.18 0.050 180 / 0.30)),
-    linear-gradient(135deg, oklch(0.935 0.030 180 / 0.28), transparent 52%);
+    linear-gradient(180deg, oklch(0.985 0.002 248 / 0.18), oklch(0.34 0.050 160 / 0.26)),
+    linear-gradient(135deg, oklch(0.930 0.040 160 / 0.34), oklch(0.985 0.002 248 / 0.10) 48%, transparent 78%);
 }
 
 .retreat-steps {
   position: absolute;
-  right: 18px;
-  bottom: 18px;
-  width: min(calc(100% - 36px), 360px);
+  inset: 24px 26px;
+  width: auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .retreat-step {
   width: 100%;
   display: grid;
-  grid-template-columns: 46px 1fr;
-  align-items: start;
-  gap: 14px;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
   min-height: 0;
-  padding: 16px;
+  padding: 16px 20px;
   border: 1px solid var(--tm-line);
   border-radius: 8px;
-  background: oklch(0.985 0.002 248 / 0.94);
+  background: oklch(0.985 0.002 248 / 0.82);
   color: inherit;
   text-align: left;
   cursor: pointer;
-  box-shadow: 0 16px 34px oklch(0.239 0.006 180 / 0.09);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 14px 30px oklch(0.239 0.006 180 / 0.065);
+  backdrop-filter: blur(7px);
   transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
 }
 
@@ -1527,13 +1568,13 @@ const quickSearch = (hint) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--tm-primary-soft);
   color: var(--tm-olive);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 24px;
+  font-size: 23px;
   line-height: 1;
 }
 
@@ -1542,7 +1583,7 @@ const quickSearch = (hint) => {
   color: var(--tm-ink);
   font-size: 16px;
   font-weight: 760;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 
 .retreat-step small {
@@ -1988,8 +2029,7 @@ const quickSearch = (hint) => {
     height: 54px;
   }
   .retreat-section {
-    grid-template-columns: 1fr;
-    gap: 28px;
+    padding-top: 28px;
   }
   .itinerary-panel {
     grid-template-columns: 1fr;
@@ -2001,14 +2041,19 @@ const quickSearch = (hint) => {
     min-height: auto;
     padding: 40px;
   }
+  .retreat-copy {
+    max-width: 680px;
+    min-height: auto;
+  }
   .retreat-visual {
     min-height: 430px;
   }
   .retreat-steps {
-    width: min(92%, 420px);
+    inset: 24px;
+    width: auto;
   }
   .retreat-copy h2 {
-    max-width: 12em;
+    max-width: 8.2em;
     font-size: 42px;
   }
   .retreat-copy p {
@@ -2147,9 +2192,10 @@ const quickSearch = (hint) => {
   }
   .retreat-steps {
     position: relative;
-    right: auto;
-    bottom: auto;
+    inset: auto;
+    transform: none;
     width: 100%;
+    grid-template-rows: none;
   }
   .retreat-copy h2 {
     font-size: 34px;
