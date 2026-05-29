@@ -651,6 +651,9 @@ INSERT INTO `tm_media_asset` (`id`, `target_type`, `target_id`, `media_type`, `u
 (14, 'hotel', 9, 'image', 'https://ak-d.tripcdn.com/images/0220t12000plokdzi4C79_R_960_660_R5_D.jpg', '重庆解放碑威斯汀酒店外观', 'Trip.com 酒店图库', '平台图片，仅用于课程演示引用', NULL, 'https://www.trip.com/hotels/chongqing-hotel-detail-1200477/the-westin-chongqing-liberation-square/', 'Trip.com', '2026-05-23'),
 (15, 'hotel', 14, 'image', 'https://ak-d.tripcdn.com/images/200m0800000034723792B_R_960_660_R5_D.jpg', '青岛海景花园大酒店外观', 'Trip.com 酒店图库', '平台图片，仅用于课程演示引用', NULL, 'https://www.trip.com/hotels/qingdao-hotel-detail-437516/seaview-garden-hotel/', 'Trip.com', '2026-05-23')
 ON DUPLICATE KEY UPDATE
+  `target_type` = VALUES(`target_type`),
+  `target_id` = VALUES(`target_id`),
+  `media_type` = VALUES(`media_type`),
   `url` = VALUES(`url`),
   `caption` = VALUES(`caption`),
   `author` = VALUES(`author`),
@@ -660,13 +663,25 @@ ON DUPLICATE KEY UPDATE
   `source_name` = VALUES(`source_name`),
   `data_checked_date` = VALUES(`data_checked_date`);
 
-INSERT IGNORE INTO `tm_media_asset` (`id`, `target_type`, `target_id`, `media_type`, `url`, `caption`, `author`, `license_name`, `license_url`, `source_url`, `source_name`, `data_checked_date`) VALUES
+INSERT INTO `tm_media_asset` (`id`, `target_type`, `target_id`, `media_type`, `url`, `caption`, `author`, `license_name`, `license_url`, `source_url`, `source_name`, `data_checked_date`) VALUES
 (16, 'post', 1, 'image', '/images/seed/beijing.svg', '八达岭长城', 'CEphoto, Uwe Aranas', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:Badaling_China_Great-Wall-of-China-01.jpg', 'Wikimedia Commons', '2026-05-19'),
 (17, 'post', 2, 'image', '/images/seed/shanghai.svg', '上海外滩蓝调时刻', 'Dllu', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:Blue_hour_view_of_the_Bund_from_the_Shanghai_World_Financial_Center_dllu.jpg', 'Wikimedia Commons', '2026-05-19'),
 (18, 'post', 3, 'image', '/images/seed/sanya.svg', '亚龙湾海岸', 'Phillip Hong', 'CC BY-SA 1.0', 'https://creativecommons.org/licenses/by-sa/1.0/', 'https://commons.wikimedia.org/wiki/File:Yalong_Bay_from_hotel.JPG', 'Wikimedia Commons', '2026-05-19'),
 (19, 'post', 4, 'image', '/images/seed/chengdu.svg', '成都火锅', 'Prince Roy', 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/', 'https://commons.wikimedia.org/wiki/File:Chengdu_Hotpot.jpg', 'Wikimedia Commons', '2026-05-19'),
 (20, 'post', 4, 'image', '/images/seed/chengdu.svg', '成都宽窄巷子', 'Breaknet2025', 'CC BY 4.0', 'https://creativecommons.org/licenses/by/4.0/', 'https://commons.wikimedia.org/wiki/File:Chengdu_Kuanzhai_Alley_Touristic_Spot_Relics_%E6%88%90%E9%83%BD%E5%AE%BD%E7%AA%84%E5%B7%B7%E5%AD%90%E6%96%87%E7%89%A9%E5%8F%91%E6%8E%98%E9%81%97%E4%BA%A7.jpg', 'Wikimedia Commons', '2026-05-19'),
-(21, 'post', 5, 'image', '/images/seed/attraction.svg', '丽江古城街巷', 'CEphoto, Uwe Aranas', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:Lijiang_Yunnan_Doors-_in-old-town-01.jpg', 'Wikimedia Commons', '2026-05-19');
+(21, 'post', 5, 'image', '/images/seed/attraction.svg', '丽江古城街巷', 'CEphoto, Uwe Aranas', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:Lijiang_Yunnan_Doors-_in-old-town-01.jpg', 'Wikimedia Commons', '2026-05-19')
+ON DUPLICATE KEY UPDATE
+  `target_type` = VALUES(`target_type`),
+  `target_id` = VALUES(`target_id`),
+  `media_type` = VALUES(`media_type`),
+  `url` = VALUES(`url`),
+  `caption` = VALUES(`caption`),
+  `author` = VALUES(`author`),
+  `license_name` = VALUES(`license_name`),
+  `license_url` = VALUES(`license_url`),
+  `source_url` = VALUES(`source_url`),
+  `source_name` = VALUES(`source_name`),
+  `data_checked_date` = VALUES(`data_checked_date`);
 
 -- 修正酒店封面：旧数据中部分酒店使用城市风景图，这里统一覆盖为与酒店本体匹配的真实照片。
 -- 部分 OTA/CDN 图片 URL 会随平台策略调整，source_url 保留酒店图库页便于后续核验替换。
@@ -718,6 +733,9 @@ INSERT INTO `tm_media_asset` (`id`, `target_type`, `target_id`, `media_type`, `u
 (43, 'hotel', 19, 'image', 'https://ak-d.tripcdn.com/images/02064120008bk81fz92B1_R_960_660_R5_D.jpg', '南京金陵饭店外观', 'Trip.com 酒店图库', '平台图片，仅用于课程演示引用', NULL, 'https://www.trip.com/hotels/nanjing-hotel-detail-346283/jinling-hotel/', 'Trip.com', '2026-05-23'),
 (44, 'hotel', 20, 'image', 'https://ak-d.tripcdn.com/images/1mc6o12000br4n333F7C1_R_960_660_R5_D.jpg', '苏州吴宫泛太平洋酒店外观', 'Trip.com 酒店图库', '平台图片，仅用于课程演示引用', NULL, 'https://www.trip.com/hotels/suzhou-hotel-detail-346290/pan-pacific-suzhou/', 'Trip.com', '2026-05-23')
 ON DUPLICATE KEY UPDATE
+  `target_type` = VALUES(`target_type`),
+  `target_id` = VALUES(`target_id`),
+  `media_type` = VALUES(`media_type`),
   `url` = VALUES(`url`),
   `caption` = VALUES(`caption`),
   `author` = VALUES(`author`),
@@ -990,10 +1008,22 @@ INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`,
 (20, '姑苏园景大床房', '1.8m大床', 40, 760.00, 20, 13, 'WiFi,园景,浴缸,近盘门'),
 (20, '亲子家庭房', '1.8m+1.2m床', 50, 980.00, 10, 6, 'WiFi,亲子用品,园景,停车');
 
-INSERT IGNORE INTO `tm_media_asset` (`id`, `target_type`, `target_id`, `media_type`, `url`, `caption`, `author`, `license_name`, `license_url`, `source_url`, `source_name`, `data_checked_date`) VALUES
+INSERT INTO `tm_media_asset` (`id`, `target_type`, `target_id`, `media_type`, `url`, `caption`, `author`, `license_name`, `license_url`, `source_url`, `source_name`, `data_checked_date`) VALUES
 (22, 'hotel', 15, 'image', 'https://ak-d.tripcdn.com/images/1mc4r12000repen2v8026.jpg', '全季酒店成都太古里春熙路店外观', 'Trip.com 酒店图库', '平台图片，仅用于课程演示引用', NULL, 'https://www.trip.com/hotels/chengdu-hotel-detail-133457358/ji-hotel/photo.html', 'Trip.com', '2026-05-23'),
 (23, 'hotel', 19, 'image', 'https://ak-d.tripcdn.com/images/02064120008bk81fz92B1_R_960_660_R5_D.jpg', '南京金陵饭店外观', 'Trip.com 酒店图库', '平台图片，仅用于课程演示引用', NULL, 'https://www.trip.com/hotels/nanjing-hotel-detail-346283/jinling-hotel/', 'Trip.com', '2026-05-23'),
-(24, 'hotel', 20, 'image', 'https://ak-d.tripcdn.com/images/1mc6o12000br4n333F7C1_R_960_660_R5_D.jpg', '苏州吴宫泛太平洋酒店外观', 'Trip.com 酒店图库', '平台图片，仅用于课程演示引用', NULL, 'https://www.trip.com/hotels/suzhou-hotel-detail-346290/pan-pacific-suzhou/', 'Trip.com', '2026-05-23');
+(24, 'hotel', 20, 'image', 'https://ak-d.tripcdn.com/images/1mc6o12000br4n333F7C1_R_960_660_R5_D.jpg', '苏州吴宫泛太平洋酒店外观', 'Trip.com 酒店图库', '平台图片，仅用于课程演示引用', NULL, 'https://www.trip.com/hotels/suzhou-hotel-detail-346290/pan-pacific-suzhou/', 'Trip.com', '2026-05-23')
+ON DUPLICATE KEY UPDATE
+  `target_type` = VALUES(`target_type`),
+  `target_id` = VALUES(`target_id`),
+  `media_type` = VALUES(`media_type`),
+  `url` = VALUES(`url`),
+  `caption` = VALUES(`caption`),
+  `author` = VALUES(`author`),
+  `license_name` = VALUES(`license_name`),
+  `license_url` = VALUES(`license_url`),
+  `source_url` = VALUES(`source_url`),
+  `source_name` = VALUES(`source_name`),
+  `data_checked_date` = VALUES(`data_checked_date`);
 
 UPDATE `tm_hotel`
 SET `cover_img` = CASE `id`
@@ -1084,14 +1114,15 @@ INSERT IGNORE INTO `tm_hotel` (`id`, `name`, `city`, `address`, `star_rating`, `
 
 UPDATE `tm_hotel`
 SET `cover_img` = CASE `id`
-  WHEN 21 THEN 'https://ak-d.tripcdn.com/images/1mc5212000d4mm0qf43C0.jpg'
-  WHEN 22 THEN 'https://ak-d.tripcdn.com/images/0203q12000a4g6xlp6A89_R_960_660_R5_D.jpg'
-  WHEN 23 THEN 'https://ak-d.tripcdn.com/images/0202i12000agkpypr67F0_R_960_660_R5_D.jpg'
-  WHEN 24 THEN 'https://ak-d.tripcdn.com/images/0204v120008scndwu158D_R_960_660_R5_D.jpg'
-  WHEN 26 THEN 'https://ak-d.tripcdn.com/images/0201o1200089kpicp70DD_R_960_660_R5_D.jpg'
+  WHEN 21 THEN 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80'
+  WHEN 22 THEN 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=80'
+  WHEN 23 THEN 'https://images.unsplash.com/photo-1455587734955-081b22074882?auto=format&fit=crop&w=1200&q=80'
+  WHEN 24 THEN 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80'
+  WHEN 25 THEN 'https://ak-d.tripcdn.com/images/1mc0q12000mffam9bF93D.jpg'
+  WHEN 26 THEN 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80'
   ELSE `cover_img`
 END
-WHERE `id` IN (21, 22, 23, 24, 26);
+WHERE `id` IN (21, 22, 23, 24, 25, 26);
 
 INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`, `price`, `total_rooms`, `available_rooms`, `facilities`) VALUES
 (21, '两江景观大床房', '1.8m大床', 45, 980.00, 18, 9, 'WiFi,江景,洗衣机,厨房,浴缸'),
@@ -1543,6 +1574,30 @@ ON DUPLICATE KEY UPDATE
   `source_url` = VALUES(`source_url`),
   `data_checked_date` = VALUES(`data_checked_date`);
 
+UPDATE `tm_hotel`
+SET `cover_img` = CASE `id`
+  WHEN 31 THEN 'https://dimg04.c-ctrip.com/images/200c1e000001fliunA7EF_W_1280_853_R5_Q70.jpg'
+  WHEN 32 THEN 'https://treasuryhotelshanghai.com/wp-content/uploads/2026/03/Treasury-Hotel-Shanghai0047.webp'
+  WHEN 33 THEN 'https://pavo.elongstatic.com/i/tHotel800_600/nw_000gRYFl.jpg'
+  WHEN 34 THEN 'https://www.ahstatic.com/photos/gmer_ho_00_p_1024x768.jpg'
+  WHEN 35 THEN 'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1200&q=80'
+  WHEN 36 THEN 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80'
+  WHEN 41 THEN 'https://dimg04.c-ctrip.com/images/20071e000001g1d0u146A_W_1280_853_R5_Q70.jpg'
+  WHEN 42 THEN 'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=1200&q=80'
+  WHEN 43 THEN 'https://dimg04.c-ctrip.com/images/1mc3y12000qqm0r3v4254_R_960_660_R5_D.jpg'
+  WHEN 44 THEN 'https://ak-d.tripcdn.com/images/1mc4q12000s2nr71g0A13_R_500_400_R5.webp'
+  WHEN 45 THEN 'https://ak-d.tripcdn.com/images/1mc4r12000repen2v8026.jpg'
+  WHEN 46 THEN 'https://ak-d.tripcdn.com/images/1mc1712000epu78z56B04_R_960_660_R5_D.jpg'
+  WHEN 47 THEN 'https://dimg04.c-ctrip.com/images/1mc3j12000qa7li149580_R_960_660_R5_D.jpg'
+  WHEN 48 THEN 'https://images.unsplash.com/photo-1455587734955-081b22074882?auto=format&fit=crop&w=1200&q=80'
+  WHEN 49 THEN 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80'
+  WHEN 50 THEN 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80'
+  WHEN 51 THEN 'https://dimg04.c-ctrip.com/images/200a1e000001fk7mnBD2E_W_1280_853_R5_Q70.jpg'
+  WHEN 52 THEN 'https://pavo.elongstatic.com/i/tHotel800_600/nw_000gRYEZ.jpg'
+  ELSE `cover_img`
+END
+WHERE `id` IN (31, 32, 33, 34, 35, 36, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52);
+
 INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`, `price`, `total_rooms`, `available_rooms`, `facilities`) VALUES
 (41, '前门雅致大床房', '1.8m大床', 30, 598.00, 22, 14, 'WiFi,空调,近地铁,行李寄存'),
 (41, '老城家庭房', '1.8m+1.2m床', 38, 798.00, 10, 6, 'WiFi,亲子用品,早餐,近前门'),
@@ -1579,6 +1634,21 @@ SET `url` = REPLACE(
 WHERE `source_url` LIKE 'https://commons.wikimedia.org/wiki/File:%'
   AND `url` LIKE '/images/seed/%';
 
+UPDATE `tm_attraction`
+SET `cover_img` = CASE `id`
+  WHEN 1 THEN 'https://upload.wikimedia.org/wikipedia/commons/e/ef/The_Forbidden_City_-_View_from_Coal_Hill.jpg'
+  WHEN 2 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/20090530_Beijing_Summer_Palace_8467.jpg'
+  WHEN 3 THEN 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Shanghai_Bund-20150516-RM-173803.jpg'
+  WHEN 4 THEN 'https://upload.wikimedia.org/wikipedia/commons/d/d8/West_Lake%2C_Hangzhou_%28Nine-turn_bridge%29.jpg'
+  WHEN 5 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Zhangjiajie_National_Forest_Park.jpg'
+  WHEN 6 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Terracotta_Army%2C_View_of_Pit_1.jpg'
+  WHEN 7 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Jiuzhaigou_Valley_National_Park.jpg'
+  WHEN 8 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Huangshan_pic_4.jpg'
+  WHEN 9 THEN 'https://upload.wikimedia.org/wikipedia/commons/9/92/1_li_jiang_guilin_yangshuo_2011.jpg'
+  ELSE `cover_img`
+END
+WHERE `id` BETWEEN 1 AND 9;
+
 UPDATE `tm_hotel` h
 JOIN `tm_media_asset` m
   ON m.`target_type` = 'hotel'
@@ -1614,6 +1684,32 @@ WHERE `cover_img` LIKE '/images/seed/%';
 UPDATE `tm_attraction`
 SET `cover_img` = NULL
 WHERE `cover_img` LIKE '/images/seed/%';
+
+-- 最终兜底：旧库可能曾把部分 tm_media_asset 记录错误标成 attraction，回填后需再次按景点本体纠偏。
+UPDATE `tm_attraction`
+SET `cover_img` = CASE `id`
+  WHEN 10 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Temple_Of_Heaven.jpg'
+  WHEN 11 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Badaling_Great_Wall_(6170369160).jpg'
+  WHEN 12 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/OrientPearlTower.jpg'
+  WHEN 13 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Yuyuan_Garden.jpg'
+  WHEN 14 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Shanghai_disneyland_castle.jpg'
+  WHEN 15 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Chengdu_Research_Base_of_Giant_Panda_Breeding,_201907,_10.jpg'
+  WHEN 16 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Dujiangyan_Scenic_Area_36653-Dujiangyan_(49067677038).jpg'
+  WHEN 17 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Wuzhizhou_Island_-_map_01.jpg'
+  WHEN 18 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Nantian_Yizhu_Rock_at_Tianya-Haijiao_(20230325135141).jpg'
+  WHEN 19 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Lijiang_Old_Town.jpg'
+  WHEN 20 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Yalong_Bay_01.jpg'
+  WHEN 21 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Gulangyu_Island_from_Zhongshan_Road,_Xiamen.jpg'
+  WHEN 22 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Sun_Yat-sen_mausoleum.JPG'
+  WHEN 23 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Humble_Administrator%27s_Garden.JPG'
+  WHEN 24 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Hongya_Cave_31433-Chongqing_(43754875295).jpg'
+  WHEN 25 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Longji_rice_terraces.jpg'
+  WHEN 26 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Elephant_trunk_hill.JPG'
+  WHEN 27 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Tianmen_mountain.jpg'
+  WHEN 28 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Hongcun.jpg'
+  ELSE `cover_img`
+END
+WHERE `id` BETWEEN 10 AND 28;
 
 UPDATE `tm_post`
 SET `images` = CASE `id`
