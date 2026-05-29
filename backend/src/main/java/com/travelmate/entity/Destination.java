@@ -1,6 +1,7 @@
 package com.travelmate.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class Destination {
     private String tag;
     private String keywords;
     private String img;
+    @TableField("`desc`")
     private String desc;
     private String intro;
     private String highlights;

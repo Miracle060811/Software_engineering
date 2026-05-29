@@ -1784,11 +1784,15 @@ const quickSearch = (hint) => {
 }
 
 .feature-card {
-  background: var(--tm-surface);
+  --feat-accent: var(--tm-olive);
+  --feat-accent-soft: oklch(0.955 0.022 180);
+  --feat-border: var(--tm-line-soft);
+  background:
+    linear-gradient(180deg, var(--tm-surface) 0%, var(--feat-accent-soft) 132%);
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid var(--tm-line-soft);
+  border: 1px solid var(--feat-border);
   padding: 0;
   font: inherit;
   color: inherit;
@@ -1796,6 +1800,24 @@ const quickSearch = (hint) => {
   appearance: none;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--tm-shadow-card);
+}
+
+.feature-card:nth-child(1) {
+  --feat-accent: oklch(0.55 0.095 188);
+  --feat-accent-soft: oklch(0.965 0.028 188);
+  --feat-border: oklch(0.84 0.045 188);
+}
+
+.feature-card:nth-child(2) {
+  --feat-accent: oklch(0.64 0.120 70);
+  --feat-accent-soft: oklch(0.970 0.032 78);
+  --feat-border: oklch(0.86 0.070 78);
+}
+
+.feature-card:nth-child(3) {
+  --feat-accent: oklch(0.56 0.110 235);
+  --feat-accent-soft: oklch(0.965 0.028 230);
+  --feat-border: oklch(0.84 0.052 230);
 }
 
 .feature-card:first-child {
@@ -1814,7 +1836,10 @@ const quickSearch = (hint) => {
 }
 .feature-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--tm-shadow-card-hover);
+  border-color: var(--feat-accent);
+  box-shadow:
+    0 20px 48px oklch(0.24 0.026 82 / 0.12),
+    0 0 0 1px color-mix(in oklch, var(--feat-accent) 26%, transparent);
 }
 
 .feat-visual {
@@ -1825,13 +1850,13 @@ const quickSearch = (hint) => {
 }
 
 .feat-visual-ai {
-  background: oklch(0.955 0.014 197);
+  background: linear-gradient(135deg, oklch(0.93 0.055 188), oklch(0.965 0.024 205));
 }
 .feat-visual-community {
-  background: oklch(0.965 0.008 197);
+  background: linear-gradient(135deg, oklch(0.95 0.060 78), oklch(0.970 0.026 42));
 }
 .feat-visual-attraction {
-  background: oklch(0.955 0.018 180);
+  background: linear-gradient(135deg, oklch(0.94 0.050 230), oklch(0.965 0.025 185));
 }
 
 .feat-photo {
@@ -1847,8 +1872,8 @@ const quickSearch = (hint) => {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, oklch(0.985 0.002 248 / 0.12), oklch(0.18 0.050 180 / 0.34)),
-    linear-gradient(135deg, oklch(0.964 0.008 197 / 0.34), transparent 48%);
+    linear-gradient(180deg, oklch(0.985 0.002 248 / 0.06), color-mix(in oklch, var(--feat-accent) 42%, oklch(0.18 0.050 180 / 0.34))),
+    linear-gradient(135deg, color-mix(in oklch, var(--feat-accent) 36%, transparent), transparent 56%);
   pointer-events: none;
 }
 
@@ -1865,7 +1890,7 @@ const quickSearch = (hint) => {
   justify-content: center;
   border-radius: 999px;
   border: 1px solid oklch(0.985 0.002 248 / 0.56);
-  background: oklch(0.985 0.002 248 / 0.24);
+  background: color-mix(in oklch, var(--feat-accent) 34%, oklch(0.985 0.002 248 / 0.28));
   color: oklch(0.985 0.002 248);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 15px;
@@ -1879,8 +1904,19 @@ const quickSearch = (hint) => {
 }
 
 .feat-body {
+  position: relative;
   padding: 24px;
   text-align: center;
+}
+
+.feat-body::before {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 3px;
+  border-radius: 999px;
+  margin: 0 auto 16px;
+  background: var(--feat-accent);
 }
 
 .feat-title {
@@ -1901,7 +1937,7 @@ const quickSearch = (hint) => {
 .feat-link {
   font-size: 14px;
   font-weight: 600;
-  color: var(--el-color-primary);
+  color: var(--feat-accent);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1917,8 +1953,9 @@ const quickSearch = (hint) => {
 }
 
 .cta-card {
-  background: linear-gradient(135deg, oklch(0.985 0.002 248), oklch(0.964 0.008 197));
-  border: 1px solid var(--tm-line);
+  background:
+    linear-gradient(90deg, oklch(0.986 0.006 205) 0%, oklch(0.975 0.030 80) 48%, oklch(0.962 0.026 190) 100%);
+  border: 1px solid oklch(0.84 0.040 190);
   border-radius: 8px;
   padding: 56px 48px;
   display: flex;
@@ -1927,6 +1964,14 @@ const quickSearch = (hint) => {
   gap: 40px;
   position: relative;
   overflow: hidden;
+}
+
+.cta-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-top: 5px solid oklch(0.62 0.115 72);
+  pointer-events: none;
 }
 
 .cta-content {
@@ -1949,16 +1994,16 @@ const quickSearch = (hint) => {
 }
 
 .cta-card :deep(.el-button--primary) {
-  background: oklch(0.985 0.002 248);
-  border-color: oklch(0.76 0.045 180);
-  color: var(--tm-bark);
-  box-shadow: 0 12px 24px oklch(0.38 0.050 112 / 0.10);
+  background: var(--tm-olive);
+  border-color: var(--tm-olive);
+  color: #fff;
+  box-shadow: 0 14px 28px oklch(0.38 0.050 112 / 0.14);
 }
 
 .cta-card :deep(.el-button--primary:hover) {
-  background: oklch(0.935 0.030 180);
-  border-color: var(--tm-olive);
-  color: var(--tm-bark);
+  background: oklch(0.42 0.072 180);
+  border-color: oklch(0.42 0.072 180);
+  color: #fff;
 }
 
 .cta-decoration {

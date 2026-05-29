@@ -550,9 +550,10 @@ onMounted(() => {
   text-align: right;
 }
 .room-price {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
   color: #ef4444;
+  text-shadow: 0 8px 22px rgba(239, 68, 68, 0.12);
   margin-bottom: 8px;
 }
 .room-price span {
@@ -617,8 +618,8 @@ onMounted(() => {
   font-weight: 600;
 }
 .total-price {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: #ef4444;
 }
 .origin-price {

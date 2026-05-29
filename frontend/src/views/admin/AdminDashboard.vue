@@ -398,13 +398,6 @@
               >
             </div>
           </div>
-          <div class="toolbar toolbar-inline">
-            <div class="muted-text">
-              CSV
-              字段：slug、name、country、tag、keywords、img、desc、intro、highlights、culture、bestSeason、transport、sourceName、sourceUrl、sortOrder、status。keywords
-              和 highlights 可用竖线分隔。
-            </div>
-          </div>
           <el-table :data="destinations" v-loading="destinationLoading" stripe>
             <el-table-column prop="slug" label="标识" width="120" />
             <el-table-column prop="name" label="城市" width="100" />

@@ -97,7 +97,7 @@ export const destinations = [
     country: "中国",
     tag: "江南水乡",
     keywords: ["西湖", "灵隐寺", "龙井"],
-    img: "https://upload.wikimedia.org/wikipedia/commons/d/d8/West_Lake%2C_Hangzhou_%28Nine-turn_bridge%29.jpg",
+    img: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Leifeng_Pagoda_and_West_Lake,_Hangzhou_120529_2.jpg",
     desc: "西湖山水、人文古迹与茶文化共同构成江南旅行的经典样本。",
     intro:
       "杭州以西湖文化景观最具代表性。西湖三面环山、一面临城，湖山、园林、寺院、堤桥和茶村共同形成了诗意的城市旅行体验。",
