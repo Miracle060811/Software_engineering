@@ -81,9 +81,13 @@ mysql -u root -p -e "USE travelmate; SHOW TABLES LIKE 'tm_user'; SHOW TABLES LIK
 
 ```powershell
 .\start.ps1
+.\start-backend.ps1
+.\start-frontend.ps1
 ```
 
 脚本会先启动后端，并在检测到 `http://127.0.0.1:8080/api/post/list` 可访问后再启动前端，避免开发模式下前端一打开就因为后端尚未完成启动而出现 Vite `http proxy error` / `ECONNREFUSED`。
+
+如果你只想分别启动单个服务，也可以直接使用两个独立入口：`start-backend.ps1` 只启动后端，`start-frontend.ps1` 只启动前端。它们都会复用现有 `start.ps1` 的环境变量加载、参数校验和启动逻辑。
 
 也可以双击或命令行运行：
 
@@ -107,7 +111,29 @@ start.bat -DryRun
 .\start.ps1 -SkipRedis
 .\start.ps1 -SkipFrontendInstall
 .\start.ps1 -DryRun
+
+.\start-backend.ps1 -DbPassword 你的MySQL密码
+.\start-backend.ps1 -DeepseekApiKey 你的DeepSeek密钥
+.\start-backend.ps1 -SkipRedis
+
+.\start-frontend.ps1 -SkipFrontendInstall
+.\start-frontend.ps1 -DryRun
 ```
+
+参数说明：
+
+- `-DbPassword`：仅后端启动相关。显式指定 MySQL 密码，优先于 `.env`、`SPRING_DATASOURCE_PASSWORD`、`DB_PASSWORD` 和 `backend/application-local.yml` 中的配置。
+- `-DeepseekApiKey`：仅后端启动相关。显式指定 DeepSeek API Key；未提供时会继续尝试读取当前环境变量或根目录 `.env`。
+- `-BackendOnly`：只启动后端服务，不启动前端。通常由 `start-backend.ps1` 内部使用。
+- `-FrontendOnly`：只启动前端服务，不启动后端。通常由 `start-frontend.ps1` 内部使用。
+- `-SkipRedis`：跳过 Redis 自动检测和自动启动。适合本机未装 Redis、或你只想先验证基础后端是否能起来的场景。
+- `-SkipFrontendInstall`：启动前端前不自动执行 `npm install`。当 `frontend/node_modules` 已经存在时建议使用；如果依赖还没装，前端可能启动失败。
+- `-DryRun`：只打印即将执行的命令，不真正启动服务。适合检查脚本会如何解析参数和调用命令。
+
+独立脚本对应关系：
+
+- `start-backend.ps1` 会固定附带 `-BackendOnly`，并额外支持 `-DbPassword`、`-DeepseekApiKey`、`-SkipRedis`、`-DryRun`。
+- `start-frontend.ps1` 会固定附带 `-FrontendOnly`，并额外支持 `-SkipFrontendInstall`、`-DryRun`。
 
 `start.bat` 是 `start.ps1` 的 CMD/双击入口，会自动寻找 PowerShell 7 或 Windows PowerShell，并把命令行参数原样传给 `start.ps1`。需要查看参数时可运行 `start.bat /?`。
 
@@ -126,9 +152,9 @@ start.bat -DryRun
 已覆盖的社区交互：
 
 - 游记列表支持关键词搜索，推荐流按热度和时间衰减排序。
-- 游记发布后进入 AI审核中，后端可通过 AI 审核任务自动判断通过/拒绝；失败时保留人工审核兜底。
+- 游记发布后进入 AI 审核中，后端可通过 AI 审核任务自动判断通过/拒绝；失败时保留人工审核兜底。
 - 关注流需要登录；关注/取消关注后会同步刷新关注状态和粉丝数。
-- 社区页增加 `我的` 标签，展示草稿、AI审核中、已发布、已拒绝内容。
+- 社区页增加 `我的` 标签，展示草稿、AI 审核中、已发布、已拒绝内容。
 - 个人主页支持查看关注/粉丝列表，并可跳转到用户主页。
 - 无配图游记使用纯文字卡片，不再随机渲染占位图片。
 - 帖子详情点赞使用数字 `targetType`，避免字符串类型导致的后端解析错误。
