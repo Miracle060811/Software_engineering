@@ -286,8 +286,9 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 ### AI 智能规划与 Agent 服务（成员 C - 陈一鸿）
 
 - AI 行程规划（调用 DeepSeek API，强制 JSON 结构化输出）
-- API 超时/失败时自动降级为模板方案
-- AI 客服多轮对话（Function Calling Tools: 天气/航班/酒店查询）
+- 行程生成支持旅行节奏、必去地点、避开项、交通偏好和住宿偏好，并输出交通住宿建议、行前清单、风险提醒、每日备选方案
+- API Key 缺失、超时或失败时自动降级为本地模板方案，避免前端长时间等待失败请求
+- AI 客服多轮对话（Function Calling Tools: 天气/航班/酒店查询），支持空消息/超长消息校验和本地兜底答复
 - 站内通知查询 / 已读 / 删除 / 一键删除 / 未读数接口，支持点击通知跳转业务页面并自动清除未读红点
 - 航班延误预警模拟（定时任务随机推送通知）
 - 行程导出（文本格式，含每日路线和费用明细）
@@ -307,7 +308,7 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 - RBAC 权限控制（后端 `/api/admin/**` 要求 `ROLE_ADMIN`，前端 `requiresAdmin` 二次拦截）
 - ECharts 可观测仪表盘（真实订单趋势、类型分布、热门目的地、用户增长、今日 GMV、近 15 分钟活跃用户、本地请求量、接口延迟、报错日志告警）
 - 资源管理（航班 CRUD、火车 CRUD、酒店 CRUD、房型库存/价格/上下架干预、景点 CRUD、城市资料下线）
-- 资源批量导入（航班、火车、酒店、房型、景点、城市资料 CSV 导入，格式见 [docs/admin-csv-import.md](docs/admin-csv-import.md)）
+- 资源批量导入（航班、火车、酒店、房型、景点、城市资料 CSV 导入；支持 UTF-8/BOM、引号、多行字段、预检、仅新增/重复更新和模板下载，格式见 [docs/admin-csv-import.md](docs/admin-csv-import.md)）
 - 优惠券配置（满减券/折扣券新增、编辑、删除，支持业务类型分类和用户领券记录查看）
 - 内容与安全审核（敏感词新增/编辑/删除、游记人工审核、AI 审核建议复核、通过 / 拒绝原因记录、审核完成后可随时改判、一键封禁作者）
 - 商家回复与评价举报工单处理（驳回举报、删除被举报评价、查看/新增/删除商家回复）
@@ -327,6 +328,7 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 | 数据库 | MySQL 8.0 + Redis                                             |
 | 认证   | JWT (jjwt 0.11.5) + Spring Security                           |
 | AI     | DeepSeek API（OpenAI 兼容协议）                               |
+| CSV    | Apache Commons CSV                                            |
 
 ---
 

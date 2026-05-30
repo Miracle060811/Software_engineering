@@ -854,6 +854,132 @@
     </el-container>
 
     <el-dialog
+      v-model="importDialogVisible"
+      title="CSV 批量导入"
+      width="780px"
+      class="import-dialog"
+    >
+      <div class="import-grid">
+        <section class="import-panel">
+          <el-form label-position="top">
+            <el-form-item label="导入资源">
+              <el-select v-model="importForm.type" style="width: 100%">
+                <el-option
+                  v-for="item in importTypeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="写入方式">
+              <el-radio-group v-model="importForm.mode">
+                <el-radio-button label="insert">仅新增</el-radio-button>
+                <el-radio-button label="upsert">重复则更新</el-radio-button>
+              </el-radio-group>
+            </el-form-item>
+            <el-checkbox v-model="importForm.dryRun">
+              只预检，不写入数据库
+            </el-checkbox>
+            <el-upload
+              class="csv-upload"
+              drag
+              accept=".csv,text/csv"
+              :auto-upload="false"
+              :limit="1"
+              :on-change="handleImportFileChange"
+              :on-remove="clearImportFile"
+            >
+              <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+              <div class="el-upload__text">
+                拖入 CSV 或 <em>点击选择</em>
+              </div>
+              <template #tip>
+                <div class="el-upload__tip">
+                  请使用 UTF-8 编码，首行必须是字段名。
+                </div>
+              </template>
+            </el-upload>
+          </el-form>
+        </section>
+
+        <section class="import-panel import-help">
+          <div class="import-help-title">
+            <span>{{ currentImportType.label }}</span>
+            <el-button text type="primary" @click="downloadCsvTemplate">
+              下载模板
+            </el-button>
+          </div>
+          <div class="field-list">
+            <el-tag
+              v-for="field in currentImportType.required"
+              :key="field"
+              size="small"
+              type="danger"
+              effect="plain"
+            >
+              {{ field }}
+            </el-tag>
+            <el-tag
+              v-for="field in currentImportType.optional"
+              :key="field"
+              size="small"
+              effect="plain"
+            >
+              {{ field }}
+            </el-tag>
+          </div>
+          <p class="muted-text">
+            红色字段必填；日期时间支持 2026-06-01T08:00:00 或
+            2026-06-01 08:00:00。
+          </p>
+        </section>
+      </div>
+
+      <el-alert
+        v-if="importResult"
+        class="import-result"
+        :type="importResult.failed ? 'warning' : 'success'"
+        :closable="false"
+        show-icon
+      >
+        <template #title>
+          共 {{ importResult.total || 0 }} 行，成功
+          {{ importResult.success || 0 }} 行，失败
+          {{ importResult.failed || 0 }} 行
+        </template>
+        <div>
+          新增 {{ importResult.inserted || 0 }}，更新
+          {{ importResult.updated || 0 }}，预检
+          {{ importResult.validated || 0 }}
+        </div>
+      </el-alert>
+
+      <el-table
+        v-if="importFailures.length"
+        :data="importFailures"
+        class="import-failure-table"
+        max-height="220"
+        stripe
+      >
+        <el-table-column prop="line" label="行号" width="90" />
+        <el-table-column prop="reason" label="失败原因" min-width="420" />
+      </el-table>
+
+      <template #footer>
+        <el-button @click="importDialogVisible = false">关闭</el-button>
+        <el-button
+          type="primary"
+          :loading="importLoading"
+          :disabled="!importForm.file"
+          @click="submitCsvImport"
+        >
+          {{ importForm.dryRun ? "开始预检" : "开始导入" }}
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
       v-model="flightDialogVisible"
       :title="flightForm.id ? '编辑航班' : '新增航班'"
       width="760px"
@@ -1544,6 +1670,7 @@ import {
   Document,
   User,
   Tickets,
+  UploadFilled,
 } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 
@@ -1614,12 +1741,129 @@ const couponClaimsDrawerVisible = ref(false);
 const sensitiveDialogVisible = ref(false);
 const replyDrawerVisible = ref(false);
 const userDrawerVisible = ref(false);
+const importDialogVisible = ref(false);
+const importLoading = ref(false);
 
 const activeHotel = ref(null);
 const activeCoupon = ref(null);
 const activeReport = ref(null);
 const selectedUser = ref(null);
 const replyContent = ref("");
+const importResult = ref(null);
+
+const importTypeOptions = [
+  {
+    value: "flights",
+    label: "航班资源",
+    required: [
+      "flightNo",
+      "airline",
+      "departureCity",
+      "arrivalCity",
+      "departureTime",
+      "arrivalTime",
+      "economyPrice",
+      "businessPrice",
+      "totalSeats",
+      "availableSeats",
+    ],
+    optional: ["status"],
+  },
+  {
+    value: "trains",
+    label: "火车资源",
+    required: [
+      "trainNo",
+      "trainType",
+      "departureStation",
+      "arrivalStation",
+      "departureTime",
+      "arrivalTime",
+      "firstClassPrice",
+      "secondClassPrice",
+      "firstClassSeats",
+      "secondClassSeats",
+    ],
+    optional: ["durationMinutes", "status"],
+  },
+  {
+    value: "hotels",
+    label: "酒店资源",
+    required: ["name", "city", "address", "starRating", "avgPrice"],
+    optional: ["description", "coverImg", "lat", "lng", "score", "status"],
+  },
+  {
+    value: "rooms",
+    label: "酒店房型",
+    required: [
+      "hotelId",
+      "roomType",
+      "bedType",
+      "price",
+      "totalRooms",
+      "availableRooms",
+    ],
+    optional: ["area", "images", "facilities", "status"],
+  },
+  {
+    value: "attractions",
+    label: "景点资源",
+    required: [
+      "name",
+      "city",
+      "address",
+      "adultPrice",
+      "childPrice",
+      "totalTickets",
+      "availableTickets",
+    ],
+    optional: [
+      "description",
+      "coverImg",
+      "openTime",
+      "lat",
+      "lng",
+      "officialUrl",
+      "sourceName",
+      "dataCheckedDate",
+      "status",
+    ],
+  },
+  {
+    value: "destinations",
+    label: "城市资源",
+    required: ["slug", "name", "tag", "img", "desc", "intro"],
+    optional: [
+      "country",
+      "keywords",
+      "highlights",
+      "culture",
+      "bestSeason",
+      "transport",
+      "sourceName",
+      "sourceUrl",
+      "sortOrder",
+      "status",
+    ],
+  },
+];
+
+const importForm = ref({
+  type: "flights",
+  mode: "insert",
+  dryRun: true,
+  file: null,
+});
+
+const currentImportType = computed(
+  () =>
+    importTypeOptions.find((item) => item.value === importForm.value.type) ||
+    importTypeOptions[0],
+);
+
+const importFailures = computed(() =>
+  Array.isArray(importResult.value?.failures) ? importResult.value.failures : [],
+);
 
 const createFlightForm = () => ({
   id: null,
@@ -2422,32 +2666,171 @@ const removeDestination = async (row) => {
 };
 
 const triggerImport = (type) => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".csv,text/csv";
-  input.onchange = async () => {
-    const file = input.files?.[0];
-    if (!file) return;
-    const form = new FormData();
-    form.append("file", file);
-    try {
-      const result = await request.post(`/api/admin/import/${type}`, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const failures = result?.failures || [];
-      ElMessageBox.alert(
-        `成功 ${result?.success || 0} 行，失败 ${result?.failed || 0} 行` +
-          (failures.length
-            ? `\n${failures
-                .map((f) => `第 ${f.line} 行：${f.reason}`)
-                .join("\n")}`
-            : ""),
-        "导入结果",
-      );
-      await refreshResourceAfterImport(type);
-    } catch (error) {}
+  importForm.value = {
+    type,
+    mode: "insert",
+    dryRun: true,
+    file: null,
   };
-  input.click();
+  importResult.value = null;
+  importDialogVisible.value = true;
+};
+
+const handleImportFileChange = (uploadFile) => {
+  importForm.value.file = uploadFile.raw;
+  importResult.value = null;
+};
+
+const clearImportFile = () => {
+  importForm.value.file = null;
+};
+
+const submitCsvImport = async () => {
+  if (!importForm.value.file) {
+    ElMessage.warning("请先选择 CSV 文件");
+    return;
+  }
+  const form = new FormData();
+  form.append("file", importForm.value.file);
+  importLoading.value = true;
+  try {
+    const result = await request.post(
+      `/api/admin/import/${importForm.value.type}`,
+      form,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+        params: {
+          dryRun: importForm.value.dryRun,
+          mode: importForm.value.mode,
+        },
+      },
+    );
+    importResult.value = result || {};
+    if (result?.failed) {
+      ElMessage.warning("CSV 已处理，请查看失败行");
+    } else {
+      ElMessage.success(importForm.value.dryRun ? "预检通过" : "导入完成");
+    }
+    if (!importForm.value.dryRun && result?.success) {
+      await refreshResourceAfterImport(importForm.value.type);
+    }
+  } catch (error) {
+    importResult.value = null;
+  } finally {
+    importLoading.value = false;
+  }
+};
+
+const escapeCsvCell = (value) => {
+  const text = String(value ?? "");
+  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+};
+
+const downloadCsvTemplate = () => {
+  const type = currentImportType.value;
+  const headers = [...type.required, ...type.optional];
+  const examples = {
+    flights: [
+      "CA1001",
+      "中国国际航空",
+      "北京",
+      "上海",
+      "2026-06-01T08:00:00",
+      "2026-06-01T10:00:00",
+      "680",
+      "2180",
+      "200",
+      "120",
+      "1",
+    ],
+    trains: [
+      "G1001",
+      "G",
+      "北京南",
+      "上海虹桥",
+      "2026-06-01T08:00:00",
+      "2026-06-01T12:30:00",
+      "880",
+      "553",
+      "80",
+      "420",
+      "270",
+      "1",
+    ],
+    hotels: [
+      "城市花园酒店",
+      "上海",
+      "上海市黄浦区示例路1号",
+      "4",
+      "520",
+      "近地铁商务酒店",
+      "https://example.com/hotel.jpg",
+      "31.2304",
+      "121.4737",
+      "4.6",
+      "1",
+    ],
+    rooms: [
+      "1",
+      "豪华大床房",
+      "1张大床",
+      "688",
+      "20",
+      "12",
+      "38",
+      '["/images/room.jpg"]',
+      '["早餐","洗衣房"]',
+      "1",
+    ],
+    attractions: [
+      "示例景区",
+      "杭州",
+      "杭州市示例路1号",
+      "80",
+      "40",
+      "1000",
+      "800",
+      "城市观光景区",
+      "https://example.com/scenic.jpg",
+      "08:00-18:00",
+      "30.2741",
+      "120.1551",
+      "https://example.com",
+      "景区官网",
+      "2026-05-30",
+      "1",
+    ],
+    destinations: [
+      "dali",
+      "大理",
+      "风花雪月",
+      "/images/seed/dali.svg",
+      "苍山洱海与古城生活交织",
+      "适合慢旅行的城市",
+      "中国",
+      "洱海|古城|苍山",
+      "洱海骑行|古城夜游",
+      "白族文化",
+      "春秋季",
+      "高铁到大理站",
+      "公开旅游资料",
+      "https://example.com",
+      "90",
+      "1",
+    ],
+  };
+  const lines = [
+    headers.map(escapeCsvCell).join(","),
+    (examples[type.value] || []).map(escapeCsvCell).join(","),
+  ];
+  const blob = new Blob([`\uFEFF${lines.join("\n")}`], {
+    type: "text/csv;charset=utf-8",
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `travelmate-${type.value}-template.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
 };
 
 const refreshResourceAfterImport = async (type) => {
@@ -2860,15 +3243,14 @@ onUnmounted(() => {
   height: 44px;
   margin: 4px 0;
   color: #475569;
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 600;
 }
 
 .admin-menu :deep(.el-menu-item:hover),
 .admin-menu :deep(.el-menu-item.is-active) {
-  background: linear-gradient(135deg, #e0f7fa, #ecfdf5);
+  background: #e7f8f4;
   color: #0f766e;
-  box-shadow: inset 3px 0 0 #14b8a6;
 }
 
 .admin-main {
@@ -2907,7 +3289,7 @@ onUnmounted(() => {
 
 .stat-card {
   text-align: center;
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 .stat-card,
@@ -2920,10 +3302,7 @@ onUnmounted(() => {
 .stat-value {
   font-size: 30px;
   font-weight: 700;
-  background: linear-gradient(135deg, #0d9488, #10b981);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #0f766e;
   margin-bottom: 6px;
 }
 
@@ -2934,7 +3313,7 @@ onUnmounted(() => {
 
 .panel-card,
 .alert-card {
-  border-radius: 16px;
+  border-radius: 8px;
 }
 
 :deep(.el-table) {
@@ -2943,7 +3322,7 @@ onUnmounted(() => {
   --el-table-row-hover-bg-color: #eefcf8;
   --el-table-border-color: #e5eef8;
   color: #334155;
-  border-radius: 14px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
 }
@@ -3008,7 +3387,7 @@ onUnmounted(() => {
   align-items: flex-start;
   padding: 12px 14px;
   background: #f8fafc;
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 .alert-message {
@@ -3028,5 +3407,50 @@ onUnmounted(() => {
 
 .muted-text {
   color: var(--el-text-color-secondary);
+}
+
+.import-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.import-panel {
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfdff;
+}
+
+.csv-upload {
+  margin-top: 14px;
+}
+
+.import-help-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.field-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.import-result,
+.import-failure-table {
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .import-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

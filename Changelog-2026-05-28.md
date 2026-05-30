@@ -5,6 +5,7 @@
 | 分支      | `main`                             |
 | 提交者    | Yinghao Xiang、Sylphira-ovo        |
 | 提交 Hash | `d50499f2`、`3c4da3bf`、`8b950abe` |
+| 推送状态  | 已推送到 `origin/main`             |
 
 ## 今日概述
 
@@ -27,6 +28,11 @@
 - **导航与页脚**: 优化顶部导航、Logo、用户入口、移动端按钮、面包屑和页脚的颜色、间距、圆角与阴影，使整体风格更统一（`frontend/src/App.vue`）。
 - **公共页面头部**: 将 `PageHeader` 调整为浅色面板样式，统一标题层级、图标容器和页面节奏（`frontend/src/components/PageHeader.vue`）。
 - **社区与搜索列表**: 统一社区卡片、机票搜索、火车票搜索、酒店搜索的搜索框、结果卡片、价格、路线信息和移动端布局（`frontend/src/views/community/Community.vue`、`frontend/src/views/flight/FlightSearch.vue`）。
+
+### docs · Documentation
+
+- **项目说明**: 在 README 中补充前端视觉方向说明，记录当前首页、AI 行程规划页和自然旅行主题的设计基调（`README.md`）。
+- **每日日志**: 生成并完善 2026-05-28 修改日志，用于记录本日前端视觉优化范围、验证结果和后续计划（`Changelog-2026-05-28.md`）。
 
 ### fix · Bug Fix
 
@@ -67,6 +73,7 @@
 - 首页和 AI 规划页已经完成重点优化，后续仍可继续细化目的地详情、酒店详情、订单中心和管理后台的视觉一致性。
 - `theme.css` 中存在多段历史主题 token 叠加，后续可以整理为更清晰的单一主题层，降低维护成本。
 - 前端大 chunk 警告仍未处理，后续可评估对 ECharts、管理后台或大页面做懒加载拆分。
+- `backend/target/classes/com/travelmate/service/impl/TrainServiceImpl.class` 当前仍显示为本地已修改的编译产物，未纳入提交；建议后续恢复或加入忽略范围。
 
 ## 明日计划
 
@@ -79,3 +86,4 @@
 
 - 本日志已按 2026-05-28 当天实际提交重写，移除了旧版“今日暂无新提交”的错误说明。
 - 提交 `8b950abe` 仅补充日志内容；本次重写已将追加记录合并进统一结构。
+- 本日志由 `D:\Skill\daily-changelog` skill 生成，并已合并远端追加记录。
