@@ -9,7 +9,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = TravelMateApplication.class)
@@ -61,5 +63,14 @@ class SecurityConfigTests {
     void unauthenticatedStaticImageRequestIsServed() throws Exception {
         mockMvc.perform(get("/images/seed/beijing.svg"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void deployedFrontendOriginIsAllowedForUserApi() throws Exception {
+        mockMvc.perform(options("/user/register")
+                .header("Origin", "http://82.156.91.79:42356")
+                .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://82.156.91.79:42356"));
     }
 }
