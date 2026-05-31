@@ -33,6 +33,16 @@
     </el-tabs>
 
     <el-alert
+      v-if="selectedTag"
+      class="audit-alert"
+      type="success"
+      show-icon
+      :closable="true"
+      :title="`正在查看标签：${selectedTag}`"
+      @close="clearTagFilter"
+    />
+
+    <el-alert
       v-if="activeTab === 'mine'"
       class="audit-alert"
       type="info"
@@ -124,6 +134,18 @@
               <el-icon :size="13"><LocationFilled /></el-icon>
               {{ post.destination }}
             </div>
+            <div v-if="post.tags" class="post-tags" @click.stop>
+              <el-tag
+                v-for="tag in parseTags(post.tags)"
+                :key="tag"
+                size="small"
+                round
+                effect="plain"
+                @click="openTag(tag)"
+              >
+                {{ tag }}
+              </el-tag>
+            </div>
           </div>
         </el-card>
       </div>
@@ -144,10 +166,10 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { Plus, UserFilled, StarFilled, LocationFilled, Notebook } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
@@ -166,7 +188,9 @@ const hasMore = ref(true);
 const activeTab = ref("recommend");
 const mineStatusFilter = ref("all");
 const userStore = useUserStore();
+const route = useRoute();
 const router = useRouter();
+const selectedTag = ref("");
 
 const emptyTitle = computed(() => {
   if (activeTab.value === "following") return "暂无关注的游记";
@@ -197,7 +221,7 @@ const fetchPosts = async () => {
         ? "/api/post/my"
         : "/api/post/list";
     const data = await request.get(url, {
-      params: { page: 1, size, keyword: keyword.value },
+      params: { page: 1, size, keyword: selectedTag.value || keyword.value },
     });
     const list = filterMinePosts(Array.isArray(data) ? data : data?.records || []);
     posts.value = list;
@@ -226,7 +250,7 @@ const loadMore = async () => {
   try {
     const url = activeTab.value === "following" ? "/api/post/following" : "/api/post/list";
     const data = await request.get(url, {
-      params: { page: page.value, size, keyword: keyword.value },
+      params: { page: page.value, size, keyword: selectedTag.value || keyword.value },
     });
     const list = Array.isArray(data) ? data : data?.records || [];
     posts.value.push(...list);
@@ -239,6 +263,25 @@ const loadMore = async () => {
 
 const splitImages = (images) => {
   return parseImageList(images);
+};
+
+const parseTags = (tags) => {
+  if (!tags) return [];
+  if (Array.isArray(tags)) return tags;
+  return String(tags)
+    .split(/[,，]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const openTag = (tag) => {
+  router.push({ path: "/community", query: { tag } });
+};
+
+const clearTagFilter = () => {
+  selectedTag.value = "";
+  router.push("/community");
+  fetchPosts();
 };
 
 const getPostFallbackImage = (post) => {
@@ -308,8 +351,18 @@ const deletePost = async (post) => {
 };
 
 onMounted(() => {
+  selectedTag.value = typeof route.query.tag === "string" ? route.query.tag : "";
   fetchPosts();
 });
+
+watch(
+  () => route.query.tag,
+  (tag) => {
+    selectedTag.value = typeof tag === "string" ? tag : "";
+    activeTab.value = "recommend";
+    fetchPosts();
+  },
+);
 </script>
 
 <style scoped>
@@ -470,6 +523,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.post-tags :deep(.el-tag) {
+  cursor: pointer;
 }
 
 .load-more {

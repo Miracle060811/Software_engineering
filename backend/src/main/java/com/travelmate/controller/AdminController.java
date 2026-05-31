@@ -50,6 +50,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -137,6 +138,7 @@ public class AdminController {
 
     private static final int STATUS_TRAFFIC_CANCELLED = 3;
     private static final int STATUS_TRAFFIC_REFUNDED = 4;
+    private static final int STATUS_REFUND_REQUESTED = 5;
     private static final int STATUS_HOTEL_PAID = 1;
     private static final int STATUS_HOTEL_COMPLETED = 3;
     private static final int STATUS_HOTEL_CANCELLED_OR_REFUNDED = 4;
@@ -1011,6 +1013,7 @@ public class AdminController {
     }
 
     @PostMapping("/orders/{orderNo}/refund/approve")
+    @Transactional(rollbackFor = Exception.class)
     public Result<String> approveRefund(@PathVariable String orderNo) {
         checkAdmin();
         if (orderNo.startsWith("HT")) {
@@ -1025,13 +1028,21 @@ public class AdminController {
             if (Objects.equals(order.getStatus(), STATUS_HOTEL_COMPLETED)) {
                 return Result.error("已完成的酒店订单不能直接退款");
             }
-            if (!Objects.equals(order.getStatus(), STATUS_HOTEL_PAID)) {
-                return Result.error("只有已支付且未入住的酒店订单可以退款");
+            if (!Objects.equals(order.getStatus(), STATUS_REFUND_REQUESTED)) {
+                return Result.error("只有已提交退款申请的酒店订单可以办理退款");
             }
-            order.setStatus(STATUS_HOTEL_CANCELLED_OR_REFUNDED);
-            hotelOrderMapper.updateById(order);
+            int updated = hotelOrderMapper.markRefundApproved(orderNo);
+            if (updated == 0) {
+                return Result.error("订单状态已变化，请刷新后重试");
+            }
             hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());
             hotelRoomStockService.syncWithDatabase(order.getRoomId());
+            notificationCenterService.createNotification(
+                    order.getUserId(),
+                    "hotel_order",
+                    "酒店退款已通过",
+                    String.format("订单 %s 已退款，房间库存已归还。", orderNo),
+                    "/my-orders?tab=hotel");
         } else {
             TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper<TrafficOrder>()
                     .eq(TrafficOrder::getOrderNo, orderNo));
@@ -1044,17 +1055,26 @@ public class AdminController {
             if (Objects.equals(order.getStatus(), STATUS_TRAFFIC_CANCELLED)) {
                 return Result.error("已取消的待支付订单库存已归还，不能再次退款");
             }
-            if (!Objects.equals(order.getStatus(), 1) && !Objects.equals(order.getStatus(), 2)) {
-                return Result.error("只有出票中或已出票的订单可以退票");
+            if (!Objects.equals(order.getStatus(), STATUS_REFUND_REQUESTED)) {
+                return Result.error("只有已提交退票申请的订单可以办理退票");
             }
-            order.setStatus(STATUS_TRAFFIC_REFUNDED);
-            trafficOrderMapper.updateById(order);
+            int updated = trafficOrderMapper.markRefundApproved(orderNo);
+            if (updated == 0) {
+                return Result.error("订单状态已变化，请刷新后重试");
+            }
             returnTrafficStock(order);
+            notificationCenterService.createNotification(
+                    order.getUserId(),
+                    "traffic_order",
+                    "退票申请已通过",
+                    String.format("订单 %s 已退票，库存已归还。", orderNo),
+                    "/my-orders?tab=traffic");
         }
         return Result.success("退款审批已通过");
     }
 
     @PostMapping("/orders/{orderNo}/refund/reject")
+    @Transactional(rollbackFor = Exception.class)
     public Result<String> rejectRefund(@PathVariable String orderNo) {
         checkAdmin();
         if (orderNo.startsWith("HT")) {
@@ -1063,14 +1083,34 @@ public class AdminController {
             if (order == null) {
                 return Result.error("订单不存在");
             }
-            return Result.error("当前没有独立的退款申请状态，不能将酒店订单标记为拒绝退款");
+            int updated = hotelOrderMapper.markRefundRejected(orderNo);
+            if (updated == 0) {
+                return Result.error("只有退款申请中的酒店订单可以驳回");
+            }
+            notificationCenterService.createNotification(
+                    order.getUserId(),
+                    "hotel_order",
+                    "酒店退款申请被驳回",
+                    String.format("订单 %s 未通过退款审核，订单已恢复为已支付。", orderNo),
+                    "/my-orders?tab=hotel");
+            return Result.success("退款申请已驳回");
         } else {
             TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper<TrafficOrder>()
                     .eq(TrafficOrder::getOrderNo, orderNo));
             if (order == null) {
                 return Result.error("订单不存在");
             }
-            return Result.error("当前没有独立的退款申请状态，不能将票务订单标记为拒绝退款");
+            int updated = trafficOrderMapper.markRefundRejected(orderNo);
+            if (updated == 0) {
+                return Result.error("只有退票申请中的订单可以驳回");
+            }
+            notificationCenterService.createNotification(
+                    order.getUserId(),
+                    "traffic_order",
+                    "退票申请被驳回",
+                    String.format("订单 %s 未通过退票审核，订单已恢复为已出票。", orderNo),
+                    "/my-orders?tab=traffic");
+            return Result.success("退票申请已驳回");
         }
     }
 

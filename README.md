@@ -154,10 +154,11 @@ start.bat -DryRun
 - 游记列表支持关键词搜索，推荐流按热度和时间衰减排序。
 - 游记发布后进入 AI 审核中，后端可通过 AI 审核任务自动判断通过/拒绝；失败时保留人工审核兜底。
 - 关注流需要登录；关注/取消关注后会同步刷新关注状态和粉丝数。
-- 社区页增加 `我的` 标签，展示草稿、AI 审核中、已发布、已拒绝内容。
+- 社区页增加 `我的` 标签，展示草稿、AI 审核中、已发布、已拒绝内容；标签可点击进入同标签筛选页。
 - 个人主页支持查看关注/粉丝列表，并可跳转到用户主页。
 - 无配图游记使用纯文字卡片，不再随机渲染占位图片。
-- 帖子详情点赞使用数字 `targetType`，避免字符串类型导致的后端解析错误。
+- 帖子详情点赞/收藏使用数字 `targetType`，避免字符串类型导致的后端解析错误。
+- 我的收藏页集中展示已收藏游记，可从用户菜单进入。
 - 评论、回复、删除评论后会刷新评论树和评论数量；无头像用户显示首字母默认头像。
 
 ### 后端启动
@@ -218,14 +219,15 @@ npm run dev
 当前仓库已经完成基础业务主链路，但整体仍处于“可运行 + 持续联调完善”阶段，不应再按早期文档理解为“酒店/AI/社区/后台尚未开始”。
 
 - 后端已具备：用户认证、航班/火车、交通订单、酒店/景点、AI 行程、AI 聊天、社区、管理后台等基础接口。
-- 前端已具备：[frontend/src/views/Home.vue](frontend/src/views/Home.vue)、[frontend/src/views/Login.vue](frontend/src/views/Login.vue)、[frontend/src/views/destination/DestinationList.vue](frontend/src/views/destination/DestinationList.vue)、[frontend/src/views/destination/DestinationDetail.vue](frontend/src/views/destination/DestinationDetail.vue)、[frontend/src/views/info/InfoPage.vue](frontend/src/views/info/InfoPage.vue)、[frontend/src/views/flight/FlightSearch.vue](frontend/src/views/flight/FlightSearch.vue)、[frontend/src/views/train/TrainSearch.vue](frontend/src/views/train/TrainSearch.vue)、[frontend/src/views/hotel/HotelSearch.vue](frontend/src/views/hotel/HotelSearch.vue)、[frontend/src/views/hotel/HotelDetail.vue](frontend/src/views/hotel/HotelDetail.vue)、[frontend/src/views/hotel/AttractionList.vue](frontend/src/views/hotel/AttractionList.vue)、[frontend/src/views/ai/AiPlan.vue](frontend/src/views/ai/AiPlan.vue)、[frontend/src/views/community/Community.vue](frontend/src/views/community/Community.vue)、[frontend/src/views/community/PostCreate.vue](frontend/src/views/community/PostCreate.vue)、[frontend/src/views/community/PostDetail.vue](frontend/src/views/community/PostDetail.vue)、[frontend/src/views/order/CouponCenter.vue](frontend/src/views/order/CouponCenter.vue)、[frontend/src/views/order/MyOrders.vue](frontend/src/views/order/MyOrders.vue)、[frontend/src/views/user/NotificationCenter.vue](frontend/src/views/user/NotificationCenter.vue)、[frontend/src/views/user/UserProfile.vue](frontend/src/views/user/UserProfile.vue)、[frontend/src/views/admin/AdminDashboard.vue](frontend/src/views/admin/AdminDashboard.vue) 等基础页面。
+- 前端已具备：[frontend/src/views/Home.vue](frontend/src/views/Home.vue)、[frontend/src/views/Login.vue](frontend/src/views/Login.vue)、[frontend/src/views/destination/DestinationList.vue](frontend/src/views/destination/DestinationList.vue)、[frontend/src/views/destination/DestinationDetail.vue](frontend/src/views/destination/DestinationDetail.vue)、[frontend/src/views/info/InfoPage.vue](frontend/src/views/info/InfoPage.vue)、[frontend/src/views/flight/FlightSearch.vue](frontend/src/views/flight/FlightSearch.vue)、[frontend/src/views/train/TrainSearch.vue](frontend/src/views/train/TrainSearch.vue)、[frontend/src/views/hotel/HotelSearch.vue](frontend/src/views/hotel/HotelSearch.vue)、[frontend/src/views/hotel/HotelDetail.vue](frontend/src/views/hotel/HotelDetail.vue)、[frontend/src/views/hotel/AttractionList.vue](frontend/src/views/hotel/AttractionList.vue)、[frontend/src/views/ai/AiPlan.vue](frontend/src/views/ai/AiPlan.vue)、[frontend/src/views/community/Community.vue](frontend/src/views/community/Community.vue)、[frontend/src/views/community/PostCreate.vue](frontend/src/views/community/PostCreate.vue)、[frontend/src/views/community/PostDetail.vue](frontend/src/views/community/PostDetail.vue)、[frontend/src/views/order/CouponCenter.vue](frontend/src/views/order/CouponCenter.vue)、[frontend/src/views/order/MyOrders.vue](frontend/src/views/order/MyOrders.vue)、[frontend/src/views/user/NotificationCenter.vue](frontend/src/views/user/NotificationCenter.vue)、[frontend/src/views/user/MyCollections.vue](frontend/src/views/user/MyCollections.vue)、[frontend/src/views/user/UserProfile.vue](frontend/src/views/user/UserProfile.vue)、[frontend/src/views/admin/AdminDashboard.vue](frontend/src/views/admin/AdminDashboard.vue) 等基础页面。
 - Windows 根目录已提供一键启动脚本：[start.ps1](start.ps1) 和 [start.bat](start.bat)。
 - 数据库种子已改用本地静态图片路径，热门城市资料、一日游/周边游、优惠券、订单、日志、评价等演示数据不再依赖随机占位图。
-- 订单链路已支持机票/火车票多张购买、酒店多间房预订，库存预扣减和超时取消会按实际数量回补。
+- 订单链路已支持机票/火车票多张购买、酒店多间房预订、景点门票购买、详情查看、用户退款申请、后台退款审批，库存预扣减和取消/退款会按实际数量回补。
+- 首页会展示本地最近浏览记录，当前覆盖酒店详情、景点购票入口和游记详情。
 
 ## 图片资源策略
 
-酒店和景点封面应使用真实图片 URL 或真实本地图片路径（如 `/uploads/...`、非 seed 的 `/images/...`）。`/images/seed/...` 仅保留普通失败占位图 `/images/seed/fallback.svg`，业务图片为空、加载失败或仍指向其他 seed 图片时，前端会统一回退到该占位图。
+酒店和景点封面优先使用真实图片 URL 或真实本地图片路径（如 `/uploads/...`、`/images/real/...`）。课程演示用的 `/images/seed/...` SVG 仍允许作为稳定兜底素材；业务图片为空或加载失败时，前端会统一回退到 `/images/seed/fallback.svg`。
 
 新增或修改本地图片后建议执行：
 
@@ -242,6 +244,7 @@ npm run check:images
 - AI 行程与订单的更深度联动、同行人共享行程等扩展能力待后续补充。
 - 若后续需要更真实的照片效果，可把同名 seed SVG 替换为自建 CDN 或对象存储中的稳定图片，并保持数据库路径由项目方控制。
 - 更深层的并发压测与端到端自动化回归仍需继续完善。
+- 已初始化过的本地数据库若缺少 `tm_attraction_order`，需要重新执行 `docs/sql/init.sql` 或手工补建该表后再使用景点购票订单功能。
 
 ---
 
@@ -265,22 +268,22 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 
 - 航班搜索（出发城市、到达城市、日期，多维度筛选）
 - 火车票搜索（出发站、到达站、日期、中转方案推荐）
-- 基础订单管理（多张票下单、模拟支付、取消、退款处理、状态机流转）
+- 基础订单管理（多张票下单、模拟支付、取消、订单详情、用户退票申请、后台退款处理、状态机流转）
 - 库存管控（机票、酒店等资源的 Redis 预扣减 + MySQL 原子更新防超卖）
 - 常用旅客管理
 - 历史价格趋势（ECharts 折线图，近 7 天模拟数据）
 - 退改签规则展示（各舱位退改费用说明）
-- 行程单下载（文本格式订单回执）
+- 行程单下载（文本格式订单回执）和订单详情弹窗
 
 ### 目的地住宿与本地生活（成员 B - 莫谨瑞）
 
 - 酒店多条件搜索（城市、星级、价格区间）
 - 酒店详情与房型展示（提供房型与基础库存数据）
 - 景点搜索与详情展示
-- 景点门票购买入口与订单 / 凭证展示
+- 景点门票购买入口、真实订单落库、我的订单景点门票标签页与凭证展示
 - 一日游 / 周边游产品推荐
 - 基础评价系统（星级评分、图片上传、标签选择、评价列表）
-- 酒店订单扫码核销（内置不可用示例二维码，避免外链破图）
+- 酒店订单扫码核销、订单详情、用户退款申请与后台审批
 - 热门城市资料页（真实目的地介绍、代表景点、出行建议），优先读取后端城市资料表，后端为空时回退到前端静态资料
 
 ### AI 智能规划与 Agent 服务（成员 C - 陈一鸿）
@@ -298,8 +301,8 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 - 用户注册/登录（BCrypt + JWT 认证）
 - 游记发布（图片上传、标签、可见范围、草稿箱）
 - 游记审核状态流转（审核中、已发布、已拒绝）
-- 双列瀑布流社区浏览（推荐 + 关注信息流）
-- 点赞、收藏、评论（二级评论树）
+- 双列瀑布流社区浏览（推荐 + 关注信息流 + 标签筛选）
+- 点赞、收藏、我的收藏页、评论（二级评论树）
 - 关注/粉丝社交关系
 - 个人资料编辑 + 密码修改
 

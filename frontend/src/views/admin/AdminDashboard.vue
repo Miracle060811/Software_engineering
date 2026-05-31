@@ -511,7 +511,7 @@
           </el-tabs>
           <div class="toolbar toolbar-inline">
             <div class="muted-text">
-              按订单状态筛选流水，可对仍占库存的已支付订单办理退款。
+              按订单状态筛选流水，可处理用户提交的退票/退款申请。
             </div>
             <el-select
               v-model="orderStatusFilter"
@@ -525,7 +525,7 @@
               <el-option label="已出票/入住中" :value="2" />
               <el-option label="已取消/已完成" :value="3" />
               <el-option label="已退票/已退款/已取消" :value="4" />
-              <el-option label="拒绝退款（历史）" :value="5" />
+              <el-option label="退款申请中" :value="5" />
             </el-select>
           </div>
           <el-table :data="orders" v-loading="orderLoading" stripe>
@@ -545,7 +545,7 @@
                 }}</el-tag></template
               >
             </el-table-column>
-            <el-table-column label="操作" width="170" fixed="right">
+            <el-table-column label="操作" width="220" fixed="right">
               <template #default="scope">
                 <el-button
                   v-if="canReviewRefund(scope.row)"
@@ -553,6 +553,14 @@
                   type="success"
                   @click="approveRefund(scope.row.orderNo)"
                   >办理退款</el-button
+                >
+                <el-button
+                  v-if="canReviewRefund(scope.row)"
+                  size="small"
+                  type="danger"
+                  plain
+                  @click="rejectRefund(scope.row.orderNo)"
+                  >驳回</el-button
                 >
                 <span v-else class="muted-text">无人工操作</span>
               </template>
@@ -2778,7 +2786,7 @@ const downloadCsvTemplate = () => {
       "20",
       "12",
       "38",
-      '["/images/room.jpg"]',
+      '["/images/seed/hotel.svg"]',
       '["早餐","洗衣房"]',
       "1",
     ],
@@ -2804,7 +2812,7 @@ const downloadCsvTemplate = () => {
       "dali",
       "大理",
       "风花雪月",
-      "/images/seed/dali.svg",
+      "/images/seed/lake.svg",
       "苍山洱海与古城生活交织",
       "适合慢旅行的城市",
       "中国",
@@ -3080,11 +3088,16 @@ const approveRefund = async (orderNo) => {
   } catch (error) {}
 };
 
+const rejectRefund = async (orderNo) => {
+  try {
+    await request.post(`/api/admin/orders/${orderNo}/refund/reject`);
+    ElMessage.success("退款申请已驳回");
+    await fetchOrders();
+  } catch (error) {}
+};
+
 const canReviewRefund = (row) => {
-  if (row.type === "酒店") {
-    return row.status === 1;
-  }
-  return row.status === 1 || row.status === 2;
+  return row.status === 5;
 };
 
 const orderStatusLabel = (row) => {
@@ -3096,7 +3109,7 @@ const orderStatusLabel = (row) => {
         "入住中",
         "已完成",
         "已取消/已退款",
-        "拒绝退款（历史）",
+        "退款申请中",
       ][row.status] || `状态${row.status}`
     );
   }
@@ -3107,7 +3120,7 @@ const orderStatusLabel = (row) => {
       "已出票",
       "已取消",
       "已退票/已退款",
-      "拒绝退款（历史）",
+      "退票申请中",
     ][row.status] || `状态${row.status}`
   );
 };

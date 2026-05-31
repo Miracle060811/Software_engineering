@@ -141,6 +141,24 @@ public class HotelController {
     }
 
     /**
+     * 申请退款
+     * POST /api/hotel/order/{orderNo}/refund
+     */
+    @PostMapping("/order/{orderNo}/refund")
+    public Result<String> requestRefund(@PathVariable String orderNo) {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return Result.error("用户未登录或Token无效");
+        }
+        try {
+            boolean success = hotelOrderService.requestRefund(userId, orderNo);
+            return success ? Result.success("退款申请已提交") : Result.error("申请失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
      * 我的酒店订单列表
      * GET /api/hotel/orders
      */
@@ -164,9 +182,8 @@ public class HotelController {
             return Result.error("用户未登录或Token无效");
         }
 
-        return hotelOrderService.getUserOrders(userId).stream()
-                .filter(order -> order.getOrderNo().equals(orderNo))
-                .findFirst()
+        HotelOrder order = hotelOrderService.getOrderDetail(userId, orderNo);
+        return java.util.Optional.ofNullable(order)
                 .map(Result::success)
                 .orElseGet(() -> Result.error("订单不存在或无权查看"));
     }

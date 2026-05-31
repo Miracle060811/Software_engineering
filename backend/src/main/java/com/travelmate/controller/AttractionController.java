@@ -5,6 +5,7 @@ import com.travelmate.backend.entity.User;
 import com.travelmate.backend.mapper.UserMapper;
 import com.travelmate.common.Result;
 import com.travelmate.entity.Attraction;
+import com.travelmate.entity.AttractionOrder;
 import com.travelmate.service.AttractionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -84,6 +85,33 @@ public class AttractionController {
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }
+    }
+
+    /**
+     * 我的景点门票订单
+     * GET /api/attraction/orders
+     */
+    @GetMapping("/orders")
+    public Result<List<AttractionOrder>> getMyTicketOrders() {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return Result.error("用户未登录或Token无效");
+        }
+        return Result.success(attractionService.getUserTicketOrders(userId));
+    }
+
+    /**
+     * 景点门票订单详情/核销凭证
+     * GET /api/attraction/order/{orderNo}/receipt
+     */
+    @GetMapping("/order/{orderNo}/receipt")
+    public Result<AttractionOrder> getTicketReceipt(@PathVariable String orderNo) {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return Result.error("用户未登录或Token无效");
+        }
+        AttractionOrder order = attractionService.getTicketOrderDetail(userId, orderNo);
+        return order == null ? Result.error("订单不存在或无权查看") : Result.success(order);
     }
 
     // ===================== 工具方法 =====================

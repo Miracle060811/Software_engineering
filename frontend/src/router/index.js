@@ -109,6 +109,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/collections",
+    name: "MyCollections",
+    component: () => import("../views/user/MyCollections.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/profile/:username",
     name: "UserProfile",
     component: () => import("../views/user/UserProfile.vue"),

@@ -209,6 +209,7 @@ import { StarFilled, LocationFilled, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import SafeImage from "@/components/SafeImage.vue";
 import { FALLBACK_IMAGE, parseImageList } from "@/utils/image";
+import { addBrowseHistory } from "@/utils/browseHistory";
 
 const route = useRoute();
 const router = useRouter();
@@ -286,6 +287,15 @@ const fetchHotelDetail = async () => {
     ]);
     const detail = hotelData.status === "fulfilled" ? hotelData.value : null;
     hotel.value = detail?.hotel || detail || null;
+    if (hotel.value?.id) {
+      addBrowseHistory({
+        type: "hotel",
+        id: hotel.value.id,
+        title: hotel.value.name,
+        subtitle: hotel.value.city || hotel.value.address || "酒店",
+        path: `/hotel/${hotel.value.id}`,
+      });
+    }
     rooms.value =
       roomData.status === "fulfilled" && Array.isArray(roomData.value)
         ? roomData.value

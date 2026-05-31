@@ -260,6 +260,28 @@
       </div>
     </section>
 
+    <section v-if="recentHistory.length" class="history-section">
+      <div class="section-header history-header">
+        <div>
+          <h2 class="section-title">最近浏览</h2>
+          <p class="section-sub">快速回到刚看过的酒店、景点和游记</p>
+        </div>
+      </div>
+      <div class="history-list">
+        <button
+          v-for="item in recentHistory"
+          :key="`${item.type}-${item.id}`"
+          class="history-card"
+          type="button"
+          @click="router.push(item.path)"
+        >
+          <span class="history-type">{{ historyTypeLabel(item.type) }}</span>
+          <strong>{{ item.title }}</strong>
+          <small>{{ item.subtitle }}</small>
+        </button>
+      </div>
+    </section>
+
     <!-- ========== 安静规划步骤 ========== -->
     <section class="itinerary-section">
       <div class="itinerary-panel">
@@ -488,7 +510,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import {
   Search,
@@ -508,9 +530,11 @@ import CountUp from "../components/CountUp.vue";
 import SafeImage from "@/components/SafeImage.vue";
 import { destinations } from "@/data/destinations";
 import { FALLBACK_IMAGE } from "@/utils/image";
+import { getBrowseHistory } from "@/utils/browseHistory";
 
 const router = useRouter();
 const searchTab = ref("flight");
+const recentHistory = ref([]);
 
 const formatDate = (date) => {
   const year = date.getFullYear();
@@ -542,6 +566,13 @@ const featurePhotos = {
   community: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&h=620&q=80",
   attraction: "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?auto=format&fit=crop&w=1200&h=620&q=80",
 };
+
+const historyTypeLabel = (type) =>
+  ({ hotel: "酒店", attraction: "景点", post: "游记" }[type] || "记录");
+
+onMounted(() => {
+  recentHistory.value = getBrowseHistory().slice(0, 4);
+});
 
 const retreatPhoto =
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&h=760&q=80";
@@ -1158,6 +1189,59 @@ const quickSearch = (hint) => {
   padding: 26px 0 0;
   box-shadow: none;
   border: 0;
+}
+
+.history-section {
+  padding: 0 var(--tm-page-padding);
+  margin-top: 52px;
+  position: relative;
+  z-index: 2;
+}
+.history-header {
+  margin-bottom: 18px;
+}
+.history-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.history-card {
+  min-height: 120px;
+  padding: 18px;
+  border: 1px solid var(--tm-line-soft);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(241, 253, 250, 0.92)),
+    radial-gradient(circle at 92% 12%, rgba(20, 184, 166, 0.12), transparent 34%);
+  box-shadow: 0 16px 36px rgba(36, 96, 92, 0.08);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+.history-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 44px rgba(36, 96, 92, 0.14);
+}
+.history-type {
+  display: inline-flex;
+  margin-bottom: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+}
+.history-card strong {
+  display: block;
+  color: var(--tm-ink);
+  font-size: 16px;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+.history-card small {
+  color: var(--tm-muted);
+  font-size: 13px;
 }
 
 .stat-item {
@@ -2287,6 +2371,9 @@ const quickSearch = (hint) => {
     grid-template-columns: 1fr;
     gap: 12px;
     padding: 20px 16px;
+  }
+  .history-list {
+    grid-template-columns: 1fr;
   }
   .stat-item {
     padding: 8px;

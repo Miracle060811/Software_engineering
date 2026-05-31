@@ -12,14 +12,9 @@ const toBackendAssetUrl = (path) => {
   return path;
 };
 
-const isInvalidSeedImage = (url) => {
-  const value = String(url || "").replace(/\\/g, "/");
-  return value.includes("images/seed/") && !value.endsWith("images/seed/fallback.svg");
-};
-
 export const normalizeImageUrl = (url, fallback = FALLBACK_IMAGE) => {
   const raw = stripWrappingQuotes(url).replace(/\\/g, "/");
-  if (!raw || isInvalidSeedImage(raw)) return fallback || FALLBACK_IMAGE;
+  if (!raw) return fallback || FALLBACK_IMAGE;
   if (raw.startsWith("https://commons.wikimedia.org/wiki/File:")) {
     return raw.replace(
       "https://commons.wikimedia.org/wiki/File:",

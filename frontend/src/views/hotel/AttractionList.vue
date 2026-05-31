@@ -147,7 +147,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Clock, Search } from "@element-plus/icons-vue";
 import request from "@/utils/request";
@@ -155,8 +155,10 @@ import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import SafeImage from "@/components/SafeImage.vue";
+import { addBrowseHistory } from "@/utils/browseHistory";
 
 const route = useRoute();
+const router = useRouter();
 const activeTab = ref("attraction");
 const attractions = ref([]);
 const loading = ref(false);
@@ -202,6 +204,13 @@ const fetchAttractions = async () => {
 
 const openBookDialog = (attr) => {
   selectedAttraction.value = attr;
+  addBrowseHistory({
+    type: "attraction",
+    id: attr.id,
+    title: attr.name,
+    subtitle: attr.city || "景点门票",
+    path: `/attractions?city=${encodeURIComponent(attr.city || "")}`,
+  });
   bookForm.value = { adultCount: 1, childCount: 0, guestName: "", guestPhone: "" };
   bookDialogVisible.value = true;
 };
@@ -226,6 +235,8 @@ const confirmBook = async () => {
     });
     ElMessage.success(`购票成功！订单号：${resp}`);
     bookDialogVisible.value = false;
+    window.dispatchEvent(new Event("notification-updated"));
+    router.push({ path: "/my-orders", query: { tab: "attraction" } });
   } catch (e) {
   } finally {
     booking.value = false;

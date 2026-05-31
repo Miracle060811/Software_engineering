@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `tm_traffic_order` (
   `passenger_name` VARCHAR(50) NOT NULL COMMENT '乘车人姓名',
   `passenger_id_card` VARCHAR(20) NOT NULL COMMENT '乘车人身份证',
   `amount` DECIMAL(10,2) NOT NULL COMMENT '订单总金额',
-  `status` TINYINT(1) DEFAULT '0' COMMENT '状态: 0-待支付, 1-出票中, 2-已出票, 3-已取消, 4-已退票',
+  `status` TINYINT(1) DEFAULT '0' COMMENT '状态: 0-待支付, 1-出票中, 2-已出票, 3-已取消, 4-已退票, 5-退票申请中',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '下单时间',
   `pay_time` DATETIME DEFAULT NULL COMMENT '支付时间',
   `deleted` TINYINT(1) DEFAULT '0' COMMENT '逻辑删除: 0-未删除, 1-已删除',
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS `tm_hotel_order` (
   `guest_name` VARCHAR(50) NOT NULL COMMENT '入住人姓名',
   `guest_phone` VARCHAR(20) NOT NULL COMMENT '联系电话',
   `amount` DECIMAL(10,2) NOT NULL COMMENT '订单总金额',
-  `status` TINYINT(1) DEFAULT '0' COMMENT '0-待支付, 1-已支付, 2-入住中, 3-已完成, 4-已取消',
+  `status` TINYINT(1) DEFAULT '0' COMMENT '0-待支付, 1-已支付, 2-入住中, 3-已完成, 4-已取消/已退款, 5-退款申请中',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `pay_time` DATETIME DEFAULT NULL,
   `deleted` TINYINT(1) DEFAULT '0',
@@ -204,6 +204,27 @@ CREATE TABLE IF NOT EXISTS `tm_attraction` (
   `data_checked_date` DATE DEFAULT NULL COMMENT '数据核验日期',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='景点门票表';
+
+CREATE TABLE IF NOT EXISTS `tm_attraction_order` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `order_no` VARCHAR(50) NOT NULL COMMENT '订单编号',
+  `user_id` BIGINT NOT NULL COMMENT '用户ID',
+  `attraction_id` BIGINT NOT NULL COMMENT '景点ID',
+  `attraction_name` VARCHAR(100) NOT NULL COMMENT '景点名称快照',
+  `city` VARCHAR(50) DEFAULT NULL COMMENT '城市快照',
+  `adult_count` INT NOT NULL DEFAULT '0' COMMENT '成人票数量',
+  `child_count` INT NOT NULL DEFAULT '0' COMMENT '儿童票数量',
+  `ticket_count` INT NOT NULL DEFAULT '1' COMMENT '总票数',
+  `guest_name` VARCHAR(50) NOT NULL COMMENT '游客姓名',
+  `guest_phone` VARCHAR(20) NOT NULL COMMENT '游客手机号',
+  `amount` DECIMAL(10,2) NOT NULL COMMENT '订单金额',
+  `status` TINYINT(1) DEFAULT '1' COMMENT '1-已支付/待核销, 2-已核销, 4-已取消/已退款',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '购票时间',
+  `deleted` TINYINT(1) DEFAULT '0' COMMENT '逻辑删除: 0-未删除, 1-已删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order_no` (`order_no`),
+  KEY `idx_user_create_time` (`user_id`, `create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='景点门票订单表';
 
 -- 10.1 热门城市资料表
 CREATE TABLE IF NOT EXISTS `tm_destination` (
