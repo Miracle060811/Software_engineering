@@ -81,6 +81,28 @@ public class AiServiceImpl implements AiService {
 
     private boolean apiKeyWarningLogged = false;
 
+    private static final String CHAT_SYSTEM_PROMPT = """
+            你是 TravelMate 的中文旅行助手，像一位靠谱、自然、会一起琢磨路线的旅行搭子。
+
+            你的风格：
+            - 语气温和、清楚、有判断力，少说套话，不要营销式自我介绍。
+            - 默认不用 emoji，不要在用户只是打招呼时列出一长串功能。
+            - 回答要先解决用户眼前的问题；信息不足时，最多问 1-2 个关键问题，同时先给一个可执行的初版建议。
+            - 不要假装拥有实时信息。涉及天气、航班、酒店等实时或库存信息时，优先调用工具；工具无结果或不可用时，要说明限制并给出下一步建议。
+
+            旅行建议原则：
+            - 按目的地、天数、交通、住宿、预算、体力、天气风险来组织思路。
+            - 路线要能真实执行：避免堆景点，每天留出吃饭、移动和休息缓冲。
+            - 给推荐时说明取舍，例如为什么适合、哪里可能踩坑、有什么备选。
+            - 用户没有给预算、人数或偏好时，先按常见自由行节奏假设，并明确假设。
+
+            表达方式：
+            - 短段落优先，需要比较时再用项目符号；除非很适合比较，不要强行用表格。
+            - 如果用户只是说“你好/在吗”，简短回应并邀请他说目的地、天数或想法。
+            - 如果用户问非旅行问题，可以简短回答安全、无害的部分，然后自然拉回旅行场景。
+            - 遇到违法、危险、侵犯隐私或明显不安全的请求，要拒绝并给安全替代方案。
+            """;
+
     private static final String PLAN_SYSTEM_PROMPT = """
             你是 TravelMate 的资深中文自由行规划师。目标不是堆景点，而是生成能真实执行的行程。
             必须只返回严格 JSON，不要 markdown，不要解释文字。结构如下：
@@ -481,9 +503,9 @@ public class AiServiceImpl implements AiService {
     private String callDeepSeekWithTools(List<AiChat> history, String userMessage) {
         try {
             StringBuilder messagesJson = new StringBuilder();
-            messagesJson.append(
-                    "{\"role\":\"system\",\"content\":\"你是TravelMate旅行助手，专注于旅游规划、景点推荐、行程建议等旅行相关问题。" +
-                            "当用户询问天气、航班、酒店等实时信息时，请调用对应的工具函数获取数据。请用友好、专业的语气回答用户问题。\"}");
+            messagesJson.append("{\"role\":\"system\",\"content\":\"")
+                    .append(escapeJson(CHAT_SYSTEM_PROMPT))
+                    .append("\"}");
 
             for (AiChat msg : history) {
                 messagesJson.append(",{\"role\":\"").append(escapeJson(msg.getRole()))
@@ -529,19 +551,23 @@ public class AiServiceImpl implements AiService {
 
     private String buildLocalChatReply(String userMessage) {
         String message = userMessage == null ? "" : userMessage;
+        String normalized = message.trim().toLowerCase();
+        if (normalized.matches("^(你好|您好|hi|hello|嗨|在吗)[。！!\\s]*$")) {
+            return "在呢。你可以直接说目的地、天数和预算；信息不全也没关系，我会先按常见自由行节奏给你一版能落地的路线。";
+        }
         if (message.contains("天气")) {
-            return "当前未接入实时天气源，建议出发前查看官方天气预报。规划上可以先按晴雨两套方案准备：室外景点放上午，博物馆、商场、餐厅作为雨天备选。";
+            return "我现在拿不到可靠的实时天气结果。规划上可以先按晴雨两套方案准备：室外景点尽量放上午，博物馆、商场、餐厅留作雨天备选；出发前再用官方天气预报校准衣物和交通时间。";
         }
         if (message.contains("酒店") || message.contains("住宿")) {
-            return "选酒店建议先定活动半径：城市观光优先地铁或核心商圈，亲子游优先低楼层、早餐和洗衣设施，赶早班车则优先车站 20 分钟内。你也可以告诉我城市和预算，我帮你整理筛选思路。";
+            return "选酒店先看活动半径。城市观光优先地铁和核心商圈，亲子游优先早餐、洗衣和安静房型，赶早班车就住车站 20 分钟内。告诉我城市、预算和同行人数，我可以帮你把区域和筛选条件定下来。";
         }
         if (message.contains("航班") || message.contains("机票") || message.contains("火车") || message.contains("车票")) {
-            return "交通建议先锁定日期、出发地、目的地和时间偏好。早到适合首日轻行程，晚到要把入住和晚餐留成主任务，避免第一天安排重景点。";
+            return "交通先锁定日期、出发地、目的地和时间偏好。早到适合安排轻量市区活动，晚到就把入住和晚餐当成当天主任务，别在第一天硬塞重景点。";
         }
         if (message.contains("行程") || message.contains("路线") || message.contains("规划") || message.contains("安排")) {
-            return "可以按“上午核心景点、午餐休息、下午顺路补充、晚上轻活动”的结构排。每天 3 到 5 个活动比较稳，跨区移动最好控制在 1 次以内。";
+            return "可以按“上午核心景点、午餐休息、下午顺路补充、晚上轻活动”的节奏排。每天 3 到 5 个活动比较稳，跨区移动最好控制在 1 次以内；如果你告诉我目的地和天数，我能直接给你拆成每日路线。";
         }
-        return "我先用本地兜底助手回答：旅行问题可以从目的地、天数、人数、预算、偏好这几项入手。你把这些信息补全后，我可以帮你拆成每天可执行的路线。";
+        return "我可以帮你把旅行问题拆成路线、住宿、交通、预算和风险。先告诉我目的地和天数；如果还没定，也可以说季节、预算或想要的旅行感觉，我会帮你缩小选择。";
     }
 
     // ======================== 游记自动审核 ========================
