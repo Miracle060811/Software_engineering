@@ -22,9 +22,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,11 +37,14 @@ public class AiServiceImpl implements AiService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final int MAX_CHAT_MESSAGE_LENGTH = 1000;
 
-    @Value("${ai.deepseek.api-key:sk-demo-placeholder}")
+    @Value("${ai.deepseek.api-key:}")
     private String apiKey;
 
     @Value("${ai.deepseek.base-url:https://api.deepseek.com}")
     private String baseUrl;
+
+    @Value("${ai.deepseek.chat-completions-path:/chat/completions}")
+    private String chatCompletionsPath;
 
     @Value("${ai.deepseek.plan-model:deepseek-v4-flash}")
     private String planModel;
@@ -333,48 +333,12 @@ public class AiServiceImpl implements AiService {
     }
 
     private void checkApiKey() {
-        if ("sk-demo-placeholder".equals(apiKey) || apiKey == null || apiKey.isBlank()) {
-            String fromFile = loadKeyFromEnvFile();
-            if (fromFile != null && !fromFile.isBlank()) {
-                this.apiKey = fromFile;
-                log.info("已从 .env 文件自动加载 DeepSeek API Key ({}...{})",
-                        fromFile.substring(0, 7), fromFile.substring(fromFile.length() - 4));
-                return;
-            }
+        if (isApiKeyMissing()) {
             if (!apiKeyWarningLogged) {
-                log.warn("DeepSeek API Key 未配置！AI 功能将使用降级模板。请在 .env 文件中设置 DEEPSEEK_API_KEY");
+                log.warn("DeepSeek API Key 未配置！AI 功能将使用降级模板。请通过环境变量 DEEPSEEK_API_KEY 配置");
                 apiKeyWarningLogged = true;
             }
         }
-    }
-
-    /**
-     * 尝试从 .env 文件读取 DEEPSEEK_API_KEY
-     * 依次尝试多个可能的路径：backend 目录的上级、当前目录、user.home
-     */
-    private String loadKeyFromEnvFile() {
-        String[] searchPaths = { "../.env", ".env", "../../.env" };
-        for (String sp : searchPaths) {
-            try {
-                Path path = Paths.get(sp);
-                if (Files.exists(path)) {
-                    String content = Files.readString(path);
-                    for (String line : content.split("\n")) {
-                        line = line.trim();
-                        if (line.startsWith("DEEPSEEK_API_KEY") && line.contains("=")) {
-                            String value = line.substring(line.indexOf('=') + 1).trim();
-                            value = value.replaceAll("^[\"']|[\"']$", "");
-                            if (!value.isBlank() && !value.startsWith("your_")
-                                    && !value.equals("sk-demo-placeholder")) {
-                                return value;
-                            }
-                        }
-                    }
-                }
-            } catch (Exception ignored) {
-            }
-        }
-        return null;
     }
 
     private String callDeepSeekForPlan(String userPrompt, AiPlanCreateDTO dto) {
@@ -385,7 +349,7 @@ public class AiServiceImpl implements AiService {
         try {
             String body = buildPlanRequestBody(userPrompt);
             log.info("正在调用 DeepSeek API 生成行程规划...");
-            String response = doHttpPost(baseUrl + "/v1/chat/completions", body);
+            String response = doHttpPost(resolveChatCompletionsUrl(), body);
             String content = extractContent(response);
             if (content != null) {
                 String normalized = normalizePlanContent(content);
@@ -531,7 +495,7 @@ public class AiServiceImpl implements AiService {
             String body = "{\"model\":\"" + escapeJson(resolveModel(chatModel)) + "\",\"messages\":[" + messagesJson +
                     "]" + buildThinkingConfigJson() + ",\"tools\":" + TOOLS_JSON + "}";
             log.info("正在调用 DeepSeek API (带工具)...");
-            String response = doHttpPost(baseUrl + "/v1/chat/completions", body);
+            String response = doHttpPost(resolveChatCompletionsUrl(), body);
 
             // 检查是否有 tool_calls
             JsonNode toolCall = extractToolCall(response);
@@ -547,7 +511,7 @@ public class AiServiceImpl implements AiService {
                         .append(escapeJson(toolResult)).append("\"}");
                 String body2 = "{\"model\":\"" + escapeJson(resolveModel(chatModel)) + "\",\"messages\":["
                         + messagesJson + "]" + buildThinkingConfigJson() + "}";
-                String response2 = doHttpPost(baseUrl + "/v1/chat/completions", body2);
+                String response2 = doHttpPost(resolveChatCompletionsUrl(), body2);
                 String content = extractContent(response2);
                 if (content != null)
                     return content;
@@ -589,7 +553,7 @@ public class AiServiceImpl implements AiService {
         checkApiKey();
         if (!isApiKeyMissing()) {
             try {
-                String response = doHttpPost(baseUrl + "/v1/chat/completions",
+                String response = doHttpPost(resolveChatCompletionsUrl(),
                         buildPostAuditRequestBody(title, content, tags, destination, matchedWords));
                 String auditJson = extractContent(response);
                 PostAuditResult result = parsePostAuditResult(auditJson);
@@ -915,6 +879,26 @@ public class AiServiceImpl implements AiService {
         };
     }
 
+    private String resolveChatCompletionsUrl() {
+        String normalizedBaseUrl = baseUrl == null || baseUrl.isBlank()
+                ? "https://api.deepseek.com"
+                : baseUrl.trim();
+        if (normalizedBaseUrl.endsWith("/chat/completions")) {
+            return normalizedBaseUrl;
+        }
+
+        String normalizedPath = chatCompletionsPath == null || chatCompletionsPath.isBlank()
+                ? "/chat/completions"
+                : chatCompletionsPath.trim();
+        if (!normalizedPath.startsWith("/")) {
+            normalizedPath = "/" + normalizedPath;
+        }
+        while (normalizedBaseUrl.endsWith("/") && normalizedBaseUrl.length() > 1) {
+            normalizedBaseUrl = normalizedBaseUrl.substring(0, normalizedBaseUrl.length() - 1);
+        }
+        return normalizedBaseUrl + normalizedPath;
+    }
+
     private String doHttpPost(String url, String body) throws Exception {
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
@@ -929,7 +913,7 @@ public class AiServiceImpl implements AiService {
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         int status = response.statusCode();
         if (status == 401 || status == 403) {
-            log.error("DeepSeek API 认证失败！请检查 .env 中的 DEEPSEEK_API_KEY 是否正确");
+            log.error("DeepSeek API 认证失败！请检查环境变量 DEEPSEEK_API_KEY 是否正确");
             throw new RuntimeException("API 认证失败 (HTTP " + status + ")，请检查 API Key 配置");
         }
         if (status != 200) {
