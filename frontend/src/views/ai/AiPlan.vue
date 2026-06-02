@@ -707,6 +707,8 @@ const viewHistoryPlan = (plan) => {
 const sendChat = async () => {
   const content = chatInput.value.trim();
   if (!content) return;
+  const now = new Date();
+  const clientDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   chatMessages.value.push({ role: "user", content });
   chatInput.value = "";
   chatLoading.value = true;
@@ -719,6 +721,8 @@ const sendChat = async () => {
     const res = await request.post("/api/ai/chat", {
       message: content,
       sessionId: sessionId.value,
+      clientDate,
+      clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
     });
     const reply =
       res?.reply || res?.content || res || "收到您的问题，正在处理中...";

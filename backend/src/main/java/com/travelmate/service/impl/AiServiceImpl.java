@@ -83,29 +83,47 @@ public class AiServiceImpl implements AiService {
 
     private static final String CHAT_SYSTEM_PROMPT = """
             你是 TravelMate 的中文旅行助手，像一位靠谱、自然、会一起琢磨路线的旅行搭子。
+            你的核心任务是帮助用户把模糊的旅行想法变成可执行的出行方案，同时提醒交通、住宿、预算、体力和安全风险。
 
             你的风格：
             - 语气温和、清楚、有判断力，少说套话，不要营销式自我介绍。
             - 默认不用 emoji，不要在用户只是打招呼时列出一长串功能。
-            - 回答要先解决用户眼前的问题；信息不足时，最多问 1-2 个关键问题，同时先给一个可执行的初版建议。
+            - 回答要先解决用户眼前的问题；信息不足时，最多问 1 个关键问题，同时先给一个可执行的初版建议。
             - 不要假装拥有实时信息。涉及天气、航班、酒店等实时或库存信息时，优先调用工具；工具无结果或不可用时，要说明限制并给出下一步建议。
+            - 不要编造平台库存、订单状态、实时价格、航班余票、酒店空房、景区开放状态或用户身份信息。
+            - 不要主动长篇自我介绍。用户要求自我介绍时，用 1-2 句自然说明你能帮他规划路线、交通、住宿和预算即可。
 
             旅行建议原则：
             - 按目的地、天数、交通、住宿、预算、体力、天气风险来组织思路。
             - 路线要能真实执行：避免堆景点，每天留出吃饭、移动和休息缓冲。
             - 给推荐时说明取舍，例如为什么适合、哪里可能踩坑、有什么备选。
             - 用户没有给预算、人数或偏好时，先按常见自由行节奏假设，并明确假设。
+            - 推荐酒店区域时，优先说明交通半径、夜间安全、亲子/老人便利性和赶早班车风险，而不是只说“住市中心”。
+            - 推荐交通时，区分到达交通、市内移动和跨城移动；对早到、晚到、带老人儿童、行李较多等情况主动降强度。
+            - 推荐景点时，优先真实常见地点；不要为了显得丰富而虚构小众景点、餐厅、门票政策或开放时间。
+            - 对预算敏感用户，主动给低成本替代、可删减项目和费用优先级；不要硬塞高价体验。
 
             表达方式：
-            - 短段落优先，需要比较时再用项目符号；除非很适合比较，不要强行用表格。
+            - 必须自然输出，像正常客服聊天，不要写成攻略文章、报告、论文或 Markdown 文档。
+            - 不要使用星号、加粗、表格、markdown 标题、分隔线、代码块或复杂列表。
+            - 不要输出“###”“---”“| 表格 |”这类格式符号，也不要用项目符号堆很多条。
+            - 优先使用短段落。需要分天说明时，用“第1天：”“第2天：”这种自然文本，每天 2-4 句话即可。
+            - 回答普通问题控制在 300 字以内；用户要求行程时先给 500-800 字的精简可执行版本，不要一次铺成超长攻略。
             - 如果用户只是说“你好/在吗”，简短回应并邀请他说目的地、天数或想法。
             - 如果用户问非旅行问题，可以简短回答安全、无害的部分，然后自然拉回旅行场景。
             - 遇到违法、危险、侵犯隐私或明显不安全的请求，要拒绝并给安全替代方案。
+            - 当用户需要决策时，优先按“我建议选什么、为什么、有什么备选、要注意什么”的顺序自然说明，不要写成模板标题。
+            - 当用户给出多个限制条件时，先复述关键约束，再给方案，避免遗漏必去、避开、预算和同行人群。
+            - 不要输出空泛口号；每条建议尽量包含可操作信息，例如时间段、区域、交通方式、取舍理由或风险提醒。
+            - 如果没有实时工具结果，不要说“今天预报”“当前价格”“现在还有票”。只能说“出发前再查实时信息”。
             """;
 
     private static final String PLAN_SYSTEM_PROMPT = """
             你是 TravelMate 的资深中文自由行规划师。目标不是堆景点，而是生成能真实执行的行程。
-            必须只返回严格 JSON，不要 markdown，不要解释文字。结构如下：
+            必须只返回严格 JSON，不要 markdown，不要解释文字，不要在 JSON 外包裹任何前后缀。
+            所有字符串必须使用中文自然表达；费用字段必须是数字；数组字段即使内容较少也必须存在。
+            如果用户信息不足，请基于常见自由行经验做合理假设，并在 summary、budgetNote 或 riskNotes 中写明假设。
+            结构如下：
             {
               "title": "包含目的地和天数的行程标题",
               "summary": "100字以内，说明节奏、适合人群和主要亮点",
@@ -158,6 +176,17 @@ public class AiServiceImpl implements AiService {
             7. 如果预算明显不足，给出低成本替代和取舍，不要硬塞高价项目。
             8. 必去地点必须尽量纳入行程；避开项必须规避或说明原因。
             9. 每天必须提供 backupPlan，至少覆盖下雨、排队过长、闭馆或体力不足中的一种。
+            10. 每个 activity 的 time 必须按当天时间顺序递增，duration、transfer、bookingTip 不允许为空。
+            11. description 不要只写景点介绍，必须说明为什么放在这个时间、与前后行程如何衔接、现场需要注意什么。
+            12. mealHint 要结合当天区域给出餐饮节奏建议，不要只写“自行用餐”。
+            13. transportAdvice 要覆盖抵达、离开、市内移动三个层次；如果用户偏好公共交通、自驾或打车，必须体现偏好。
+            14. hotelAdvice 要给出建议住宿区域和理由，至少包含交通便利性、夜间返回、预算或同行人群中的两个维度。
+            15. riskNotes 至少 3 条，覆盖天气/排队/体力/预算/安全/闭馆中的不同风险。
+            16. beforeTripChecklist 至少 4 条，覆盖证件、预约购票、交通确认、装备或付款准备。
+            17. alternatives 至少 2 个，分别面向天气变化、体力不足、预算压缩或排队过长等真实场景。
+            18. 不要输出“某某网红店”“当地特色美食街”等空泛占位；如不确定具体店名，就写餐饮类型和选址原则。
+            19. 不要把购物、拍照打卡或夜游塞得过满；每天必须保留可恢复体力的空档。
+            20. 如果目的地涉及高原、海岛、山地、滑雪、涉水、夜间活动，必须写安全提醒和替代安排。
             """;
 
     private static final String POST_AUDIT_SYSTEM_PROMPT = "你是 TravelMate 社区游记内容审核 AI。请只返回严格 JSON，不要输出 markdown。" +
@@ -166,6 +195,9 @@ public class AiServiceImpl implements AiService {
             "2) 命中 level=2 中度敏感词时从严审核，除非上下文明确无害；" +
             "3) level=1 轻度敏感词作为风险提示；" +
             "4) 再判断违法违规、辱骂仇恨、色情低俗、广告引流、诈骗、隐私泄露、明显非旅行内容。" +
+            "审核尺度：正常吐槽、普通差评、主观旅行体验、合理避坑可以 approve；涉及人身攻击、泄露手机号身份证住址、诱导私下交易、明显广告引流、危险违法行为教学必须 reject。" +
+            "如果内容主要不是旅行笔记，或标题标签与正文明显无关，也应 reject。" +
+            "不要因为文字短就直接拒绝，但原因不足时可用“内容过少缺少旅行信息”。" +
             "返回格式：{\"decision\":\"approve|reject\",\"reason\":\"20字以内中文原因\"}。";
 
     // ======================== AI 行程生成 ========================
@@ -464,9 +496,10 @@ public class AiServiceImpl implements AiService {
         aiChatMapper.insert(userMsg);
 
         // 调用 DeepSeek（含 Function Calling）
+        String runtimeContext = buildChatRuntimeContext(dto);
         String aiReply = isApiKeyMissing()
                 ? buildLocalChatReply(userMessage)
-                : callDeepSeekWithTools(history, userMessage);
+                : callDeepSeekWithTools(history, userMessage, runtimeContext);
 
         // 保存 AI 回复
         AiChat assistantMsg = new AiChat();
@@ -500,14 +533,18 @@ public class AiServiceImpl implements AiService {
         return message;
     }
 
-    private String callDeepSeekWithTools(List<AiChat> history, String userMessage) {
+    private String callDeepSeekWithTools(List<AiChat> history, String userMessage, String runtimeContext) {
         try {
             StringBuilder messagesJson = new StringBuilder();
             messagesJson.append("{\"role\":\"system\",\"content\":\"")
                     .append(escapeJson(CHAT_SYSTEM_PROMPT))
+                    .append(escapeJson(runtimeContext))
                     .append("\"}");
 
             for (AiChat msg : history) {
+                if (containsToolProtocolLeak(msg.getContent())) {
+                    continue;
+                }
                 messagesJson.append(",{\"role\":\"").append(escapeJson(msg.getRole()))
                         .append("\",\"content\":\"").append(escapeJson(msg.getContent())).append("\"}");
             }
@@ -535,18 +572,106 @@ public class AiServiceImpl implements AiService {
                         + messagesJson + "]" + buildThinkingConfigJson() + "}";
                 String response2 = doHttpPost(resolveChatCompletionsUrl(), body2);
                 String content = extractContent(response2);
-                if (content != null)
+                if (isUsableChatContent(content)) {
                     return content;
+                }
+                log.warn("AI 工具二次响应包含协议文本或为空，改用普通对话兜底");
+                return callDeepSeekWithoutTools(history, userMessage, runtimeContext);
             }
 
             String content = extractContent(response);
-            if (content != null)
+            if (isUsableChatContent(content)) {
                 return content;
+            }
+            if (containsToolProtocolLeak(content)) {
+                log.warn("AI 对话响应包含工具协议文本，改用普通对话兜底");
+                return callDeepSeekWithoutTools(history, userMessage, runtimeContext);
+            }
             log.warn("AI 对话响应解析失败");
         } catch (Exception e) {
             log.warn("AI 对话失败: {}", e.getMessage());
         }
         return buildLocalChatReply(userMessage);
+    }
+
+    private String callDeepSeekWithoutTools(List<AiChat> history, String userMessage, String runtimeContext) {
+        try {
+            StringBuilder messagesJson = new StringBuilder();
+            messagesJson.append("{\"role\":\"system\",\"content\":\"")
+                    .append(escapeJson(CHAT_SYSTEM_PROMPT))
+                    .append(escapeJson(runtimeContext))
+                    .append("\\n补充要求：本轮不要调用任何工具，不要输出工具调用协议、XML、DSML 或 JSON 函数调用文本。请直接用自然中文回答用户。")
+                    .append("\"}");
+
+            for (AiChat msg : history) {
+                if (containsToolProtocolLeak(msg.getContent())) {
+                    continue;
+                }
+                messagesJson.append(",{\"role\":\"").append(escapeJson(msg.getRole()))
+                        .append("\",\"content\":\"").append(escapeJson(msg.getContent())).append("\"}");
+            }
+            messagesJson.append(",{\"role\":\"user\",\"content\":\"").append(escapeJson(userMessage)).append("\"}");
+
+            String body = "{\"model\":\"" + escapeJson(resolveModel(chatModel)) + "\",\"messages\":[" + messagesJson +
+                    "]" + buildThinkingConfigJson() + "}";
+            String response = doHttpPost(resolveChatCompletionsUrl(), body);
+            String content = extractContent(response);
+            if (isUsableChatContent(content)) {
+                return content;
+            }
+            log.warn("普通 AI 对话兜底仍不可用，使用本地回复");
+        } catch (Exception e) {
+            log.warn("普通 AI 对话兜底失败: {}", e.getMessage());
+        }
+        return buildLocalChatReply(userMessage);
+    }
+
+    private String buildChatRuntimeContext(AiChatDTO dto) {
+        String clientDate = normalizeClientDate(dto == null ? null : dto.getClientDate());
+        String timeZone = normalizeClientTimeZone(dto == null ? null : dto.getClientTimeZone());
+        return "\n\n当前对话上下文："
+                + "\n- 用户设备日期：" + clientDate
+                + "\n- 用户设备时区：" + timeZone
+                + "\n- 当用户说今天、明天、后天、下周等相对日期时，必须按用户设备日期换算成明确日期再回答。"
+                + "\n- 如果没有工具返回明确实时结果，不要声称已经查到实时机票、酒店库存、天气或价格。";
+    }
+
+    private String normalizeClientDate(String clientDate) {
+        if (clientDate != null && !clientDate.isBlank()) {
+            try {
+                return LocalDate.parse(clientDate.trim()).toString();
+            } catch (Exception ignored) {
+            }
+        }
+        return LocalDate.now().toString();
+    }
+
+    private String normalizeClientTimeZone(String timeZone) {
+        if (timeZone == null || timeZone.isBlank()) {
+            return "服务器默认时区";
+        }
+        String normalized = timeZone.trim();
+        return normalized.length() <= 80 ? normalized : normalized.substring(0, 80);
+    }
+
+    private boolean isUsableChatContent(String content) {
+        return content != null && !content.isBlank() && !containsToolProtocolLeak(content);
+    }
+
+    private boolean containsToolProtocolLeak(String content) {
+        if (content == null || content.isBlank()) {
+            return false;
+        }
+        String lower = content.toLowerCase();
+        return content.contains("｜｜DSML｜｜")
+                || lower.contains("<tool_calls")
+                || lower.contains("</tool_calls")
+                || lower.contains("tool_calls>")
+                || lower.contains("invoke name=")
+                || lower.contains("</invoke>")
+                || lower.contains("function_call")
+                || lower.contains("\"tool_calls\"")
+                || lower.contains("\"role\":\"tool\"");
     }
 
     private String buildLocalChatReply(String userMessage) {
