@@ -28,14 +28,17 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Comparator;
+import java.util.UUID;
 
 @Service
 public class AiServiceImpl implements AiService {
 
     private static final Logger log = LoggerFactory.getLogger(AiServiceImpl.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final int MAX_CHAT_MESSAGE_LENGTH = 1000;
 
     @Value("${ai.deepseek.api-key:sk-demo-placeholder}")
     private String apiKey;
@@ -86,6 +89,17 @@ public class AiServiceImpl implements AiService {
               "summary": "100字以内，说明节奏、适合人群和主要亮点",
               "pace": "轻松/适中/紧凑",
               "budgetNote": "说明费用口径，必须写明是否不含往返大交通和住宿",
+              "transportAdvice": "到达、离开和市内交通建议，必须贴合用户交通偏好",
+              "hotelAdvice": "住宿区域、房型或订房建议，必须贴合用户住宿偏好",
+              "beforeTripChecklist": ["出发前必须完成的预约、证件、装备或票务事项"],
+              "riskNotes": ["天气、排队、体力、安全、预算或闭馆风险"],
+              "alternatives": [
+                {
+                  "title": "备选方案名称",
+                  "whenToUse": "什么情况下启用",
+                  "changes": "替换哪些活动或路线"
+                }
+              ],
               "days": [
                 {
                   "day": 1,
@@ -94,6 +108,8 @@ public class AiServiceImpl implements AiService {
                   "area": "当天主要活动区域",
                   "dayEstimatedCost": 500,
                   "tips": "当天预约、天气、体力或交通提醒",
+                  "mealHint": "当天餐饮安排重点",
+                  "backupPlan": "天气或排队异常时的当天替代安排",
                   "activities": [
                     {
                       "time": "09:30",
@@ -118,6 +134,8 @@ public class AiServiceImpl implements AiService {
             5. 预算是整团总预算。费用按人数估算，totalEstimatedCost 只统计当地门票、餐饮、市内交通和体验项目，不含往返大交通及住宿，除非用户明确要求。
             6. 优先使用用户提供的本地景点参考；没有参考时也只能使用真实常见景点，不要编造不存在的地点。
             7. 如果预算明显不足，给出低成本替代和取舍，不要硬塞高价项目。
+            8. 必去地点必须尽量纳入行程；避开项必须规避或说明原因。
+            9. 每天必须提供 backupPlan，至少覆盖下雨、排队过长、闭馆或体力不足中的一种。
             """;
 
     private static final String POST_AUDIT_SYSTEM_PROMPT = "你是 TravelMate 社区游记内容审核 AI。请只返回严格 JSON，不要输出 markdown。" +
@@ -143,7 +161,12 @@ public class AiServiceImpl implements AiService {
                         出行人数：%d人
                         总预算：%.0f元
                         人均每日可用预算参考：%.0f元
+                        旅行节奏：%s
+                        交通偏好：%s
+                        住宿偏好：%s
                         出行偏好：%s
+                        必去地点或活动：%s
+                        避开项：%s
 
                         本地景点参考：
                         %s
@@ -155,7 +178,13 @@ public class AiServiceImpl implements AiService {
                 dto.getPeopleCount(),
                 dto.getBudget() != null ? dto.getBudget().doubleValue() : 0.0,
                 estimatePerPersonDailyBudget(dto),
-                dto.getPreferences(), buildTravelContext(dto.getDestination()));
+                dto.getTravelStyle(),
+                dto.getTransportPreference(),
+                dto.getAccommodationPreference(),
+                dto.getPreferences(),
+                blankToNone(dto.getMustVisit()),
+                blankToNone(dto.getAvoidPlaces()),
+                buildTravelContext(dto.getDestination()));
 
         String planContent = callDeepSeekForPlan(userPrompt, dto);
 
@@ -165,7 +194,7 @@ public class AiServiceImpl implements AiService {
         plan.setDays(dto.getDays());
         plan.setBudget(dto.getBudget());
         plan.setPeopleCount(dto.getPeopleCount());
-        plan.setPreferences(dto.getPreferences());
+        plan.setPreferences(buildPlanPreferenceText(dto));
         plan.setPlanContent(planContent);
         plan.setStatus(1);
         plan.setCreateTime(LocalDateTime.now());
@@ -213,7 +242,44 @@ public class AiServiceImpl implements AiService {
         dto.setPreferences(dto.getPreferences() == null || dto.getPreferences().isBlank()
                 ? "经典必游,美食体验,节奏适中"
                 : dto.getPreferences().trim());
+        dto.setTravelStyle(normalizePlanText(dto.getTravelStyle(), 40, "适中"));
+        dto.setMustVisit(normalizePlanText(dto.getMustVisit(), 160, ""));
+        dto.setAvoidPlaces(normalizePlanText(dto.getAvoidPlaces(), 160, ""));
+        dto.setTransportPreference(normalizePlanText(dto.getTransportPreference(), 80, "公共交通优先，必要时打车"));
+        dto.setAccommodationPreference(normalizePlanText(dto.getAccommodationPreference(), 80, "交通便利，预算均衡"));
         dto.setStartDate(normalizeStartDate(dto.getStartDate()));
+    }
+
+    private String normalizePlanText(String value, int maxLength, String fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+        String normalized = value.trim().replaceAll("\\s+", " ");
+        return normalized.length() <= maxLength ? normalized : normalized.substring(0, maxLength);
+    }
+
+    private String blankToNone(String value) {
+        return value == null || value.isBlank() ? "无" : value;
+    }
+
+    private String buildPlanPreferenceText(AiPlanCreateDTO dto) {
+        StringBuilder text = new StringBuilder(dto.getPreferences());
+        appendPreference(text, "节奏", dto.getTravelStyle());
+        appendPreference(text, "交通", dto.getTransportPreference());
+        appendPreference(text, "住宿", dto.getAccommodationPreference());
+        appendPreference(text, "必去", dto.getMustVisit());
+        appendPreference(text, "避开", dto.getAvoidPlaces());
+        String result = text.toString();
+        return result.length() <= 500 ? result : result.substring(0, 500);
+    }
+
+    private void appendPreference(StringBuilder text, String label, String value) {
+        if (value != null && !value.isBlank()) {
+            if (!text.isEmpty()) {
+                text.append("；");
+            }
+            text.append(label).append("：").append(value);
+        }
     }
 
     private String normalizeStartDate(String startDate) {
@@ -312,6 +378,10 @@ public class AiServiceImpl implements AiService {
     }
 
     private String callDeepSeekForPlan(String userPrompt, AiPlanCreateDTO dto) {
+        if (isApiKeyMissing()) {
+            log.info("DeepSeek API Key 未配置，使用本地行程模板");
+            return generateFallbackPlan(dto);
+        }
         try {
             String body = buildPlanRequestBody(userPrompt);
             log.info("正在调用 DeepSeek API 生成行程规划...");
@@ -388,6 +458,7 @@ public class AiServiceImpl implements AiService {
     public AiChat chat(AiChatDTO dto, Long userId) {
         checkApiKey();
 
+        String userMessage = normalizeChatRequest(dto);
         String sessionId = dto.getSessionId();
 
         LambdaQueryWrapper<AiChat> historyQuery = new LambdaQueryWrapper<>();
@@ -402,12 +473,14 @@ public class AiServiceImpl implements AiService {
         userMsg.setUserId(userId);
         userMsg.setSessionId(sessionId);
         userMsg.setRole("user");
-        userMsg.setContent(dto.getMessage());
+        userMsg.setContent(userMessage);
         userMsg.setCreateTime(LocalDateTime.now());
         aiChatMapper.insert(userMsg);
 
         // 调用 DeepSeek（含 Function Calling）
-        String aiReply = callDeepSeekWithTools(history, dto.getMessage());
+        String aiReply = isApiKeyMissing()
+                ? buildLocalChatReply(userMessage)
+                : callDeepSeekWithTools(history, userMessage);
 
         // 保存 AI 回复
         AiChat assistantMsg = new AiChat();
@@ -419,6 +492,26 @@ public class AiServiceImpl implements AiService {
         aiChatMapper.insert(assistantMsg);
 
         return assistantMsg;
+    }
+
+    private String normalizeChatRequest(AiChatDTO dto) {
+        if (dto == null) {
+            throw new RuntimeException("消息不能为空");
+        }
+        String message = dto.getMessage() == null ? "" : dto.getMessage().trim();
+        if (message.isBlank()) {
+            throw new RuntimeException("消息不能为空");
+        }
+        if (message.length() > MAX_CHAT_MESSAGE_LENGTH) {
+            throw new RuntimeException("消息不能超过 " + MAX_CHAT_MESSAGE_LENGTH + " 字");
+        }
+        dto.setMessage(message);
+        if (dto.getSessionId() == null || dto.getSessionId().isBlank()) {
+            dto.setSessionId("session_" + UUID.randomUUID());
+        } else {
+            dto.setSessionId(dto.getSessionId().trim());
+        }
+        return message;
     }
 
     private String callDeepSeekWithTools(List<AiChat> history, String userMessage) {
@@ -448,7 +541,9 @@ public class AiServiceImpl implements AiService {
                 // 将工具结果追加到消息中，再次请求 AI 生成最终回复
                 messagesJson.append(",{\"role\":\"assistant\",\"content\":\"\",\"tool_calls\":[")
                         .append(toolCall.toString()).append("]}");
-                messagesJson.append(",{\"role\":\"tool\",\"content\":\"")
+                messagesJson.append(",{\"role\":\"tool\",\"tool_call_id\":\"")
+                        .append(escapeJson(toolCall.path("id").asText("tool_call")))
+                        .append("\",\"content\":\"")
                         .append(escapeJson(toolResult)).append("\"}");
                 String body2 = "{\"model\":\"" + escapeJson(resolveModel(chatModel)) + "\",\"messages\":["
                         + messagesJson + "]" + buildThinkingConfigJson() + "}";
@@ -465,7 +560,24 @@ public class AiServiceImpl implements AiService {
         } catch (Exception e) {
             log.warn("AI 对话失败: {}", e.getMessage());
         }
-        return "抱歉，AI助手暂时不可用，请稍后再试。您也可以尝试在社区中搜索相关旅行攻略。";
+        return buildLocalChatReply(userMessage);
+    }
+
+    private String buildLocalChatReply(String userMessage) {
+        String message = userMessage == null ? "" : userMessage;
+        if (message.contains("天气")) {
+            return "当前未接入实时天气源，建议出发前查看官方天气预报。规划上可以先按晴雨两套方案准备：室外景点放上午，博物馆、商场、餐厅作为雨天备选。";
+        }
+        if (message.contains("酒店") || message.contains("住宿")) {
+            return "选酒店建议先定活动半径：城市观光优先地铁或核心商圈，亲子游优先低楼层、早餐和洗衣设施，赶早班车则优先车站 20 分钟内。你也可以告诉我城市和预算，我帮你整理筛选思路。";
+        }
+        if (message.contains("航班") || message.contains("机票") || message.contains("火车") || message.contains("车票")) {
+            return "交通建议先锁定日期、出发地、目的地和时间偏好。早到适合首日轻行程，晚到要把入住和晚餐留成主任务，避免第一天安排重景点。";
+        }
+        if (message.contains("行程") || message.contains("路线") || message.contains("规划") || message.contains("安排")) {
+            return "可以按“上午核心景点、午餐休息、下午顺路补充、晚上轻活动”的结构排。每天 3 到 5 个活动比较稳，跨区移动最好控制在 1 次以内。";
+        }
+        return "我先用本地兜底助手回答：旅行问题可以从目的地、天数、人数、预算、偏好这几项入手。你把这些信息补全后，我可以帮你拆成每天可执行的路线。";
     }
 
     // ======================== 游记自动审核 ========================
@@ -610,7 +722,7 @@ public class AiServiceImpl implements AiService {
                 case "get_weather": {
                     String city = args.has("city") ? args.get("city").asText() : "未知城市";
                     return String.format("{\"city\":\"%s\",\"weather\":\"晴转多云\",\"temperature\":\"22°C ~ 28°C\"," +
-                            "\"humidity\":\"65%%\",\"wind\":\"微风\",\"tips\":\"适合出行游玩\"}", city);
+                            "\"humidity\":\"65%%\",\"wind\":\"微风\",\"tips\":\"适合出行游玩\"}", escapeJson(city));
                 }
                 case "search_flights": {
                     String depCity = args.has("depCity") ? args.get("depCity").asText() : null;
@@ -625,8 +737,8 @@ public class AiServiceImpl implements AiService {
                                 sb.append(",");
                             sb.append(String.format(
                                     "{\"flightNo\":\"%s\",\"airline\":\"%s\",\"departure\":\"%s\",\"arrival\":\"%s\",\"economyPrice\":%.2f}",
-                                    f.getFlightNo(), f.getAirline(), f.getDepartureTime(), f.getArrivalTime(),
-                                    f.getEconomyPrice()));
+                                    escapeJson(f.getFlightNo()), escapeJson(f.getAirline()), f.getDepartureTime(),
+                                    f.getArrivalTime(), f.getEconomyPrice() == null ? BigDecimal.ZERO : f.getEconomyPrice()));
                             if (count >= 5)
                                 break;
                         }
@@ -646,7 +758,9 @@ public class AiServiceImpl implements AiService {
                                 sb.append(",");
                             sb.append(String.format(
                                     "{\"name\":\"%s\",\"star\":%d,\"score\":%.1f,\"address\":\"%s\",\"avgPrice\":%.2f}",
-                                    h.getName(), h.getStarRating(), h.getScore(), h.getAddress(), h.getAvgPrice()));
+                                    escapeJson(h.getName()), h.getStarRating() == null ? 0 : h.getStarRating(),
+                                    h.getScore() == null ? BigDecimal.ZERO : h.getScore(), escapeJson(h.getAddress()),
+                                    h.getAvgPrice() == null ? BigDecimal.ZERO : h.getAvgPrice()));
                             if (count >= 5)
                                 break;
                         }
@@ -855,6 +969,16 @@ public class AiServiceImpl implements AiService {
                 .append("\",");
         json.append("\"pace\":\"适中\",");
         json.append("\"budgetNote\":\"费用仅估算当地门票、餐饮、市内交通和体验项目，不含往返大交通及住宿。\",");
+        json.append("\"transportAdvice\":\"").append(escapeJson(buildFallbackTransportAdvice(dto))).append("\",");
+        json.append("\"hotelAdvice\":\"").append(escapeJson(buildFallbackHotelAdvice(dto))).append("\",");
+        appendJsonArrayField(json, "beforeTripChecklist", buildFallbackChecklist(dest, dto));
+        json.append(",");
+        appendJsonArrayField(json, "riskNotes", buildFallbackRiskNotes(dest, dto));
+        json.append(",");
+        json.append("\"alternatives\":[");
+        json.append("{\"title\":\"雨天室内替代\",\"whenToUse\":\"遇到持续降雨、暴晒或室外排队过长时\",\"changes\":\"把户外景点替换为博物馆、老街区室内店铺或商场餐饮\"},");
+        json.append("{\"title\":\"低体力版本\",\"whenToUse\":\"同行人有老人、儿童或当天状态不佳时\",\"changes\":\"保留上午核心景点，取消下午远距离移动，晚餐放回住宿片区\"}");
+        json.append("],");
         json.append("\"days\":[");
 
         double totalCost = 0;
@@ -871,6 +995,66 @@ public class AiServiceImpl implements AiService {
         json.append("}");
 
         return json.toString();
+    }
+
+    private String buildFallbackTransportAdvice(AiPlanCreateDTO dto) {
+        String preference = dto.getTransportPreference();
+        if (preference.contains("自驾")) {
+            return "按自驾节奏安排同区游览，热门景点提前确认停车场和限行信息，跨区行程尽量避开早晚高峰。";
+        }
+        if (preference.contains("打车")) {
+            return "市内以打车和少量步行为主，每天控制跨区次数，热门景点返程建议提前叫车。";
+        }
+        return "优先使用地铁、公交和短途打车组合，住宿建议靠近地铁或核心景区，减少换乘和折返。";
+    }
+
+    private String buildFallbackHotelAdvice(AiPlanCreateDTO dto) {
+        String preference = dto.getAccommodationPreference();
+        if (preference.contains("亲子")) {
+            return "优先选亲子友好、早餐稳定、带洗衣或家庭房的酒店，晚间活动控制在住宿片区附近。";
+        }
+        if (preference.contains("安静")) {
+            return "优先选主干道内侧或景区外一站路区域，兼顾安静和交通，避免夜市正楼上。";
+        }
+        return "建议住在交通便利的核心片区，首末日靠近车站或机场动线，减少搬运行李的成本。";
+    }
+
+    private List<String> buildFallbackChecklist(String dest, AiPlanCreateDTO dto) {
+        List<String> items = new ArrayList<>();
+        items.add("确认身份证件、学生证或优惠证件，并提前保存电子订单");
+        items.add("热门景区、博物馆和演出票提前预约，至少准备一个同区备选点");
+        items.add("出发前一天查看天气，准备舒适步行鞋、雨具、防晒和常用药");
+        if (!blankToNone(dto.getMustVisit()).equals("无")) {
+            items.add("优先锁定必去地点的开放时间和预约规则：" + dto.getMustVisit());
+        }
+        if (dest.contains("云南") || dest.contains("丽江") || dest.contains("大理")) {
+            items.add("高原和强紫外线地区注意补水、防晒，首日不要安排高强度活动");
+        }
+        return items;
+    }
+
+    private List<String> buildFallbackRiskNotes(String dest, AiPlanCreateDTO dto) {
+        List<String> items = new ArrayList<>();
+        items.add("预算为当地游玩估算，不含往返大交通和住宿，实际消费会受餐饮与门票预约影响");
+        items.add("热门景点遇到排队超过 45 分钟时，建议启用当天 backupPlan");
+        if (!blankToNone(dto.getAvoidPlaces()).equals("无")) {
+            items.add("已尽量避开：" + dto.getAvoidPlaces() + "；若现场交通受限，可按同区替代点调整");
+        }
+        if (dest.contains("三亚") || dest.contains("厦门") || dest.contains("青岛")) {
+            items.add("海滨城市受天气和风浪影响较大，涉水项目以当天官方通知为准");
+        }
+        return items;
+    }
+
+    private void appendJsonArrayField(StringBuilder json, String fieldName, List<String> values) {
+        json.append("\"").append(fieldName).append("\":[");
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) {
+                json.append(",");
+            }
+            json.append("\"").append(escapeJson(values.get(i))).append("\"");
+        }
+        json.append("]");
     }
 
     private static class DayPlan {
@@ -893,6 +1077,8 @@ public class AiServiceImpl implements AiService {
                 .append("\",\"date\":\"").append(date).append("\",");
         sb.append("\"area\":\"").append(escapeJson(getAreaHint(dest, day))).append("\",");
         sb.append("\"tips\":\"").append(escapeJson(buildDayTip(dest, prefs, day, totalDays))).append("\",");
+        sb.append("\"mealHint\":\"").append(escapeJson(buildMealHint(dest, day))).append("\",");
+        sb.append("\"backupPlan\":\"").append(escapeJson(buildBackupPlan(dest, day))).append("\",");
         sb.append("\"activities\":[");
 
         double dayCost = 0;
@@ -972,6 +1158,39 @@ public class AiServiceImpl implements AiService {
             return "海岛行程看天气调整，防晒、防水袋和换洗衣物要提前准备。";
         }
         return "当天景点集中在相邻片区，午后留出排队和交通缓冲。";
+    }
+
+    private String buildMealHint(String dest, int day) {
+        if (dest.contains("成都")) {
+            return day == 1 ? "首日选微辣或鸳鸯锅适应口味，午后安排茶馆休息。" : "午餐可放在景区附近，晚餐再安排火锅或川菜。";
+        }
+        if (dest.contains("广州")) {
+            return "早餐或午餐安排茶点，晚餐避开热门餐厅排队高峰。";
+        }
+        if (dest.contains("上海")) {
+            return "午餐选本帮菜或简餐，晚餐可结合外滩、陆家嘴或老城厢动线。";
+        }
+        if (dest.contains("北京")) {
+            return "午餐以景区周边简餐为主，烤鸭等正餐建议提前预约。";
+        }
+        return "午餐放在当天动线中段，晚餐回到住宿片区附近，降低返程压力。";
+    }
+
+    private String buildBackupPlan(String dest, int day) {
+        if (dest.contains("北京")) {
+            return "若遇到排队或天气异常，可把户外点替换为国家博物馆、首都博物馆或商场休整。";
+        }
+        if (dest.contains("上海")) {
+            return "若下雨或外滩人流过大，可改走上海博物馆、商场餐饮或法租界短线。";
+        }
+        if (dest.contains("成都")) {
+            return "若熊猫基地或热门街区拥挤，可改为人民公园、四川博物院和茶馆慢行。";
+        }
+        if (dest.contains("三亚")) {
+            return "若风浪或降雨影响海边活动，可改为免税店、酒店设施或室内餐饮休整。";
+        }
+        return day == 1 ? "若抵达延误，保留入住和晚餐，取消下午景点。"
+                : "若天气或体力不佳，保留上午核心点，下午改为室内展馆、咖啡休息或住宿片区轻逛。";
     }
 
     private String[] getThemesForDestination(String dest) {

@@ -101,6 +101,9 @@
                   <el-dropdown-item command="profile">
                     <el-icon><User /></el-icon>个人主页
                   </el-dropdown-item>
+                  <el-dropdown-item command="collections">
+                    <el-icon><StarFilled /></el-icon>我的收藏
+                  </el-dropdown-item>
                   <el-dropdown-item
                     v-if="userStore.userInfo?.role === 1"
                     command="admin"
@@ -179,6 +182,9 @@
           </div>
           <div class="mobile-menu-item" @click="mobileNav('/notifications')">
             <el-icon style="margin-right: 8px"><Bell /></el-icon>通知中心
+          </div>
+          <div class="mobile-menu-item" @click="mobileNav('/collections')">
+            <el-icon style="margin-right: 8px"><StarFilled /></el-icon>我的收藏
           </div>
           <div
             class="mobile-menu-item"
@@ -463,6 +469,7 @@ import {
   House,
   HomeFilled,
   Present,
+  StarFilled,
 } from "@element-plus/icons-vue";
 import { useUserStore } from "./stores/user";
 import request from "@/utils/request";
@@ -612,6 +619,7 @@ const breadcrumbRouteMap = {
   MyOrders: [{ label: "首页", to: "/" }, { label: "我的订单" }],
   CouponCenter: [{ label: "首页", to: "/" }, { label: "优惠券中心" }],
   NotificationCenter: [{ label: "首页", to: "/" }, { label: "通知中心" }],
+  MyCollections: [{ label: "首页", to: "/" }, { label: "我的收藏" }],
   UserProfile: [{ label: "首页", to: "/" }, { label: "用户主页" }],
   AdminDashboard: [{ label: "首页", to: "/" }, { label: "管理后台" }],
 };
@@ -645,6 +653,8 @@ const handleCommand = (cmd) => {
   } else if (cmd === "profile") {
     const username = userStore.userInfo?.username;
     if (username) router.push(`/profile/${username}`);
+  } else if (cmd === "collections") {
+    router.push("/collections");
   } else if (cmd === "admin") {
     router.push("/admin");
   }

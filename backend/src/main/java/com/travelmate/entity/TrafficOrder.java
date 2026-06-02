@@ -38,7 +38,7 @@ public class TrafficOrder {
     private BigDecimal amount;
 
     /**
-     * 0-待支付, 1-出票中, 2-已出票, 3-已取消, 4-已退票
+     * 0-待支付, 1-出票中, 2-已出票, 3-已取消, 4-已退票, 5-退票申请中
      */
     private Integer status;
 

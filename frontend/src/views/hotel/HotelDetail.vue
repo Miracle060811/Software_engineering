@@ -6,8 +6,7 @@
         <el-row :gutter="24">
           <el-col :span="10">
             <SafeImage
-              :src="hotelCoverImage(hotel)"
-              :fallback="localSeedImage(hotel.name, 'hotel')"
+              :src="hotel.coverImg"
               image-class="hotel-cover"
               :alt="hotel.name"
             />
@@ -121,7 +120,7 @@
               style="width:80px;height:80px;border-radius:8px;margin-right:8px;object-fit:cover"
             >
               <template #error>
-                <img :src="localSeedImage(hotel.name, 'hotel')" class="review-image-fallback" alt="图片暂不可用" />
+                <img :src="FALLBACK_IMAGE" class="review-image-fallback" alt="图片暂不可用" />
               </template>
             </el-image>
           </div>
@@ -209,7 +208,8 @@ import { ElMessage } from "element-plus";
 import { StarFilled, LocationFilled, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import SafeImage from "@/components/SafeImage.vue";
-import { hotelCoverImage, localSeedImage, parseImageList } from "@/utils/image";
+import { FALLBACK_IMAGE, parseImageList } from "@/utils/image";
+import { addBrowseHistory } from "@/utils/browseHistory";
 
 const route = useRoute();
 const router = useRouter();
@@ -287,6 +287,15 @@ const fetchHotelDetail = async () => {
     ]);
     const detail = hotelData.status === "fulfilled" ? hotelData.value : null;
     hotel.value = detail?.hotel || detail || null;
+    if (hotel.value?.id) {
+      addBrowseHistory({
+        type: "hotel",
+        id: hotel.value.id,
+        title: hotel.value.name,
+        subtitle: hotel.value.city || hotel.value.address || "酒店",
+        path: `/hotel/${hotel.value.id}`,
+      });
+    }
     rooms.value =
       roomData.status === "fulfilled" && Array.isArray(roomData.value)
         ? roomData.value
@@ -550,9 +559,10 @@ onMounted(() => {
   text-align: right;
 }
 .room-price {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
   color: #ef4444;
+  text-shadow: 0 8px 22px rgba(239, 68, 68, 0.12);
   margin-bottom: 8px;
 }
 .room-price span {
@@ -617,8 +627,8 @@ onMounted(() => {
   font-weight: 600;
 }
 .total-price {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: #ef4444;
 }
 .origin-price {

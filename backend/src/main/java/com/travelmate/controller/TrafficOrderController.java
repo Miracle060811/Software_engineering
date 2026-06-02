@@ -94,6 +94,19 @@ public class TrafficOrderController {
         return cancelOrder(orderNo);
     }
 
+    @PostMapping("/{orderNo}/refund")
+    public Result<String> requestRefund(@PathVariable String orderNo) {
+        Long userId = getCurrentUserId();
+        if (userId == null)
+            return Result.error("用户未登录");
+        try {
+            boolean ok = trafficOrderService.requestRefund(userId, orderNo);
+            return ok ? Result.success("退票申请已提交") : Result.error("申请失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
     @GetMapping("/list")
     public Result<List<TrafficOrder>> getMyOrders() {
         Long userId = getCurrentUserId();
@@ -110,11 +123,7 @@ public class TrafficOrderController {
         Long userId = getCurrentUserId();
         if (userId == null)
             return Result.error("用户未登录");
-        List<TrafficOrder> orders = trafficOrderService.getUserOrders(userId);
-        TrafficOrder order = orders.stream()
-                .filter(o -> o.getOrderNo().equals(orderNo))
-                .findFirst()
-                .orElse(null);
+        TrafficOrder order = trafficOrderService.getOrderDetail(userId, orderNo);
         if (order == null)
             return Result.error("订单不存在或无权查看");
         return Result.success(order);

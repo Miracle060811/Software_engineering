@@ -191,6 +191,42 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean requestRefund(Long userId, String orderNo) {
+        HotelOrder order = getOne(new LambdaQueryWrapper<HotelOrder>()
+                .eq(HotelOrder::getOrderNo, orderNo)
+                .eq(HotelOrder::getUserId, userId));
+
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (order.getStatus() != 1) {
+            throw new RuntimeException("只有已支付且未入住的酒店订单可以申请退款");
+        }
+
+        int updated = baseMapper.markRefundRequested(userId, orderNo);
+        if (updated == 0) {
+            throw new RuntimeException("订单状态已变化，请刷新后重试");
+        }
+
+        notificationCenterService.createNotification(
+                userId,
+                "hotel_order",
+                "酒店退款申请已提交",
+                String.format("订单 %s 已提交退款申请，请等待管理员处理。", orderNo),
+                "/my-orders?tab=hotel");
+
+        return true;
+    }
+
+    @Override
+    public HotelOrder getOrderDetail(Long userId, String orderNo) {
+        return getOne(new LambdaQueryWrapper<HotelOrder>()
+                .eq(HotelOrder::getOrderNo, orderNo)
+                .eq(HotelOrder::getUserId, userId));
+    }
+
+    @Override
     public List<HotelOrder> getUserOrders(Long userId) {
         return list(new LambdaQueryWrapper<HotelOrder>()
                 .eq(HotelOrder::getUserId, userId)

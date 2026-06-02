@@ -39,6 +39,16 @@ public interface HotelOrderService extends IService<HotelOrder> {
     boolean cancelOrder(Long userId, String orderNo);
 
     /**
+     * 申请退款，进入后台人工处理队列。
+     */
+    boolean requestRefund(Long userId, String orderNo);
+
+    /**
+     * 查询单个酒店订单详情。
+     */
+    HotelOrder getOrderDetail(Long userId, String orderNo);
+
+    /**
      * 查询用户所有酒店订单
      *
      * @param userId 用户ID

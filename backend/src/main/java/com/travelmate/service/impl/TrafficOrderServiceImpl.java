@@ -223,6 +223,46 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean requestRefund(Long userId, String orderNo) {
+        TrafficOrder order = this.getOne(new LambdaQueryWrapper<TrafficOrder>()
+                .eq(TrafficOrder::getOrderNo, orderNo)
+                .eq(TrafficOrder::getUserId, userId));
+
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (!Objects.equals(order.getStatus(), 1) && !Objects.equals(order.getStatus(), 2)) {
+            throw new RuntimeException("只有出票中或已出票订单可以申请退票");
+        }
+
+        int updated = baseMapper.markRefundRequested(userId, orderNo);
+        if (updated == 0) {
+            throw new RuntimeException("订单状态已变化，请刷新后重试");
+        }
+
+        notificationCenterService.createNotification(
+                userId,
+                "traffic_order",
+                "退票申请已提交",
+                String.format("订单 %s 已提交退票申请，请等待管理员处理。", orderNo),
+                "/my-orders?tab=traffic");
+        return true;
+    }
+
+    @Override
+    public TrafficOrder getOrderDetail(Long userId, String orderNo) {
+        TrafficOrder order = this.getOne(new LambdaQueryWrapper<TrafficOrder>()
+                .eq(TrafficOrder::getOrderNo, orderNo)
+                .eq(TrafficOrder::getUserId, userId));
+        if (order == null) {
+            return null;
+        }
+        fillTicketSnapshot(order);
+        return order;
+    }
+
+    @Override
     public java.util.List<TrafficOrder> getUserOrders(Long userId) {
         java.util.List<TrafficOrder> orders = this.list(new LambdaQueryWrapper<TrafficOrder>()
                 .eq(TrafficOrder::getUserId, userId)

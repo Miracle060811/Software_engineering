@@ -32,7 +32,7 @@ public class UserService {
         User user = new User();
         user.setUsername(normalizedUsername);
         user.setPassword(encodedPassword);
-        user.setRole(0);
+        user.setRole(Integer.valueOf(1).equals(role) ? 1 : 0);
         userMapper.insert(user);
         return true;
     }
@@ -64,9 +64,9 @@ public class UserService {
         return true;
     }
 
-    public boolean resetPassword(String username, String oldPassword, String newPassword) {
+    public boolean resetPassword(String username, String newPassword) {
         if (username == null || username.trim().isEmpty()
-                || oldPassword == null || newPassword == null || newPassword.length() < 6) {
+                || newPassword == null || newPassword.length() < 6) {
             return false;
         }
         User user = userMapper.selectOne(new QueryWrapper<User>()
@@ -74,7 +74,7 @@ public class UserService {
                 .eq("status", 1)
                 .eq("deleted", 0));
         if (user == null) return false;
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) return false;
+        if (Integer.valueOf(1).equals(user.getRole())) return false;
         user.setPassword(passwordEncoder.encode(newPassword));
         userMapper.updateById(user);
         return true;

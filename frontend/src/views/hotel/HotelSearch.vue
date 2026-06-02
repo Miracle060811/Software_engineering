@@ -90,8 +90,7 @@
             @click="$router.push(`/hotel/${hotel.id}`)"
           >
             <SafeImage
-              :src="hotelCoverImage(hotel)"
-              :fallback="localSeedImage(hotel.name, 'hotel')"
+              :src="hotel.coverImg"
               image-class="hotel-img"
               :alt="hotel.name"
             />
@@ -127,7 +126,6 @@ import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import SafeImage from "@/components/SafeImage.vue";
-import { hotelCoverImage, localSeedImage } from "@/utils/image";
 
 const route = useRoute();
 const hotels = ref([]);
@@ -189,14 +187,15 @@ onMounted(() => {
   cursor: pointer;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--tm-line-soft);
-  background: var(--tm-surface);
+  border: 1px solid oklch(0.93 0.018 190);
+  background: linear-gradient(135deg, #ffffff 0%, #fbfffe 58%, #f2fbf8 100%);
+  box-shadow: 0 10px 28px rgba(43, 96, 92, 0.06);
   transition: all 0.28s ease;
 }
 .hotel-card:hover {
   transform: translateY(-3px);
-  border-color: oklch(0.82 0.055 190);
-  box-shadow: var(--tm-shadow-hover);
+  border-color: oklch(0.83 0.072 184);
+  box-shadow: 0 18px 42px rgba(43, 96, 92, 0.12);
 }
 .hotel-img {
   width: 100%;
@@ -243,9 +242,10 @@ onMounted(() => {
   color: var(--tm-muted);
 }
 .price-value {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 800;
-  color: var(--tm-accent);
+  color: #ef4444;
+  text-shadow: 0 8px 22px rgba(239, 68, 68, 0.12);
 }
 .price-unit {
   font-size: 12px;

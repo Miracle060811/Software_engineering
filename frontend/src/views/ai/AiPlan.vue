@@ -45,7 +45,7 @@
               <el-input-number
                 v-model="planForm.days"
                 :min="1"
-                :max="30"
+                :max="15"
                 style="width: 100%"
               />
             </el-form-item>
@@ -53,7 +53,7 @@
               <el-input-number
                 v-model="planForm.people"
                 :min="1"
-                :max="50"
+                :max="20"
                 style="width: 100%"
               />
             </el-form-item>
@@ -83,6 +83,55 @@
                   {{ item }}
                 </el-checkbox>
               </el-checkbox-group>
+            </el-form-item>
+            <el-form-item label="旅行节奏">
+              <el-radio-group v-model="planForm.travelStyle" class="style-group">
+                <el-radio-button
+                  v-for="item in travelStyleOptions"
+                  :key="item"
+                  :label="item"
+                />
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="交通偏好">
+              <el-select v-model="planForm.transportPreference">
+                <el-option
+                  v-for="item in transportOptions"
+                  :key="item"
+                  :label="item"
+                  :value="item"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="住宿偏好">
+              <el-select v-model="planForm.accommodationPreference">
+                <el-option
+                  v-for="item in accommodationOptions"
+                  :key="item"
+                  :label="item"
+                  :value="item"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="必去地点">
+              <el-input
+                v-model="planForm.mustVisit"
+                type="textarea"
+                :rows="2"
+                maxlength="120"
+                show-word-limit
+                placeholder="如：洱海骑行、苍山、当地夜市"
+              />
+            </el-form-item>
+            <el-form-item label="避开项">
+              <el-input
+                v-model="planForm.avoidPlaces"
+                type="textarea"
+                :rows="2"
+                maxlength="120"
+                show-word-limit
+                placeholder="如：高强度爬山、排队太久、太晚返程"
+              />
             </el-form-item>
             <el-button
               type="primary"
@@ -205,6 +254,29 @@
             </p>
           </section>
 
+          <section v-if="hasPlanInsights" class="plan-insight-section">
+            <article v-if="currentPlan.transportAdvice" class="insight-card">
+              <span>交通建议</span>
+              <p>{{ currentPlan.transportAdvice }}</p>
+            </article>
+            <article v-if="currentPlan.hotelAdvice" class="insight-card">
+              <span>住宿建议</span>
+              <p>{{ currentPlan.hotelAdvice }}</p>
+            </article>
+            <article v-if="beforeTripChecklist.length" class="insight-card">
+              <span>行前清单</span>
+              <ul>
+                <li v-for="item in beforeTripChecklist" :key="item">{{ item }}</li>
+              </ul>
+            </article>
+            <article v-if="riskNotes.length" class="insight-card">
+              <span>风险提醒</span>
+              <ul>
+                <li v-for="item in riskNotes" :key="item">{{ item }}</li>
+              </ul>
+            </article>
+          </section>
+
           <section
             v-for="dayPlan in currentPlan.days || []"
             :key="dayPlan.day"
@@ -224,6 +296,19 @@
               </div>
             </div>
             <div v-if="dayPlan.tips" class="day-tip">{{ dayPlan.tips }}</div>
+            <div
+              v-if="dayPlan.mealHint || dayPlan.backupPlan"
+              class="day-support-grid"
+            >
+              <div v-if="dayPlan.mealHint">
+                <span>餐饮安排</span>
+                <p>{{ dayPlan.mealHint }}</p>
+              </div>
+              <div v-if="dayPlan.backupPlan">
+                <span>当天备选</span>
+                <p>{{ dayPlan.backupPlan }}</p>
+              </div>
+            </div>
             <el-timeline>
               <el-timeline-item
                 v-for="(activity, idx) in dayPlan.activities"
@@ -251,6 +336,24 @@
                 </div>
               </el-timeline-item>
             </el-timeline>
+          </section>
+
+          <section v-if="planAlternatives.length" class="alternative-section">
+            <div class="alternative-head">
+              <span class="section-kicker">PLAN B</span>
+              <h3>备选方案</h3>
+            </div>
+            <div class="alternative-list">
+              <article
+                v-for="item in planAlternatives"
+                :key="item.title + item.whenToUse"
+                class="alternative-item"
+              >
+                <strong>{{ item.title }}</strong>
+                <p v-if="item.whenToUse">{{ item.whenToUse }}</p>
+                <small v-if="item.changes">{{ item.changes }}</small>
+              </article>
+            </div>
           </section>
         </div>
       </main>
@@ -302,7 +405,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted } from "vue";
+import { computed, ref, nextTick, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import {
   Cpu,
@@ -335,6 +438,22 @@ const preferenceOptions = [
   "轻松慢行",
 ];
 
+const travelStyleOptions = ["轻松", "适中", "紧凑"];
+
+const transportOptions = [
+  "公共交通优先，必要时打车",
+  "打车优先，减少换乘",
+  "自驾优先，控制停车成本",
+  "步行友好，少跨区移动",
+];
+
+const accommodationOptions = [
+  "交通便利，预算均衡",
+  "亲子友好，早餐稳定",
+  "安静舒适，避开夜市",
+  "靠近核心景区，减少通勤",
+];
+
 const destinationPresets = [
   {
     name: "云南大理",
@@ -342,6 +461,11 @@ const destinationPresets = [
     people: 2,
     budget: "4200",
     preferences: ["自然风光", "美食体验", "轻松慢行"],
+    travelStyle: "轻松",
+    transportPreference: "公共交通优先，必要时打车",
+    accommodationPreference: "安静舒适，避开夜市",
+    mustVisit: "洱海骑行、古城夜游",
+    avoidPlaces: "连续高强度爬山",
   },
   {
     name: "杭州",
@@ -349,6 +473,11 @@ const destinationPresets = [
     people: 2,
     budget: "2600",
     preferences: ["文化历史", "美食体验"],
+    travelStyle: "适中",
+    transportPreference: "步行友好，少跨区移动",
+    accommodationPreference: "靠近核心景区，减少通勤",
+    mustVisit: "西湖、灵隐寺",
+    avoidPlaces: "太晚返程",
   },
   {
     name: "成都",
@@ -356,6 +485,11 @@ const destinationPresets = [
     people: 3,
     budget: "5200",
     preferences: ["美食体验", "亲子游", "文化历史"],
+    travelStyle: "轻松",
+    transportPreference: "打车优先，减少换乘",
+    accommodationPreference: "亲子友好，早餐稳定",
+    mustVisit: "大熊猫基地、茶馆、火锅",
+    avoidPlaces: "午后长时间排队",
   },
 ];
 
@@ -372,6 +506,11 @@ const planForm = ref({
   budget: "",
   startDate: addDays(1),
   preferences: [],
+  travelStyle: "适中",
+  transportPreference: "公共交通优先，必要时打车",
+  accommodationPreference: "交通便利，预算均衡",
+  mustVisit: "",
+  avoidPlaces: "",
 });
 
 const generating = ref(false);
@@ -390,12 +529,41 @@ const chatLoading = ref(false);
 const chatMessagesRef = ref(null);
 const sessionId = ref(`session_${Date.now()}`);
 
+const normalizeList = (value) => {
+  if (Array.isArray(value)) {
+    return value.filter((item) => item !== null && item !== undefined && String(item).trim());
+  }
+  return [];
+};
+
+const beforeTripChecklist = computed(() =>
+  normalizeList(currentPlan.value?.beforeTripChecklist),
+);
+const riskNotes = computed(() => normalizeList(currentPlan.value?.riskNotes));
+const planAlternatives = computed(() =>
+  normalizeList(currentPlan.value?.alternatives),
+);
+const hasPlanInsights = computed(
+  () =>
+    Boolean(currentPlan.value?.transportAdvice) ||
+    Boolean(currentPlan.value?.hotelAdvice) ||
+    beforeTripChecklist.value.length > 0 ||
+    riskNotes.value.length > 0,
+);
+
 const applyDestinationPreset = (preset) => {
   planForm.value.destination = preset.name;
   planForm.value.days = preset.days;
   planForm.value.people = preset.people;
   planForm.value.budget = preset.budget;
   planForm.value.preferences = [...preset.preferences];
+  planForm.value.travelStyle = preset.travelStyle || "适中";
+  planForm.value.transportPreference =
+    preset.transportPreference || "公共交通优先，必要时打车";
+  planForm.value.accommodationPreference =
+    preset.accommodationPreference || "交通便利，预算均衡";
+  planForm.value.mustVisit = preset.mustVisit || "";
+  planForm.value.avoidPlaces = preset.avoidPlaces || "";
   if (!planForm.value.startDate) {
     planForm.value.startDate = addDays(1);
   }
@@ -404,6 +572,10 @@ const applyDestinationPreset = (preset) => {
 const generatePlan = async () => {
   if (!planForm.value.destination) {
     ElMessage.warning("请输入目的地");
+    return;
+  }
+  if (Number(planForm.value.budget) <= 0) {
+    ElMessage.warning("请输入大于 0 的预算");
     return;
   }
   generating.value = true;
@@ -417,6 +589,11 @@ const generatePlan = async () => {
       budget: planForm.value.budget,
       startDate: planForm.value.startDate,
       preferences: planForm.value.preferences.join(","),
+      travelStyle: planForm.value.travelStyle,
+      transportPreference: planForm.value.transportPreference,
+      accommodationPreference: planForm.value.accommodationPreference,
+      mustVisit: planForm.value.mustVisit,
+      avoidPlaces: planForm.value.avoidPlaces,
     });
     // 后端返回 planContent 为 JSON 字符串
     if (res && res.planContent) {
@@ -464,10 +641,31 @@ const exportPlan = () => {
   text += `  ${currentPlan.value.summary || ""}\n`;
   text += `  总预估费用：¥${currentPlan.value.totalEstimatedCost || 0}\n`;
   text += "========================================\n\n";
+  if (currentPlan.value.transportAdvice) {
+    text += `交通建议：${currentPlan.value.transportAdvice}\n`;
+  }
+  if (currentPlan.value.hotelAdvice) {
+    text += `住宿建议：${currentPlan.value.hotelAdvice}\n`;
+  }
+  if (beforeTripChecklist.value.length) {
+    text += "\n行前清单：\n";
+    for (const item of beforeTripChecklist.value) {
+      text += `- ${item}\n`;
+    }
+  }
+  if (riskNotes.value.length) {
+    text += "\n风险提醒：\n";
+    for (const item of riskNotes.value) {
+      text += `- ${item}\n`;
+    }
+  }
+  text += "\n";
   if (currentPlan.value.days) {
     for (const day of currentPlan.value.days) {
       text += `第 ${day.day} 天 · ${day.theme || ""}\n`;
       text += `${"-".repeat(40)}\n`;
+      if (day.mealHint) text += `餐饮安排：${day.mealHint}\n`;
+      if (day.backupPlan) text += `当天备选：${day.backupPlan}\n`;
       if (day.activities) {
         for (const act of day.activities) {
           text += `  ${act.time || ""} | ${act.name || ""} [${
@@ -478,6 +676,12 @@ const exportPlan = () => {
           text += "\n";
         }
       }
+    }
+  }
+  if (planAlternatives.value.length) {
+    text += "\n备选方案：\n";
+    for (const item of planAlternatives.value) {
+      text += `- ${item.title || "备选"}：${item.whenToUse || ""} ${item.changes || ""}\n`;
     }
   }
   text += "========================================\n";
@@ -739,6 +943,16 @@ onMounted(() => {
   font-weight: 650;
 }
 
+.style-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+}
+
+.style-group :deep(.el-radio-button__inner) {
+  width: 100%;
+}
+
 .generate-btn {
   width: 100%;
   height: 44px;
@@ -953,6 +1167,51 @@ onMounted(() => {
   line-height: 1.6;
 }
 
+.plan-insight-section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.insight-card,
+.alternative-section {
+  border-radius: 8px;
+  border: 1px solid var(--tm-line-soft);
+  background: var(--tm-surface);
+  box-shadow: var(--tm-shadow-card);
+}
+
+.insight-card {
+  padding: 18px;
+}
+
+.insight-card span,
+.day-support-grid span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--tm-olive);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.insight-card p,
+.day-support-grid p {
+  margin: 0;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.insight-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
 .day-card {
   margin-bottom: 16px;
   padding: 24px 24px 8px;
@@ -1001,6 +1260,20 @@ onMounted(() => {
   color: var(--el-text-color-regular);
   font-size: 13px;
   line-height: 1.6;
+}
+
+.day-support-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.day-support-grid > div {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--tm-line-soft);
+  background: oklch(0.985 0.002 248);
 }
 
 .day-card :deep(.el-timeline) {
@@ -1065,6 +1338,47 @@ onMounted(() => {
   color: var(--tm-accent);
   margin-top: 6px;
   font-weight: 700;
+}
+
+.alternative-section {
+  padding: 22px;
+}
+
+.alternative-head {
+  margin-bottom: 12px;
+}
+
+.alternative-head h3 {
+  margin: 0;
+  color: var(--tm-ink);
+  font-size: 20px;
+}
+
+.alternative-list {
+  display: grid;
+  gap: 10px;
+}
+
+.alternative-item {
+  padding: 14px;
+  border: 1px solid var(--tm-line-soft);
+  border-radius: 8px;
+  background: oklch(0.985 0.002 248);
+}
+
+.alternative-item strong {
+  color: var(--tm-ink);
+}
+
+.alternative-item p {
+  margin: 6px 0;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+}
+
+.alternative-item small {
+  color: var(--el-text-color-secondary);
+  line-height: 1.6;
 }
 
 .chat-fab {
@@ -1155,7 +1469,9 @@ onMounted(() => {
 @media (max-width: 900px) {
   .planner-hero,
   .planner-layout,
-  .empty-plan {
+  .empty-plan,
+  .plan-insight-section,
+  .day-support-grid {
     grid-template-columns: 1fr;
   }
 

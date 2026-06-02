@@ -1,16 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="TravelMate ??????">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="图片暂不可用">
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#334155"/><stop offset="1" stop-color="#0d9488"/></linearGradient>
-    <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="rgba(255,255,255,.32)"/><stop offset="1" stop-color="rgba(15,23,42,.34)"/></linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8fbff"/>
+      <stop offset="0.58" stop-color="#eef6f4"/>
+      <stop offset="1" stop-color="#e7f0ec"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#c9ded9"/>
+      <stop offset="0.52" stop-color="#9fc4bd"/>
+      <stop offset="1" stop-color="#c8d9e2"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#6b7f8a" flood-opacity="0.18"/>
+    </filter>
   </defs>
-  <rect width="960" height="540" fill="url(#sky)"/>
-  <circle cx="780" cy="110" r="82" fill="rgba(255,255,255,.32)"/>
-  <path d="M0 388 C130 320 210 360 330 292 C455 222 540 335 650 275 C760 218 815 292 960 230 L960 540 L0 540Z" fill="rgba(255,255,255,.32)"/>
-  <path d="M0 440 C145 365 250 410 365 345 C510 263 602 390 720 328 C830 270 875 345 960 320 L960 540 L0 540Z" fill="rgba(15,23,42,.22)"/>
-  <path d="M92 388h70v-92h74v92h70V248h-70v-55h-74v55H92z" fill="rgba(255,255,255,.72)"/>
-  <path d="M642 386h44V272h78v114h44V232h-166z" fill="rgba(255,255,255,.66)"/>
-  <rect y="0" width="960" height="540" fill="url(#shade)"/>
-  <text x="54" y="92" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="50" font-weight="800" fill="#fff">TravelMate</text>
-  <text x="56" y="142" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="24" font-weight="600" fill="rgba(255,255,255,.86)">??????</text>
-  <text x="56" y="484" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="rgba(255,255,255,.82)">TravelMate Local Seed Image</text>
+
+  <rect width="960" height="540" rx="26" fill="url(#sky)"/>
+  <rect x="1.5" y="1.5" width="957" height="537" rx="24.5" fill="none" stroke="#d6e2ea" stroke-width="3"/>
+
+  <g opacity="0.92">
+    <path d="M0 346 C126 298 206 300 306 333 C414 368 514 352 606 318 C714 278 828 288 960 331 L960 540 L0 540 Z" fill="#d7e5df"/>
+    <path d="M0 391 C128 352 229 350 331 382 C431 413 524 404 626 368 C734 330 833 334 960 375 L960 540 L0 540 Z" fill="url(#water)"/>
+    <path d="M0 434 C142 405 250 406 362 428 C472 450 579 447 694 414 C792 386 874 391 960 416 L960 540 L0 540 Z" fill="#8fb4b0" opacity="0.42"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <path d="M224 326 L342 190 L417 274 L463 222 L590 366 L224 366 Z" fill="#7c96a6"/>
+    <path d="M408 302 L463 222 L590 366 L485 366 Z" fill="#5f7f89" opacity="0.85"/>
+    <circle cx="620" cy="151" r="48" fill="#f2c96d"/>
+    <path d="M218 365 H622" stroke="#ffffff" stroke-width="14" stroke-linecap="round" opacity="0.78"/>
+  </g>
+
+  <g transform="translate(655 222)">
+    <rect x="0" y="28" width="128" height="94" rx="14" fill="#ffffff" opacity="0.9"/>
+    <path d="M24 28 V6 H104 V28" fill="none" stroke="#6f8d98" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M28 72 H100" stroke="#7fa096" stroke-width="12" stroke-linecap="round"/>
+    <path d="M64 42 V104" stroke="#7fa096" stroke-width="12" stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(0 0)">
+    <text x="480" y="438" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="34" font-weight="700" fill="#334155">图片暂不可用</text>
+    <text x="480" y="480" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="22" fill="#70808d">TravelMate</text>
+  </g>
 </svg>

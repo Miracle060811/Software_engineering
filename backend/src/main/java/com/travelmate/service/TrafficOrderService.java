@@ -37,6 +37,16 @@ public interface TrafficOrderService extends IService<TrafficOrder> {
     boolean cancelOrder(Long userId, String orderNo);
 
     /**
+     * 申请退票，进入后台人工处理队列。
+     */
+    boolean requestRefund(Long userId, String orderNo);
+
+    /**
+     * 查询单个订单详情。
+     */
+    TrafficOrder getOrderDetail(Long userId, String orderNo);
+
+    /**
      * 查询我的订单列表
      */
     java.util.List<TrafficOrder> getUserOrders(Long userId);

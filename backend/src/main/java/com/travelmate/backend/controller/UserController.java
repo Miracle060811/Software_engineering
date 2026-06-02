@@ -5,6 +5,7 @@ import com.travelmate.backend.entity.User;
 import com.travelmate.backend.service.UserService;
 import com.travelmate.common.Result;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin
@@ -18,12 +19,27 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Value("${ADMIN_REGISTER_SECRET:5201314}")
+    private String adminRegisterSecret;
+
     @PostMapping("/register")
     public Result<String> register(
             @RequestParam String username,
             @RequestParam String password) {
         boolean success = userService.register(username, password, 0);
         return success ? Result.success("注册成功") : Result.error("用户名已存在");
+    }
+
+    @PostMapping("/admin-register")
+    public Result<String> adminRegister(
+            @RequestParam String username,
+            @RequestParam String password,
+            @RequestParam String secret) {
+        if (!adminRegisterSecret.equals(secret)) {
+            return Result.error("管理员注册密钥错误");
+        }
+        boolean success = userService.register(username, password, 1);
+        return success ? Result.success("管理员注册成功") : Result.error("用户名已存在或密码不合法");
     }
 
     @PostMapping("/login")
@@ -35,10 +51,9 @@ public class UserController {
     @PostMapping("/reset-password")
     public Result<String> resetPassword(
             @RequestParam String username,
-            @RequestParam String oldPassword,
             @RequestParam String newPassword) {
-        boolean ok = userService.resetPassword(username, oldPassword, newPassword);
-        return ok ? Result.success("密码修改成功") : Result.error("用户名或原密码错误");
+        boolean ok = userService.resetPassword(username, newPassword);
+        return ok ? Result.success("密码重置成功") : Result.error("用户名不存在、新密码不合法或管理员账号不允许重置");
     }
 
     @PostMapping("/password")

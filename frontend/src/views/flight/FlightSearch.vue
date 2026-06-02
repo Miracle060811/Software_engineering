@@ -433,20 +433,23 @@ onMounted(() => {
 .search-box {
   margin-bottom: 22px;
   border-radius: 8px;
-  border: 1px solid var(--tm-line-soft);
-  background: linear-gradient(135deg, var(--tm-surface), var(--tm-primary-soft));
-  box-shadow: var(--tm-shadow-card);
+  border: 1px solid oklch(0.91 0.028 185);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(238, 253, 249, 0.92)),
+    radial-gradient(circle at 92% 8%, rgba(239, 68, 68, 0.10), transparent 30%);
+  box-shadow: 0 14px 36px rgba(36, 96, 92, 0.08);
 }
 .flight-card {
   margin-bottom: 12px;
   border-radius: 8px;
-  border: 1px solid var(--tm-line-soft);
-  background: var(--tm-surface);
+  border: 1px solid oklch(0.93 0.018 190);
+  background: linear-gradient(135deg, #ffffff 0%, #fbfffe 58%, #f2fbf8 100%);
+  box-shadow: 0 10px 28px rgba(43, 96, 92, 0.06);
   transition: all 0.3s ease;
 }
 .flight-card:hover {
-  border-color: oklch(0.82 0.055 190);
-  box-shadow: var(--tm-shadow-hover);
+  border-color: oklch(0.83 0.072 184);
+  box-shadow: 0 18px 42px rgba(43, 96, 92, 0.12);
   transform: translateY(-2px);
 }
 .flight-row {
@@ -481,19 +484,26 @@ onMounted(() => {
 }
 .flight-route {
   font-size: 13px;
-  color: var(--el-color-primary);
+  color: oklch(0.43 0.090 182);
   margin: 6px 0;
 }
 .flight-seats {
   text-align: center;
 }
+.flight-seats :deep(.el-tag) {
+  border: 0;
+  background: #ecfdf5;
+  color: oklch(0.43 0.105 166);
+  font-weight: 700;
+}
 .flight-price-col {
   text-align: right;
 }
 .price-num {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 800;
-  color: var(--tm-accent);
+  color: #ef4444;
+  text-shadow: 0 8px 22px rgba(239, 68, 68, 0.12);
 }
 .price-label {
   font-size: 11px;
@@ -503,22 +513,31 @@ onMounted(() => {
 .price-num-sm {
   font-size: 16px;
   font-weight: 700;
-  color: oklch(0.54 0.12 165);
+  color: #dc2626;
 }
 .price-business {
   margin-bottom: 8px;
 }
+.flight-price-col :deep(.el-button--primary) {
+  background: oklch(0.50 0.095 180);
+  border-color: oklch(0.50 0.095 180);
+  box-shadow: 0 12px 24px rgba(37, 118, 111, 0.18);
+}
+.flight-price-col :deep(.el-button--primary:hover) {
+  background: oklch(0.45 0.105 180);
+  border-color: oklch(0.45 0.105 180);
+}
 .book-flight-info {
   padding: 14px;
-  background: var(--tm-primary-soft);
-  border: 1px solid var(--tm-line-soft);
+  background: #f0fdfa;
+  border: 1px solid oklch(0.90 0.040 185);
   border-radius: 8px;
   margin-bottom: 4px;
 }
 .total-price {
   font-size: 24px;
   font-weight: 800;
-  color: var(--tm-accent);
+  color: #ef4444;
 }
 .origin-price {
   margin-right: 8px;

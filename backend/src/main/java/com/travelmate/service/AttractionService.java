@@ -2,6 +2,7 @@ package com.travelmate.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travelmate.entity.Attraction;
+import com.travelmate.entity.AttractionOrder;
 
 import java.util.List;
 
@@ -31,4 +32,14 @@ public interface AttractionService extends IService<Attraction> {
      */
     String buyTicket(Long userId, Long attractionId, Integer adultCount, Integer childCount,
             String guestName, String guestPhone);
+
+    /**
+     * 查询我的景点门票订单。
+     */
+    List<AttractionOrder> getUserTicketOrders(Long userId);
+
+    /**
+     * 查询单个景点门票订单详情。
+     */
+    AttractionOrder getTicketOrderDetail(Long userId, String orderNo);
 }

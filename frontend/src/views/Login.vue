@@ -55,7 +55,7 @@
             </el-button>
             <div class="form-actions">
               <el-button link type="primary" @click="openResetDialog">
-                修改密码
+                忘记密码？
               </el-button>
             </div>
           </el-form>
@@ -120,7 +120,7 @@
 
     <el-dialog
       v-model="resetDialogVisible"
-      title="修改密码"
+      title="忘记密码"
       width="420px"
       class="reset-dialog"
       :close-on-click-modal="false"
@@ -138,17 +138,6 @@
             placeholder="请输入用户名"
             size="large"
             :prefix-icon="User"
-            class="auth-input"
-          />
-        </el-form-item>
-        <el-form-item prop="oldPassword">
-          <el-input
-            v-model="resetForm.oldPassword"
-            type="password"
-            placeholder="请输入原密码"
-            size="large"
-            :prefix-icon="Lock"
-            show-password
             class="auth-input"
           />
         </el-form-item>
@@ -183,7 +172,77 @@
           :loading="resetLoading"
           @click="handleResetPassword"
         >
-          确认修改
+          确认重置
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="adminDialogVisible"
+      title="管理员注册"
+      width="420px"
+      class="reset-dialog"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="adminFormRef"
+        :model="adminForm"
+        :rules="adminRules"
+        label-width="0"
+        class="auth-form"
+      >
+        <el-form-item prop="username">
+          <el-input
+            v-model="adminForm.username"
+            placeholder="管理员用户名"
+            size="large"
+            :prefix-icon="User"
+            class="auth-input"
+          />
+        </el-form-item>
+        <el-form-item prop="password">
+          <el-input
+            v-model="adminForm.password"
+            type="password"
+            placeholder="管理员密码（至少6位）"
+            size="large"
+            :prefix-icon="Lock"
+            show-password
+            class="auth-input"
+          />
+        </el-form-item>
+        <el-form-item prop="confirmPassword">
+          <el-input
+            v-model="adminForm.confirmPassword"
+            type="password"
+            placeholder="请再次输入管理员密码"
+            size="large"
+            :prefix-icon="Lock"
+            show-password
+            class="auth-input"
+          />
+        </el-form-item>
+        <el-form-item prop="secret">
+          <el-input
+            v-model="adminForm.secret"
+            type="password"
+            placeholder="请输入管理员注册密钥"
+            size="large"
+            :prefix-icon="Lock"
+            show-password
+            class="auth-input"
+            @keyup.enter="handleAdminRegister"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="adminDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="adminLoading"
+          @click="handleAdminRegister"
+        >
+          注册管理员
         </el-button>
       </template>
     </el-dialog>
@@ -204,14 +263,19 @@ const activeTab = ref("login");
 const loading = ref(false);
 const resetLoading = ref(false);
 const resetDialogVisible = ref(false);
+const adminLoading = ref(false);
+const adminDialogVisible = ref(false);
+const blankRegisterClickCount = ref(0);
 
 const loginFormRef = ref(null);
 const registerFormRef = ref(null);
 const resetFormRef = ref(null);
+const adminFormRef = ref(null);
 
 const loginForm = ref({ username: "", password: "" });
 const registerForm = ref({ username: "", password: "", confirmPassword: "" });
-const resetForm = ref({ username: "", oldPassword: "", newPassword: "", confirmPassword: "" });
+const resetForm = ref({ username: "", newPassword: "", confirmPassword: "" });
+const adminForm = ref({ username: "", password: "", confirmPassword: "", secret: "" });
 
 const loginRules = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
@@ -242,9 +306,33 @@ const registerRules = {
   ],
 };
 
+const adminRules = {
+  username: [
+    { required: true, message: "请输入管理员用户名", trigger: "blur" },
+    { min: 4, max: 20, message: "用户名长度4-20位", trigger: "blur" },
+  ],
+  password: [
+    { required: true, message: "请输入管理员密码", trigger: "blur" },
+    { min: 6, message: "密码至少6位", trigger: "blur" },
+  ],
+  confirmPassword: [
+    { required: true, message: "请确认管理员密码", trigger: "blur" },
+    {
+      validator: (_rule, value, callback) => {
+        if (value !== adminForm.value.password) {
+          callback(new Error("两次密码不一致"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
+  ],
+  secret: [{ required: true, message: "请输入管理员注册密钥", trigger: "blur" }],
+};
+
 const resetRules = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
-  oldPassword: [{ required: true, message: "请输入原密码", trigger: "blur" }],
   newPassword: [
     { required: true, message: "请输入新密码", trigger: "blur" },
     { min: 6, message: "密码至少6位", trigger: "blur" },
@@ -267,7 +355,6 @@ const resetRules = {
 const openResetDialog = () => {
   resetForm.value = {
     username: loginForm.value.username,
-    oldPassword: "",
     newPassword: "",
     confirmPassword: "",
   };
@@ -290,6 +377,19 @@ const handleLogin = async () => {
 };
 
 const handleRegister = async () => {
+  const isBlankRegisterForm = !registerForm.value.username
+    && !registerForm.value.password
+    && !registerForm.value.confirmPassword;
+  if (isBlankRegisterForm) {
+    blankRegisterClickCount.value += 1;
+    if (blankRegisterClickCount.value >= 3) {
+      blankRegisterClickCount.value = 0;
+      adminForm.value = { username: "", password: "", confirmPassword: "", secret: "" };
+      adminDialogVisible.value = true;
+    }
+    return;
+  }
+  blankRegisterClickCount.value = 0;
   const valid = await registerFormRef.value?.validate().catch(() => false);
   if (!valid) return;
   loading.value = true;
@@ -309,6 +409,30 @@ const handleRegister = async () => {
   }
 };
 
+const handleAdminRegister = async () => {
+  const valid = await adminFormRef.value?.validate().catch(() => false);
+  if (!valid) return;
+  adminLoading.value = true;
+  try {
+    await request.post("/user/admin-register", null, {
+      params: {
+        username: adminForm.value.username,
+        password: adminForm.value.password,
+        secret: adminForm.value.secret,
+      },
+    });
+    ElMessage.success("管理员注册成功，请登录");
+    loginForm.value.username = adminForm.value.username;
+    loginForm.value.password = "";
+    adminDialogVisible.value = false;
+    activeTab.value = "login";
+  } catch (e) {
+    // error handled in request.js
+  } finally {
+    adminLoading.value = false;
+  }
+};
+
 const handleResetPassword = async () => {
   const valid = await resetFormRef.value?.validate().catch(() => false);
   if (!valid) return;
@@ -317,11 +441,10 @@ const handleResetPassword = async () => {
     await request.post("/user/reset-password", null, {
       params: {
         username: resetForm.value.username,
-        oldPassword: resetForm.value.oldPassword,
         newPassword: resetForm.value.newPassword,
       },
     });
-    ElMessage.success("密码修改成功，请使用新密码登录");
+    ElMessage.success("密码重置成功，请使用新密码登录");
     loginForm.value.username = resetForm.value.username;
     loginForm.value.password = "";
     resetDialogVisible.value = false;

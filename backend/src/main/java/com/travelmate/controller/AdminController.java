@@ -9,6 +9,7 @@ import com.travelmate.common.Result;
 import com.travelmate.entity.Attraction;
 import com.travelmate.entity.Comment;
 import com.travelmate.entity.Coupon;
+import com.travelmate.entity.Destination;
 import com.travelmate.entity.Flight;
 import com.travelmate.entity.Hotel;
 import com.travelmate.entity.HotelOrder;
@@ -25,6 +26,7 @@ import com.travelmate.entity.UserCoupon;
 import com.travelmate.mapper.AttractionMapper;
 import com.travelmate.mapper.CommentMapper;
 import com.travelmate.mapper.CouponMapper;
+import com.travelmate.mapper.DestinationMapper;
 import com.travelmate.mapper.FlightMapper;
 import com.travelmate.mapper.HotelMapper;
 import com.travelmate.mapper.HotelOrderMapper;
@@ -40,18 +42,27 @@ import com.travelmate.mapper.TrainMapper;
 import com.travelmate.mapper.UserCouponMapper;
 import com.travelmate.service.HotelRoomStockService;
 import com.travelmate.service.NotificationCenterService;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -93,6 +104,9 @@ public class AdminController {
     private CouponMapper couponMapper;
 
     @Autowired
+    private DestinationMapper destinationMapper;
+
+    @Autowired
     private ReviewReportMapper reviewReportMapper;
 
     @Autowired
@@ -124,9 +138,25 @@ public class AdminController {
 
     private static final int STATUS_TRAFFIC_CANCELLED = 3;
     private static final int STATUS_TRAFFIC_REFUNDED = 4;
+    private static final int STATUS_REFUND_REQUESTED = 5;
     private static final int STATUS_HOTEL_PAID = 1;
     private static final int STATUS_HOTEL_COMPLETED = 3;
     private static final int STATUS_HOTEL_CANCELLED_OR_REFUNDED = 4;
+    private static final long MAX_CSV_FILE_SIZE = 5L * 1024L * 1024L;
+    private static final int MAX_IMPORT_FAILURES_RETURNED = 50;
+    private static final String CSV_MODE_UPSERT = "upsert";
+    private static final Set<String> CSV_IMPORT_TYPES = Set.of(
+            "flights", "trains", "hotels", "rooms", "attractions", "destinations");
+    private static final Map<String, List<String>> CSV_REQUIRED_HEADERS = Map.of(
+            "flights", List.of("flightNo", "airline", "departureCity", "arrivalCity", "departureTime", "arrivalTime",
+                    "economyPrice", "businessPrice", "totalSeats", "availableSeats"),
+            "trains", List.of("trainNo", "trainType", "departureStation", "arrivalStation", "departureTime",
+                    "arrivalTime", "firstClassPrice", "secondClassPrice", "firstClassSeats", "secondClassSeats"),
+            "hotels", List.of("name", "city", "address", "starRating", "avgPrice"),
+            "rooms", List.of("hotelId", "roomType", "bedType", "price", "totalRooms", "availableRooms"),
+            "attractions", List.of("name", "city", "address", "adultPrice", "childPrice", "totalTickets",
+                    "availableTickets"),
+            "destinations", List.of("slug", "name", "tag", "img", "desc", "intro"));
 
     private User checkAdmin() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -174,6 +204,9 @@ public class AdminController {
         requireNonNegative(flight.getBusinessPrice(), "公务舱价格");
         requireNonNegative(flight.getTotalSeats(), "总座位数");
         requireNonNegative(flight.getAvailableSeats(), "可售座位数");
+        if (flight.getAvailableSeats() > flight.getTotalSeats()) {
+            throw new RuntimeException("可售座位数不能大于总座位数");
+        }
     }
 
     private void validateTrain(Train train) {
@@ -186,6 +219,9 @@ public class AdminController {
         requireNonNegative(train.getSecondClassPrice(), "二等座价格");
         requireNonNegative(train.getFirstClassSeats(), "一等座余票");
         requireNonNegative(train.getSecondClassSeats(), "二等座余票");
+        if (train.getDurationMinutes() == null) {
+            train.setDurationMinutes((int) Duration.between(train.getDepartureTime(), train.getArrivalTime()).toMinutes());
+        }
     }
 
     private void validateHotel(Hotel hotel) {
@@ -196,6 +232,10 @@ public class AdminController {
         if (hotel.getStarRating() == null || hotel.getStarRating() < 1 || hotel.getStarRating() > 5) {
             throw new RuntimeException("星级必须在 1-5 之间");
         }
+        if (hotel.getScore() != null
+                && (hotel.getScore().compareTo(BigDecimal.ZERO) < 0 || hotel.getScore().compareTo(BigDecimal.valueOf(5)) > 0)) {
+            throw new RuntimeException("评分必须在 0-5 之间");
+        }
     }
 
     private void validateHotelRoom(HotelRoom room) {
@@ -204,6 +244,9 @@ public class AdminController {
         requireNonNegative(room.getPrice(), "房型价格");
         requireNonNegative(room.getTotalRooms(), "总房量");
         requireNonNegative(room.getAvailableRooms(), "可售房量");
+        if (room.getAvailableRooms() > room.getTotalRooms()) {
+            throw new RuntimeException("可售房量不能大于总房量");
+        }
     }
 
     private void validateAttraction(Attraction attraction) {
@@ -214,6 +257,9 @@ public class AdminController {
         requireNonNegative(attraction.getChildPrice(), "儿童票价");
         requireNonNegative(attraction.getTotalTickets(), "总票数");
         requireNonNegative(attraction.getAvailableTickets(), "可售票数");
+        if (attraction.getAvailableTickets() > attraction.getTotalTickets()) {
+            throw new RuntimeException("可售票数不能大于总票数");
+        }
         if (attraction.getStatus() == null) {
             attraction.setStatus(1);
         }
@@ -232,6 +278,22 @@ public class AdminController {
         }
         if (coupon.getDiscountType() == 1 && coupon.getDiscountValue().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("折扣比例必须大于 0");
+        }
+    }
+
+    private void validateDestination(Destination destination) {
+        requireText(destination.getSlug(), "城市标识");
+        requireText(destination.getName(), "城市名称");
+        requireText(destination.getCountry(), "国家/地区");
+        requireText(destination.getTag(), "城市标签");
+        requireText(destination.getImg(), "封面图");
+        requireText(destination.getDesc(), "短描述");
+        requireText(destination.getIntro(), "城市介绍");
+        if (destination.getStatus() == null) {
+            destination.setStatus(1);
+        }
+        if (destination.getSortOrder() == null) {
+            destination.setSortOrder(100);
         }
     }
 
@@ -791,6 +853,34 @@ public class AdminController {
                 .toList());
     }
 
+    @GetMapping("/destinations")
+    public Result<List<Destination>> listAdminDestinations() {
+        checkAdmin();
+        return Result.success(destinationMapper.selectList(new LambdaQueryWrapper<Destination>()
+                .orderByAsc(Destination::getSortOrder)
+                .orderByDesc(Destination::getId)));
+    }
+
+    @PutMapping("/destinations/{id}")
+    public Result<Void> updateDestination(@PathVariable Long id, @RequestBody Destination destination) {
+        checkAdmin();
+        destination.setId(id);
+        validateDestination(destination);
+        destination.setUpdateTime(LocalDateTime.now());
+        destinationMapper.updateById(destination);
+        return Result.success();
+    }
+
+    @DeleteMapping("/destinations/{id}")
+    public Result<Void> deleteDestination(@PathVariable Long id) {
+        checkAdmin();
+        destinationMapper.update(null, new LambdaUpdateWrapper<Destination>()
+                .eq(Destination::getId, id)
+                .set(Destination::getStatus, 0)
+                .set(Destination::getUpdateTime, LocalDateTime.now()));
+        return Result.success();
+    }
+
     @PostMapping("/posts/{id}/approve")
     public Result<Void> approvePost(@PathVariable Long id) {
         checkAdmin();
@@ -798,7 +888,8 @@ public class AdminController {
         postMapper.update(null, new LambdaUpdateWrapper<Post>()
                 .eq(Post::getId, id)
                 .set(Post::getStatus, 1)
-                .set(Post::getRejectReason, null));
+                .set(Post::getRejectReason, null)
+                .set(Post::getUpdateTime, LocalDateTime.now()));
         if (post != null) {
             notificationCenterService.createNotification(
                     post.getUserId(),
@@ -818,7 +909,8 @@ public class AdminController {
         postMapper.update(null, new LambdaUpdateWrapper<Post>()
                 .eq(Post::getId, id)
                 .set(Post::getStatus, 2)
-                .set(Post::getRejectReason, reason));
+                .set(Post::getRejectReason, reason)
+                .set(Post::getUpdateTime, LocalDateTime.now()));
         if (post != null) {
             notificationCenterService.createNotification(
                     post.getUserId(),
@@ -921,6 +1013,7 @@ public class AdminController {
     }
 
     @PostMapping("/orders/{orderNo}/refund/approve")
+    @Transactional(rollbackFor = Exception.class)
     public Result<String> approveRefund(@PathVariable String orderNo) {
         checkAdmin();
         if (orderNo.startsWith("HT")) {
@@ -935,13 +1028,21 @@ public class AdminController {
             if (Objects.equals(order.getStatus(), STATUS_HOTEL_COMPLETED)) {
                 return Result.error("已完成的酒店订单不能直接退款");
             }
-            if (!Objects.equals(order.getStatus(), STATUS_HOTEL_PAID)) {
-                return Result.error("只有已支付且未入住的酒店订单可以退款");
+            if (!Objects.equals(order.getStatus(), STATUS_REFUND_REQUESTED)) {
+                return Result.error("只有已提交退款申请的酒店订单可以办理退款");
             }
-            order.setStatus(STATUS_HOTEL_CANCELLED_OR_REFUNDED);
-            hotelOrderMapper.updateById(order);
+            int updated = hotelOrderMapper.markRefundApproved(orderNo);
+            if (updated == 0) {
+                return Result.error("订单状态已变化，请刷新后重试");
+            }
             hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());
             hotelRoomStockService.syncWithDatabase(order.getRoomId());
+            notificationCenterService.createNotification(
+                    order.getUserId(),
+                    "hotel_order",
+                    "酒店退款已通过",
+                    String.format("订单 %s 已退款，房间库存已归还。", orderNo),
+                    "/my-orders?tab=hotel");
         } else {
             TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper<TrafficOrder>()
                     .eq(TrafficOrder::getOrderNo, orderNo));
@@ -954,17 +1055,26 @@ public class AdminController {
             if (Objects.equals(order.getStatus(), STATUS_TRAFFIC_CANCELLED)) {
                 return Result.error("已取消的待支付订单库存已归还，不能再次退款");
             }
-            if (!Objects.equals(order.getStatus(), 1) && !Objects.equals(order.getStatus(), 2)) {
-                return Result.error("只有出票中或已出票的订单可以退票");
+            if (!Objects.equals(order.getStatus(), STATUS_REFUND_REQUESTED)) {
+                return Result.error("只有已提交退票申请的订单可以办理退票");
             }
-            order.setStatus(STATUS_TRAFFIC_REFUNDED);
-            trafficOrderMapper.updateById(order);
+            int updated = trafficOrderMapper.markRefundApproved(orderNo);
+            if (updated == 0) {
+                return Result.error("订单状态已变化，请刷新后重试");
+            }
             returnTrafficStock(order);
+            notificationCenterService.createNotification(
+                    order.getUserId(),
+                    "traffic_order",
+                    "退票申请已通过",
+                    String.format("订单 %s 已退票，库存已归还。", orderNo),
+                    "/my-orders?tab=traffic");
         }
         return Result.success("退款审批已通过");
     }
 
     @PostMapping("/orders/{orderNo}/refund/reject")
+    @Transactional(rollbackFor = Exception.class)
     public Result<String> rejectRefund(@PathVariable String orderNo) {
         checkAdmin();
         if (orderNo.startsWith("HT")) {
@@ -973,14 +1083,34 @@ public class AdminController {
             if (order == null) {
                 return Result.error("订单不存在");
             }
-            return Result.error("当前没有独立的退款申请状态，不能将酒店订单标记为拒绝退款");
+            int updated = hotelOrderMapper.markRefundRejected(orderNo);
+            if (updated == 0) {
+                return Result.error("只有退款申请中的酒店订单可以驳回");
+            }
+            notificationCenterService.createNotification(
+                    order.getUserId(),
+                    "hotel_order",
+                    "酒店退款申请被驳回",
+                    String.format("订单 %s 未通过退款审核，订单已恢复为已支付。", orderNo),
+                    "/my-orders?tab=hotel");
+            return Result.success("退款申请已驳回");
         } else {
             TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper<TrafficOrder>()
                     .eq(TrafficOrder::getOrderNo, orderNo));
             if (order == null) {
                 return Result.error("订单不存在");
             }
-            return Result.error("当前没有独立的退款申请状态，不能将票务订单标记为拒绝退款");
+            int updated = trafficOrderMapper.markRefundRejected(orderNo);
+            if (updated == 0) {
+                return Result.error("只有退票申请中的订单可以驳回");
+            }
+            notificationCenterService.createNotification(
+                    order.getUserId(),
+                    "traffic_order",
+                    "退票申请被驳回",
+                    String.format("订单 %s 未通过退票审核，订单已恢复为已出票。", orderNo),
+                    "/my-orders?tab=traffic");
+            return Result.success("退票申请已驳回");
         }
     }
 
@@ -1207,75 +1337,129 @@ public class AdminController {
         return Result.success();
     }
 
+    @GetMapping("/import/{type}/template")
+    public ResponseEntity<byte[]> downloadImportTemplate(@PathVariable String type) {
+        checkAdmin();
+        String normalizedType = normalizeCsvType(type);
+        String csv = "\uFEFF" + String.join(",", csvHeadersFor(normalizedType)) + "\n"
+                + csvTemplateSample(normalizedType) + "\n";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"travelmate-" + normalizedType + "-template.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
+                .body(csv.getBytes(StandardCharsets.UTF_8));
+    }
+
     @PostMapping("/import/{type}")
-    public Result<Map<String, Object>> importCsv(@PathVariable String type, @RequestParam("file") MultipartFile file) {
+    public Result<Map<String, Object>> importCsv(
+            @PathVariable String type,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(defaultValue = "false") boolean dryRun,
+            @RequestParam(defaultValue = "insert") String mode) {
         checkAdmin();
         if (file == null || file.isEmpty()) {
             return Result.error("CSV 文件不能为空");
         }
+        if (file.getSize() > MAX_CSV_FILE_SIZE) {
+            return Result.error("CSV 文件不能超过 5MB");
+        }
         try {
-            List<String> lines = Arrays.stream(new String(file.getBytes(), StandardCharsets.UTF_8).split("\\R"))
-                    .map(String::trim)
-                    .filter(line -> !line.isEmpty())
-                    .toList();
-            if (lines.size() < 2) {
-                return Result.error("CSV 至少需要表头和一行数据");
-            }
-            List<String> headers = parseCsvLine(lines.get(0));
+            String normalizedType = normalizeCsvType(type);
+            boolean upsert = CSV_MODE_UPSERT.equalsIgnoreCase(mode);
             int success = 0;
+            int failed = 0;
+            int total = 0;
+            Map<String, Integer> actionCounts = new LinkedHashMap<>();
             List<Map<String, Object>> failures = new ArrayList<>();
-            for (int i = 1; i < lines.size(); i++) {
-                Map<String, String> row = mapCsvRow(headers, parseCsvLine(lines.get(i)));
-                try {
-                    importCsvRow(type, row);
-                    success++;
-                } catch (Exception e) {
-                    failures.add(Map.of("line", i + 1, "reason", e.getMessage()));
+
+            try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
+                    CSVParser parser = CSVFormat.DEFAULT.builder()
+                            .setHeader()
+                            .setSkipHeaderRecord(true)
+                            .setIgnoreEmptyLines(true)
+                            .setTrim(true)
+                            .build()
+                            .parse(reader)) {
+                List<String> headers = new ArrayList<>(parser.getHeaderMap().keySet());
+                List<String> missingHeaders = findMissingHeaders(normalizedType, headers);
+                if (!missingHeaders.isEmpty()) {
+                    return Result.error("CSV 缺少必填表头：" + String.join(", ", missingHeaders));
+                }
+
+                for (CSVRecord record : parser) {
+                    Map<String, String> row = mapCsvRecord(headers, record);
+                    if (isBlankCsvRow(row)) {
+                        continue;
+                    }
+                    total++;
+                    try {
+                        String action = importCsvRow(normalizedType, row, dryRun, upsert);
+                        success++;
+                        actionCounts.merge(action, 1, Integer::sum);
+                    } catch (Exception e) {
+                        failed++;
+                        if (failures.size() < MAX_IMPORT_FAILURES_RETURNED) {
+                            failures.add(Map.of(
+                                    "line", record.getRecordNumber() + 1,
+                                    "reason", e.getMessage()));
+                        }
+                    }
                 }
             }
+            if (total == 0) {
+                return Result.error("CSV 至少需要一行有效数据");
+            }
             Map<String, Object> result = new LinkedHashMap<>();
+            result.put("type", normalizedType);
+            result.put("mode", upsert ? CSV_MODE_UPSERT : "insert");
+            result.put("dryRun", dryRun);
+            result.put("total", total);
             result.put("success", success);
-            result.put("failed", failures.size());
+            result.put("failed", failed);
+            result.put("inserted", actionCounts.getOrDefault("inserted", 0));
+            result.put("updated", actionCounts.getOrDefault("updated", 0));
+            result.put("validated", actionCounts.getOrDefault("validated", 0));
             result.put("failures", failures);
+            result.put("failureLimit", MAX_IMPORT_FAILURES_RETURNED);
             return Result.success(result);
         } catch (Exception e) {
             return Result.error("导入失败：" + e.getMessage());
         }
     }
 
-    private List<String> parseCsvLine(String line) {
-        List<String> values = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean quoted = false;
-        for (int i = 0; i < line.length(); i++) {
-            char ch = line.charAt(i);
-            if (ch == '"') {
-                if (quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                    current.append('"');
-                    i++;
-                    continue;
-                }
-                quoted = !quoted;
-            } else if (ch == ',' && !quoted) {
-                values.add(current.toString().trim());
-                current.setLength(0);
-            } else {
-                current.append(ch);
-            }
+    private String normalizeCsvType(String type) {
+        String normalized = type == null ? "" : type.trim().toLowerCase();
+        if (!CSV_IMPORT_TYPES.contains(normalized)) {
+            throw new RuntimeException("不支持的导入类型：" + type);
         }
-        values.add(current.toString().trim());
-        return values;
+        return normalized;
     }
 
-    private Map<String, String> mapCsvRow(List<String> headers, List<String> values) {
+    private List<String> findMissingHeaders(String type, List<String> headers) {
+        Set<String> normalizedHeaders = headers.stream()
+                .map(this::normalizeHeaderName)
+                .collect(Collectors.toSet());
+        return CSV_REQUIRED_HEADERS.getOrDefault(type, List.of()).stream()
+                .filter(required -> !normalizedHeaders.contains(normalizeHeaderName(required)))
+                .toList();
+    }
+
+    private Map<String, String> mapCsvRecord(List<String> headers, CSVRecord record) {
         Map<String, String> row = new HashMap<>();
         for (int i = 0; i < headers.size(); i++) {
-            row.put(headers.get(i), i < values.size() ? values.get(i) : "");
+            String header = cleanCsvHeader(headers.get(i));
+            String value = i < record.size() ? record.get(i).trim() : "";
+            row.put(header, value);
+            row.put(normalizeHeaderName(header), value);
         }
         return row;
     }
 
-    private void importCsvRow(String type, Map<String, String> row) {
+    private boolean isBlankCsvRow(Map<String, String> row) {
+        return row.values().stream().allMatch(value -> value == null || value.isBlank());
+    }
+
+    private String importCsvRow(String type, Map<String, String> row, boolean dryRun, boolean upsert) {
         switch (type) {
             case "flights" -> {
                 Flight flight = new Flight();
@@ -1283,15 +1467,29 @@ public class AdminController {
                 flight.setAirline(csv(row, "airline"));
                 flight.setDepartureCity(csv(row, "departureCity"));
                 flight.setArrivalCity(csv(row, "arrivalCity"));
-                flight.setDepartureTime(LocalDateTime.parse(csv(row, "departureTime")));
-                flight.setArrivalTime(LocalDateTime.parse(csv(row, "arrivalTime")));
+                flight.setDepartureTime(dateTime(row, "departureTime"));
+                flight.setArrivalTime(dateTime(row, "arrivalTime"));
                 flight.setEconomyPrice(decimal(row, "economyPrice"));
                 flight.setBusinessPrice(decimal(row, "businessPrice"));
                 flight.setTotalSeats(integer(row, "totalSeats"));
                 flight.setAvailableSeats(integer(row, "availableSeats"));
                 flight.setStatus(optionalInteger(row, "status", 1));
                 validateFlight(flight);
+                if (dryRun) {
+                    return "validated";
+                }
+                if (upsert) {
+                    Flight exists = flightMapper.selectOne(new LambdaQueryWrapper<Flight>()
+                            .eq(Flight::getFlightNo, flight.getFlightNo())
+                            .last("LIMIT 1"));
+                    if (exists != null) {
+                        flight.setId(exists.getId());
+                        flightMapper.updateById(flight);
+                        return "updated";
+                    }
+                }
                 flightMapper.insert(flight);
+                return "inserted";
             }
             case "trains" -> {
                 Train train = new Train();
@@ -1299,92 +1497,321 @@ public class AdminController {
                 train.setTrainType(csv(row, "trainType"));
                 train.setDepartureStation(csv(row, "departureStation"));
                 train.setArrivalStation(csv(row, "arrivalStation"));
-                train.setDepartureTime(LocalDateTime.parse(csv(row, "departureTime")));
-                train.setArrivalTime(LocalDateTime.parse(csv(row, "arrivalTime")));
+                train.setDepartureTime(dateTime(row, "departureTime"));
+                train.setArrivalTime(dateTime(row, "arrivalTime"));
+                train.setDurationMinutes(optionalInteger(row, "durationMinutes", null));
                 train.setFirstClassPrice(decimal(row, "firstClassPrice"));
                 train.setSecondClassPrice(decimal(row, "secondClassPrice"));
                 train.setFirstClassSeats(integer(row, "firstClassSeats"));
                 train.setSecondClassSeats(integer(row, "secondClassSeats"));
                 train.setStatus(optionalInteger(row, "status", 1));
                 validateTrain(train);
+                if (dryRun) {
+                    return "validated";
+                }
+                if (upsert) {
+                    Train exists = trainMapper.selectOne(new LambdaQueryWrapper<Train>()
+                            .eq(Train::getTrainNo, train.getTrainNo())
+                            .last("LIMIT 1"));
+                    if (exists != null) {
+                        train.setId(exists.getId());
+                        trainMapper.updateById(train);
+                        return "updated";
+                    }
+                }
                 trainMapper.insert(train);
+                return "inserted";
             }
             case "hotels" -> {
                 Hotel hotel = new Hotel();
                 hotel.setName(csv(row, "name"));
                 hotel.setCity(csv(row, "city"));
                 hotel.setAddress(csv(row, "address"));
-                hotel.setDescription(row.getOrDefault("description", ""));
+                hotel.setDescription(optionalText(row, "description", ""));
+                hotel.setCoverImg(optionalText(row, "coverImg", ""));
+                hotel.setLat(optionalDecimal(row, "lat"));
+                hotel.setLng(optionalDecimal(row, "lng"));
                 hotel.setStarRating(integer(row, "starRating"));
                 hotel.setAvgPrice(decimal(row, "avgPrice"));
-                hotel.setScore(new BigDecimal(row.getOrDefault("score", "4.5")));
+                hotel.setScore(optionalDecimal(row, "score", BigDecimal.valueOf(4.5)));
                 hotel.setStatus(optionalInteger(row, "status", 1));
                 validateHotel(hotel);
+                if (dryRun) {
+                    return "validated";
+                }
+                if (upsert) {
+                    Hotel exists = hotelMapper.selectOne(new LambdaQueryWrapper<Hotel>()
+                            .eq(Hotel::getName, hotel.getName())
+                            .eq(Hotel::getCity, hotel.getCity())
+                            .eq(Hotel::getAddress, hotel.getAddress())
+                            .last("LIMIT 1"));
+                    if (exists != null) {
+                        hotel.setId(exists.getId());
+                        hotelMapper.updateById(hotel);
+                        return "updated";
+                    }
+                }
                 hotelMapper.insert(hotel);
+                return "inserted";
             }
             case "rooms" -> {
                 HotelRoom room = new HotelRoom();
-                room.setHotelId(Long.valueOf(csv(row, "hotelId")));
+                room.setHotelId(longValue(row, "hotelId"));
+                if (hotelMapper.selectById(room.getHotelId()) == null) {
+                    throw new RuntimeException("酒店ID不存在：" + room.getHotelId());
+                }
                 room.setRoomType(csv(row, "roomType"));
                 room.setBedType(csv(row, "bedType"));
                 room.setArea(optionalInteger(row, "area", 30));
                 room.setPrice(decimal(row, "price"));
                 room.setTotalRooms(integer(row, "totalRooms"));
                 room.setAvailableRooms(integer(row, "availableRooms"));
+                room.setImages(optionalText(row, "images", ""));
+                room.setFacilities(optionalText(row, "facilities", ""));
                 room.setStatus(optionalInteger(row, "status", 1));
                 validateHotelRoom(room);
+                if (dryRun) {
+                    return "validated";
+                }
+                if (upsert) {
+                    HotelRoom exists = hotelRoomMapper.selectOne(new LambdaQueryWrapper<HotelRoom>()
+                            .eq(HotelRoom::getHotelId, room.getHotelId())
+                            .eq(HotelRoom::getRoomType, room.getRoomType())
+                            .last("LIMIT 1"));
+                    if (exists != null) {
+                        room.setId(exists.getId());
+                        hotelRoomMapper.updateById(room);
+                        hotelRoomStockService.syncWithDatabase(room.getId());
+                        return "updated";
+                    }
+                }
                 hotelRoomMapper.insert(room);
                 hotelRoomStockService.syncWithDatabase(room.getId());
+                return "inserted";
             }
             case "attractions" -> {
                 Attraction attraction = new Attraction();
                 attraction.setName(csv(row, "name"));
                 attraction.setCity(csv(row, "city"));
                 attraction.setAddress(csv(row, "address"));
-                attraction.setDescription(row.getOrDefault("description", ""));
-                attraction.setCoverImg(row.getOrDefault("coverImg", ""));
+                attraction.setDescription(optionalText(row, "description", ""));
+                attraction.setCoverImg(optionalText(row, "coverImg", ""));
                 attraction.setAdultPrice(decimal(row, "adultPrice"));
                 attraction.setChildPrice(decimal(row, "childPrice"));
                 attraction.setTotalTickets(integer(row, "totalTickets"));
                 attraction.setAvailableTickets(integer(row, "availableTickets"));
-                attraction.setOpenTime(row.getOrDefault("openTime", ""));
+                attraction.setOpenTime(optionalText(row, "openTime", ""));
                 attraction.setLat(optionalDecimal(row, "lat"));
                 attraction.setLng(optionalDecimal(row, "lng"));
-                attraction.setOfficialUrl(row.getOrDefault("officialUrl", ""));
-                attraction.setSourceName(row.getOrDefault("sourceName", ""));
-                attraction.setDataCheckedDate(row.get("dataCheckedDate") == null || row.get("dataCheckedDate").isBlank() ? null : LocalDate.parse(row.get("dataCheckedDate")));
+                attraction.setOfficialUrl(optionalText(row, "officialUrl", ""));
+                attraction.setSourceName(optionalText(row, "sourceName", ""));
+                attraction.setDataCheckedDate(optionalDate(row, "dataCheckedDate"));
                 attraction.setStatus(optionalInteger(row, "status", 1));
                 validateAttraction(attraction);
+                if (dryRun) {
+                    return "validated";
+                }
+                if (upsert) {
+                    Attraction exists = attractionMapper.selectOne(new LambdaQueryWrapper<Attraction>()
+                            .eq(Attraction::getName, attraction.getName())
+                            .eq(Attraction::getCity, attraction.getCity())
+                            .last("LIMIT 1"));
+                    if (exists != null) {
+                        attraction.setId(exists.getId());
+                        attractionMapper.updateById(attraction);
+                        return "updated";
+                    }
+                }
                 attractionMapper.insert(attraction);
+                return "inserted";
+            }
+            case "destinations" -> {
+                Destination destination = new Destination();
+                destination.setSlug(csv(row, "slug"));
+                destination.setName(csv(row, "name"));
+                destination.setCountry(optionalText(row, "country", "中国"));
+                destination.setTag(csv(row, "tag"));
+                destination.setKeywords(optionalText(row, "keywords", ""));
+                destination.setImg(csv(row, "img"));
+                destination.setDesc(csv(row, "desc"));
+                destination.setIntro(csv(row, "intro"));
+                destination.setHighlights(optionalText(row, "highlights", ""));
+                destination.setCulture(optionalText(row, "culture", ""));
+                destination.setBestSeason(optionalText(row, "bestSeason", ""));
+                destination.setTransport(optionalText(row, "transport", ""));
+                destination.setSourceName(optionalText(row, "sourceName", ""));
+                destination.setSourceUrl(optionalText(row, "sourceUrl", ""));
+                destination.setSortOrder(optionalInteger(row, "sortOrder", 100));
+                destination.setStatus(optionalInteger(row, "status", 1));
+                validateDestination(destination);
+                if (dryRun) {
+                    return "validated";
+                }
+                Destination exists = destinationMapper.selectOne(new LambdaQueryWrapper<Destination>()
+                        .eq(Destination::getSlug, destination.getSlug())
+                        .last("LIMIT 1"));
+                destination.setUpdateTime(LocalDateTime.now());
+                if (exists == null) {
+                    destination.setCreateTime(LocalDateTime.now());
+                    destinationMapper.insert(destination);
+                } else {
+                    destination.setId(exists.getId());
+                    destination.setCreateTime(exists.getCreateTime());
+                    destinationMapper.updateById(destination);
+                    return "updated";
+                }
+                return "inserted";
             }
             default -> throw new RuntimeException("不支持的导入类型：" + type);
         }
     }
 
+    private String cleanCsvHeader(String header) {
+        return header == null ? "" : header.replace("\uFEFF", "").trim();
+    }
+
+    private String normalizeHeaderName(String header) {
+        return cleanCsvHeader(header)
+                .replace("_", "")
+                .replace("-", "")
+                .replace(" ", "")
+                .toLowerCase();
+    }
+
     private String csv(Map<String, String> row, String key) {
         String value = row.get(key);
+        if ((value == null || value.isBlank())) {
+            value = row.get(normalizeHeaderName(key));
+        }
         if (value == null || value.isBlank()) {
             throw new RuntimeException("缺少字段 " + key);
         }
         return value.trim();
     }
 
+    private String optionalText(Map<String, String> row, String key, String fallback) {
+        String value = row.get(key);
+        if (value == null) {
+            value = row.get(normalizeHeaderName(key));
+        }
+        return value == null || value.isBlank() ? fallback : value.trim();
+    }
+
     private Integer integer(Map<String, String> row, String key) {
-        return Integer.valueOf(csv(row, key));
+        try {
+            return Integer.valueOf(normalizeNumber(csv(row, key)));
+        } catch (Exception e) {
+            throw new RuntimeException("字段 " + key + " 必须是整数");
+        }
     }
 
     private Integer optionalInteger(Map<String, String> row, String key, Integer fallback) {
-        String value = row.get(key);
-        return value == null || value.isBlank() ? fallback : Integer.valueOf(value.trim());
+        String value = optionalText(row, key, "");
+        if (value.isBlank()) {
+            return fallback;
+        }
+        try {
+            return Integer.valueOf(normalizeNumber(value));
+        } catch (Exception e) {
+            throw new RuntimeException("字段 " + key + " 必须是整数");
+        }
+    }
+
+    private Long longValue(Map<String, String> row, String key) {
+        try {
+            return Long.valueOf(normalizeNumber(csv(row, key)));
+        } catch (Exception e) {
+            throw new RuntimeException("字段 " + key + " 必须是整数");
+        }
     }
 
     private BigDecimal decimal(Map<String, String> row, String key) {
-        return new BigDecimal(csv(row, key));
+        try {
+            return new BigDecimal(normalizeNumber(csv(row, key)));
+        } catch (Exception e) {
+            throw new RuntimeException("字段 " + key + " 必须是数字");
+        }
     }
 
     private BigDecimal optionalDecimal(Map<String, String> row, String key) {
-        String value = row.get(key);
-        return value == null || value.isBlank() ? null : new BigDecimal(value.trim());
+        String value = optionalText(row, key, "");
+        if (value.isBlank()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(normalizeNumber(value));
+        } catch (Exception e) {
+            throw new RuntimeException("字段 " + key + " 必须是数字");
+        }
+    }
+
+    private BigDecimal optionalDecimal(Map<String, String> row, String key, BigDecimal fallback) {
+        BigDecimal value = optionalDecimal(row, key);
+        return value == null ? fallback : value;
+    }
+
+    private String normalizeNumber(String value) {
+        return value.trim().replace("￥", "").replace("¥", "").replace(",", "");
+    }
+
+    private LocalDateTime dateTime(Map<String, String> row, String key) {
+        String value = csv(row, key);
+        List<DateTimeFormatter> formatters = List.of(
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        for (DateTimeFormatter formatter : formatters) {
+            try {
+                return LocalDateTime.parse(value, formatter);
+            } catch (Exception ignored) {
+            }
+        }
+        throw new RuntimeException("字段 " + key + " 时间格式应为 2026-06-01T08:00:00 或 2026-06-01 08:00:00");
+    }
+
+    private LocalDate optionalDate(Map<String, String> row, String key) {
+        String value = optionalText(row, key, "");
+        if (value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value);
+        } catch (Exception e) {
+            throw new RuntimeException("字段 " + key + " 日期格式应为 2026-05-30");
+        }
+    }
+
+    private List<String> csvHeadersFor(String type) {
+        return switch (type) {
+            case "flights" -> List.of("flightNo", "airline", "departureCity", "arrivalCity", "departureTime",
+                    "arrivalTime", "economyPrice", "businessPrice", "totalSeats", "availableSeats", "status");
+            case "trains" -> List.of("trainNo", "trainType", "departureStation", "arrivalStation", "departureTime",
+                    "arrivalTime", "durationMinutes", "firstClassPrice", "secondClassPrice", "firstClassSeats",
+                    "secondClassSeats", "status");
+            case "hotels" -> List.of("name", "city", "address", "description", "coverImg", "lat", "lng",
+                    "starRating", "avgPrice", "score", "status");
+            case "rooms" -> List.of("hotelId", "roomType", "bedType", "area", "price", "totalRooms",
+                    "availableRooms", "images", "facilities", "status");
+            case "attractions" -> List.of("name", "city", "address", "description", "coverImg", "adultPrice",
+                    "childPrice", "totalTickets", "availableTickets", "openTime", "lat", "lng", "officialUrl",
+                    "sourceName", "dataCheckedDate", "status");
+            case "destinations" -> List.of("slug", "name", "country", "tag", "keywords", "img", "desc", "intro",
+                    "highlights", "culture", "bestSeason", "transport", "sourceName", "sourceUrl", "sortOrder",
+                    "status");
+            default -> throw new RuntimeException("不支持的导入类型：" + type);
+        };
+    }
+
+    private String csvTemplateSample(String type) {
+        return switch (type) {
+            case "flights" -> "CA1001,中国国际航空,北京,上海,2026-06-01T08:00:00,2026-06-01T10:00:00,680,2180,200,120,1";
+            case "trains" -> "G1001,G,北京南,上海虹桥,2026-06-01T08:00:00,2026-06-01T12:30:00,270,880,553,80,420,1";
+            case "hotels" -> "城市花园酒店,上海,上海市黄浦区示例路1号,近地铁商务酒店,https://example.com/hotel.jpg,31.2304,121.4737,4,520,4.6,1";
+            case "rooms" -> "1,豪华大床房,1张大床,38,688,20,12,\"[\"\"/images/room.jpg\"\"]\",\"[\"\"早餐\"\",\"\"洗衣房\"\"]\",1";
+            case "attractions" -> "示例景区,杭州,杭州市示例路1号,城市观光景区,https://example.com/scenic.jpg,80,40,1000,800,08:00-18:00,30.2741,120.1551,https://example.com,景区官网,2026-05-30,1";
+            case "destinations" -> "dali,大理,中国,风花雪月,洱海|古城|苍山,/images/seed/dali.svg,苍山洱海与古城生活交织,适合慢旅行的城市,洱海骑行|古城夜游,白族文化,春秋季,高铁到大理站,公开旅游资料,https://example.com,90,1";
+            default -> throw new RuntimeException("不支持的导入类型：" + type);
+        };
     }
 
     @GetMapping("/logs")

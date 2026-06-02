@@ -81,9 +81,13 @@ mysql -u root -p -e "USE travelmate; SHOW TABLES LIKE 'tm_user'; SHOW TABLES LIK
 
 ```powershell
 .\start.ps1
+.\start-backend.ps1
+.\start-frontend.ps1
 ```
 
 脚本会先启动后端，并在检测到 `http://127.0.0.1:8080/api/post/list` 可访问后再启动前端，避免开发模式下前端一打开就因为后端尚未完成启动而出现 Vite `http proxy error` / `ECONNREFUSED`。
+
+如果你只想分别启动单个服务，也可以直接使用两个独立入口：`start-backend.ps1` 只启动后端，`start-frontend.ps1` 只启动前端。它们都会复用现有 `start.ps1` 的环境变量加载、参数校验和启动逻辑。
 
 也可以双击或命令行运行：
 
@@ -107,7 +111,29 @@ start.bat -DryRun
 .\start.ps1 -SkipRedis
 .\start.ps1 -SkipFrontendInstall
 .\start.ps1 -DryRun
+
+.\start-backend.ps1 -DbPassword 你的MySQL密码
+.\start-backend.ps1 -DeepseekApiKey 你的DeepSeek密钥
+.\start-backend.ps1 -SkipRedis
+
+.\start-frontend.ps1 -SkipFrontendInstall
+.\start-frontend.ps1 -DryRun
 ```
+
+参数说明：
+
+- `-DbPassword`：仅后端启动相关。显式指定 MySQL 密码，优先于 `.env`、`SPRING_DATASOURCE_PASSWORD`、`DB_PASSWORD` 和 `backend/application-local.yml` 中的配置。
+- `-DeepseekApiKey`：仅后端启动相关。显式指定 DeepSeek API Key；未提供时会继续尝试读取当前环境变量或根目录 `.env`。
+- `-BackendOnly`：只启动后端服务，不启动前端。通常由 `start-backend.ps1` 内部使用。
+- `-FrontendOnly`：只启动前端服务，不启动后端。通常由 `start-frontend.ps1` 内部使用。
+- `-SkipRedis`：跳过 Redis 自动检测和自动启动。适合本机未装 Redis、或你只想先验证基础后端是否能起来的场景。
+- `-SkipFrontendInstall`：启动前端前不自动执行 `npm install`。当 `frontend/node_modules` 已经存在时建议使用；如果依赖还没装，前端可能启动失败。
+- `-DryRun`：只打印即将执行的命令，不真正启动服务。适合检查脚本会如何解析参数和调用命令。
+
+独立脚本对应关系：
+
+- `start-backend.ps1` 会固定附带 `-BackendOnly`，并额外支持 `-DbPassword`、`-DeepseekApiKey`、`-SkipRedis`、`-DryRun`。
+- `start-frontend.ps1` 会固定附带 `-FrontendOnly`，并额外支持 `-SkipFrontendInstall`、`-DryRun`。
 
 `start.bat` 是 `start.ps1` 的 CMD/双击入口，会自动寻找 PowerShell 7 或 Windows PowerShell，并把命令行参数原样传给 `start.ps1`。需要查看参数时可运行 `start.bat /?`。
 
@@ -126,12 +152,13 @@ start.bat -DryRun
 已覆盖的社区交互：
 
 - 游记列表支持关键词搜索，推荐流按热度和时间衰减排序。
-- 游记发布后进入 AI审核中，后端可通过 AI 审核任务自动判断通过/拒绝；失败时保留人工审核兜底。
+- 游记发布后进入 AI 审核中，后端可通过 AI 审核任务自动判断通过/拒绝；失败时保留人工审核兜底。
 - 关注流需要登录；关注/取消关注后会同步刷新关注状态和粉丝数。
-- 社区页增加 `我的` 标签，展示草稿、AI审核中、已发布、已拒绝内容。
+- 社区页增加 `我的` 标签，展示草稿、AI 审核中、已发布、已拒绝内容；标签可点击进入同标签筛选页。
 - 个人主页支持查看关注/粉丝列表，并可跳转到用户主页。
 - 无配图游记使用纯文字卡片，不再随机渲染占位图片。
-- 帖子详情点赞使用数字 `targetType`，避免字符串类型导致的后端解析错误。
+- 帖子详情点赞/收藏使用数字 `targetType`，避免字符串类型导致的后端解析错误。
+- 我的收藏页集中展示已收藏游记，可从用户菜单进入。
 - 评论、回复、删除评论后会刷新评论树和评论数量；无头像用户显示首字母默认头像。
 
 ### 后端启动
@@ -192,22 +219,23 @@ npm run dev
 当前仓库已经完成基础业务主链路，但整体仍处于“可运行 + 持续联调完善”阶段，不应再按早期文档理解为“酒店/AI/社区/后台尚未开始”。
 
 - 后端已具备：用户认证、航班/火车、交通订单、酒店/景点、AI 行程、AI 聊天、社区、管理后台等基础接口。
-- 前端已具备：[frontend/src/views/Home.vue](frontend/src/views/Home.vue)、[frontend/src/views/Login.vue](frontend/src/views/Login.vue)、[frontend/src/views/destination/DestinationList.vue](frontend/src/views/destination/DestinationList.vue)、[frontend/src/views/destination/DestinationDetail.vue](frontend/src/views/destination/DestinationDetail.vue)、[frontend/src/views/info/InfoPage.vue](frontend/src/views/info/InfoPage.vue)、[frontend/src/views/flight/FlightSearch.vue](frontend/src/views/flight/FlightSearch.vue)、[frontend/src/views/train/TrainSearch.vue](frontend/src/views/train/TrainSearch.vue)、[frontend/src/views/hotel/HotelSearch.vue](frontend/src/views/hotel/HotelSearch.vue)、[frontend/src/views/hotel/HotelDetail.vue](frontend/src/views/hotel/HotelDetail.vue)、[frontend/src/views/hotel/AttractionList.vue](frontend/src/views/hotel/AttractionList.vue)、[frontend/src/views/ai/AiPlan.vue](frontend/src/views/ai/AiPlan.vue)、[frontend/src/views/community/Community.vue](frontend/src/views/community/Community.vue)、[frontend/src/views/community/PostCreate.vue](frontend/src/views/community/PostCreate.vue)、[frontend/src/views/community/PostDetail.vue](frontend/src/views/community/PostDetail.vue)、[frontend/src/views/order/CouponCenter.vue](frontend/src/views/order/CouponCenter.vue)、[frontend/src/views/order/MyOrders.vue](frontend/src/views/order/MyOrders.vue)、[frontend/src/views/user/NotificationCenter.vue](frontend/src/views/user/NotificationCenter.vue)、[frontend/src/views/user/UserProfile.vue](frontend/src/views/user/UserProfile.vue)、[frontend/src/views/admin/AdminDashboard.vue](frontend/src/views/admin/AdminDashboard.vue) 等基础页面。
+- 前端已具备：[frontend/src/views/Home.vue](frontend/src/views/Home.vue)、[frontend/src/views/Login.vue](frontend/src/views/Login.vue)、[frontend/src/views/destination/DestinationList.vue](frontend/src/views/destination/DestinationList.vue)、[frontend/src/views/destination/DestinationDetail.vue](frontend/src/views/destination/DestinationDetail.vue)、[frontend/src/views/info/InfoPage.vue](frontend/src/views/info/InfoPage.vue)、[frontend/src/views/flight/FlightSearch.vue](frontend/src/views/flight/FlightSearch.vue)、[frontend/src/views/train/TrainSearch.vue](frontend/src/views/train/TrainSearch.vue)、[frontend/src/views/hotel/HotelSearch.vue](frontend/src/views/hotel/HotelSearch.vue)、[frontend/src/views/hotel/HotelDetail.vue](frontend/src/views/hotel/HotelDetail.vue)、[frontend/src/views/hotel/AttractionList.vue](frontend/src/views/hotel/AttractionList.vue)、[frontend/src/views/ai/AiPlan.vue](frontend/src/views/ai/AiPlan.vue)、[frontend/src/views/community/Community.vue](frontend/src/views/community/Community.vue)、[frontend/src/views/community/PostCreate.vue](frontend/src/views/community/PostCreate.vue)、[frontend/src/views/community/PostDetail.vue](frontend/src/views/community/PostDetail.vue)、[frontend/src/views/order/CouponCenter.vue](frontend/src/views/order/CouponCenter.vue)、[frontend/src/views/order/MyOrders.vue](frontend/src/views/order/MyOrders.vue)、[frontend/src/views/user/NotificationCenter.vue](frontend/src/views/user/NotificationCenter.vue)、[frontend/src/views/user/MyCollections.vue](frontend/src/views/user/MyCollections.vue)、[frontend/src/views/user/UserProfile.vue](frontend/src/views/user/UserProfile.vue)、[frontend/src/views/admin/AdminDashboard.vue](frontend/src/views/admin/AdminDashboard.vue) 等基础页面。
 - Windows 根目录已提供一键启动脚本：[start.ps1](start.ps1) 和 [start.bat](start.bat)。
 - 数据库种子已改用本地静态图片路径，热门城市资料、一日游/周边游、优惠券、订单、日志、评价等演示数据不再依赖随机占位图。
-- 订单链路已支持机票/火车票多张购买、酒店多间房预订，库存预扣减和超时取消会按实际数量回补。
+- 订单链路已支持机票/火车票多张购买、酒店多间房预订、景点门票购买、详情查看、用户退款申请、后台退款审批，库存预扣减和取消/退款会按实际数量回补。
+- 首页会展示本地最近浏览记录，当前覆盖酒店详情、景点购票入口和游记详情。
 
 ## 图片资源策略
 
-核心演示图片统一放在 [frontend/public/images/seed](frontend/public/images/seed)，数据库 `cover_img`、媒体资源 URL 和热门城市封面保存 `/images/seed/...` 这类本地路径。前端使用 [SafeImage.vue](frontend/src/components/SafeImage.vue) 做统一兜底，空地址或加载失败会显示 `/images/seed/fallback.svg`。
+酒店和景点封面优先使用真实图片 URL 或真实本地图片路径（如 `/uploads/...`、`/images/real/...`）。课程演示用的 `/images/seed/...` SVG 仍允许作为稳定兜底素材；业务图片为空或加载失败时，前端会统一回退到 `/images/seed/fallback.svg`。
 
-新增或修改种子图片后建议执行：
+新增或修改本地图片后建议执行：
 
 ```powershell
 npm run check:images
 ```
 
-该命令会检查 `docs/sql/init.sql` 和主要前端入口，避免重新引入 `picsum.photos`、Wikimedia 图片直链等高风险外链，并确认本地 seed 图片文件存在。
+该命令会检查 `docs/sql/init.sql` 和主要前端入口，避免重新引入随机占位图，并确认本地图片文件存在。
 
 ## 当前待完善项
 
@@ -216,6 +244,7 @@ npm run check:images
 - AI 行程与订单的更深度联动、同行人共享行程等扩展能力待后续补充。
 - 若后续需要更真实的照片效果，可把同名 seed SVG 替换为自建 CDN 或对象存储中的稳定图片，并保持数据库路径由项目方控制。
 - 更深层的并发压测与端到端自动化回归仍需继续完善。
+- 已初始化过的本地数据库若缺少 `tm_attraction_order`，需要重新执行 `docs/sql/init.sql` 或手工补建该表后再使用景点购票订单功能。
 
 ---
 
@@ -239,29 +268,30 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 
 - 航班搜索（出发城市、到达城市、日期，多维度筛选）
 - 火车票搜索（出发站、到达站、日期、中转方案推荐）
-- 基础订单管理（多张票下单、模拟支付、取消、退款处理、状态机流转）
+- 基础订单管理（多张票下单、模拟支付、取消、订单详情、用户退票申请、后台退款处理、状态机流转）
 - 库存管控（机票、酒店等资源的 Redis 预扣减 + MySQL 原子更新防超卖）
 - 常用旅客管理
 - 历史价格趋势（ECharts 折线图，近 7 天模拟数据）
 - 退改签规则展示（各舱位退改费用说明）
-- 行程单下载（文本格式订单回执）
+- 行程单下载（文本格式订单回执）和订单详情弹窗
 
 ### 目的地住宿与本地生活（成员 B - 莫谨瑞）
 
 - 酒店多条件搜索（城市、星级、价格区间）
 - 酒店详情与房型展示（提供房型与基础库存数据）
 - 景点搜索与详情展示
-- 景点门票购买入口与订单 / 凭证展示
+- 景点门票购买入口、真实订单落库、我的订单景点门票标签页与凭证展示
 - 一日游 / 周边游产品推荐
 - 基础评价系统（星级评分、图片上传、标签选择、评价列表）
-- 酒店订单扫码核销（内置不可用示例二维码，避免外链破图）
-- 热门城市资料页（真实目的地介绍、代表景点、出行建议）
+- 酒店订单扫码核销、订单详情、用户退款申请与后台审批
+- 热门城市资料页（真实目的地介绍、代表景点、出行建议），优先读取后端城市资料表，后端为空时回退到前端静态资料
 
 ### AI 智能规划与 Agent 服务（成员 C - 陈一鸿）
 
 - AI 行程规划（调用 DeepSeek API，强制 JSON 结构化输出）
-- API 超时/失败时自动降级为模板方案
-- AI 客服多轮对话（Function Calling Tools: 天气/航班/酒店查询）
+- 行程生成支持旅行节奏、必去地点、避开项、交通偏好和住宿偏好，并输出交通住宿建议、行前清单、风险提醒、每日备选方案
+- API Key 缺失、超时或失败时自动降级为本地模板方案，避免前端长时间等待失败请求
+- AI 客服多轮对话（Function Calling Tools: 天气/航班/酒店查询），支持空消息/超长消息校验和本地兜底答复
 - 站内通知查询 / 已读 / 删除 / 一键删除 / 未读数接口，支持点击通知跳转业务页面并自动清除未读红点
 - 航班延误预警模拟（定时任务随机推送通知）
 - 行程导出（文本格式，含每日路线和费用明细）
@@ -271,8 +301,8 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 - 用户注册/登录（BCrypt + JWT 认证）
 - 游记发布（图片上传、标签、可见范围、草稿箱）
 - 游记审核状态流转（审核中、已发布、已拒绝）
-- 双列瀑布流社区浏览（推荐 + 关注信息流）
-- 点赞、收藏、评论（二级评论树）
+- 双列瀑布流社区浏览（推荐 + 关注信息流 + 标签筛选）
+- 点赞、收藏、我的收藏页、评论（二级评论树）
 - 关注/粉丝社交关系
 - 个人资料编辑 + 密码修改
 
@@ -280,10 +310,10 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 
 - RBAC 权限控制（后端 `/api/admin/**` 要求 `ROLE_ADMIN`，前端 `requiresAdmin` 二次拦截）
 - ECharts 可观测仪表盘（真实订单趋势、类型分布、热门目的地、用户增长、今日 GMV、近 15 分钟活跃用户、本地请求量、接口延迟、报错日志告警）
-- 资源管理（航班 CRUD、火车 CRUD、酒店 CRUD、房型库存/价格/上下架干预、景点 CRUD）
-- 资源批量导入（航班、火车、酒店、房型、景点 CSV 导入，格式见 [docs/admin-csv-import.md](docs/admin-csv-import.md)）
+- 资源管理（航班 CRUD、火车 CRUD、酒店 CRUD、房型库存/价格/上下架干预、景点 CRUD、城市资料下线）
+- 资源批量导入（航班、火车、酒店、房型、景点、城市资料 CSV 导入；支持 UTF-8/BOM、引号、多行字段、预检、仅新增/重复更新和模板下载，格式见 [docs/admin-csv-import.md](docs/admin-csv-import.md)）
 - 优惠券配置（满减券/折扣券新增、编辑、删除，支持业务类型分类和用户领券记录查看）
-- 内容与安全审核（敏感词新增/编辑/删除、游记人工审核、AI 审核建议复核、通过 / 拒绝原因记录、一键封禁作者）
+- 内容与安全审核（敏感词新增/编辑/删除、游记人工审核、AI 审核建议复核、通过 / 拒绝原因记录、审核完成后可随时改判、一键封禁作者）
 - 商家回复与评价举报工单处理（驳回举报、删除被举报评价、查看/新增/删除商家回复）
 - 用户管理（启用/禁用、用户画像侧边查看，含订单、发帖、评论、评价、举报和最近操作统计）
 - 全平台订单流水（按类型/状态筛选、分页查看、交通与酒店退款审批闭环）
@@ -301,6 +331,7 @@ curl -X POST "http://localhost:8080/user/register?username=test&password=test123
 | 数据库 | MySQL 8.0 + Redis                                             |
 | 认证   | JWT (jjwt 0.11.5) + Spring Security                           |
 | AI     | DeepSeek API（OpenAI 兼容协议）                               |
+| CSV    | Apache Commons CSV                                            |
 
 ---
 
@@ -335,7 +366,7 @@ Software_engineering/
 │       │   └── admin/AdminDashboard.vue ← ECharts 仪表盘 + 资源/审核/订单管理
 │       ├── components/                ← PageHeader, SkeletonBox, EmptyState, CountUp, PriceTrend
 │       ├── stores/user.js             ← Pinia 用户状态
-│       ├── data/                      ← destinations + infoPages 静态资料
+│       ├── data/                      ← destinations 兜底资料 + infoPages 静态资料
 │       ├── router/index.js            ← 路由配置（23 路由）
 │       └── utils/request.js           ← Axios 封装（含 JWT 自动注入）
 └── docs/

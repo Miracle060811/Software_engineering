@@ -48,7 +48,9 @@
             v-for="tag in parseTags(post.tags)"
             :key="tag"
             size="small"
+            class="clickable-tag"
             style="margin-right: 6px"
+            @click="openTag(tag)"
           >
             {{ tag }}
           </el-tag>
@@ -85,13 +87,22 @@
       <div class="action-bar">
         <el-button
           :type="isLiked ? 'danger' : ''"
-          circle
           size="large"
           @click="toggleLike"
         >
           <el-icon size="18"><component :is="isLiked ? StarFilled : Star" /></el-icon>
+          {{ isLiked ? "已点赞" : "点赞" }}
         </el-button>
         <span class="like-count">{{ likeCount }}</span>
+        <el-button
+          :type="isCollected ? 'warning' : ''"
+          size="large"
+          @click="toggleCollect"
+        >
+          <el-icon size="18"><component :is="isCollected ? StarFilled : Star" /></el-icon>
+          {{ isCollected ? "已收藏" : "收藏" }}
+        </el-button>
+        <span class="like-count">{{ collectCount }}</span>
       </div>
 
       <!-- 评论区 -->
@@ -192,6 +203,7 @@ import { LocationFilled, StarFilled, Star } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import { useUserStore } from "@/stores/user";
 import { FALLBACK_IMAGE, parseImageList } from "@/utils/image";
+import { addBrowseHistory } from "@/utils/browseHistory";
 
 const route = useRoute();
 const router = useRouter();
@@ -204,9 +216,12 @@ const commentContent = ref("");
 const replyContent = ref("");
 const replyingTo = ref(null);
 const isLiked = ref(false);
+const isCollected = ref(false);
 const likeCount = ref(0);
+const collectCount = ref(0);
 const isFollowing = ref(false);
 const POST_LIKE_TARGET_TYPE = 0;
+const POST_COLLECT_TARGET_TYPE = 2;
 
 const isSelf = computed(() => {
   const current = userStore.userInfo;
@@ -248,6 +263,10 @@ const goAuthorProfile = (item) => {
   }
 };
 
+const openTag = (tag) => {
+  router.push({ path: "/community", query: { tag } });
+};
+
 const isMyComment = (comment) => {
   return userStore.userInfo?.username === comment.authorUsername;
 };
@@ -257,8 +276,16 @@ const fetchPost = async () => {
   try {
     const data = await request.get(`/api/post/${postId}`);
     post.value = data;
+    addBrowseHistory({
+      type: "post",
+      id: data.id,
+      title: data.title,
+      subtitle: data.destination || "旅行社区",
+      path: `/post/${data.id}`,
+    });
     likeCount.value = data.likeCount || 0;
-    await Promise.allSettled([fetchComments(), fetchLikeStatus(), fetchFollowStatus()]);
+    collectCount.value = data.collectCount || 0;
+    await Promise.allSettled([fetchComments(), fetchLikeStatus(), fetchCollectStatus(), fetchFollowStatus()]);
   } catch (e) {
     ElMessage.error(e.message || "游记详情加载失败");
   } finally {
@@ -292,6 +319,16 @@ const fetchLikeStatus = async () => {
   } catch (e) {}
 };
 
+const fetchCollectStatus = async () => {
+  if (!userStore.isLoggedIn) return;
+  try {
+    const data = await request.get("/api/like/status", {
+      params: { targetId: postId, targetType: POST_COLLECT_TARGET_TYPE },
+    });
+    isCollected.value = !!data;
+  } catch (e) {}
+};
+
 const toggleLike = async () => {
   if (!userStore.isLoggedIn) {
     ElMessage.warning("请先登录");
@@ -304,6 +341,22 @@ const toggleLike = async () => {
     });
     isLiked.value = !!data?.liked;
     likeCount.value = data?.count ?? Math.max(0, likeCount.value + (isLiked.value ? 1 : -1));
+  } catch (e) {}
+};
+
+const toggleCollect = async () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning("请先登录");
+    return;
+  }
+  try {
+    const data = await request.post("/api/like/toggle", {
+      targetId: postId,
+      targetType: POST_COLLECT_TARGET_TYPE,
+    });
+    isCollected.value = !!data?.collected;
+    collectCount.value = data?.count ?? Math.max(0, collectCount.value + (isCollected.value ? 1 : -1));
+    ElMessage.success(isCollected.value ? "已加入收藏" : "已取消收藏");
   } catch (e) {}
 };
 
@@ -464,6 +517,9 @@ onMounted(() => {
 }
 .post-tags {
   margin-bottom: 8px;
+}
+.clickable-tag {
+  cursor: pointer;
 }
 .post-destination {
   font-size: 13px;

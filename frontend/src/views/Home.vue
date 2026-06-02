@@ -5,7 +5,7 @@
       <div class="hero-bg">
         <SafeImage
           :src="heroPhoto"
-          :fallback="seedImage('coast.svg')"
+          :fallback="FALLBACK_IMAGE"
           image-class="hero-photo-img"
           alt="海岛旅行风景"
           loading="eager"
@@ -27,9 +27,11 @@
             把交通、住宿、景点与 AI 行程规划收进一处，让出发前的安排安静、有序，也更接近你想要的旅行节奏。
           </p>
           <div class="hero-chips" aria-label="TravelMate 服务">
-            <span>实时票务</span>
-            <span>酒店房型</span>
-            <span>AI 行程</span>
+            <span>交通</span>
+            <span>出游</span>
+            <span>社区</span>
+            <span>AI规划</span>
+            <span>优惠券</span>
           </div>
           <div class="hero-actions">
             <el-button type="primary" size="large" round @click="$router.push('/ai-plan')">
@@ -258,6 +260,28 @@
       </div>
     </section>
 
+    <section v-if="recentHistory.length" class="history-section">
+      <div class="section-header history-header">
+        <div>
+          <h2 class="section-title">最近浏览</h2>
+          <p class="section-sub">快速回到刚看过的酒店、景点和游记</p>
+        </div>
+      </div>
+      <div class="history-list">
+        <button
+          v-for="item in recentHistory"
+          :key="`${item.type}-${item.id}`"
+          class="history-card"
+          type="button"
+          @click="router.push(item.path)"
+        >
+          <span class="history-type">{{ historyTypeLabel(item.type) }}</span>
+          <strong>{{ item.title }}</strong>
+          <small>{{ item.subtitle }}</small>
+        </button>
+      </div>
+    </section>
+
     <!-- ========== 安静规划步骤 ========== -->
     <section class="itinerary-section">
       <div class="itinerary-panel">
@@ -308,15 +332,19 @@
         <div class="retreat-copy">
           <div class="retreat-heading">
             <span class="section-kicker">CALM PLANNING</span>
-            <h2>把复杂行程，拆成三段安静的准备</h2>
+            <h2>
+              <span>把复杂行程</span>
+              <span>拆成三段</span>
+              <span>安静地准备</span>
+            </h2>
           </div>
           <p>
             参考自然 retreat 的慢节奏，把票务、住宿和路线从拥挤流程里拆开。每一步都保留明确入口，也留出足够的呼吸感。
           </p>
-          <div class="retreat-art-notes">
-            <span>Tickets</span>
-            <span>Stay</span>
-            <span>AI Route</span>
+          <div class="retreat-actions" aria-label="旅行准备入口">
+            <button type="button" @click="$router.push('/flight-search')">查票价</button>
+            <button type="button" @click="$router.push('/hotel-search')">选住宿</button>
+            <button type="button" @click="$router.push('/ai-plan')">生成路线</button>
           </div>
         </div>
 
@@ -324,7 +352,7 @@
           <div class="retreat-image-wrap">
             <SafeImage
               :src="retreatPhoto"
-              :fallback="seedImage('garden.svg')"
+              :fallback="FALLBACK_IMAGE"
               image-class="retreat-photo"
               alt="安静旅行规划"
             />
@@ -417,7 +445,7 @@
       <div class="feature-grid">
         <button class="feature-card" type="button" @click="$router.push('/ai-plan')">
           <div class="feat-visual feat-visual-ai">
-            <SafeImage :src="featurePhotos.ai" :fallback="seedImage('lake.svg')" image-class="feat-photo" alt="AI 智能规划" />
+            <SafeImage :src="featurePhotos.ai" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="AI 智能规划" />
             <div class="feat-photo-overlay"></div>
             <span class="feat-number">01</span>
           </div>
@@ -430,7 +458,7 @@
 
         <button class="feature-card" type="button" @click="$router.push('/community')">
           <div class="feat-visual feat-visual-community">
-            <SafeImage :src="featurePhotos.community" :fallback="seedImage('garden.svg')" image-class="feat-photo" alt="旅行社区" />
+            <SafeImage :src="featurePhotos.community" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="旅行社区" />
             <div class="feat-photo-overlay"></div>
             <span class="feat-number">02</span>
           </div>
@@ -443,7 +471,7 @@
 
         <button class="feature-card" type="button" @click="$router.push('/attractions')">
           <div class="feat-visual feat-visual-attraction">
-            <SafeImage :src="featurePhotos.attraction" :fallback="seedImage('mountain.svg')" image-class="feat-photo" alt="景点门票" />
+            <SafeImage :src="featurePhotos.attraction" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="景点门票" />
             <div class="feat-photo-overlay"></div>
             <span class="feat-number">03</span>
           </div>
@@ -482,7 +510,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import {
   Search,
@@ -501,10 +529,12 @@ import {
 import CountUp from "../components/CountUp.vue";
 import SafeImage from "@/components/SafeImage.vue";
 import { destinations } from "@/data/destinations";
-import { seedImage } from "@/utils/image";
+import { FALLBACK_IMAGE } from "@/utils/image";
+import { getBrowseHistory } from "@/utils/browseHistory";
 
 const router = useRouter();
 const searchTab = ref("flight");
+const recentHistory = ref([]);
 
 const formatDate = (date) => {
   const year = date.getFullYear();
@@ -525,22 +555,27 @@ const hotelForm = ref({ city: "", dateRange: [addDays(1), addDays(3)] });
 
 const hotSearches = ["北京", "上海", "三亚", "成都", "杭州", "西安"];
 const heroPhoto =
-  destinations.find((item) => item.slug === "guilin")?.img || seedImage("mountain.svg");
+  destinations.find((item) => item.slug === "guilin")?.img || FALLBACK_IMAGE;
 
 const showcaseDestinations = ["guilin", "hangzhou", "chengdu"]
   .map((slug) => destinations.find((item) => item.slug === slug))
   .filter(Boolean);
 
 const featurePhotos = {
-  ai: destinations.find((item) => item.slug === "hangzhou")?.img || seedImage("lake.svg"),
-  community: destinations.find((item) => item.slug === "chengdu")?.img || seedImage("garden.svg"),
-  attraction: destinations.find((item) => item.slug === "zhangjiajie")?.img || seedImage("mountain.svg"),
+  ai: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&h=620&q=80",
+  community: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&h=620&q=80",
+  attraction: "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?auto=format&fit=crop&w=1200&h=620&q=80",
 };
 
+const historyTypeLabel = (type) =>
+  ({ hotel: "酒店", attraction: "景点", post: "游记" }[type] || "记录");
+
+onMounted(() => {
+  recentHistory.value = getBrowseHistory().slice(0, 4);
+});
+
 const retreatPhoto =
-  destinations.find((item) => item.slug === "dali")?.img ||
-  destinations.find((item) => item.slug === "hangzhou")?.img ||
-  seedImage("garden.svg");
+  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&h=760&q=80";
 
 const stats = [
   {
@@ -588,10 +623,22 @@ const recommendedTrip = {
 };
 
 const travelerAvatars = [
-  { name: "旅行者头像 1", src: seedImage("avatar-1.svg") },
-  { name: "旅行者头像 2", src: seedImage("avatar-2.svg") },
-  { name: "旅行者头像 3", src: seedImage("avatar-3.svg") },
-  { name: "旅行者头像 4", src: seedImage("avatar-4.svg") },
+  {
+    name: "旅行者头像 1",
+    src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
+  },
+  {
+    name: "旅行者头像 2",
+    src: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
+  },
+  {
+    name: "旅行者头像 3",
+    src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
+  },
+  {
+    name: "旅行者头像 4",
+    src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
+  },
 ];
 
 const swapFlightCities = () => {
@@ -732,7 +779,7 @@ const quickSearch = (hint) => {
 }
 
 .hero-copy {
-  max-width: 610px;
+  max-width: 560px;
 }
 
 .hero-badge {
@@ -761,11 +808,11 @@ const quickSearch = (hint) => {
 
 .hero-title {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(58px, 6.5vw, 92px);
+  font-size: clamp(62px, 5.7vw, 86px);
   font-weight: 500;
   color: var(--tm-ink);
-  margin-bottom: 26px;
-  line-height: 0.95;
+  margin-bottom: 30px;
+  line-height: 0.98;
   letter-spacing: 0;
   animation: fadeInUp 0.65s ease 0.05s both;
   text-shadow: none;
@@ -781,28 +828,55 @@ const quickSearch = (hint) => {
   max-width: 50ch;
   font-size: 17px;
   color: var(--tm-ink-soft);
-  margin-bottom: 28px;
+  margin-bottom: 34px;
   line-height: 1.9;
   animation: fadeInUp 0.65s ease 0.1s both;
 }
 
 .hero-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: flex-start;
+  gap: 0;
+  padding-top: 20px;
+  border-top: 1px solid oklch(0.78 0.018 100 / 0.62);
 }
 
 .hero-chips span {
+  position: relative;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 999px;
-  color: var(--tm-bark);
-  background: oklch(0.985 0.002 248 / 0.72);
-  border: 1px solid oklch(0.86 0.018 180 / 0.42);
-  font-size: 13px;
-  font-weight: 650;
+  gap: 14px;
+  min-width: 0;
+  padding: 0 12px;
+  box-sizing: border-box;
+  color: var(--tm-ink);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-size: 19px;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.hero-chips span::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tm-olive);
+}
+
+.hero-chips span + span::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 1px;
+  height: 18px;
+  background: oklch(0.74 0.018 100 / 0.72);
+  transform: rotate(14deg);
 }
 
 .hero-actions {
@@ -1117,6 +1191,59 @@ const quickSearch = (hint) => {
   border: 0;
 }
 
+.history-section {
+  padding: 0 var(--tm-page-padding);
+  margin-top: 52px;
+  position: relative;
+  z-index: 2;
+}
+.history-header {
+  margin-bottom: 18px;
+}
+.history-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.history-card {
+  min-height: 120px;
+  padding: 18px;
+  border: 1px solid var(--tm-line-soft);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(241, 253, 250, 0.92)),
+    radial-gradient(circle at 92% 12%, rgba(20, 184, 166, 0.12), transparent 34%);
+  box-shadow: 0 16px 36px rgba(36, 96, 92, 0.08);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+.history-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 44px rgba(36, 96, 92, 0.14);
+}
+.history-type {
+  display: inline-flex;
+  margin-bottom: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+}
+.history-card strong {
+  display: block;
+  color: var(--tm-ink);
+  font-size: 16px;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+.history-card small {
+  color: var(--tm-muted);
+  font-size: 13px;
+}
+
 .stat-item {
   display: flex;
   align-items: center;
@@ -1162,16 +1289,19 @@ const quickSearch = (hint) => {
 /* ==================== 安静规划步骤 ==================== */
 .itinerary-section {
   padding: 54px var(--tm-page-padding) 0;
+  display: flex;
+  justify-content: center;
 }
 
 .itinerary-panel {
+  width: min(100%, 1320px);
   display: grid;
-  grid-template-columns: minmax(0, 0.88fr) minmax(340px, 0.7fr);
-  gap: clamp(28px, 5vw, 70px);
+  grid-template-columns: minmax(360px, 0.9fr) minmax(500px, 0.98fr);
+  gap: clamp(40px, 4.8vw, 70px);
   align-items: center;
-  padding: 52px;
+  padding: clamp(42px, 4vw, 58px);
   border: 1px solid var(--tm-line);
-  min-height: 520px;
+  min-height: 500px;
   border-radius: 10px;
   background:
     linear-gradient(135deg, oklch(0.985 0.002 248), oklch(0.950 0.018 112));
@@ -1334,17 +1464,20 @@ const quickSearch = (hint) => {
 }
 
 .retreat-section {
-  padding: 24px var(--tm-page-padding) 12px;
+  padding: 34px var(--tm-page-padding) 18px;
+  display: flex;
+  justify-content: center;
 }
 
 .retreat-panel {
+  width: min(100%, 1320px);
   display: grid;
-  grid-template-columns: minmax(0, 0.88fr) minmax(340px, 0.7fr);
-  gap: clamp(28px, 5vw, 70px);
+  grid-template-columns: minmax(360px, 0.9fr) minmax(500px, 0.98fr);
+  gap: clamp(40px, 4.8vw, 70px);
   align-items: center;
-  padding: 52px;
+  padding: clamp(42px, 4vw, 58px);
   border: 1px solid var(--tm-line);
-  min-height: 520px;
+  min-height: 500px;
   border-radius: 10px;
   background:
     linear-gradient(135deg, oklch(0.985 0.002 248), oklch(0.950 0.018 112));
@@ -1368,6 +1501,11 @@ const quickSearch = (hint) => {
 .retreat-copy {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 560px;
+  min-height: 390px;
 }
 
 .retreat-heading {
@@ -1376,7 +1514,7 @@ const quickSearch = (hint) => {
 
 .section-kicker {
   display: inline-flex;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   color: var(--tm-olive);
   font-size: 12px;
   font-weight: 800;
@@ -1384,44 +1522,60 @@ const quickSearch = (hint) => {
 }
 
 .retreat-copy h2 {
-  max-width: 10.4em;
+  max-width: 8.2em;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(36px, 4vw, 56px);
+  font-size: clamp(36px, 3.5vw, 50px);
   font-weight: 500;
-  line-height: 1.04;
+  line-height: 1.1;
   color: var(--tm-ink);
-  margin: 0 0 18px;
+  margin: 0 0 22px;
+}
+
+.retreat-copy h2 span {
+  display: block;
 }
 
 .retreat-copy p {
-  max-width: 58ch;
+  max-width: 52ch;
   margin: 0;
   color: var(--tm-muted);
   font-size: 16px;
-  line-height: 1.85;
+  line-height: 1.9;
 }
 
-.retreat-art-notes {
+.retreat-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 30px;
 }
 
-.retreat-art-notes span {
-  padding: 7px 12px;
+.retreat-actions button {
+  min-width: 82px;
+  padding: 9px 16px;
   border-radius: 999px;
   border: 1px solid var(--tm-line);
-  background: oklch(0.985 0.002 248 / 0.68);
+  background: oklch(0.985 0.002 248 / 0.82);
   color: var(--tm-bark);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 760;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 10px 24px oklch(0.24 0.026 82 / 0.06);
+  transition: transform 0.22s ease, border-color 0.22s ease, color 0.22s ease, background 0.22s ease;
+}
+
+.retreat-actions button:hover {
+  transform: translateY(-2px);
+  border-color: oklch(0.70 0.060 180);
+  background: oklch(0.955 0.022 180);
+  color: var(--tm-olive);
 }
 
 .retreat-visual {
   position: relative;
   z-index: 1;
-  min-height: 380px;
+  min-height: 390px;
   overflow: hidden;
   border-radius: 10px;
 }
@@ -1440,49 +1594,49 @@ const quickSearch = (hint) => {
   height: 100%;
   object-fit: cover;
   display: block;
-  filter: saturate(0.82) contrast(0.96) brightness(1.06);
+  filter: saturate(0.92) contrast(0.94) brightness(1.08);
   transition: transform 0.7s ease, filter 0.7s ease;
 }
 
 .retreat-panel:hover .retreat-photo {
   transform: scale(1.035);
-  filter: saturate(0.9) contrast(0.98) brightness(1.08);
+  filter: saturate(0.98) contrast(0.96) brightness(1.1);
 }
 
 .retreat-image-overlay {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, oklch(0.985 0.002 248 / 0.08), oklch(0.18 0.050 180 / 0.30)),
-    linear-gradient(135deg, oklch(0.935 0.030 180 / 0.28), transparent 52%);
+    linear-gradient(180deg, oklch(0.985 0.002 248 / 0.18), oklch(0.34 0.050 160 / 0.26)),
+    linear-gradient(135deg, oklch(0.930 0.040 160 / 0.34), oklch(0.985 0.002 248 / 0.10) 48%, transparent 78%);
 }
 
 .retreat-steps {
   position: absolute;
-  right: 18px;
-  bottom: 18px;
-  width: min(calc(100% - 36px), 360px);
+  inset: 24px 26px;
+  width: auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .retreat-step {
   width: 100%;
   display: grid;
-  grid-template-columns: 46px 1fr;
-  align-items: start;
-  gap: 14px;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
   min-height: 0;
-  padding: 16px;
+  padding: 16px 20px;
   border: 1px solid var(--tm-line);
   border-radius: 8px;
-  background: oklch(0.985 0.002 248 / 0.94);
+  background: oklch(0.985 0.002 248 / 0.82);
   color: inherit;
   text-align: left;
   cursor: pointer;
-  box-shadow: 0 16px 34px oklch(0.239 0.006 180 / 0.09);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 14px 30px oklch(0.239 0.006 180 / 0.065);
+  backdrop-filter: blur(7px);
   transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
 }
 
@@ -1498,13 +1652,13 @@ const quickSearch = (hint) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--tm-primary-soft);
   color: var(--tm-olive);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 24px;
+  font-size: 23px;
   line-height: 1;
 }
 
@@ -1513,7 +1667,7 @@ const quickSearch = (hint) => {
   color: var(--tm-ink);
   font-size: 16px;
   font-weight: 760;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 
 .retreat-step small {
@@ -1689,6 +1843,7 @@ const quickSearch = (hint) => {
   color: var(--tm-muted);
   margin-bottom: 10px;
   line-height: 1.5;
+  min-height: 3em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -1713,11 +1868,15 @@ const quickSearch = (hint) => {
 }
 
 .feature-card {
-  background: var(--tm-surface);
+  --feat-accent: var(--tm-olive);
+  --feat-accent-soft: oklch(0.955 0.022 180);
+  --feat-border: var(--tm-line-soft);
+  background:
+    linear-gradient(180deg, var(--tm-surface) 0%, var(--feat-accent-soft) 132%);
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid var(--tm-line-soft);
+  border: 1px solid var(--feat-border);
   padding: 0;
   font: inherit;
   color: inherit;
@@ -1725,6 +1884,24 @@ const quickSearch = (hint) => {
   appearance: none;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--tm-shadow-card);
+}
+
+.feature-card:nth-child(1) {
+  --feat-accent: oklch(0.55 0.095 188);
+  --feat-accent-soft: oklch(0.965 0.028 188);
+  --feat-border: oklch(0.84 0.045 188);
+}
+
+.feature-card:nth-child(2) {
+  --feat-accent: oklch(0.64 0.120 70);
+  --feat-accent-soft: oklch(0.970 0.032 78);
+  --feat-border: oklch(0.86 0.070 78);
+}
+
+.feature-card:nth-child(3) {
+  --feat-accent: oklch(0.56 0.110 235);
+  --feat-accent-soft: oklch(0.965 0.028 230);
+  --feat-border: oklch(0.84 0.052 230);
 }
 
 .feature-card:first-child {
@@ -1743,7 +1920,10 @@ const quickSearch = (hint) => {
 }
 .feature-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--tm-shadow-card-hover);
+  border-color: var(--feat-accent);
+  box-shadow:
+    0 20px 48px oklch(0.24 0.026 82 / 0.12),
+    0 0 0 1px color-mix(in oklch, var(--feat-accent) 26%, transparent);
 }
 
 .feat-visual {
@@ -1754,13 +1934,13 @@ const quickSearch = (hint) => {
 }
 
 .feat-visual-ai {
-  background: oklch(0.955 0.014 197);
+  background: linear-gradient(135deg, oklch(0.93 0.055 188), oklch(0.965 0.024 205));
 }
 .feat-visual-community {
-  background: oklch(0.965 0.008 197);
+  background: linear-gradient(135deg, oklch(0.95 0.060 78), oklch(0.970 0.026 42));
 }
 .feat-visual-attraction {
-  background: oklch(0.955 0.018 180);
+  background: linear-gradient(135deg, oklch(0.94 0.050 230), oklch(0.965 0.025 185));
 }
 
 .feat-photo {
@@ -1776,8 +1956,8 @@ const quickSearch = (hint) => {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, oklch(0.985 0.002 248 / 0.12), oklch(0.18 0.050 180 / 0.34)),
-    linear-gradient(135deg, oklch(0.964 0.008 197 / 0.34), transparent 48%);
+    linear-gradient(180deg, oklch(0.985 0.002 248 / 0.06), color-mix(in oklch, var(--feat-accent) 42%, oklch(0.18 0.050 180 / 0.34))),
+    linear-gradient(135deg, color-mix(in oklch, var(--feat-accent) 36%, transparent), transparent 56%);
   pointer-events: none;
 }
 
@@ -1794,7 +1974,7 @@ const quickSearch = (hint) => {
   justify-content: center;
   border-radius: 999px;
   border: 1px solid oklch(0.985 0.002 248 / 0.56);
-  background: oklch(0.985 0.002 248 / 0.24);
+  background: color-mix(in oklch, var(--feat-accent) 34%, oklch(0.985 0.002 248 / 0.28));
   color: oklch(0.985 0.002 248);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 15px;
@@ -1808,8 +1988,19 @@ const quickSearch = (hint) => {
 }
 
 .feat-body {
+  position: relative;
   padding: 24px;
   text-align: center;
+}
+
+.feat-body::before {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 3px;
+  border-radius: 999px;
+  margin: 0 auto 16px;
+  background: var(--feat-accent);
 }
 
 .feat-title {
@@ -1830,7 +2021,7 @@ const quickSearch = (hint) => {
 .feat-link {
   font-size: 14px;
   font-weight: 600;
-  color: var(--el-color-primary);
+  color: var(--feat-accent);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1846,8 +2037,9 @@ const quickSearch = (hint) => {
 }
 
 .cta-card {
-  background: linear-gradient(135deg, oklch(0.985 0.002 248), oklch(0.964 0.008 197));
-  border: 1px solid var(--tm-line);
+  background:
+    linear-gradient(90deg, oklch(0.986 0.006 205) 0%, oklch(0.975 0.030 80) 48%, oklch(0.962 0.026 190) 100%);
+  border: 1px solid oklch(0.84 0.040 190);
   border-radius: 8px;
   padding: 56px 48px;
   display: flex;
@@ -1856,6 +2048,14 @@ const quickSearch = (hint) => {
   gap: 40px;
   position: relative;
   overflow: hidden;
+}
+
+.cta-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-top: 5px solid oklch(0.62 0.115 72);
+  pointer-events: none;
 }
 
 .cta-content {
@@ -1878,16 +2078,16 @@ const quickSearch = (hint) => {
 }
 
 .cta-card :deep(.el-button--primary) {
-  background: oklch(0.985 0.002 248);
-  border-color: oklch(0.76 0.045 180);
-  color: var(--tm-bark);
-  box-shadow: 0 12px 24px oklch(0.38 0.050 112 / 0.10);
+  background: var(--tm-olive);
+  border-color: var(--tm-olive);
+  color: #fff;
+  box-shadow: 0 14px 28px oklch(0.38 0.050 112 / 0.14);
 }
 
 .cta-card :deep(.el-button--primary:hover) {
-  background: oklch(0.935 0.030 180);
-  border-color: var(--tm-olive);
-  color: var(--tm-bark);
+  background: oklch(0.42 0.072 180);
+  border-color: oklch(0.42 0.072 180);
+  color: #fff;
 }
 
 .cta-decoration {
@@ -1958,8 +2158,7 @@ const quickSearch = (hint) => {
     height: 54px;
   }
   .retreat-section {
-    grid-template-columns: 1fr;
-    gap: 28px;
+    padding-top: 28px;
   }
   .itinerary-panel {
     grid-template-columns: 1fr;
@@ -1971,14 +2170,19 @@ const quickSearch = (hint) => {
     min-height: auto;
     padding: 40px;
   }
+  .retreat-copy {
+    max-width: 680px;
+    min-height: auto;
+  }
   .retreat-visual {
     min-height: 430px;
   }
   .retreat-steps {
-    width: min(92%, 420px);
+    inset: 24px;
+    width: auto;
   }
   .retreat-copy h2 {
-    max-width: 12em;
+    max-width: 8.2em;
     font-size: 42px;
   }
   .retreat-copy p {
@@ -2117,9 +2321,10 @@ const quickSearch = (hint) => {
   }
   .retreat-steps {
     position: relative;
-    right: auto;
-    bottom: auto;
+    inset: auto;
+    transform: none;
     width: 100%;
+    grid-template-rows: none;
   }
   .retreat-copy h2 {
     font-size: 34px;
@@ -2166,6 +2371,9 @@ const quickSearch = (hint) => {
     grid-template-columns: 1fr;
     gap: 12px;
     padding: 20px 16px;
+  }
+  .history-list {
+    grid-template-columns: 1fr;
   }
   .stat-item {
     padding: 8px;

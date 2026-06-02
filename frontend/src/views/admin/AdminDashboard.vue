@@ -24,6 +24,9 @@
           <el-menu-item index="attractions"
             ><el-icon><Promotion /></el-icon><span>景点资源</span></el-menu-item
           >
+          <el-menu-item index="destinations"
+            ><el-icon><Promotion /></el-icon><span>城市资源</span></el-menu-item
+          >
           <el-menu-item index="coupons"
             ><el-icon><Tickets /></el-icon><span>促销券配置</span></el-menu-item
           >
@@ -95,13 +98,17 @@
             >
             <el-col :span="3"
               ><el-card class="stat-card"
-                ><div class="stat-value">¥{{ dashboardData.todayGmv || 0 }}</div>
+                ><div class="stat-value">
+                  ¥{{ dashboardData.todayGmv || 0 }}
+                </div>
                 <div class="stat-label">今日 GMV</div></el-card
               ></el-col
             >
             <el-col :span="3"
               ><el-card class="stat-card"
-                ><div class="stat-value">{{ dashboardData.onlineUsers || 0 }}</div>
+                ><div class="stat-value">
+                  {{ dashboardData.onlineUsers || 0 }}
+                </div>
                 <div class="stat-label">近 15 分钟活跃</div></el-card
               ></el-col
             >
@@ -167,7 +174,9 @@
             <h2 class="section-title">航班资源管理</h2>
             <div>
               <el-button @click="triggerImport('flights')">导入 CSV</el-button>
-              <el-button type="primary" @click="openFlightDialog()">新增航班</el-button>
+              <el-button type="primary" @click="openFlightDialog()"
+                >新增航班</el-button
+              >
             </div>
           </div>
           <el-table :data="flights" v-loading="flightLoading" stripe>
@@ -199,21 +208,10 @@
                 }}</el-tag></template
               >
             </el-table-column>
-            <el-table-column label="操作" width="220" fixed="right">
+            <el-table-column label="操作" width="150" fixed="right">
               <template #default="scope">
                 <el-button size="small" @click="openFlightDialog(scope.row)"
                   >编辑</el-button
-                >
-                <el-button
-                  size="small"
-                  type="warning"
-                  @click="
-                    openFlightDialog({
-                      ...scope.row,
-                      availableSeats: scope.row.availableSeats,
-                    })
-                  "
-                  >改库存</el-button
                 >
                 <el-button
                   size="small"
@@ -231,7 +229,9 @@
             <h2 class="section-title">火车资源管理</h2>
             <div>
               <el-button @click="triggerImport('trains')">导入 CSV</el-button>
-              <el-button type="primary" @click="openTrainDialog()">新增车次</el-button>
+              <el-button type="primary" @click="openTrainDialog()"
+                >新增车次</el-button
+              >
             </div>
           </div>
           <el-table :data="trains" v-loading="trainLoading" stripe>
@@ -289,7 +289,9 @@
             <h2 class="section-title">酒店与房态管理</h2>
             <div>
               <el-button @click="triggerImport('hotels')">导入 CSV</el-button>
-              <el-button type="primary" @click="openHotelDialog()">新增酒店</el-button>
+              <el-button type="primary" @click="openHotelDialog()"
+                >新增酒店</el-button
+              >
             </div>
           </div>
           <el-table :data="hotels" v-loading="hotelLoading" stripe>
@@ -334,29 +336,100 @@
           <div class="toolbar">
             <h2 class="section-title">景点资源管理</h2>
             <div>
-              <el-button @click="triggerImport('attractions')">导入 CSV</el-button>
-              <el-button type="primary" @click="openAttractionDialog()">新增景点</el-button>
+              <el-button @click="triggerImport('attractions')"
+                >导入 CSV</el-button
+              >
+              <el-button type="primary" @click="openAttractionDialog()"
+                >新增景点</el-button
+              >
             </div>
           </div>
           <el-table :data="attractions" v-loading="attractionLoading" stripe>
             <el-table-column prop="name" label="景点名称" min-width="180" />
             <el-table-column prop="city" label="城市" width="100" />
             <el-table-column label="门票" width="150">
-              <template #default="scope">成人 ¥{{ scope.row.adultPrice }} / 儿童 ¥{{ scope.row.childPrice }}</template>
+              <template #default="scope"
+                >成人 ¥{{ scope.row.adultPrice }} / 儿童 ¥{{
+                  scope.row.childPrice
+                }}</template
+              >
             </el-table-column>
             <el-table-column label="余票" width="130">
-              <template #default="scope">{{ scope.row.availableTickets }} / {{ scope.row.totalTickets }}</template>
+              <template #default="scope"
+                >{{ scope.row.availableTickets }} /
+                {{ scope.row.totalTickets }}</template
+              >
             </el-table-column>
-            <el-table-column prop="openTime" label="开放时间" min-width="160" show-overflow-tooltip />
+            <el-table-column
+              prop="openTime"
+              label="开放时间"
+              min-width="160"
+              show-overflow-tooltip
+            />
             <el-table-column label="状态" width="90">
               <template #default="scope">
-                <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">{{ scope.row.status === 1 ? "开放" : "下线" }}</el-tag>
+                <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">{{
+                  scope.row.status === 1 ? "开放" : "下线"
+                }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="160" fixed="right">
               <template #default="scope">
-                <el-button size="small" @click="openAttractionDialog(scope.row)">编辑</el-button>
-                <el-button size="small" type="danger" @click="removeAttraction(scope.row)">删除</el-button>
+                <el-button size="small" @click="openAttractionDialog(scope.row)"
+                  >编辑</el-button
+                >
+                <el-button
+                  size="small"
+                  type="danger"
+                  @click="removeAttraction(scope.row)"
+                  >删除</el-button
+                >
+              </template>
+            </el-table-column>
+          </el-table>
+        </section>
+
+        <section v-else-if="activeMenu === 'destinations'">
+          <div class="toolbar">
+            <h2 class="section-title">城市资源管理</h2>
+            <div>
+              <el-button @click="triggerImport('destinations')"
+                >导入 CSV</el-button
+              >
+            </div>
+          </div>
+          <el-table :data="destinations" v-loading="destinationLoading" stripe>
+            <el-table-column prop="slug" label="标识" width="120" />
+            <el-table-column prop="name" label="城市" width="100" />
+            <el-table-column prop="tag" label="标签" width="120" />
+            <el-table-column
+              prop="keywords"
+              label="关键词"
+              min-width="160"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              prop="desc"
+              label="短描述"
+              min-width="240"
+              show-overflow-tooltip
+            />
+            <el-table-column prop="sortOrder" label="排序" width="80" />
+            <el-table-column label="状态" width="90">
+              <template #default="scope">
+                <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">{{
+                  scope.row.status === 1 ? "展示" : "下线"
+                }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="scope">
+                <el-button
+                  size="small"
+                  type="danger"
+                  @click="removeDestination(scope.row)"
+                  >下线</el-button
+                >
               </template>
             </el-table-column>
           </el-table>
@@ -402,7 +475,11 @@
             </el-table-column>
             <el-table-column label="操作" width="220" fixed="right">
               <template #default="scope">
-                <el-button size="small" type="primary" plain @click="openCouponClaims(scope.row)"
+                <el-button
+                  size="small"
+                  type="primary"
+                  plain
+                  @click="openCouponClaims(scope.row)"
                   >领取记录</el-button
                 >
                 <el-button size="small" @click="openCouponDialog(scope.row)"
@@ -433,7 +510,9 @@
             <el-tab-pane label="酒店" name="hotel" />
           </el-tabs>
           <div class="toolbar toolbar-inline">
-            <div class="muted-text">按订单状态筛选流水，可对仍占库存的已支付订单办理退款。</div>
+            <div class="muted-text">
+              按订单状态筛选流水，可处理用户提交的退票/退款申请。
+            </div>
             <el-select
               v-model="orderStatusFilter"
               placeholder="全部状态"
@@ -446,7 +525,7 @@
               <el-option label="已出票/入住中" :value="2" />
               <el-option label="已取消/已完成" :value="3" />
               <el-option label="已退票/已退款/已取消" :value="4" />
-              <el-option label="拒绝退款（历史）" :value="5" />
+              <el-option label="退款申请中" :value="5" />
             </el-select>
           </div>
           <el-table :data="orders" v-loading="orderLoading" stripe>
@@ -466,7 +545,7 @@
                 }}</el-tag></template
               >
             </el-table-column>
-            <el-table-column label="操作" width="170" fixed="right">
+            <el-table-column label="操作" width="220" fixed="right">
               <template #default="scope">
                 <el-button
                   v-if="canReviewRefund(scope.row)"
@@ -474,6 +553,14 @@
                   type="success"
                   @click="approveRefund(scope.row.orderNo)"
                   >办理退款</el-button
+                >
+                <el-button
+                  v-if="canReviewRefund(scope.row)"
+                  size="small"
+                  type="danger"
+                  plain
+                  @click="rejectRefund(scope.row.orderNo)"
+                  >驳回</el-button
                 >
                 <span v-else class="muted-text">无人工操作</span>
               </template>
@@ -550,18 +637,20 @@
                 <el-table-column label="操作" width="250" fixed="right">
                   <template #default="scope">
                     <el-button
-                      v-if="scope.row.status === 0"
                       size="small"
                       type="success"
                       @click="approvePost(scope.row.id)"
-                      >通过</el-button
+                      >{{
+                        scope.row.status === 1 ? "保持通过" : "改为通过"
+                      }}</el-button
                     >
                     <el-button
-                      v-if="scope.row.status === 0"
                       size="small"
                       type="danger"
                       @click="rejectPost(scope.row.id)"
-                      >拒绝</el-button
+                      >{{
+                        scope.row.status === 2 ? "修改原因" : "改为拒绝"
+                      }}</el-button
                     >
                     <el-button
                       size="small"
@@ -570,7 +659,6 @@
                       @click="disablePostAuthor(scope.row)"
                       >封禁作者</el-button
                     >
-                    <span v-if="scope.row.status !== 0" class="muted-text">已处理</span>
                   </template>
                 </el-table-column>
               </el-table>
@@ -656,7 +744,9 @@
                       @click="openReplyDrawer(scope.row)"
                       >商家回复</el-button
                     >
-                    <span v-if="scope.row.status !== 0" class="muted-text">已完成</span>
+                    <span v-if="scope.row.status !== 0" class="muted-text"
+                      >已完成</span
+                    >
                   </template>
                 </el-table-column>
               </el-table>
@@ -770,6 +860,132 @@
         </section>
       </el-main>
     </el-container>
+
+    <el-dialog
+      v-model="importDialogVisible"
+      title="CSV 批量导入"
+      width="780px"
+      class="import-dialog"
+    >
+      <div class="import-grid">
+        <section class="import-panel">
+          <el-form label-position="top">
+            <el-form-item label="导入资源">
+              <el-select v-model="importForm.type" style="width: 100%">
+                <el-option
+                  v-for="item in importTypeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="写入方式">
+              <el-radio-group v-model="importForm.mode">
+                <el-radio-button label="insert">仅新增</el-radio-button>
+                <el-radio-button label="upsert">重复则更新</el-radio-button>
+              </el-radio-group>
+            </el-form-item>
+            <el-checkbox v-model="importForm.dryRun">
+              只预检，不写入数据库
+            </el-checkbox>
+            <el-upload
+              class="csv-upload"
+              drag
+              accept=".csv,text/csv"
+              :auto-upload="false"
+              :limit="1"
+              :on-change="handleImportFileChange"
+              :on-remove="clearImportFile"
+            >
+              <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+              <div class="el-upload__text">
+                拖入 CSV 或 <em>点击选择</em>
+              </div>
+              <template #tip>
+                <div class="el-upload__tip">
+                  请使用 UTF-8 编码，首行必须是字段名。
+                </div>
+              </template>
+            </el-upload>
+          </el-form>
+        </section>
+
+        <section class="import-panel import-help">
+          <div class="import-help-title">
+            <span>{{ currentImportType.label }}</span>
+            <el-button text type="primary" @click="downloadCsvTemplate">
+              下载模板
+            </el-button>
+          </div>
+          <div class="field-list">
+            <el-tag
+              v-for="field in currentImportType.required"
+              :key="field"
+              size="small"
+              type="danger"
+              effect="plain"
+            >
+              {{ field }}
+            </el-tag>
+            <el-tag
+              v-for="field in currentImportType.optional"
+              :key="field"
+              size="small"
+              effect="plain"
+            >
+              {{ field }}
+            </el-tag>
+          </div>
+          <p class="muted-text">
+            红色字段必填；日期时间支持 2026-06-01T08:00:00 或
+            2026-06-01 08:00:00。
+          </p>
+        </section>
+      </div>
+
+      <el-alert
+        v-if="importResult"
+        class="import-result"
+        :type="importResult.failed ? 'warning' : 'success'"
+        :closable="false"
+        show-icon
+      >
+        <template #title>
+          共 {{ importResult.total || 0 }} 行，成功
+          {{ importResult.success || 0 }} 行，失败
+          {{ importResult.failed || 0 }} 行
+        </template>
+        <div>
+          新增 {{ importResult.inserted || 0 }}，更新
+          {{ importResult.updated || 0 }}，预检
+          {{ importResult.validated || 0 }}
+        </div>
+      </el-alert>
+
+      <el-table
+        v-if="importFailures.length"
+        :data="importFailures"
+        class="import-failure-table"
+        max-height="220"
+        stripe
+      >
+        <el-table-column prop="line" label="行号" width="90" />
+        <el-table-column prop="reason" label="失败原因" min-width="420" />
+      </el-table>
+
+      <template #footer>
+        <el-button @click="importDialogVisible = false">关闭</el-button>
+        <el-button
+          type="primary"
+          :loading="importLoading"
+          :disabled="!importForm.file"
+          @click="submitCsvImport"
+        >
+          {{ importForm.dryRun ? "开始预检" : "开始导入" }}
+        </el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog
       v-model="flightDialogVisible"
@@ -992,6 +1208,12 @@
               ><el-input v-model="hotelForm.address" /></el-form-item
           ></el-col>
           <el-col :span="24"
+            ><el-form-item label="封面图"
+              ><el-input
+                v-model="hotelForm.coverImg"
+                placeholder="真实图片 URL 或 /uploads/... 本地路径" /></el-form-item
+          ></el-col>
+          <el-col :span="24"
             ><el-form-item label="描述"
               ><el-input
                 v-model="hotelForm.description"
@@ -1017,7 +1239,9 @@
         <div class="muted-text">成员 E 可在此干预房态、价格和上下架。</div>
         <div>
           <el-button @click="triggerImport('rooms')">导入 CSV</el-button>
-          <el-button type="primary" @click="openRoomDialog()">新增房型</el-button>
+          <el-button type="primary" @click="openRoomDialog()"
+            >新增房型</el-button
+          >
         </div>
       </div>
       <el-table :data="hotelRooms" v-loading="roomLoading" stripe>
@@ -1116,22 +1340,100 @@
     >
       <el-form :model="attractionForm" label-width="110px" class="entity-form">
         <el-row :gutter="16">
-          <el-col :span="12"><el-form-item label="景点名称"><el-input v-model="attractionForm.name" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="城市"><el-input v-model="attractionForm.city" /></el-form-item></el-col>
-          <el-col :span="24"><el-form-item label="地址"><el-input v-model="attractionForm.address" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="成人票价"><el-input-number v-model="attractionForm.adultPrice" :min="0" :precision="2" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="儿童票价"><el-input-number v-model="attractionForm.childPrice" :min="0" :precision="2" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="总票数"><el-input-number v-model="attractionForm.totalTickets" :min="0" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="可售票数"><el-input-number v-model="attractionForm.availableTickets" :min="0" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="开放时间"><el-input v-model="attractionForm.openTime" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="状态"><el-select v-model="attractionForm.status" style="width: 100%"><el-option label="开放" :value="1" /><el-option label="下线" :value="0" /></el-select></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="纬度"><el-input-number v-model="attractionForm.lat" :precision="6" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="经度"><el-input-number v-model="attractionForm.lng" :precision="6" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="24"><el-form-item label="封面图"><el-input v-model="attractionForm.coverImg" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="来源名称"><el-input v-model="attractionForm.sourceName" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="核验日期"><el-date-picker v-model="attractionForm.dataCheckedDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="24"><el-form-item label="来源URL"><el-input v-model="attractionForm.officialUrl" /></el-form-item></el-col>
-          <el-col :span="24"><el-form-item label="描述"><el-input v-model="attractionForm.description" type="textarea" :rows="3" /></el-form-item></el-col>
+          <el-col :span="12"
+            ><el-form-item label="景点名称"
+              ><el-input v-model="attractionForm.name" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="城市"
+              ><el-input v-model="attractionForm.city" /></el-form-item
+          ></el-col>
+          <el-col :span="24"
+            ><el-form-item label="地址"
+              ><el-input v-model="attractionForm.address" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="成人票价"
+              ><el-input-number
+                v-model="attractionForm.adultPrice"
+                :min="0"
+                :precision="2"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="儿童票价"
+              ><el-input-number
+                v-model="attractionForm.childPrice"
+                :min="0"
+                :precision="2"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="总票数"
+              ><el-input-number
+                v-model="attractionForm.totalTickets"
+                :min="0"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="可售票数"
+              ><el-input-number
+                v-model="attractionForm.availableTickets"
+                :min="0"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="开放时间"
+              ><el-input v-model="attractionForm.openTime" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="状态"
+              ><el-select v-model="attractionForm.status" style="width: 100%"
+                ><el-option label="开放" :value="1" /><el-option
+                  label="下线"
+                  :value="0" /></el-select></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="纬度"
+              ><el-input-number
+                v-model="attractionForm.lat"
+                :precision="6"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="经度"
+              ><el-input-number
+                v-model="attractionForm.lng"
+                :precision="6"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="24"
+            ><el-form-item label="封面图"
+              ><el-input v-model="attractionForm.coverImg" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="来源名称"
+              ><el-input v-model="attractionForm.sourceName" /></el-form-item
+          ></el-col>
+          <el-col :span="12"
+            ><el-form-item label="核验日期"
+              ><el-date-picker
+                v-model="attractionForm.dataCheckedDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                style="width: 100%" /></el-form-item
+          ></el-col>
+          <el-col :span="24"
+            ><el-form-item label="来源URL"
+              ><el-input v-model="attractionForm.officialUrl" /></el-form-item
+          ></el-col>
+          <el-col :span="24"
+            ><el-form-item label="描述"
+              ><el-input
+                v-model="attractionForm.description"
+                type="textarea"
+                :rows="3" /></el-form-item
+          ></el-col>
         </el-row>
       </el-form>
       <template #footer>
@@ -1254,7 +1556,9 @@
         <el-table-column prop="username" label="用户名" width="140" />
         <el-table-column prop="nickname" label="昵称" width="140" />
         <el-table-column label="状态" width="90">
-          <template #default="scope">{{ couponClaimStatusLabel(scope.row.status) }}</template>
+          <template #default="scope">{{
+            couponClaimStatusLabel(scope.row.status)
+          }}</template>
         </el-table-column>
         <el-table-column prop="receivedTime" label="领取时间" width="180" />
         <el-table-column prop="usedTime" label="使用时间" width="180" />
@@ -1263,15 +1567,26 @@
 
     <el-drawer
       v-model="replyDrawerVisible"
-      :title="activeReport ? `评价 ${activeReport.reviewId} · 商家回复` : '商家回复'"
+      :title="
+        activeReport ? `评价 ${activeReport.reviewId} · 商家回复` : '商家回复'
+      "
       size="620px"
     >
       <el-descriptions v-if="activeReport" :column="1" border>
-        <el-descriptions-item label="评价对象">{{ activeReport.targetName }}</el-descriptions-item>
-        <el-descriptions-item label="评价内容">{{ activeReport.reviewContent }}</el-descriptions-item>
+        <el-descriptions-item label="评价对象">{{
+          activeReport.targetName
+        }}</el-descriptions-item>
+        <el-descriptions-item label="评价内容">{{
+          activeReport.reviewContent
+        }}</el-descriptions-item>
       </el-descriptions>
       <div class="reply-editor">
-        <el-input v-model="replyContent" type="textarea" :rows="3" placeholder="输入商家回复内容" />
+        <el-input
+          v-model="replyContent"
+          type="textarea"
+          :rows="3"
+          placeholder="输入商家回复内容"
+        />
         <el-button type="primary" @click="saveReply">发布回复</el-button>
       </div>
       <el-table :data="reviewReplies" v-loading="replyLoading" stripe>
@@ -1279,7 +1594,12 @@
         <el-table-column prop="createTime" label="时间" width="180" />
         <el-table-column label="操作" width="90">
           <template #default="scope">
-            <el-button size="small" type="danger" @click="removeReply(scope.row)">删除</el-button>
+            <el-button
+              size="small"
+              type="danger"
+              @click="removeReply(scope.row)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -1358,6 +1678,7 @@ import {
   Document,
   User,
   Tickets,
+  UploadFilled,
 } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 
@@ -1377,6 +1698,7 @@ const trains = ref([]);
 const hotels = ref([]);
 const hotelRooms = ref([]);
 const attractions = ref([]);
+const destinations = ref([]);
 const coupons = ref([]);
 const couponClaims = ref([]);
 const orders = ref([]);
@@ -1392,6 +1714,7 @@ const trainLoading = ref(false);
 const hotelLoading = ref(false);
 const roomLoading = ref(false);
 const attractionLoading = ref(false);
+const destinationLoading = ref(false);
 const couponLoading = ref(false);
 const couponClaimsLoading = ref(false);
 const orderLoading = ref(false);
@@ -1426,12 +1749,129 @@ const couponClaimsDrawerVisible = ref(false);
 const sensitiveDialogVisible = ref(false);
 const replyDrawerVisible = ref(false);
 const userDrawerVisible = ref(false);
+const importDialogVisible = ref(false);
+const importLoading = ref(false);
 
 const activeHotel = ref(null);
 const activeCoupon = ref(null);
 const activeReport = ref(null);
 const selectedUser = ref(null);
 const replyContent = ref("");
+const importResult = ref(null);
+
+const importTypeOptions = [
+  {
+    value: "flights",
+    label: "航班资源",
+    required: [
+      "flightNo",
+      "airline",
+      "departureCity",
+      "arrivalCity",
+      "departureTime",
+      "arrivalTime",
+      "economyPrice",
+      "businessPrice",
+      "totalSeats",
+      "availableSeats",
+    ],
+    optional: ["status"],
+  },
+  {
+    value: "trains",
+    label: "火车资源",
+    required: [
+      "trainNo",
+      "trainType",
+      "departureStation",
+      "arrivalStation",
+      "departureTime",
+      "arrivalTime",
+      "firstClassPrice",
+      "secondClassPrice",
+      "firstClassSeats",
+      "secondClassSeats",
+    ],
+    optional: ["durationMinutes", "status"],
+  },
+  {
+    value: "hotels",
+    label: "酒店资源",
+    required: ["name", "city", "address", "starRating", "avgPrice"],
+    optional: ["description", "coverImg", "lat", "lng", "score", "status"],
+  },
+  {
+    value: "rooms",
+    label: "酒店房型",
+    required: [
+      "hotelId",
+      "roomType",
+      "bedType",
+      "price",
+      "totalRooms",
+      "availableRooms",
+    ],
+    optional: ["area", "images", "facilities", "status"],
+  },
+  {
+    value: "attractions",
+    label: "景点资源",
+    required: [
+      "name",
+      "city",
+      "address",
+      "adultPrice",
+      "childPrice",
+      "totalTickets",
+      "availableTickets",
+    ],
+    optional: [
+      "description",
+      "coverImg",
+      "openTime",
+      "lat",
+      "lng",
+      "officialUrl",
+      "sourceName",
+      "dataCheckedDate",
+      "status",
+    ],
+  },
+  {
+    value: "destinations",
+    label: "城市资源",
+    required: ["slug", "name", "tag", "img", "desc", "intro"],
+    optional: [
+      "country",
+      "keywords",
+      "highlights",
+      "culture",
+      "bestSeason",
+      "transport",
+      "sourceName",
+      "sourceUrl",
+      "sortOrder",
+      "status",
+    ],
+  },
+];
+
+const importForm = ref({
+  type: "flights",
+  mode: "insert",
+  dryRun: true,
+  file: null,
+});
+
+const currentImportType = computed(
+  () =>
+    importTypeOptions.find((item) => item.value === importForm.value.type) ||
+    importTypeOptions[0],
+);
+
+const importFailures = computed(() =>
+  Array.isArray(importResult.value?.failures) ? importResult.value.failures : [],
+);
 
 const createFlightForm = () => ({
   id: null,
@@ -1470,6 +1910,7 @@ const createHotelForm = () => ({
   address: "",
   starRating: 4,
   description: "",
+  coverImg: "",
   avgPrice: 0,
   score: 4.5,
   status: 1,
@@ -1587,8 +2028,14 @@ const normalizeAttraction = (row = {}) => ({
   childPrice: parseNumberish(row.childPrice, 0),
   totalTickets: parseNumberish(row.totalTickets, 1000),
   availableTickets: parseNumberish(row.availableTickets, 1000),
-  lat: row.lat === null || row.lat === undefined ? null : parseNumberish(row.lat, null),
-  lng: row.lng === null || row.lng === undefined ? null : parseNumberish(row.lng, null),
+  lat:
+    row.lat === null || row.lat === undefined
+      ? null
+      : parseNumberish(row.lat, null),
+  lng:
+    row.lng === null || row.lng === undefined
+      ? null
+      : parseNumberish(row.lng, null),
   status: parseNumberish(row.status, 1),
 });
 
@@ -1762,7 +2209,7 @@ const renderCharts = () => {
 
   setChartOption(qpsChartRef.value, {
     title: {
-              text: "本地请求量监控",
+      text: "本地请求量监控",
       left: "center",
       textStyle: { fontSize: 14 },
     },
@@ -1787,7 +2234,7 @@ const renderCharts = () => {
 
   setChartOption(latencyChartRef.value, {
     title: {
-              text: "接口平均延迟监控",
+      text: "接口平均延迟监控",
       left: "center",
       textStyle: { fontSize: 14 },
     },
@@ -1891,6 +2338,18 @@ const fetchAttractions = async () => {
     attractions.value = [];
   } finally {
     attractionLoading.value = false;
+  }
+};
+
+const fetchDestinations = async () => {
+  destinationLoading.value = true;
+  try {
+    const data = await request.get("/api/admin/destinations");
+    destinations.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    destinations.value = [];
+  } finally {
+    destinationLoading.value = false;
   }
 };
 
@@ -2185,11 +2644,15 @@ const saveAttraction = async () => {
 };
 
 const removeAttraction = async (row) => {
-  await ElMessageBox.confirm(`确认删除或下线景点 ${row.name} 吗？`, "删除确认", {
-    type: "warning",
-    confirmButtonText: "确认",
-    cancelButtonText: "取消",
-  });
+  await ElMessageBox.confirm(
+    `确认删除或下线景点 ${row.name} 吗？`,
+    "删除确认",
+    {
+      type: "warning",
+      confirmButtonText: "确认",
+      cancelButtonText: "取消",
+    },
+  );
   try {
     await request.delete(`/api/admin/attractions/${row.id}`);
     ElMessage.success("景点已删除或下线");
@@ -2197,29 +2660,185 @@ const removeAttraction = async (row) => {
   } catch (error) {}
 };
 
+const removeDestination = async (row) => {
+  await ElMessageBox.confirm(`确认下线城市 ${row.name} 吗？`, "下线确认", {
+    type: "warning",
+    confirmButtonText: "确认下线",
+    cancelButtonText: "取消",
+  });
+  try {
+    await request.delete(`/api/admin/destinations/${row.id}`);
+    ElMessage.success("城市已下线");
+    await fetchDestinations();
+  } catch (error) {}
+};
+
 const triggerImport = (type) => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".csv,text/csv";
-  input.onchange = async () => {
-    const file = input.files?.[0];
-    if (!file) return;
-    const form = new FormData();
-    form.append("file", file);
-    try {
-      const result = await request.post(`/api/admin/import/${type}`, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const failures = result?.failures || [];
-      ElMessageBox.alert(
-        `成功 ${result?.success || 0} 行，失败 ${result?.failed || 0} 行` +
-          (failures.length ? `\n${failures.map((f) => `第 ${f.line} 行：${f.reason}`).join("\n")}` : ""),
-        "导入结果",
-      );
-      await refreshResourceAfterImport(type);
-    } catch (error) {}
+  importForm.value = {
+    type,
+    mode: "insert",
+    dryRun: true,
+    file: null,
   };
-  input.click();
+  importResult.value = null;
+  importDialogVisible.value = true;
+};
+
+const handleImportFileChange = (uploadFile) => {
+  importForm.value.file = uploadFile.raw;
+  importResult.value = null;
+};
+
+const clearImportFile = () => {
+  importForm.value.file = null;
+};
+
+const submitCsvImport = async () => {
+  if (!importForm.value.file) {
+    ElMessage.warning("请先选择 CSV 文件");
+    return;
+  }
+  const form = new FormData();
+  form.append("file", importForm.value.file);
+  importLoading.value = true;
+  try {
+    const result = await request.post(
+      `/api/admin/import/${importForm.value.type}`,
+      form,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+        params: {
+          dryRun: importForm.value.dryRun,
+          mode: importForm.value.mode,
+        },
+      },
+    );
+    importResult.value = result || {};
+    if (result?.failed) {
+      ElMessage.warning("CSV 已处理，请查看失败行");
+    } else {
+      ElMessage.success(importForm.value.dryRun ? "预检通过" : "导入完成");
+    }
+    if (!importForm.value.dryRun && result?.success) {
+      await refreshResourceAfterImport(importForm.value.type);
+    }
+  } catch (error) {
+    importResult.value = null;
+  } finally {
+    importLoading.value = false;
+  }
+};
+
+const escapeCsvCell = (value) => {
+  const text = String(value ?? "");
+  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+};
+
+const downloadCsvTemplate = () => {
+  const type = currentImportType.value;
+  const headers = [...type.required, ...type.optional];
+  const examples = {
+    flights: [
+      "CA1001",
+      "中国国际航空",
+      "北京",
+      "上海",
+      "2026-06-01T08:00:00",
+      "2026-06-01T10:00:00",
+      "680",
+      "2180",
+      "200",
+      "120",
+      "1",
+    ],
+    trains: [
+      "G1001",
+      "G",
+      "北京南",
+      "上海虹桥",
+      "2026-06-01T08:00:00",
+      "2026-06-01T12:30:00",
+      "880",
+      "553",
+      "80",
+      "420",
+      "270",
+      "1",
+    ],
+    hotels: [
+      "城市花园酒店",
+      "上海",
+      "上海市黄浦区示例路1号",
+      "4",
+      "520",
+      "近地铁商务酒店",
+      "https://example.com/hotel.jpg",
+      "31.2304",
+      "121.4737",
+      "4.6",
+      "1",
+    ],
+    rooms: [
+      "1",
+      "豪华大床房",
+      "1张大床",
+      "688",
+      "20",
+      "12",
+      "38",
+      '["/images/seed/hotel.svg"]',
+      '["早餐","洗衣房"]',
+      "1",
+    ],
+    attractions: [
+      "示例景区",
+      "杭州",
+      "杭州市示例路1号",
+      "80",
+      "40",
+      "1000",
+      "800",
+      "城市观光景区",
+      "https://example.com/scenic.jpg",
+      "08:00-18:00",
+      "30.2741",
+      "120.1551",
+      "https://example.com",
+      "景区官网",
+      "2026-05-30",
+      "1",
+    ],
+    destinations: [
+      "dali",
+      "大理",
+      "风花雪月",
+      "/images/seed/lake.svg",
+      "苍山洱海与古城生活交织",
+      "适合慢旅行的城市",
+      "中国",
+      "洱海|古城|苍山",
+      "洱海骑行|古城夜游",
+      "白族文化",
+      "春秋季",
+      "高铁到大理站",
+      "公开旅游资料",
+      "https://example.com",
+      "90",
+      "1",
+    ],
+  };
+  const lines = [
+    headers.map(escapeCsvCell).join(","),
+    (examples[type.value] || []).map(escapeCsvCell).join(","),
+  ];
+  const blob = new Blob([`\uFEFF${lines.join("\n")}`], {
+    type: "text/csv;charset=utf-8",
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `travelmate-${type.value}-template.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
 };
 
 const refreshResourceAfterImport = async (type) => {
@@ -2228,6 +2847,7 @@ const refreshResourceAfterImport = async (type) => {
   if (type === "hotels") return fetchHotels();
   if (type === "rooms") return fetchHotelRooms(activeHotel.value?.id);
   if (type === "attractions") return fetchAttractions();
+  if (type === "destinations") return fetchDestinations();
 };
 
 const openCouponDialog = (row = null) => {
@@ -2321,17 +2941,13 @@ const approvePost = async (id) => {
 
 const rejectPost = async (id) => {
   try {
-    const { value } = await ElMessageBox.prompt(
-      "请输入拒绝原因",
-      "审核拒绝",
-      {
-        inputValue: "内容不符合社区规范",
-        inputPattern: /\S+/,
-        inputErrorMessage: "拒绝原因不能为空",
-        confirmButtonText: "确认拒绝",
-        cancelButtonText: "暂不处理",
-      },
-    );
+    const { value } = await ElMessageBox.prompt("请输入拒绝原因", "审核拒绝", {
+      inputValue: "内容不符合社区规范",
+      inputPattern: /\S+/,
+      inputErrorMessage: "拒绝原因不能为空",
+      confirmButtonText: "确认拒绝",
+      cancelButtonText: "暂不处理",
+    });
     await request.post(`/api/admin/posts/${id}/reject`, { reason: value });
     ElMessage.success("审核已拒绝");
     await fetchPosts();
@@ -2343,11 +2959,15 @@ const rejectPost = async (id) => {
 
 const disablePostAuthor = async (row) => {
   if (!row.userId) return;
-  await ElMessageBox.confirm(`确认封禁作者 ${row.authorUsername || row.userId} 吗？`, "封禁确认", {
-    type: "warning",
-    confirmButtonText: "确认封禁",
-    cancelButtonText: "取消",
-  });
+  await ElMessageBox.confirm(
+    `确认封禁作者 ${row.authorUsername || row.userId} 吗？`,
+    "封禁确认",
+    {
+      type: "warning",
+      confirmButtonText: "确认封禁",
+      cancelButtonText: "取消",
+    },
+  );
   try {
     await request.post(`/api/admin/users/${row.userId}/disable`);
     ElMessage.success("作者已封禁");
@@ -2357,17 +2977,13 @@ const disablePostAuthor = async (row) => {
 
 const resolveReviewReport = async (id) => {
   try {
-    const { value } = await ElMessageBox.prompt(
-      "请输入处理备注",
-      "举报处理",
-      {
-        inputValue: "已人工复核",
-        inputPattern: /\S+/,
-        inputErrorMessage: "处理备注不能为空",
-        confirmButtonText: "确认处理",
-        cancelButtonText: "暂不处理",
-      },
-    );
+    const { value } = await ElMessageBox.prompt("请输入处理备注", "举报处理", {
+      inputValue: "已人工复核",
+      inputPattern: /\S+/,
+      inputErrorMessage: "处理备注不能为空",
+      confirmButtonText: "确认处理",
+      cancelButtonText: "暂不处理",
+    });
     await request.post(`/api/admin/review-reports/${id}/resolve`, {
       remark: value,
     });
@@ -2418,9 +3034,12 @@ const openReplyDrawer = async (row) => {
 const saveReply = async () => {
   if (!activeReport.value?.reviewId) return;
   try {
-    await request.post(`/api/admin/reviews/${activeReport.value.reviewId}/replies`, {
-      content: replyContent.value,
-    });
+    await request.post(
+      `/api/admin/reviews/${activeReport.value.reviewId}/replies`,
+      {
+        content: replyContent.value,
+      },
+    );
     ElMessage.success("商家回复已发布");
     replyContent.value = "";
     await fetchReviewReplies(activeReport.value.reviewId);
@@ -2469,23 +3088,40 @@ const approveRefund = async (orderNo) => {
   } catch (error) {}
 };
 
+const rejectRefund = async (orderNo) => {
+  try {
+    await request.post(`/api/admin/orders/${orderNo}/refund/reject`);
+    ElMessage.success("退款申请已驳回");
+    await fetchOrders();
+  } catch (error) {}
+};
+
 const canReviewRefund = (row) => {
-  if (row.type === "酒店") {
-    return row.status === 1;
-  }
-  return row.status === 1 || row.status === 2;
+  return row.status === 5;
 };
 
 const orderStatusLabel = (row) => {
   if (row.type === "酒店") {
     return (
-      ["待支付", "已支付", "入住中", "已完成", "已取消/已退款", "拒绝退款（历史）"][row.status] ||
-      `状态${row.status}`
+      [
+        "待支付",
+        "已支付",
+        "入住中",
+        "已完成",
+        "已取消/已退款",
+        "退款申请中",
+      ][row.status] || `状态${row.status}`
     );
   }
   return (
-    ["待支付", "出票中", "已出票", "已取消", "已退票/已退款", "拒绝退款（历史）"][row.status] ||
-    `状态${row.status}`
+    [
+      "待支付",
+      "出票中",
+      "已出票",
+      "已取消",
+      "已退票/已退款",
+      "退票申请中",
+    ][row.status] || `状态${row.status}`
   );
 };
 
@@ -2539,6 +3175,8 @@ const handleMenuSelect = (menu) => {
     fetchHotels();
   } else if (menu === "attractions") {
     fetchAttractions();
+  } else if (menu === "destinations") {
+    fetchDestinations();
   } else if (menu === "coupons") {
     fetchCoupons();
   } else if (menu === "orders") {
@@ -2584,6 +3222,7 @@ onUnmounted(() => {
 .admin-page {
   margin: -24px -40px;
   min-height: calc(100vh - 60px);
+  background: linear-gradient(180deg, #f6fbff 0%, #ffffff 46%, #f8fbff 100%);
 }
 
 .reply-editor {
@@ -2593,35 +3232,47 @@ onUnmounted(() => {
 }
 
 .admin-aside {
-  background: #0f172a;
+  background: linear-gradient(180deg, #ffffff 0%, #f3fbff 100%);
   min-height: calc(100vh - 60px);
+  border-right: 1px solid #dbeafe;
+  box-shadow: 10px 0 30px rgba(59, 130, 246, 0.08);
 }
 
 .admin-logo {
-  color: #fff;
+  color: #0f766e;
   font-size: 18px;
   font-weight: 700;
   padding: 20px 20px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid #dbeafe;
 }
 
 .admin-menu {
-  background: #0f172a;
+  background: transparent;
   border-right: none;
+  padding: 8px 10px;
 }
 
 .admin-menu :deep(.el-menu-item) {
-  color: rgba(255, 255, 255, 0.6);
+  height: 44px;
+  margin: 4px 0;
+  color: #475569;
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 .admin-menu :deep(.el-menu-item:hover),
 .admin-menu :deep(.el-menu-item.is-active) {
-  background: linear-gradient(135deg, #0d9488, #10b981);
-  color: #fff;
+  background: #e7f8f4;
+  color: #0f766e;
 }
 
 .admin-main {
-  background: #f8fafc;
+  background: radial-gradient(
+      circle at 88% 8%,
+      rgba(20, 184, 166, 0.12),
+      transparent 28%
+    ),
+    linear-gradient(180deg, #f7fcff 0%, #ffffff 56%, #f8fbff 100%);
   padding: 24px;
 }
 
@@ -2651,16 +3302,20 @@ onUnmounted(() => {
 
 .stat-card {
   text-align: center;
-  border-radius: 12px;
+  border-radius: 8px;
+}
+
+.stat-card,
+.panel-card,
+.alert-card {
+  border: 1px solid #dbeafe;
+  box-shadow: 0 14px 36px rgba(15, 118, 110, 0.08);
 }
 
 .stat-value {
   font-size: 30px;
   font-weight: 700;
-  background: linear-gradient(135deg, #0d9488, #10b981);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #0f766e;
   margin-bottom: 6px;
 }
 
@@ -2671,7 +3326,56 @@ onUnmounted(() => {
 
 .panel-card,
 .alert-card {
-  border-radius: 16px;
+  border-radius: 8px;
+}
+
+:deep(.el-table) {
+  --el-table-header-bg-color: #eff8ff;
+  --el-table-header-text-color: #0f172a;
+  --el-table-row-hover-bg-color: #eefcf8;
+  --el-table-border-color: #e5eef8;
+  color: #334155;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+:deep(.el-table th.el-table__cell) {
+  font-weight: 700;
+}
+
+:deep(
+    .el-table--striped
+      .el-table__body
+      tr.el-table__row--striped
+      td.el-table__cell
+  ) {
+  background: #fbfdff;
+}
+
+:deep(.el-table__fixed-right) {
+  box-shadow: -10px 0 18px rgba(15, 23, 42, 0.05);
+}
+
+:deep(.el-button--primary) {
+  --el-button-bg-color: #14b8a6;
+  --el-button-border-color: #14b8a6;
+  --el-button-hover-bg-color: #0d9488;
+  --el-button-hover-border-color: #0d9488;
+}
+
+:deep(.el-button--warning) {
+  --el-button-bg-color: #f4b860;
+  --el-button-border-color: #f4b860;
+  --el-button-hover-bg-color: #e59e35;
+  --el-button-hover-border-color: #e59e35;
+}
+
+:deep(.el-button--danger) {
+  --el-button-bg-color: #e60012;
+  --el-button-border-color: #e60012;
+  --el-button-hover-bg-color: #c7000b;
+  --el-button-hover-border-color: #c7000b;
 }
 
 .chart-panel {
@@ -2696,7 +3400,7 @@ onUnmounted(() => {
   align-items: flex-start;
   padding: 12px 14px;
   background: #f8fafc;
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 .alert-message {
@@ -2716,5 +3420,50 @@ onUnmounted(() => {
 
 .muted-text {
   color: var(--el-text-color-secondary);
+}
+
+.import-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.import-panel {
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfdff;
+}
+
+.csv-upload {
+  margin-top: 14px;
+}
+
+.import-help-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.field-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.import-result,
+.import-failure-table {
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .import-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

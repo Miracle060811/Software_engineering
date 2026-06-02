@@ -14,4 +14,9 @@ public class AiPlanCreateDTO {
     private int peopleCount;
     private String preferences;
     private String startDate;
+    private String travelStyle;
+    private String mustVisit;
+    private String avoidPlaces;
+    private String transportPreference;
+    private String accommodationPreference;
 }
