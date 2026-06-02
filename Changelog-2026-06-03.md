@@ -13,6 +13,8 @@
 
 本次调整的核心落点在 DeepSeek 配置读取方式：移除了运行时扫描 `.env` 文件的逻辑，改为完全依赖 Spring 环境变量与配置项读取 API Key，并新增 `DEEPSEEK_CHAT_COMPLETIONS_PATH` 以适配服务器环境中的路径配置。同步新增宝塔部署环境变量说明文档，为后续线上部署和同学接手排查提供更清晰的操作依据。
 
+注：已将sylphira_server最新的更新同步到main
+
 ## 变更内容
 
 ### feat · New Feature
