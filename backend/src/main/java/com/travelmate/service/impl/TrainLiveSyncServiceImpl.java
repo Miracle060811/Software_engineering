@@ -10,6 +10,7 @@ import com.travelmate.service.TrainLiveSyncService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -179,10 +180,24 @@ public class TrainLiveSyncServiceImpl implements TrainLiveSyncService {
     private void upsertTrain(Train train) {
         Train existing = trainMapper.selectOne(new LambdaQueryWrapper<Train>()
                 .eq(Train::getTrainNo, train.getTrainNo())
+                .eq(Train::getDepartureStation, train.getDepartureStation())
+                .eq(Train::getArrivalStation, train.getArrivalStation())
                 .eq(Train::getDepartureTime, train.getDepartureTime())
                 .last("LIMIT 1"));
         if (existing == null) {
-            trainMapper.insert(train);
+            try {
+                trainMapper.insert(train);
+            } catch (DuplicateKeyException ex) {
+                Train sameDeparture = trainMapper.selectOne(new LambdaQueryWrapper<Train>()
+                        .eq(Train::getTrainNo, train.getTrainNo())
+                        .eq(Train::getDepartureTime, train.getDepartureTime())
+                        .last("LIMIT 1"));
+                if (sameDeparture == null) {
+                    throw ex;
+                }
+                train.setId(sameDeparture.getId());
+                trainMapper.updateById(train);
+            }
             return;
         }
         train.setId(existing.getId());

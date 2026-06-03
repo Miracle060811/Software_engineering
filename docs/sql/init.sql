@@ -88,8 +88,14 @@ CREATE TABLE IF NOT EXISTS `tm_train` (
   `second_class_seats` INT DEFAULT '300' COMMENT '二等座余票',
   `status` TINYINT(1) DEFAULT '1' COMMENT '1-正常 0-停运',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_train_no_deptime` (`train_no`, `departure_time`)
+  UNIQUE KEY `uk_train_segment_deptime` (`train_no`, `departure_station`, `arrival_station`, `departure_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='火车票信息表';
+
+-- 兼容已初始化过的旧库：同一车次可缓存不同查询区间
+SET @sql = (SELECT IF(COUNT(*) > 0, 'ALTER TABLE `tm_train` DROP INDEX `uk_train_no_deptime`', 'SELECT 1') FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_train' AND INDEX_NAME = 'uk_train_no_deptime');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_train` ADD UNIQUE KEY `uk_train_segment_deptime` (`train_no`, `departure_station`, `arrival_station`, `departure_time`)', 'SELECT 1') FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_train' AND INDEX_NAME = 'uk_train_segment_deptime');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- 5. 交通票务订单表 (Traffic Order) 成员A负责
 CREATE TABLE IF NOT EXISTS `tm_traffic_order` (
@@ -110,6 +116,25 @@ CREATE TABLE IF NOT EXISTS `tm_traffic_order` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_order_no` (`order_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='大交通票务订单表';
+
+CREATE TABLE IF NOT EXISTS `tm_train_waitlist` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL COMMENT '用户ID',
+  `train_id` BIGINT DEFAULT NULL COMMENT '关联车次ID',
+  `train_no` VARCHAR(20) NOT NULL COMMENT '车次号',
+  `departure_station` VARCHAR(50) NOT NULL COMMENT '出发站',
+  `arrival_station` VARCHAR(50) NOT NULL COMMENT '到达站',
+  `departure_time` DATETIME NOT NULL COMMENT '出发时间',
+  `seat_type` VARCHAR(20) NOT NULL COMMENT '候补席别',
+  `ticket_count` INT NOT NULL DEFAULT '1' COMMENT '候补票数',
+  `passenger_name` VARCHAR(50) NOT NULL COMMENT '乘车人姓名',
+  `passenger_id_card` VARCHAR(30) NOT NULL COMMENT '乘车人证件号',
+  `status` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '0-候补中 1-已兑现 2-已取消',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_train_waitlist_user` (`user_id`, `create_time`),
+  KEY `idx_train_waitlist_route` (`train_no`, `departure_station`, `arrival_station`, `departure_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='火车票候补申请表';
 
 -- 兼容已初始化过的旧库：补充大交通订单购票数量
 SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_traffic_order` ADD COLUMN `ticket_count` INT NOT NULL DEFAULT ''1'' COMMENT ''购票数量'' AFTER `seat_type`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_traffic_order' AND COLUMN_NAME = 'ticket_count');
@@ -492,15 +517,19 @@ INSERT IGNORE INTO `tm_flight` (`flight_no`, `airline`, `departure_city`, `arriv
 ('MU0123', '中国东方航空', '上海', '重庆', '2026-06-03 12:00:00', '2026-06-03 14:15:00', 680.00, 2180.00, 180, 108),
 ('CZ5005', '中国南方航空', '广州', '重庆', '2026-06-04 09:30:00', '2026-06-04 11:30:00', 560.00, 1780.00, 220, 145);
 
--- 兼容旧库：删除重复火车行（保留 id 最小的），再补 UNIQUE 约束
+-- 兼容旧库：删除重复火车查询区间（保留 id 最小的），再补 UNIQUE 约束
 DELETE t1 FROM `tm_train` t1
   INNER JOIN `tm_train` t2
-    ON t1.train_no = t2.train_no AND t1.departure_time = t2.departure_time AND t1.id > t2.id;
+    ON t1.train_no = t2.train_no
+    AND t1.departure_station = t2.departure_station
+    AND t1.arrival_station = t2.arrival_station
+    AND t1.departure_time = t2.departure_time
+    AND t1.id > t2.id;
 SET @sql = (SELECT IF(COUNT(*) = 0,
-  'ALTER TABLE `tm_train` ADD UNIQUE KEY `uk_train_no_deptime` (`train_no`, `departure_time`)',
+  'ALTER TABLE `tm_train` ADD UNIQUE KEY `uk_train_segment_deptime` (`train_no`, `departure_station`, `arrival_station`, `departure_time`)',
   'SELECT 1')
   FROM INFORMATION_SCHEMA.STATISTICS
-  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_train' AND INDEX_NAME = 'uk_train_no_deptime');
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_train' AND INDEX_NAME = 'uk_train_segment_deptime');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- 火车数据

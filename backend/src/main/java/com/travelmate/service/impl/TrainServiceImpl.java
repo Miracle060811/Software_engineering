@@ -13,23 +13,51 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements TrainService {
+    private static final int DEFAULT_RESULT_LIMIT = 10;
+    private static final int MAX_RESULT_LIMIT = 20;
 
     @Autowired
     private TrainLiveSyncService trainLiveSyncService;
 
+    @Autowired
+    private TrainStationResolver trainStationResolver;
+
     @Override
     public List<Train> searchTrains(String depStation, String arrStation, String depDate) {
+        return searchTrains(depStation, arrStation, depDate, 0, DEFAULT_RESULT_LIMIT);
+    }
+
+    @Override
+    public List<Train> searchTrains(String depStation, String arrStation, String depDate, Integer offset, Integer limit) {
+        int safeOffset = normalizeOffset(offset);
+        int safeLimit = normalizeLimit(limit);
+        int collectTarget = safeOffset + safeLimit;
+
         if (StringUtils.hasText(depStation) && StringUtils.hasText(arrStation) && StringUtils.hasText(depDate)) {
-            TrainLiveSyncStatus syncStatus = trainLiveSyncService.syncIfSupported(depStation, arrStation, depDate);
-            if (syncStatus.isSynced()) {
-                List<Train> liveTrains = trainLiveSyncService.getCachedLiveTrains(depStation, arrStation, depDate);
-                if (!liveTrains.isEmpty()) {
-                    return liveTrains;
+            Map<String, Train> liveMatches = new LinkedHashMap<>();
+            for (TrainStationResolver.RouteCandidate route : trainStationResolver.routeCandidates(depStation, arrStation)) {
+                TrainLiveSyncStatus syncStatus = trainLiveSyncService.syncIfSupported(
+                        route.depStation(), route.arrStation(), depDate);
+                if (syncStatus.isSynced()) {
+                    for (Train train : trainLiveSyncService.getCachedLiveTrains(
+                            route.depStation(), route.arrStation(), depDate)) {
+                        liveMatches.putIfAbsent(trainKey(train), train);
+                    }
+                    if (liveMatches.size() >= collectTarget) {
+                        return pageLiveResults(liveMatches, safeOffset, safeLimit);
+                    }
                 }
+            }
+            if (!liveMatches.isEmpty()) {
+                return pageLiveResults(liveMatches, safeOffset, safeLimit);
             }
         }
 
@@ -38,15 +66,17 @@ public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements
         wrapper.eq(Train::getStatus, 1);
 
         // 只要有一等座或者二等座其中之一有票就可以展示
-        wrapper.and(w -> w.gt(Train::getFirstClassSeats, 0)
-                .or()
-                .gt(Train::getSecondClassSeats, 0));
-
         if (StringUtils.hasText(depStation)) {
-            wrapper.eq(Train::getDepartureStation, depStation);
+            List<String> depStations = trainStationResolver.stationsFor(depStation);
+            wrapper.and(w -> w.in(Train::getDepartureStation, depStations)
+                    .or()
+                    .like(Train::getDepartureStation, depStation.trim()));
         }
         if (StringUtils.hasText(arrStation)) {
-            wrapper.eq(Train::getArrivalStation, arrStation);
+            List<String> arrStations = trainStationResolver.stationsFor(arrStation);
+            wrapper.and(w -> w.in(Train::getArrivalStation, arrStations)
+                    .or()
+                    .like(Train::getArrivalStation, arrStation.trim()));
         }
         if (StringUtils.hasText(depDate)) {
             wrapper.likeRight(Train::getDepartureTime, depDate);
@@ -56,9 +86,9 @@ public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements
         List<Train> trains = list(wrapper);
         if (trains.isEmpty() && StringUtils.hasText(depStation) && StringUtils.hasText(arrStation)
                 && StringUtils.hasText(depDate)) {
-            return demoFallbackTrains(depStation, arrStation, depDate);
+            return pageList(demoFallbackTrains(depStation, arrStation, depDate), safeOffset, safeLimit);
         }
-        return trains;
+        return pageList(trains, safeOffset, safeLimit);
     }
 
     private List<Train> demoFallbackTrains(String depStation, String arrStation, String depDate) {
@@ -73,7 +103,6 @@ public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements
                 .eq(Train::getStatus, 1)
                 .eq(Train::getDepartureStation, depStation)
                 .eq(Train::getArrivalStation, arrStation)
-                .and(w -> w.gt(Train::getFirstClassSeats, 0).or().gt(Train::getSecondClassSeats, 0))
                 .orderByAsc(Train::getDepartureTime)
                 .last("LIMIT 6"));
 
@@ -105,8 +134,56 @@ public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements
         copy.setSecondClassPrice(source.getSecondClassPrice());
         copy.setFirstClassSeats(source.getFirstClassSeats());
         copy.setSecondClassSeats(source.getSecondClassSeats());
+        copy.setBusinessClassSeats(source.getBusinessClassSeats());
+        copy.setHardSeatSeats(source.getHardSeatSeats());
+        copy.setNoSeatSeats(source.getNoSeatSeats());
+        copy.setBusinessSeatText(source.getBusinessSeatText());
+        copy.setFirstClassSeatText(source.getFirstClassSeatText());
+        copy.setSecondClassSeatText(source.getSecondClassSeatText());
+        copy.setHardSeatText(source.getHardSeatText());
+        copy.setNoSeatText(source.getNoSeatText());
+        copy.setLiveOnly(source.getLiveOnly());
+        copy.setDataSource(source.getDataSource());
         copy.setStatus(source.getStatus());
         return copy;
+    }
+
+    private static String trainKey(Train train) {
+        return (train.getTrainNo() == null ? "" : train.getTrainNo()) + "|"
+                + (train.getDepartureStation() == null ? "" : train.getDepartureStation()) + "|"
+                + (train.getArrivalStation() == null ? "" : train.getArrivalStation()) + "|"
+                + (train.getDepartureTime() == null ? "" : train.getDepartureTime());
+    }
+
+    private static List<Train> pageLiveResults(Map<String, Train> liveMatches, int offset, int limit) {
+        return liveMatches.values().stream()
+                .sorted(Comparator.comparing(Train::getDepartureTime,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .skip(offset)
+                .limit(limit)
+                .toList();
+    }
+
+    private static List<Train> pageList(List<Train> trains, int offset, int limit) {
+        if (trains == null || trains.isEmpty() || offset >= trains.size()) {
+            return List.of();
+        }
+        return trains.stream()
+                .skip(offset)
+                .limit(limit)
+                .toList();
+    }
+
+    private static int normalizeOffset(Integer offset) {
+        return Math.max(0, offset == null ? 0 : offset);
+    }
+
+    private static int normalizeLimit(Integer limit) {
+        int value = limit == null ? DEFAULT_RESULT_LIMIT : limit;
+        if (value <= 0) {
+            return DEFAULT_RESULT_LIMIT;
+        }
+        return Math.min(value, MAX_RESULT_LIMIT);
     }
 
     /**

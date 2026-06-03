@@ -16,6 +16,8 @@ public interface TrainService extends IService<Train> {
      */
     List<Train> searchTrains(String depStation, String arrStation, String depDate);
 
+    List<Train> searchTrains(String depStation, String arrStation, String depDate, Integer offset, Integer limit);
+
     /**
      * 智能中转推荐 (例如: 出发地查不到直达, 找途经第三站拼接的两段列车)
      */
