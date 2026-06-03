@@ -1,7 +1,9 @@
 package com.travelmate.controller;
 
 import com.travelmate.common.Result;
+import com.travelmate.dto.TrainLiveSyncStatus;
 import com.travelmate.entity.Train;
+import com.travelmate.service.TrainLiveSyncService;
 import com.travelmate.service.TrainService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,9 @@ public class TrainController {
     @Autowired
     private TrainService trainService;
 
+    @Autowired
+    private TrainLiveSyncService trainLiveSyncService;
+
     /**
      * @param depStation 出发点 (如 北京南)
      * @param arrStation 到达点 (如 上海虹桥)
@@ -32,6 +37,11 @@ public class TrainController {
 
         List<Train> list = trainService.searchTrains(depStation, arrStation, date);
         return Result.success(list);
+    }
+
+    @GetMapping("/live-sync-status")
+    public Result<TrainLiveSyncStatus> liveSyncStatus() {
+        return Result.success(trainLiveSyncService.getLastStatus());
     }
 
     /**

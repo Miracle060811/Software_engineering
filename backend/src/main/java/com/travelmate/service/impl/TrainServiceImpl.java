@@ -2,19 +2,37 @@ package com.travelmate.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travelmate.dto.TrainLiveSyncStatus;
 import com.travelmate.entity.Train;
 import com.travelmate.mapper.TrainMapper;
+import com.travelmate.service.TrainLiveSyncService;
 import com.travelmate.service.TrainService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements TrainService {
 
+    @Autowired
+    private TrainLiveSyncService trainLiveSyncService;
+
     @Override
     public List<Train> searchTrains(String depStation, String arrStation, String depDate) {
+        if (StringUtils.hasText(depStation) && StringUtils.hasText(arrStation) && StringUtils.hasText(depDate)) {
+            TrainLiveSyncStatus syncStatus = trainLiveSyncService.syncIfSupported(depStation, arrStation, depDate);
+            if (syncStatus.isSynced()) {
+                List<Train> liveTrains = trainLiveSyncService.getCachedLiveTrains(depStation, arrStation, depDate);
+                if (!liveTrains.isEmpty()) {
+                    return liveTrains;
+                }
+            }
+        }
+
         LambdaQueryWrapper<Train> wrapper = new LambdaQueryWrapper<>();
 
         wrapper.eq(Train::getStatus, 1);
@@ -35,7 +53,60 @@ public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements
         }
 
         wrapper.orderByAsc(Train::getDepartureTime);
-        return list(wrapper);
+        List<Train> trains = list(wrapper);
+        if (trains.isEmpty() && StringUtils.hasText(depStation) && StringUtils.hasText(arrStation)
+                && StringUtils.hasText(depDate)) {
+            return demoFallbackTrains(depStation, arrStation, depDate);
+        }
+        return trains;
+    }
+
+    private List<Train> demoFallbackTrains(String depStation, String arrStation, String depDate) {
+        LocalDate targetDate;
+        try {
+            targetDate = LocalDate.parse(depDate);
+        } catch (Exception ex) {
+            return java.util.List.of();
+        }
+
+        List<Train> cached = this.list(new LambdaQueryWrapper<Train>()
+                .eq(Train::getStatus, 1)
+                .eq(Train::getDepartureStation, depStation)
+                .eq(Train::getArrivalStation, arrStation)
+                .and(w -> w.gt(Train::getFirstClassSeats, 0).or().gt(Train::getSecondClassSeats, 0))
+                .orderByAsc(Train::getDepartureTime)
+                .last("LIMIT 6"));
+
+        return cached.stream()
+                .map(train -> shiftTrainDate(train, targetDate))
+                .toList();
+    }
+
+    private Train shiftTrainDate(Train source, LocalDate targetDate) {
+        Train copy = new Train();
+        copy.setId(source.getId());
+        copy.setTrainNo(source.getTrainNo());
+        copy.setTrainType(source.getTrainType());
+        copy.setDepartureStation(source.getDepartureStation());
+        copy.setArrivalStation(source.getArrivalStation());
+
+        LocalDateTime sourceDeparture = source.getDepartureTime();
+        LocalDateTime sourceArrival = source.getArrivalTime();
+        if (sourceDeparture != null) {
+            LocalDateTime shiftedDeparture = LocalDateTime.of(targetDate, sourceDeparture.toLocalTime());
+            copy.setDepartureTime(shiftedDeparture);
+            if (sourceArrival != null) {
+                copy.setArrivalTime(shiftedDeparture.plusMinutes(java.time.Duration.between(sourceDeparture, sourceArrival).toMinutes()));
+            }
+        }
+
+        copy.setDurationMinutes(source.getDurationMinutes());
+        copy.setFirstClassPrice(source.getFirstClassPrice());
+        copy.setSecondClassPrice(source.getSecondClassPrice());
+        copy.setFirstClassSeats(source.getFirstClassSeats());
+        copy.setSecondClassSeats(source.getSecondClassSeats());
+        copy.setStatus(source.getStatus());
+        return copy;
     }
 
     /**

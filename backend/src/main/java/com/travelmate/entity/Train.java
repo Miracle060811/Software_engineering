@@ -1,6 +1,7 @@
 package com.travelmate.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -25,4 +26,34 @@ public class Train {
     private Integer firstClassSeats;
     private Integer secondClassSeats;
     private Integer status;
+
+    @TableField(exist = false)
+    private Integer businessClassSeats;
+
+    @TableField(exist = false)
+    private Integer hardSeatSeats;
+
+    @TableField(exist = false)
+    private Integer noSeatSeats;
+
+    @TableField(exist = false)
+    private String businessSeatText;
+
+    @TableField(exist = false)
+    private String firstClassSeatText;
+
+    @TableField(exist = false)
+    private String secondClassSeatText;
+
+    @TableField(exist = false)
+    private String hardSeatText;
+
+    @TableField(exist = false)
+    private String noSeatText;
+
+    @TableField(exist = false)
+    private Boolean liveOnly;
+
+    @TableField(exist = false)
+    private String dataSource;
 }

@@ -44,6 +44,15 @@
           <el-button size="large" @click="resetForm">重置</el-button>
         </el-form-item>
       </el-form>
+      <div class="live-sync-panel">
+        <div class="live-sync-copy">
+          <strong>12306 公开余票同步</strong>
+          <span>{{ syncStatusText }}</span>
+          <el-tag v-if="syncStatus" size="small" :type="syncSourceTagType">
+            {{ syncSourceLabel }}
+          </el-tag>
+        </div>
+      </div>
     </el-card>
 
     <!-- 骨架屏 -->
@@ -93,6 +102,7 @@
             <el-button
               type="primary"
               size="small"
+              :disabled="isLiveDemoTrain(train)"
               @click="openBookDialog(train)"
             >
               预订
@@ -248,6 +258,7 @@ const route = useRoute();
 const router = useRouter();
 const trains = ref([]);
 const loading = ref(false);
+const syncStatus = ref(null);
 const bookDialogVisible = ref(false);
 const passengerDrawerVisible = ref(false);
 const booking = ref(false);
@@ -262,6 +273,8 @@ const searchForm = ref({
   arrStation: route.query.arrStation || "",
   date: "",
 });
+
+const today = () => new Date().toISOString().slice(0, 10);
 
 const bookForm = ref({ passengerId: null, seatType: "secondClass", ticketCount: 1, userCouponId: null });
 const newPassenger = ref({ name: "", idCard: "", phone: "" });
@@ -290,17 +303,55 @@ const currentPayablePrice = computed(() => {
   return calcCouponAmount(currentSeatPrice.value, coupon);
 });
 
+const syncStatusText = computed(() => {
+  if (!syncStatus.value) return "输入出发站、到达站和日期后，搜索时会尝试同步 12306 公开余票。";
+  const status = syncStatus.value;
+  if (status.synced) {
+    return `${status.route || "当前路线"} ${status.date || ""} 已同步 ${status.trainCount || 0} 趟车`;
+  }
+  return status.message || "实时同步未返回结果，当前展示本地数据。";
+});
+
+const syncSourceLabel = computed(() => {
+  const source = syncStatus.value?.dataSource;
+  if (source === "12306_PAGE") return "12306 页面实时读取成功";
+  if (source === "LOCAL_DEMO_CACHE") return "12306 页面读取失败，展示本地演示缓存";
+  return "本地数据库数据";
+});
+
+const syncSourceTagType = computed(() => {
+  const source = syncStatus.value?.dataSource;
+  if (source === "12306_PAGE") return "success";
+  if (source === "LOCAL_DEMO_CACHE") return "warning";
+  return "info";
+});
+
 const fetchTrains = async () => {
+  if (!searchForm.value.date) {
+    searchForm.value.date = today();
+    ElMessage.info("未选择出发日期，已默认使用今天");
+  }
   loading.value = true;
   try {
     const data = await request.get("/api/train/search", {
       params: searchForm.value,
     });
     trains.value = Array.isArray(data) ? data : [];
+    await fetchSyncStatus();
   } catch (e) {
     trains.value = [];
   } finally {
     loading.value = false;
+  }
+};
+
+const fetchSyncStatus = async () => {
+  try {
+    syncStatus.value = await request.get("/api/train/live-sync-status", {
+      skipErrorMessage: true,
+    });
+  } catch (e) {
+    syncStatus.value = null;
   }
 };
 
@@ -337,7 +388,10 @@ const openPriceTrend = (train) => {
   priceTrendVisible.value = true;
 };
 
+const isLiveDemoTrain = (train) => train?.liveOnly === true;
+
 const openBookDialog = async (train) => {
+  if (isLiveDemoTrain(train)) return;
   selectedTrain.value = train;
   bookForm.value = { passengerId: null, seatType: "secondClass", ticketCount: 1, userCouponId: null };
   bookDialogVisible.value = true;
@@ -460,6 +514,37 @@ onMounted(() => {
     radial-gradient(circle at 92% 8%, rgba(239, 68, 68, 0.10), transparent 30%);
   box-shadow: 0 14px 36px rgba(36, 96, 92, 0.08);
 }
+.live-sync-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid oklch(0.91 0.028 185);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+}
+.live-sync-copy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--tm-ink-soft);
+}
+.live-sync-copy strong {
+  flex: 0 0 auto;
+  color: oklch(0.43 0.090 182);
+}
+.live-sync-copy span {
+  font-size: 13px;
+  color: var(--tm-muted);
+  line-height: 1.5;
+}
+.live-sync-copy :deep(.el-tag) {
+  flex: 0 0 auto;
+  width: fit-content;
+}
 .train-card {
   margin-bottom: 12px;
   border-radius: 8px;
@@ -572,6 +657,12 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .live-sync-panel {
+    align-items: flex-start;
+  }
+  .live-sync-copy {
+    flex-wrap: wrap;
+  }
   .train-row {
     grid-template-columns: 1fr;
     gap: 12px;
