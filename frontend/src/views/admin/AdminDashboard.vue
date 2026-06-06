@@ -622,6 +622,30 @@
                   min-width="160"
                   show-overflow-tooltip
                 />
+                <el-table-column label="点赞量" width="132">
+                  <template #default="scope">
+                    <el-input-number
+                      v-model="scope.row.likeCount"
+                      :min="0"
+                      :step="1"
+                      controls-position="right"
+                      size="small"
+                      style="width: 112px"
+                    />
+                  </template>
+                </el-table-column>
+                <el-table-column label="收藏量" width="132">
+                  <template #default="scope">
+                    <el-input-number
+                      v-model="scope.row.collectCount"
+                      :min="0"
+                      :step="1"
+                      controls-position="right"
+                      size="small"
+                      style="width: 112px"
+                    />
+                  </template>
+                </el-table-column>
                 <el-table-column label="状态" width="100">
                   <template #default="scope"
                     ><el-tag :type="postStatusType(scope.row.status)">{{
@@ -634,7 +658,7 @@
                   label="发布时间"
                   width="180"
                 />
-                <el-table-column label="操作" width="250" fixed="right">
+                <el-table-column label="操作" width="340" fixed="right">
                   <template #default="scope">
                     <el-button
                       size="small"
@@ -643,6 +667,13 @@
                       >{{
                         scope.row.status === 1 ? "保持通过" : "改为通过"
                       }}</el-button
+                    >
+                    <el-button
+                      size="small"
+                      type="primary"
+                      plain
+                      @click="savePostMetrics(scope.row)"
+                      >保存数据</el-button
                     >
                     <el-button
                       size="small"
@@ -2407,7 +2438,13 @@ const fetchPosts = async () => {
         ? {}
         : { status: statusMap[postStatusFilter.value] };
     const data = await request.get("/api/admin/posts", { params });
-    reviewPosts.value = Array.isArray(data) ? data : [];
+    reviewPosts.value = Array.isArray(data)
+      ? data.map((post) => ({
+          ...post,
+          likeCount: Number(post.likeCount || 0),
+          collectCount: Number(post.collectCount || 0),
+        }))
+      : [];
   } catch (error) {
     reviewPosts.value = [];
   } finally {
@@ -2925,6 +2962,28 @@ const removeSensitiveWord = async (row) => {
     await request.delete(`/api/admin/sensitive-words/${row.id}`);
     ElMessage.success("敏感词已删除");
     await fetchSensitiveWords();
+  } catch (error) {}
+};
+
+const savePostMetrics = async (row) => {
+  const likeCount = Number(row.likeCount);
+  const collectCount = Number(row.collectCount);
+  if (
+    !Number.isInteger(likeCount) ||
+    likeCount < 0 ||
+    !Number.isInteger(collectCount) ||
+    collectCount < 0
+  ) {
+    ElMessage.warning("点赞量和收藏量必须是非负整数");
+    return;
+  }
+  try {
+    await request.post(`/api/admin/posts/${row.id}/metrics`, {
+      likeCount,
+      collectCount,
+    });
+    ElMessage.success("互动数据已保存");
+    await fetchPosts();
   } catch (error) {}
 };
 

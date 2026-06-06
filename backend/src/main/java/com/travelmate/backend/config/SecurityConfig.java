@@ -45,6 +45,7 @@ public class SecurityConfig {
                                                                 "/my-orders",
                                                                 "/coupons",
                                                                 "/notifications",
+                                                                "/messages",
                                                                 "/collections",
                                                                 "/profile/*",
                                                                 "/admin")
@@ -85,6 +86,8 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 .requestMatchers("/api/admin/**")
                                                 .hasRole("ADMIN")
+                                                .requestMatchers("/api/private-message/**")
+                                                .authenticated()
                                                 .requestMatchers("/api/post/**")
                                                 .authenticated()
                                                 .anyRequest().authenticated())

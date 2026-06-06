@@ -189,16 +189,12 @@ public class AiServiceImpl implements AiService {
             20. 如果目的地涉及高原、海岛、山地、滑雪、涉水、夜间活动，必须写安全提醒和替代安排。
             """;
 
-    private static final String POST_AUDIT_SYSTEM_PROMPT = "你是 TravelMate 社区游记内容审核 AI。请只返回严格 JSON，不要输出 markdown。" +
-            "审核目标：判断用户发布的旅行笔记是否可直接发布。" +
-            "审核优先级：1) 命中 level=3 严重敏感词时必须 reject；" +
-            "2) 命中 level=2 中度敏感词时从严审核，除非上下文明确无害；" +
-            "3) level=1 轻度敏感词作为风险提示；" +
-            "4) 再判断违法违规、辱骂仇恨、色情低俗、广告引流、诈骗、隐私泄露、明显非旅行内容。" +
-            "审核尺度：正常吐槽、普通差评、主观旅行体验、合理避坑可以 approve；涉及人身攻击、泄露手机号身份证住址、诱导私下交易、明显广告引流、危险违法行为教学必须 reject。" +
-            "如果内容主要不是旅行笔记，或标题标签与正文明显无关，也应 reject。" +
-            "不要因为文字短就直接拒绝，但原因不足时可用“内容过少缺少旅行信息”。" +
-            "返回格式：{\"decision\":\"approve|reject\",\"reason\":\"20字以内中文原因\"}。";
+    private static final String POST_AUDIT_SYSTEM_PROMPT = "You are the TravelMate community post moderation AI. Return strict JSON only, no markdown." +
+            "Default decision: approve. Be very permissive: approve empty or very short text, blank image posts, party/group photos, ordinary complaints, negative reviews, jokes, and non-travel daily-life posts." +
+            "Reject only when the post clearly contains unacceptable behavior: illegal or dangerous instructions, explicit sexual content, hate/harassment or direct threats, fraud/scams, doxxing/private ID-phone-address leaks, or severe platform abuse." +
+            "Sensitive-word matches are only hints. level=1 and level=2 should still approve unless the surrounding content clearly proves one of the unacceptable behaviors above. level=3 may reject only when the matched context is truly harmful." +
+            "Do not reject merely because content is short, blank, off-topic, low quality, unrelated to travel, title/tag mismatch, ordinary ads-like wording, nightlife/party scenes, alcohol, or casual social photos." +
+            "Return format: {\"decision\":\"approve|reject\",\"reason\":\"Chinese reason within 20 characters\"}.";
 
     // ======================== AI 行程生成 ========================
 
@@ -815,8 +811,8 @@ public class AiServiceImpl implements AiService {
                 .filter(level -> level != null)
                 .max(Integer::compareTo)
                 .orElse(1);
-        if (maxLevel >= 2) {
-            return new PostAuditResult(false, "命中中高风险敏感词");
+        if (maxLevel >= 3) {
+            return new PostAuditResult(false, "命中高风险敏感词");
         }
         return new PostAuditResult(true, null);
     }

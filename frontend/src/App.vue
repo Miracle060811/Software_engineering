@@ -71,6 +71,15 @@
                 <el-icon :size="18"><Bell /></el-icon>
               </el-button>
             </el-badge>
+            <el-badge
+              :value="privateUnreadCount"
+              :hidden="privateUnreadCount === 0"
+              class="nav-badge"
+            >
+              <el-button text @click="$router.push('/messages')">
+                <el-icon :size="18"><ChatDotRound /></el-icon>
+              </el-button>
+            </el-badge>
             <el-button
               text
               :type="$route.path === '/my-orders' ? 'primary' : ''"
@@ -136,6 +145,15 @@
           >
             <el-button text circle @click="$router.push('/notifications')">
               <el-icon :size="20"><Bell /></el-icon>
+            </el-button>
+          </el-badge>
+          <el-badge
+            v-if="userStore.isLoggedIn"
+            :value="privateUnreadCount"
+            :hidden="privateUnreadCount === 0"
+          >
+            <el-button text circle @click="$router.push('/messages')">
+              <el-icon :size="20"><ChatDotRound /></el-icon>
             </el-button>
           </el-badge>
           <el-button text circle @click="showMobileMenu = true">
@@ -459,6 +477,7 @@ import {
   SwitchButton,
   Search,
   Bell,
+  ChatDotRound,
   Expand,
   Close,
   Right,
@@ -483,6 +502,7 @@ const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 const unreadCount = ref(0);
+const privateUnreadCount = ref(0);
 const showSearch = ref(false);
 const showMobileMenu = ref(false);
 const searchTab = ref("flight");
@@ -643,6 +663,19 @@ const fetchUnreadCount = async () => {
   }
 };
 
+const fetchPrivateUnreadCount = async () => {
+  if (!userStore.isLoggedIn) {
+    privateUnreadCount.value = 0;
+    return;
+  }
+  try {
+    const data = await request.get("/api/private-message/unread-count", { silent: true });
+    privateUnreadCount.value = data || 0;
+  } catch (e) {
+    privateUnreadCount.value = 0;
+  }
+};
+
 const handleNotificationUpdated = () => fetchUnreadCount();
 
 // ---------- 导航操作 ----------
@@ -725,6 +758,7 @@ onMounted(() => {
   if (userStore.isLoggedIn) {
     userStore.fetchUserInfo();
     fetchUnreadCount();
+    fetchPrivateUnreadCount();
   }
 });
 
@@ -738,8 +772,10 @@ watch(
     if (loggedIn) {
       userStore.fetchUserInfo();
       fetchUnreadCount();
+      fetchPrivateUnreadCount();
     } else {
       unreadCount.value = 0;
+      privateUnreadCount.value = 0;
     }
   },
 );
@@ -747,7 +783,10 @@ watch(
 watch(
   () => route.fullPath,
   () => {
-    if (userStore.isLoggedIn) fetchUnreadCount();
+    if (userStore.isLoggedIn) {
+      fetchUnreadCount();
+      fetchPrivateUnreadCount();
+    }
   },
 );
 </script>

@@ -109,6 +109,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/messages",
+    name: "PrivateMessages",
+    component: () => import("../views/user/PrivateMessages.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/collections",
     name: "MyCollections",
     component: () => import("../views/user/MyCollections.vue"),

@@ -479,7 +479,35 @@ CREATE TABLE IF NOT EXISTS `tm_follow` (
   UNIQUE KEY `uk_follow` (`follower_id`, `followee_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='关注关系表';
 
--- 19. 系统操作日志表 (Sys Log) 成员E负责
+-- 19. 私信消息表
+CREATE TABLE IF NOT EXISTS `tm_private_message` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `sender_id` BIGINT NOT NULL COMMENT '发送者ID',
+  `receiver_id` BIGINT NOT NULL COMMENT '接收者ID',
+  `content` VARCHAR(1000) NOT NULL COMMENT '消息内容',
+  `read_status` TINYINT(1) DEFAULT '0' COMMENT '0-未读, 1-已读',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '发送时间',
+  `deleted` TINYINT(1) DEFAULT '0' COMMENT '逻辑删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_sender_receiver` (`sender_id`, `receiver_id`),
+  KEY `idx_receiver_read` (`receiver_id`, `read_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户私信消息表';
+
+-- 20. 私信联系人表
+CREATE TABLE IF NOT EXISTS `tm_private_contact` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL COMMENT '用户ID',
+  `contact_user_id` BIGINT NOT NULL COMMENT '联系人用户ID',
+  `last_message_id` BIGINT DEFAULT NULL COMMENT '最后一条消息ID',
+  `unread_count` INT DEFAULT '0' COMMENT '未读数',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_private_contact` (`user_id`, `contact_user_id`),
+  KEY `idx_private_contact_update` (`user_id`, `update_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户私信联系人表';
+
+-- 21. 系统操作日志表 (Sys Log) 成员E负责
 CREATE TABLE IF NOT EXISTS `sys_log` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT COMMENT '操作用户ID',
@@ -495,7 +523,7 @@ CREATE TABLE IF NOT EXISTS `sys_log` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统操作日志表';
 
--- 20. 敏感词表 (Sensitive Word) 成员E负责
+-- 22. 敏感词表 (Sensitive Word) 成员E负责
 CREATE TABLE IF NOT EXISTS `sys_sensitive_word` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `word` VARCHAR(100) NOT NULL COMMENT '敏感词',

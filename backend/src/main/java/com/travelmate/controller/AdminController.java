@@ -527,6 +527,8 @@ public class AdminController {
         row.put("content", post.getContent());
         row.put("destination", post.getDestination());
         row.put("tags", post.getTags());
+        row.put("likeCount", post.getLikeCount());
+        row.put("collectCount", post.getCollectCount());
         row.put("status", post.getStatus());
         row.put("rejectReason", post.getRejectReason());
         row.put("createTime", post.getCreateTime());
@@ -920,6 +922,38 @@ public class AdminController {
                     "/post/" + post.getId());
         }
         return Result.success();
+    }
+
+    @PostMapping("/posts/{id}/metrics")
+    public Result<Void> updatePostMetrics(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        checkAdmin();
+        Post post = postMapper.selectById(id);
+        if (post == null) {
+            return Result.error("游记不存在");
+        }
+        Integer likeCount = parseNonNegativeInteger(body == null ? null : body.get("likeCount"), "点赞量");
+        Integer collectCount = parseNonNegativeInteger(body == null ? null : body.get("collectCount"), "收藏量");
+        postMapper.update(null, new LambdaUpdateWrapper<Post>()
+                .eq(Post::getId, id)
+                .set(Post::getLikeCount, likeCount)
+                .set(Post::getCollectCount, collectCount)
+                .set(Post::getUpdateTime, LocalDateTime.now()));
+        return Result.success();
+    }
+
+    private Integer parseNonNegativeInteger(Object value, String fieldName) {
+        if (value == null || value.toString().isBlank()) {
+            throw new RuntimeException(fieldName + "不能为空");
+        }
+        try {
+            int parsed = Integer.parseInt(value.toString());
+            if (parsed < 0) {
+                throw new RuntimeException(fieldName + "不能小于0");
+            }
+            return parsed;
+        } catch (NumberFormatException e) {
+            throw new RuntimeException(fieldName + "必须是整数");
+        }
     }
 
     @GetMapping("/users")

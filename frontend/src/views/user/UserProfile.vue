@@ -46,6 +46,7 @@
               >
                 {{ isFollowing ? "已关注" : "+ 关注" }}
               </el-button>
+              <el-button :icon="Message" @click="openPrivateMessage">私信</el-button>
             </template>
           </div>
         </div>
@@ -131,8 +132,28 @@
         <el-form-item label="昵称">
           <el-input v-model="editForm.nickname" placeholder="请输入昵称" />
         </el-form-item>
-        <el-form-item label="头像URL">
-          <el-input v-model="editForm.avatar" placeholder="请输入头像图片URL" />
+        <el-form-item label="头像">
+          <el-upload
+            class="avatar-uploader"
+            drag
+            :action="uploadUrl"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="handleAvatarUploadSuccess"
+            :before-upload="beforeAvatarUpload"
+            accept="image/*"
+          >
+            <div v-if="editForm.avatar" class="avatar-preview">
+              <el-avatar :size="82" :src="editForm.avatar">
+                {{ editForm.nickname?.[0] || profile?.username?.[0] }}
+              </el-avatar>
+              <span>拖动图片到这里替换头像</span>
+            </div>
+            <div v-else class="avatar-upload-empty">
+              <el-icon :size="28"><UploadFilled /></el-icon>
+              <span>拖动本地图片到这里上传</span>
+            </div>
+          </el-upload>
         </el-form-item>
         <el-form-item label="个人简介">
           <el-input
@@ -196,7 +217,7 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { StarFilled } from "@element-plus/icons-vue";
+import { Message, StarFilled, UploadFilled } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import { useUserStore } from "@/stores/user";
 import SafeImage from "@/components/SafeImage.vue";
@@ -224,6 +245,15 @@ const postStatusFilter = ref("all");
 
 const editForm = ref({ nickname: "", avatar: "", bio: "" });
 const pwdForm = ref({ oldPassword: "", newPassword: "", confirmPassword: "" });
+
+const uploadUrl = import.meta.env.VITE_API_BASE_URL
+  ? import.meta.env.VITE_API_BASE_URL + "/api/file/upload"
+  : "/api/file/upload";
+
+const uploadHeaders = computed(() => {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: "Bearer " + token } : {};
+});
 
 const isSelf = computed(() => {
   return userStore.userInfo?.username === route.params.username;
@@ -318,6 +348,48 @@ const toggleFollow = async () => {
     ElMessage.success(isFollowing.value ? "关注成功" : "已取消关注");
     await fetchFollowInfo();
   } catch (e) {}
+};
+
+const openPrivateMessage = () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning("请先登录");
+    return;
+  }
+  if (!profileUserId.value) {
+    ElMessage.error("无法获取用户信息");
+    return;
+  }
+  router.push({
+    path: "/messages",
+    query: {
+      userId: profileUserId.value,
+      username: profile.value?.username || "",
+      nickname: profile.value?.nickname || "",
+      avatar: profile.value?.avatar || "",
+    },
+  });
+};
+
+const beforeAvatarUpload = (file) => {
+  if (!file.type.startsWith("image/")) {
+    ElMessage.error("只能上传图片文件");
+    return false;
+  }
+  if (file.size / 1024 / 1024 >= 10) {
+    ElMessage.error("图片大小不能超过 10MB");
+    return false;
+  }
+  return true;
+};
+
+const handleAvatarUploadSuccess = (res) => {
+  const url = res?.url || res?.data?.url || (typeof res?.data === "string" ? res.data : "");
+  if (!url) {
+    ElMessage.error("头像上传结果异常");
+    return;
+  }
+  editForm.value.avatar = url;
+  ElMessage.success("头像上传成功");
 };
 
 const openFollowDialog = async (type) => {
@@ -483,6 +555,25 @@ onMounted(fetchProfile);
   font-size: 32px;
   background: #409eff;
   color: #fff;
+}
+.avatar-uploader {
+  width: 100%;
+}
+.avatar-uploader :deep(.el-upload) {
+  width: 100%;
+}
+.avatar-uploader :deep(.el-upload-dragger) {
+  padding: 18px;
+}
+.avatar-preview,
+.avatar-upload-empty {
+  min-height: 116px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--el-text-color-secondary);
 }
 .profile-info {
   flex: 1;
