@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = TravelMateApplication.class)
@@ -63,6 +64,21 @@ class SecurityConfigTests {
     void unauthenticatedStaticImageRequestIsServed() throws Exception {
         mockMvc.perform(get("/images/seed/beijing.svg"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void frontendHistoryRoutesAreForwardedWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/login"))
+                .andExpect(status().isOk())
+                .andExpect(forwardedUrl("/index.html"));
+
+        mockMvc.perform(get("/ai-plan"))
+                .andExpect(status().isOk())
+                .andExpect(forwardedUrl("/index.html"));
+
+        mockMvc.perform(get("/coupons"))
+                .andExpect(status().isOk())
+                .andExpect(forwardedUrl("/index.html"));
     }
 
     @Test

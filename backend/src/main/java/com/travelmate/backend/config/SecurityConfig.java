@@ -23,6 +23,32 @@ public class SecurityConfig {
                                 .formLogin(form -> form.disable())
                                 .httpBasic(basic -> basic.disable())
                                 .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/",
+                                                                "/index.html",
+                                                                "/login",
+                                                                "/destinations",
+                                                                "/destination/*",
+                                                                "/about",
+                                                                "/terms",
+                                                                "/privacy",
+                                                                "/help",
+                                                                "/flight-search",
+                                                                "/train-search",
+                                                                "/hotel-search",
+                                                                "/hotel/*",
+                                                                "/attractions",
+                                                                "/ai-plan",
+                                                                "/community",
+                                                                "/post/create",
+                                                                "/post/*",
+                                                                "/my-orders",
+                                                                "/coupons",
+                                                                "/notifications",
+                                                                "/collections",
+                                                                "/profile/*",
+                                                                "/admin")
+                                                .permitAll()
                                                 .requestMatchers(
                                                                 "/user/register", "/user/login",
                                                                 "/user/admin-register",

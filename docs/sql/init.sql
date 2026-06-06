@@ -251,6 +251,41 @@ CREATE TABLE IF NOT EXISTS `tm_attraction_order` (
   KEY `idx_user_create_time` (`user_id`, `create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='景点门票订单表';
 
+-- 兼容已初始化过的旧库：补建/补齐景点门票订单表
+-- 云端若曾使用旧版 init.sql，可能已存在景点数据但缺少 tm_attraction_order。
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `order_no` VARCHAR(50) NOT NULL COMMENT ''订单编号'' AFTER `id`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'order_no');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `user_id` BIGINT NOT NULL COMMENT ''用户ID'' AFTER `order_no`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'user_id');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `attraction_id` BIGINT NOT NULL COMMENT ''景点ID'' AFTER `user_id`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'attraction_id');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `attraction_name` VARCHAR(100) NOT NULL COMMENT ''景点名称快照'' AFTER `attraction_id`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'attraction_name');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `city` VARCHAR(50) DEFAULT NULL COMMENT ''城市快照'' AFTER `attraction_name`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'city');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `adult_count` INT NOT NULL DEFAULT ''0'' COMMENT ''成人票数量'' AFTER `city`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'adult_count');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `child_count` INT NOT NULL DEFAULT ''0'' COMMENT ''儿童票数量'' AFTER `adult_count`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'child_count');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `ticket_count` INT NOT NULL DEFAULT ''1'' COMMENT ''总票数'' AFTER `child_count`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'ticket_count');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `guest_name` VARCHAR(50) NOT NULL COMMENT ''游客姓名'' AFTER `ticket_count`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'guest_name');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `guest_phone` VARCHAR(20) NOT NULL COMMENT ''游客手机号'' AFTER `guest_name`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'guest_phone');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `amount` DECIMAL(10,2) NOT NULL COMMENT ''订单金额'' AFTER `guest_phone`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'amount');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `status` TINYINT(1) DEFAULT ''1'' COMMENT ''1-已支付/待核销, 2-已核销, 4-已取消/已退款'' AFTER `amount`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'status');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT ''购票时间'' AFTER `status`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'create_time');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD COLUMN `deleted` TINYINT(1) DEFAULT ''0'' COMMENT ''逻辑删除: 0-未删除, 1-已删除'' AFTER `create_time`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND COLUMN_NAME = 'deleted');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD UNIQUE KEY `uk_attraction_order_no` (`order_no`)', 'SELECT 1') FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND INDEX_NAME IN ('uk_order_no', 'uk_attraction_order_no'));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_attraction_order` ADD KEY `idx_attraction_order_user_create_time` (`user_id`, `create_time`)', 'SELECT 1') FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_attraction_order' AND INDEX_NAME IN ('idx_user_create_time', 'idx_attraction_order_user_create_time'));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- 10.1 热门城市资料表
 CREATE TABLE IF NOT EXISTS `tm_destination` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
