@@ -621,7 +621,7 @@ INSERT INTO `tm_attraction` (`id`, `name`, `city`, `address`, `description`, `co
 (4, '西湖', '杭州', '西湖区龙井路1号', '杭州西湖文化景观为世界文化遗产，核心湖区与沿湖开放空间面向公众开放。', NULL, 0.00, 0.00, 9999, 9999, '全天开放（部分收费景点另行开放）', 30.242703, 120.150269, 'https://westlake.hangzhou.gov.cn/', '杭州西湖风景名胜区管委会', '2026-05-19'),
 (5, '张家界国家森林公园', '张家界', '武陵源区国家森林公园内', '中国第一个国家森林公园，武陵源世界自然遗产核心景区之一，以石英砂岩峰林地貌著称。', NULL, 227.00, 113.00, 500, 234, '07:30-18:00（以景区当日公告为准）', 29.327001, 110.475704, 'https://wly.hunan.gov.cn/', '湖南省文化和旅游厅/武陵源景区公开信息', '2026-05-19'),
 (6, '秦始皇帝陵博物院', '西安', '临潼区秦陵北路', '以秦始皇兵马俑坑和秦始皇陵相关遗址为核心的遗址类博物馆。', NULL, 120.00, 0.00, 800, 356, '08:30-18:30（旺季，停止检票17:00）', 34.384018, 109.278491, 'https://www.bmy.com.cn/', '秦始皇帝陵博物院官网', '2026-05-19'),
-(7, '九寨沟风景名胜区', '阿坝', '阿坝藏族羌族自治州九寨沟县漳扎镇', '以高山湖泊、瀑布群、彩林和雪峰景观闻名的世界自然遗产。', NULL, 190.00, 95.00, 1000, 445, '07:30-17:00（旺季，具体以景区公告为准）', 33.260772, 103.918599, 'https://www.jiuzhai.com/intelligent-service/tickets', '九寨沟风景名胜区官网', '2026-05-19'),
+(7, '九寨沟风景名胜区', '阿坝', '阿坝藏族羌族自治州九寨沟县漳扎镇', '以高山湖泊、瀑布群、彩林和雪峰景观闻名的世界自然遗产。', 'https://commons.wikimedia.org/wiki/Special:Redirect/file/1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg', 190.00, 95.00, 1000, 445, '07:30-17:00（旺季，具体以景区公告为准）', 33.260772, 103.918599, 'https://www.jiuzhai.com/intelligent-service/tickets', '九寨沟风景名胜区官网', '2026-05-19'),
 (8, '黄山风景区', '黄山', '黄山市黄山区汤口镇', '世界文化与自然双重遗产，以奇松、怪石、云海、温泉等景观著称。', NULL, 190.00, 95.00, 1500, 678, '06:00-17:30（旺季，具体以景区公告为准）', 30.130130, 118.168498, 'https://hsgwh.huangshan.gov.cn/', '黄山风景区管委会', '2026-05-19'),
 (9, '漓江风景名胜区', '桂林', '桂林市灵川县至阳朔县漓江沿线', '桂林山水代表性景区，游船线路以漓江喀斯特峰林、江湾和田园景观为核心。', NULL, 210.00, 105.00, 600, 289, '08:00-12:00（游船班次以当日公告为准）', 25.166667, 110.416667, 'https://wglj.guilin.gov.cn/', '桂林市文化广电和旅游局', '2026-05-19'),
 (10, '天坛公园', '北京', '东城区天坛东里甲1号', '明清两代皇帝祭天祈谷场所，是北京中轴线南段的重要世界文化遗产。', NULL, 34.00, 17.00, 2000, 1280, '06:00-22:00（景点院落开放时间另行公告）', 39.882200, 116.406600, 'http://www.tiantanpark.com/', '天坛公园官网', '2026-05-19'),
@@ -691,7 +691,7 @@ INSERT INTO `tm_media_asset` (`id`, `target_type`, `target_id`, `media_type`, `u
 (4, 'attraction', 4, 'image', '/images/seed/hangzhou.svg', '西湖九曲桥', 'Sekino Tadashi', 'Public domain', 'https://creativecommons.org/publicdomain/mark/1.0/', 'https://commons.wikimedia.org/wiki/File:West_Lake,_Hangzhou_(Nine-turn_bridge).jpg', 'Wikimedia Commons', '2026-05-19'),
 (5, 'attraction', 5, 'image', '/images/seed/zhangjiajie.svg', '张家界国家森林公园', 'Kuruman', 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/', 'https://commons.wikimedia.org/wiki/File:Zhangjiajie_National_Forest_Park.jpg', 'Wikimedia Commons', '2026-05-19'),
 (6, 'attraction', 6, 'image', '/images/seed/xian.svg', '秦兵马俑', 'xiquinhosilva', 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/', 'https://commons.wikimedia.org/wiki/File:Terracotta_Army_(54082561381).jpg', 'Wikimedia Commons', '2026-05-19'),
-(7, 'attraction', 7, 'image', '/images/seed/lake.svg', '九寨沟五花海', 'Chensiyuan', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg', 'Wikimedia Commons', '2026-05-19'),
+(7, 'attraction', 7, 'image', 'https://commons.wikimedia.org/wiki/Special:Redirect/file/1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg', '九寨沟五花海', 'Chensiyuan', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg', 'Wikimedia Commons', '2026-05-19'),
 (8, 'attraction', 8, 'image', '/images/seed/mountain.svg', '黄山景观', 'Miaulian', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/', 'https://commons.wikimedia.org/wiki/File:Anhui_Huangshan.jpg', 'Wikimedia Commons', '2026-05-19'),
 (9, 'attraction', 9, 'image', '/images/seed/guilin.svg', '漓江山水', 'Chensiyuan', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/', 'https://commons.wikimedia.org/wiki/File:1_li_jiang_guilin_yangshuo_2011.jpg', 'Wikimedia Commons', '2026-05-19'),
 (10, 'post', 3, 'image', '/images/seed/sanya.svg', '三亚亚龙湾', 'Anna Frodesiak', 'Public domain', 'https://creativecommons.org/publicdomain/mark/1.0/', 'https://commons.wikimedia.org/wiki/File:Yalong_Bay_01.jpg', 'Wikimedia Commons', '2026-05-19'),
@@ -1335,7 +1335,7 @@ INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`,
 INSERT INTO `tm_attraction` (`id`, `name`, `city`, `address`, `description`, `cover_img`, `adult_price`, `child_price`, `total_tickets`, `available_tickets`, `open_time`, `lat`, `lng`, `official_url`, `source_name`, `data_checked_date`) VALUES
 (29, '黄鹤楼', '武汉', '武昌区蛇山峰岭之上',
   '中国历史名楼之一，矗立于武汉蛇山，登楼可俯瞰长江与武汉三镇城市风貌，是湖北省标志性文化地标。',
-  'https://upload.wikimedia.org/wikipedia/commons/4/40/Huanghelou.jpg',
+  'https://commons.wikimedia.org/wiki/Special:Redirect/file/HuangHe_Tower.jpg',
   70.00, 35.00, 2000, 1456, '08:00-18:00（旺季，停止入场17:30）',
   30.5447, 114.3029, 'https://www.yhl.com.cn/', '黄鹤楼公园官网', '2026-05-19'),
 
@@ -1347,7 +1347,7 @@ INSERT INTO `tm_attraction` (`id`, `name`, `city`, `address`, `description`, `co
 
 (31, '纳木错', '拉萨', '当雄县纳木错湖区',
   '藏语意为"天湖"，海拔4718米，西藏最大湖泊，以圣湖美景和雪山倒影闻名。高海拔须注意高原反应。',
-  'https://upload.wikimedia.org/wikipedia/commons/1/13/Namtso_lake.jpg',
+  '/images/real/attractions/tianshan-tianchi.jpg',
   120.00, 60.00, 1000, 780, '08:00-18:00（以景区公告为准）',
   30.7367, 90.5227, NULL, '那曲市文化和旅游局公开信息', '2026-05-19'),
 
@@ -1692,7 +1692,7 @@ SET `cover_img` = CASE `id`
   WHEN 4 THEN 'https://upload.wikimedia.org/wikipedia/commons/d/d8/West_Lake%2C_Hangzhou_%28Nine-turn_bridge%29.jpg'
   WHEN 5 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Zhangjiajie_National_Forest_Park.jpg'
   WHEN 6 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Terracotta_Army%2C_View_of_Pit_1.jpg'
-  WHEN 7 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Jiuzhaigou_Valley_National_Park.jpg'
+  WHEN 7 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg'
   WHEN 8 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Huangshan_pic_4.jpg'
   WHEN 9 THEN 'https://upload.wikimedia.org/wikipedia/commons/9/92/1_li_jiang_guilin_yangshuo_2011.jpg'
   ELSE `cover_img`
@@ -1738,6 +1738,7 @@ WHERE `cover_img` LIKE '/images/seed/%';
 -- 最终兜底：旧库可能曾把部分 tm_media_asset 记录错误标成 attraction，回填后需再次按景点本体纠偏。
 UPDATE `tm_attraction`
 SET `cover_img` = CASE `id`
+  WHEN 7 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg'
   WHEN 10 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Temple_Of_Heaven.jpg'
   WHEN 11 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Badaling_Great_Wall_(6170369160).jpg'
   WHEN 12 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/OrientPearlTower.jpg'
@@ -1759,7 +1760,15 @@ SET `cover_img` = CASE `id`
   WHEN 28 THEN 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Hongcun.jpg'
   ELSE `cover_img`
 END
-WHERE `id` BETWEEN 10 AND 28;
+WHERE `id` = 7 OR `id` BETWEEN 10 AND 28;
+
+UPDATE `tm_attraction`
+SET `cover_img` = '/images/real/attractions/tianshan-tianchi.jpg'
+WHERE `id` = 31 OR `name` = '纳木错';
+
+UPDATE `tm_hotel`
+SET `cover_img` = '/images/real/hotels/shanghai-treasury.webp'
+WHERE `id` = 32 OR `name` = '上海人民广场南京东路珍宝酒店';
 
 UPDATE `tm_post`
 SET `images` = CASE `id`

@@ -1,246 +1,16 @@
 {
   "version": "1.0.0",
-  "gitCommitHash": "06cfe1ca09ebad6793cbd724d3a1d20cba103ac5",
-  "generatedAt": "2026-05-23T18:24:36.764Z",
+  "gitCommitHash": "252b3de1ed2b3ce71b3941dd4f8c3753d39e0f51",
+  "generatedAt": "2026-06-05T16:35:27.874Z",
   "files": {
-    ".claude/settings.json": {
-      "filePath": ".claude/settings.json",
-      "contentHash": "43fd9292d8554aea3381e56d82032711f710bf8de2cec4c06ef2966351c70934",
+    ".understand-anything/.understandignore": {
+      "filePath": ".understand-anything/.understandignore",
+      "contentHash": "764a1c4f49e881697490b99d5ab063ca5aeeeb2bfd84b8d17240e1668d63b28f",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 6,
-      "hasStructuralAnalysis": true
-    },
-    ".claude/settings.local.json": {
-      "filePath": ".claude/settings.local.json",
-      "contentHash": "9cd84a387a7dda5d037c66d557e3396c1e687a53699ce4830561486db460995a",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 62,
-      "hasStructuralAnalysis": true
-    },
-    ".env": {
-      "filePath": ".env",
-      "contentHash": "7e79d119e9c0263320d3b80eb7081ba7cec5bd7f77f36110c56fa05b1a97a81f",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 12,
-      "hasStructuralAnalysis": true
-    },
-    ".env.example": {
-      "filePath": ".env.example",
-      "contentHash": "db1c601520c69e157cf02aa8d18de2dfbcff11d8f872da09e23d9c6178d8177c",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 16,
-      "hasStructuralAnalysis": true
-    },
-    ".github/java-upgrade/.gitignore": {
-      "filePath": ".github/java-upgrade/.gitignore",
-      "contentHash": "a31a11a8565c1a92ee2b47b36a4ac2ff4320a3f73645201d5736a602d3eba46f",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 3,
-      "hasStructuralAnalysis": false
-    },
-    ".github/java-upgrade/hooks/scripts/recordToolUse.ps1": {
-      "filePath": ".github/java-upgrade/hooks/scripts/recordToolUse.ps1",
-      "contentHash": "b0f2d33657b03feaaf2a056a777ee7b0e24e80ed3b9c217aa5d91a958c9a9bd8",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 18,
-      "hasStructuralAnalysis": false
-    },
-    ".github/java-upgrade/hooks/scripts/recordToolUse.sh": {
-      "filePath": ".github/java-upgrade/hooks/scripts/recordToolUse.sh",
-      "contentHash": "bf4f567d8335100b18d9f91c922d481c36394b2ebea7a3e7e5b92001b40094e3",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 28,
-      "hasStructuralAnalysis": true
-    },
-    ".understand-anything/config.json": {
-      "filePath": ".understand-anything/config.json",
-      "contentHash": "cf5ec638b0e283c436761f5b7664b9665fcf2e2a79bd6e2f1ff50b52e9f92c7d",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 4,
-      "hasStructuralAnalysis": true
-    },
-    "5组-软件详细设计说明.md": {
-      "filePath": "5组-软件详细设计说明.md",
-      "contentHash": "244f70b9e908da268df3f3d39c699a15ec117171deb769bf2f9cba4e43db5229",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 624,
-      "hasStructuralAnalysis": true
-    },
-    "5组-软件需求规格说明.md": {
-      "filePath": "5组-软件需求规格说明.md",
-      "contentHash": "5d6fab44f5be5e584546bd858175bf1a8b939d5a5a77c0df12fe9ad36c28cfa8",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 242,
-      "hasStructuralAnalysis": true
-    },
-    "AGENTS.md": {
-      "filePath": "AGENTS.md",
-      "contentHash": "c32e7ed63b93426501c6702614c47fae4e9304519ecf93bdfa0266b7ce71204b",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 255,
-      "hasStructuralAnalysis": true
-    },
-    "CLAUDE.md": {
-      "filePath": "CLAUDE.md",
-      "contentHash": "280a4a64a5338d98b32984bc2f832caaadb6607645167fbfce20addb4b64fc92",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 213,
-      "hasStructuralAnalysis": true
-    },
-    "Changelog-2026-05-11.md": {
-      "filePath": "Changelog-2026-05-11.md",
-      "contentHash": "fc910287838128d4c5e013eaa1b6ea2608d4aee89741efeb739cf6476b4b09b9",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 103,
-      "hasStructuralAnalysis": true
-    },
-    "Changelog-2026-05-12.md": {
-      "filePath": "Changelog-2026-05-12.md",
-      "contentHash": "86f97ee6bf7f80a7198f0f90d5f3eb76a329a899f3d697d6d9188040e36782d3",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 119,
-      "hasStructuralAnalysis": true
-    },
-    "Changelog-2026-05-13.md": {
-      "filePath": "Changelog-2026-05-13.md",
-      "contentHash": "1771f960364c51761c1e2d35c81b9cfa1731f91e9d1a5bf2be3a0826c505c839",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 96,
-      "hasStructuralAnalysis": true
-    },
-    "Changelog-2026-05-14.md": {
-      "filePath": "Changelog-2026-05-14.md",
-      "contentHash": "b8eac5cc0c532a080647a512803fe71b831a3fbff0e74255202a7d86e2c44fd3",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 54,
-      "hasStructuralAnalysis": true
-    },
-    "Changelog-2026-05-19.md": {
-      "filePath": "Changelog-2026-05-19.md",
-      "contentHash": "34706af912e001fbdf1cbc0b74f4c5f5719c41889e7faba71eee93f62c795144",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 69,
-      "hasStructuralAnalysis": true
-    },
-    "Changelog-2026-05-21.md": {
-      "filePath": "Changelog-2026-05-21.md",
-      "contentHash": "0497bd6ac3b3b0b70a037ec2c30819bc835b88b3658072a75f1c82703babf9e5",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 60,
-      "hasStructuralAnalysis": true
-    },
-    "Changelog-2026-05-22.md": {
-      "filePath": "Changelog-2026-05-22.md",
-      "contentHash": "dd79c12e8ec01961a794ce5b0186570e681af5041849187c18da5188b4688fb5",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 71,
-      "hasStructuralAnalysis": true
-    },
-    "Changelog-2026-05-23-afternoon.md": {
-      "filePath": "Changelog-2026-05-23-afternoon.md",
-      "contentHash": "acd6058ef2f9cfd5d79c71c61ee673d37bd2d1d537b459df3d0c180e495efb5c",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 113,
-      "hasStructuralAnalysis": true
-    },
-    "Changelog-2026-05-23.md": {
-      "filePath": "Changelog-2026-05-23.md",
-      "contentHash": "cf09c30b487b0d68e41411aad76a4a197c94e4f725482e73f1bbf34c3197e429",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 104,
-      "hasStructuralAnalysis": true
-    },
-    "Changelog-early.md": {
-      "filePath": "Changelog-early.md",
-      "contentHash": "923cb27345377ffd0d5bd4c07e8ad7e0ff23fed574aaf4d409d1109f4a5aedaa",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 75,
-      "hasStructuralAnalysis": true
-    },
-    "README.md": {
-      "filePath": "README.md",
-      "contentHash": "6b18998cd7d26bbffac5e1e5b67cae8b4a3903e0fde693c2c2f4dc7a4f2958b2",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 340,
-      "hasStructuralAnalysis": true
-    },
-    "TravelMate-defense-deck-warm.pptx": {
-      "filePath": "TravelMate-defense-deck-warm.pptx",
-      "contentHash": "56d293b6a667a74421fadada3638488e0a4bc655da57e43c741c5193b7ace154",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 377,
+      "totalLines": 20,
       "hasStructuralAnalysis": false
     },
     "backend/.gitattributes": {
@@ -252,76 +22,6 @@
       "exports": [],
       "totalLines": 3,
       "hasStructuralAnalysis": false
-    },
-    "backend/.github/java-upgrade/.gitignore": {
-      "filePath": "backend/.github/java-upgrade/.gitignore",
-      "contentHash": "a31a11a8565c1a92ee2b47b36a4ac2ff4320a3f73645201d5736a602d3eba46f",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 3,
-      "hasStructuralAnalysis": false
-    },
-    "backend/.github/java-upgrade/20260413113358/plan.md": {
-      "filePath": "backend/.github/java-upgrade/20260413113358/plan.md",
-      "contentHash": "5a7b1d8a4f314739540234931b1e8a2441e3f16c67acebf836365d0e86eac813",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 262,
-      "hasStructuralAnalysis": true
-    },
-    "backend/.github/java-upgrade/20260413113358/progress.md": {
-      "filePath": "backend/.github/java-upgrade/20260413113358/progress.md",
-      "contentHash": "67cf0d3ba150fdab45e7b2450dc629ffb7cfafb25b39a978a7bdb76c8d26d09d",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 164,
-      "hasStructuralAnalysis": true
-    },
-    "backend/.github/java-upgrade/20260413113358/summary.md": {
-      "filePath": "backend/.github/java-upgrade/20260413113358/summary.md",
-      "contentHash": "2897ebb7b9829bb99179576587bd59433e29ee58041785dd3b7747813887aa1a",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 323,
-      "hasStructuralAnalysis": true
-    },
-    "backend/.gitignore": {
-      "filePath": "backend/.gitignore",
-      "contentHash": "1ed8ac4c98fc58dd62176465e31bf7c351621cadd4a5d9bcbcc43cc0635344c1",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 37,
-      "hasStructuralAnalysis": false
-    },
-    "backend/.mvn/wrapper/maven-wrapper.properties": {
-      "filePath": "backend/.mvn/wrapper/maven-wrapper.properties",
-      "contentHash": "79f38e73124d4f57d59a3550ec8a123b01b9cc630270c4bb15628dd7924e8be6",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 4,
-      "hasStructuralAnalysis": false
-    },
-    "backend/application-local.yml": {
-      "filePath": "backend/application-local.yml",
-      "contentHash": "e967f0bfedf2a7f454ceb64707c482ccf6f41ac00ebd640091e19d487d7ec490",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 4,
-      "hasStructuralAnalysis": true
     },
     "backend/mvnw": {
       "filePath": "backend/mvnw",
@@ -342,62 +42,6 @@
       "exports": [],
       "totalLines": 192,
       "hasStructuralAnalysis": false
-    },
-    "backend/pom.xml": {
-      "filePath": "backend/pom.xml",
-      "contentHash": "794be9e510de7056688268faa5645b56ff8c6265e05eb9481c9af1b7d5099e07",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 128,
-      "hasStructuralAnalysis": false
-    },
-    "backend/src/main/java/com/travelmate/TravelMateApplication.java": {
-      "filePath": "backend/src/main/java/com/travelmate/TravelMateApplication.java",
-      "contentHash": "edf380ea63ad2372d360893a48e6c6d55aa6aaa27cb70a30b0cbd19699b12c26",
-      "functions": [
-        {
-          "name": "main",
-          "params": [
-            "args"
-          ],
-          "returnType": "void",
-          "exported": true,
-          "lineCount": 4
-        }
-      ],
-      "classes": [
-        {
-          "name": "TravelMateApplication",
-          "methods": [
-            "main"
-          ],
-          "properties": [],
-          "exported": true,
-          "lineCount": 9
-        }
-      ],
-      "imports": [
-        {
-          "source": "org.springframework.boot.SpringApplication",
-          "specifiers": [
-            "SpringApplication"
-          ]
-        },
-        {
-          "source": "org.springframework.boot.autoconfigure.SpringBootApplication",
-          "specifiers": [
-            "SpringBootApplication"
-          ]
-        }
-      ],
-      "exports": [
-        "main",
-        "TravelMateApplication"
-      ],
-      "totalLines": 14,
-      "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/annotation/RateLimiter.java": {
       "filePath": "backend/src/main/java/com/travelmate/annotation/RateLimiter.java",
@@ -596,28 +240,46 @@
     },
     "backend/src/main/java/com/travelmate/backend/config/CorsConfig.java": {
       "filePath": "backend/src/main/java/com/travelmate/backend/config/CorsConfig.java",
-      "contentHash": "acaaaa4c79616dc5fc6b59fa83151e4e0f18288926cbc656834093f332e91f0c",
+      "contentHash": "f618834032091bb8002073dbd7d6cee52ab947ef7113dc9f050665a6304bda07",
       "functions": [
         {
-          "name": "corsFilter",
+          "name": "corsConfigurationSource",
           "params": [],
-          "returnType": "CorsFilter",
+          "returnType": "CorsConfigurationSource",
           "exported": true,
           "lineCount": 13
+        },
+        {
+          "name": "corsFilter",
+          "params": [
+            "corsConfigurationSource"
+          ],
+          "returnType": "CorsFilter",
+          "exported": true,
+          "lineCount": 4
         }
       ],
       "classes": [
         {
           "name": "CorsConfig",
           "methods": [
+            "corsConfigurationSource",
             "corsFilter"
           ],
-          "properties": [],
+          "properties": [
+            "allowedOrigins"
+          ],
           "exported": true,
-          "lineCount": 17
+          "lineCount": 25
         }
       ],
       "imports": [
+        {
+          "source": "org.springframework.beans.factory.annotation.Value",
+          "specifiers": [
+            "Value"
+          ]
+        },
         {
           "source": "org.springframework.context.annotation.Bean",
           "specifiers": [
@@ -637,6 +299,12 @@
           ]
         },
         {
+          "source": "org.springframework.web.cors.CorsConfigurationSource",
+          "specifiers": [
+            "CorsConfigurationSource"
+          ]
+        },
+        {
           "source": "org.springframework.web.cors.UrlBasedCorsConfigurationSource",
           "specifiers": [
             "UrlBasedCorsConfigurationSource"
@@ -647,13 +315,20 @@
           "specifiers": [
             "CorsFilter"
           ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
         }
       ],
       "exports": [
+        "corsConfigurationSource",
         "corsFilter",
         "CorsConfig"
       ],
-      "totalLines": 26,
+      "totalLines": 38,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/backend/config/JwtFilter.java": {
@@ -882,7 +557,7 @@
     },
     "backend/src/main/java/com/travelmate/backend/config/SecurityConfig.java": {
       "filePath": "backend/src/main/java/com/travelmate/backend/config/SecurityConfig.java",
-      "contentHash": "df06c3f3380f8aedc2ee2a8a05a04048ae80a2d884bbc7940a01ddd086af77b6",
+      "contentHash": "e6ebbb38d553437a455ece8b7c24fd1e5e0c6cfb189d6d5b7b21e970a0057582",
       "functions": [
         {
           "name": "filterChain",
@@ -891,7 +566,7 @@
           ],
           "returnType": "SecurityFilterChain",
           "exported": true,
-          "lineCount": 41
+          "lineCount": 49
         }
       ],
       "classes": [
@@ -904,7 +579,7 @@
             "jwtFilter"
           ],
           "exported": true,
-          "lineCount": 48
+          "lineCount": 56
         }
       ],
       "imports": [
@@ -967,23 +642,33 @@
         "filterChain",
         "SecurityConfig"
       ],
-      "totalLines": 61,
+      "totalLines": 69,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/backend/controller/UserController.java": {
       "filePath": "backend/src/main/java/com/travelmate/backend/controller/UserController.java",
-      "contentHash": "b76c34f4c2cf6e6eae4c893c8af4f299a79130691a0a16b923336e07ab890600",
+      "contentHash": "1cfe164105d6d402ae2bc79cfcded09cdf7a2e48e324c4bb3ac7db71cd855fae",
       "functions": [
         {
           "name": "register",
           "params": [
             "username",
-            "password",
-            "role"
+            "password"
           ],
           "returnType": "Result<String>",
           "exported": true,
-          "lineCount": 8
+          "lineCount": 7
+        },
+        {
+          "name": "adminRegister",
+          "params": [
+            "username",
+            "password",
+            "secret"
+          ],
+          "returnType": "Result<String>",
+          "exported": true,
+          "lineCount": 11
         },
         {
           "name": "login",
@@ -1041,6 +726,7 @@
           "name": "UserController",
           "methods": [
             "register",
+            "adminRegister",
             "login",
             "resetPassword",
             "changePassword",
@@ -1049,10 +735,11 @@
           ],
           "properties": [
             "userService",
-            "jwtUtil"
+            "jwtUtil",
+            "adminRegisterSecret"
           ],
           "exported": true,
-          "lineCount": 70
+          "lineCount": 84
         }
       ],
       "imports": [
@@ -1087,6 +774,12 @@
           ]
         },
         {
+          "source": "org.springframework.beans.factory.annotation.Value",
+          "specifiers": [
+            "Value"
+          ]
+        },
+        {
           "source": "org.springframework.web.bind.annotation",
           "specifiers": [
             "*"
@@ -1095,6 +788,7 @@
       ],
       "exports": [
         "register",
+        "adminRegister",
         "login",
         "resetPassword",
         "changePassword",
@@ -1102,7 +796,7 @@
         "getMe",
         "UserController"
       ],
-      "totalLines": 80,
+      "totalLines": 95,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/backend/entity/User.java": {
@@ -1212,7 +906,7 @@
     },
     "backend/src/main/java/com/travelmate/backend/service/UserService.java": {
       "filePath": "backend/src/main/java/com/travelmate/backend/service/UserService.java",
-      "contentHash": "b6c0dfd4ac93274a715471edd912f689de2664948010625e090ef5fd962441a0",
+      "contentHash": "79771b5c8188b40b72a3dd2ef1327bd6199a408d1c82c1022d81364f1c51f91c",
       "functions": [
         {
           "name": "register",
@@ -1223,7 +917,7 @@
           ],
           "returnType": "boolean",
           "exported": true,
-          "lineCount": 13
+          "lineCount": 17
         },
         {
           "name": "login",
@@ -1263,7 +957,7 @@
           ],
           "returnType": "boolean",
           "exported": true,
-          "lineCount": 10
+          "lineCount": 15
         },
         {
           "name": "deleteAccount",
@@ -1293,7 +987,7 @@
             "passwordEncoder"
           ],
           "exported": true,
-          "lineCount": 81
+          "lineCount": 90
         }
       ],
       "imports": [
@@ -1355,7 +1049,7 @@
         "deleteAccount",
         "UserService"
       ],
-      "totalLines": 94,
+      "totalLines": 103,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/common/GlobalExceptionHandler.java": {
@@ -1679,7 +1373,7 @@
     },
     "backend/src/main/java/com/travelmate/config/DatabaseStartupValidator.java": {
       "filePath": "backend/src/main/java/com/travelmate/config/DatabaseStartupValidator.java",
-      "contentHash": "a8566c69183495229a1745a8a73471bf7a72df5078f01f1d0a13f14038952510",
+      "contentHash": "5ffd8581f6d4a8a164ff973b726460884898de94674cd5d8753fa2dbec1939c2",
       "functions": [
         {
           "name": "DatabaseStartupValidator",
@@ -2073,9 +1767,65 @@
       "totalLines": 23,
       "hasStructuralAnalysis": true
     },
+    "backend/src/main/java/com/travelmate/config/TomcatConfig.java": {
+      "filePath": "backend/src/main/java/com/travelmate/config/TomcatConfig.java",
+      "contentHash": "ee40e845333bb35472170be3f61bac2b7d1bf40006f9422d754d3ae539d92a24",
+      "functions": [
+        {
+          "name": "tomcatProtocolCustomizer",
+          "params": [],
+          "returnType": "WebServerFactoryCustomizer<TomcatServletWebServerFactory>",
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "classes": [
+        {
+          "name": "TomcatConfig",
+          "methods": [
+            "tomcatProtocolCustomizer"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 8
+        }
+      ],
+      "imports": [
+        {
+          "source": "org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory",
+          "specifiers": [
+            "TomcatServletWebServerFactory"
+          ]
+        },
+        {
+          "source": "org.springframework.boot.web.server.WebServerFactoryCustomizer",
+          "specifiers": [
+            "WebServerFactoryCustomizer"
+          ]
+        },
+        {
+          "source": "org.springframework.context.annotation.Bean",
+          "specifiers": [
+            "Bean"
+          ]
+        },
+        {
+          "source": "org.springframework.context.annotation.Configuration",
+          "specifiers": [
+            "Configuration"
+          ]
+        }
+      ],
+      "exports": [
+        "tomcatProtocolCustomizer",
+        "TomcatConfig"
+      ],
+      "totalLines": 15,
+      "hasStructuralAnalysis": true
+    },
     "backend/src/main/java/com/travelmate/config/WebConfig.java": {
       "filePath": "backend/src/main/java/com/travelmate/config/WebConfig.java",
-      "contentHash": "a6df3e4ddbda3ac88e53f1efa8449d55be00a19adcaf5a593aa8f7330d59c45a",
+      "contentHash": "ba0366eac50dad8bb07b2a8219abec601b548c093132832e4ef0d802f9d15b96",
       "functions": [
         {
           "name": "addInterceptors",
@@ -2085,19 +1835,40 @@
           "returnType": "void",
           "exported": true,
           "lineCount": 4
+        },
+        {
+          "name": "addResourceHandlers",
+          "params": [
+            "registry"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "fileLocation",
+          "params": [
+            "path"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 3
         }
       ],
       "classes": [
         {
           "name": "WebConfig",
           "methods": [
-            "addInterceptors"
+            "addInterceptors",
+            "addResourceHandlers",
+            "fileLocation"
           ],
           "properties": [
-            "rateLimiterInterceptor"
+            "rateLimiterInterceptor",
+            "uploadDir"
           ],
           "exported": true,
-          "lineCount": 12
+          "lineCount": 31
         }
       ],
       "imports": [
@@ -2111,6 +1882,12 @@
           "source": "org.springframework.beans.factory.annotation.Autowired",
           "specifiers": [
             "Autowired"
+          ]
+        },
+        {
+          "source": "org.springframework.beans.factory.annotation.Value",
+          "specifiers": [
+            "Value"
           ]
         },
         {
@@ -2132,22 +1909,35 @@
           ]
         },
         {
+          "source": "org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry",
+          "specifiers": [
+            "ResourceHandlerRegistry"
+          ]
+        },
+        {
           "source": "org.springframework.web.servlet.config.annotation.WebMvcConfigurer",
           "specifiers": [
             "WebMvcConfigurer"
+          ]
+        },
+        {
+          "source": "java.nio.file.Path",
+          "specifiers": [
+            "Path"
           ]
         }
       ],
       "exports": [
         "addInterceptors",
+        "addResourceHandlers",
         "WebConfig"
       ],
-      "totalLines": 22,
+      "totalLines": 45,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/controller/AdminController.java": {
       "filePath": "backend/src/main/java/com/travelmate/controller/AdminController.java",
-      "contentHash": "1803d64c7f57bbdf453ca48e90f1c1a632ad56fc7186453e18a418fca998e7e3",
+      "contentHash": "6a63cd325110ba4dfdd41efe3a772a2cb4e534ba6675d8ff54b82e5ec12b7793",
       "functions": [
         {
           "name": "checkAdmin",
@@ -2193,7 +1983,7 @@
           ],
           "returnType": "void",
           "exported": false,
-          "lineCount": 11
+          "lineCount": 14
         },
         {
           "name": "validateTrain",
@@ -2202,7 +1992,7 @@
           ],
           "returnType": "void",
           "exported": false,
-          "lineCount": 11
+          "lineCount": 14
         },
         {
           "name": "validateHotel",
@@ -2211,7 +2001,7 @@
           ],
           "returnType": "void",
           "exported": false,
-          "lineCount": 9
+          "lineCount": 13
         },
         {
           "name": "validateHotelRoom",
@@ -2220,7 +2010,7 @@
           ],
           "returnType": "void",
           "exported": false,
-          "lineCount": 7
+          "lineCount": 10
         },
         {
           "name": "validateAttraction",
@@ -2229,12 +2019,21 @@
           ],
           "returnType": "void",
           "exported": false,
-          "lineCount": 12
+          "lineCount": 15
         },
         {
           "name": "validateCoupon",
           "params": [
             "coupon"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "validateDestination",
+          "params": [
+            "destination"
           ],
           "returnType": "void",
           "exported": false,
@@ -2576,13 +2375,39 @@
           "lineCount": 12
         },
         {
+          "name": "listAdminDestinations",
+          "params": [],
+          "returnType": "Result<List<Destination>>",
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "updateDestination",
+          "params": [
+            "id",
+            "destination"
+          ],
+          "returnType": "Result<Void>",
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "deleteDestination",
+          "params": [
+            "id"
+          ],
+          "returnType": "Result<Void>",
+          "exported": true,
+          "lineCount": 9
+        },
+        {
           "name": "approvePost",
           "params": [
             "id"
           ],
           "returnType": "Result<Void>",
           "exported": true,
-          "lineCount": 18
+          "lineCount": 19
         },
         {
           "name": "rejectPost",
@@ -2592,7 +2417,7 @@
           ],
           "returnType": "Result<Void>",
           "exported": true,
-          "lineCount": 19
+          "lineCount": 20
         },
         {
           "name": "listUsers",
@@ -2638,7 +2463,7 @@
           ],
           "returnType": "Result<String>",
           "exported": true,
-          "lineCount": 29
+          "lineCount": 60
         },
         {
           "name": "rejectRefund",
@@ -2647,7 +2472,7 @@
           ],
           "returnType": "Result<String>",
           "exported": true,
-          "lineCount": 22
+          "lineCount": 40
         },
         {
           "name": "returnTrafficStock",
@@ -2700,7 +2525,7 @@
           ],
           "returnType": "Result<Void>",
           "exported": true,
-          "lineCount": 6
+          "lineCount": 15
         },
         {
           "name": "listCouponClaims",
@@ -2823,49 +2648,110 @@
           "lineCount": 6
         },
         {
+          "name": "downloadImportTemplate",
+          "params": [
+            "type"
+          ],
+          "returnType": "ResponseEntity<byte[]>",
+          "exported": true,
+          "lineCount": 12
+        },
+        {
           "name": "importCsv",
           "params": [
             "type",
-            "file"
+            "file",
+            "dryRun",
+            "mode"
           ],
           "returnType": "Result<Map<String, Object>>",
           "exported": true,
-          "lineCount": 35
+          "lineCount": 76
         },
         {
-          "name": "parseCsvLine",
+          "name": "normalizeCsvType",
           "params": [
-            "line"
+            "type"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "findMissingHeaders",
+          "params": [
+            "type",
+            "headers"
           ],
           "returnType": "List<String>",
           "exported": false,
-          "lineCount": 18
+          "lineCount": 8
         },
         {
-          "name": "mapCsvRow",
+          "name": "mapCsvRecord",
           "params": [
             "headers",
-            "values"
+            "record"
           ],
           "returnType": "Map<String, String>",
           "exported": false,
-          "lineCount": 7
+          "lineCount": 10
+        },
+        {
+          "name": "isBlankCsvRow",
+          "params": [
+            "row"
+          ],
+          "returnType": "boolean",
+          "exported": false,
+          "lineCount": 3
         },
         {
           "name": "importCsvRow",
           "params": [
             "type",
-            "row"
+            "row",
+            "dryRun",
+            "upsert"
           ],
-          "returnType": "void",
+          "returnType": "String",
           "exported": false,
-          "lineCount": 85
+          "lineCount": 206
+        },
+        {
+          "name": "cleanCsvHeader",
+          "params": [
+            "header"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "normalizeHeaderName",
+          "params": [
+            "header"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 7
         },
         {
           "name": "csv",
           "params": [
             "row",
             "key"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "optionalText",
+          "params": [
+            "row",
+            "key",
+            "fallback"
           ],
           "returnType": "String",
           "exported": false,
@@ -2879,7 +2765,7 @@
           ],
           "returnType": "Integer",
           "exported": false,
-          "lineCount": 3
+          "lineCount": 7
         },
         {
           "name": "optionalInteger",
@@ -2890,7 +2776,17 @@
           ],
           "returnType": "Integer",
           "exported": false,
-          "lineCount": 4
+          "lineCount": 11
+        },
+        {
+          "name": "longValue",
+          "params": [
+            "row",
+            "key"
+          ],
+          "returnType": "Long",
+          "exported": false,
+          "lineCount": 7
         },
         {
           "name": "decimal",
@@ -2900,7 +2796,7 @@
           ],
           "returnType": "BigDecimal",
           "exported": false,
-          "lineCount": 3
+          "lineCount": 7
         },
         {
           "name": "optionalDecimal",
@@ -2910,7 +2806,65 @@
           ],
           "returnType": "BigDecimal",
           "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "optionalDecimal",
+          "params": [
+            "row",
+            "key",
+            "fallback"
+          ],
+          "returnType": "BigDecimal",
+          "exported": false,
           "lineCount": 4
+        },
+        {
+          "name": "normalizeNumber",
+          "params": [
+            "value"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "dateTime",
+          "params": [
+            "row",
+            "key"
+          ],
+          "returnType": "LocalDateTime",
+          "exported": false,
+          "lineCount": 14
+        },
+        {
+          "name": "optionalDate",
+          "params": [
+            "row",
+            "key"
+          ],
+          "returnType": "LocalDate",
+          "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "csvHeadersFor",
+          "params": [
+            "type"
+          ],
+          "returnType": "List<String>",
+          "exported": false,
+          "lineCount": 20
+        },
+        {
+          "name": "csvTemplateSample",
+          "params": [
+            "type"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 11
         },
         {
           "name": "listLogs",
@@ -2937,6 +2891,7 @@
             "validateHotelRoom",
             "validateAttraction",
             "validateCoupon",
+            "validateDestination",
             "validateSensitiveWordUnique",
             "countTotalOrders",
             "countTodayOrders",
@@ -2977,6 +2932,9 @@
             "updateAttraction",
             "deleteAttraction",
             "listPosts",
+            "listAdminDestinations",
+            "updateDestination",
+            "deleteDestination",
             "approvePost",
             "rejectPost",
             "listUsers",
@@ -3004,15 +2962,28 @@
             "addSensitiveWord",
             "updateSensitiveWord",
             "deleteSensitiveWord",
+            "downloadImportTemplate",
             "importCsv",
-            "parseCsvLine",
-            "mapCsvRow",
+            "normalizeCsvType",
+            "findMissingHeaders",
+            "mapCsvRecord",
+            "isBlankCsvRow",
             "importCsvRow",
+            "cleanCsvHeader",
+            "normalizeHeaderName",
             "csv",
+            "optionalText",
             "integer",
             "optionalInteger",
+            "longValue",
             "decimal",
             "optionalDecimal",
+            "optionalDecimal",
+            "normalizeNumber",
+            "dateTime",
+            "optionalDate",
+            "csvHeadersFor",
+            "csvTemplateSample",
             "listLogs"
           ],
           "properties": [
@@ -3025,6 +2996,7 @@
             "sysLogMapper",
             "sensitiveWordMapper",
             "couponMapper",
+            "destinationMapper",
             "reviewReportMapper",
             "reviewMapper",
             "replyMapper",
@@ -3035,10 +3007,20 @@
             "hotelOrderMapper",
             "hotelRoomStockService",
             "notificationCenterService",
-            "STATUS_REFUND_REJECTED"
+            "STATUS_TRAFFIC_CANCELLED",
+            "STATUS_TRAFFIC_REFUNDED",
+            "STATUS_REFUND_REQUESTED",
+            "STATUS_HOTEL_PAID",
+            "STATUS_HOTEL_COMPLETED",
+            "STATUS_HOTEL_CANCELLED_OR_REFUNDED",
+            "MAX_CSV_FILE_SIZE",
+            "MAX_IMPORT_FAILURES_RETURNED",
+            "CSV_MODE_UPSERT",
+            "CSV_IMPORT_TYPES",
+            "CSV_REQUIRED_HEADERS"
           ],
           "exported": true,
-          "lineCount": 1313
+          "lineCount": 1758
         }
       ],
       "imports": [
@@ -3094,6 +3076,12 @@
           "source": "com.travelmate.entity.Coupon",
           "specifiers": [
             "Coupon"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.Destination",
+          "specifiers": [
+            "Destination"
           ]
         },
         {
@@ -3193,6 +3181,12 @@
           ]
         },
         {
+          "source": "com.travelmate.mapper.DestinationMapper",
+          "specifiers": [
+            "DestinationMapper"
+          ]
+        },
+        {
           "source": "com.travelmate.mapper.FlightMapper",
           "specifiers": [
             "FlightMapper"
@@ -3283,15 +3277,57 @@
           ]
         },
         {
+          "source": "org.apache.commons.csv.CSVFormat",
+          "specifiers": [
+            "CSVFormat"
+          ]
+        },
+        {
+          "source": "org.apache.commons.csv.CSVParser",
+          "specifiers": [
+            "CSVParser"
+          ]
+        },
+        {
+          "source": "org.apache.commons.csv.CSVRecord",
+          "specifiers": [
+            "CSVRecord"
+          ]
+        },
+        {
           "source": "org.springframework.beans.factory.annotation.Autowired",
           "specifiers": [
             "Autowired"
           ]
         },
         {
+          "source": "org.springframework.http.HttpHeaders",
+          "specifiers": [
+            "HttpHeaders"
+          ]
+        },
+        {
+          "source": "org.springframework.http.MediaType",
+          "specifiers": [
+            "MediaType"
+          ]
+        },
+        {
+          "source": "org.springframework.http.ResponseEntity",
+          "specifiers": [
+            "ResponseEntity"
+          ]
+        },
+        {
           "source": "org.springframework.security.core.context.SecurityContextHolder",
           "specifiers": [
             "SecurityContextHolder"
+          ]
+        },
+        {
+          "source": "org.springframework.transaction.annotation.Transactional",
+          "specifiers": [
+            "Transactional"
           ]
         },
         {
@@ -3307,6 +3343,18 @@
           ]
         },
         {
+          "source": "java.io.InputStreamReader",
+          "specifiers": [
+            "InputStreamReader"
+          ]
+        },
+        {
+          "source": "java.io.Reader",
+          "specifiers": [
+            "Reader"
+          ]
+        },
+        {
           "source": "java.math.BigDecimal",
           "specifiers": [
             "BigDecimal"
@@ -3316,6 +3364,12 @@
           "source": "java.nio.charset.StandardCharsets",
           "specifiers": [
             "StandardCharsets"
+          ]
+        },
+        {
+          "source": "java.time.Duration",
+          "specifiers": [
+            "Duration"
           ]
         },
         {
@@ -3340,12 +3394,6 @@
           "source": "java.util.ArrayList",
           "specifiers": [
             "ArrayList"
-          ]
-        },
-        {
-          "source": "java.util.Arrays",
-          "specifiers": [
-            "Arrays"
           ]
         },
         {
@@ -3421,6 +3469,9 @@
         "updateAttraction",
         "deleteAttraction",
         "listPosts",
+        "listAdminDestinations",
+        "updateDestination",
+        "deleteDestination",
         "approvePost",
         "rejectPost",
         "listUsers",
@@ -3445,16 +3496,17 @@
         "addSensitiveWord",
         "updateSensitiveWord",
         "deleteSensitiveWord",
+        "downloadImportTemplate",
         "importCsv",
         "listLogs",
         "AdminController"
       ],
-      "totalLines": 1377,
+      "totalLines": 1833,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/controller/AiController.java": {
       "filePath": "backend/src/main/java/com/travelmate/controller/AiController.java",
-      "contentHash": "5dbe0d73000fa2701e102f771454de28cc7d0076c6741b4057e7778c36da86a0",
+      "contentHash": "b8e71508f9ae18ab912f292d8b6cc37373b3d3ddd1498cda8a790f2c00599b01",
       "functions": [
         {
           "name": "generatePlan",
@@ -3678,7 +3730,7 @@
     },
     "backend/src/main/java/com/travelmate/controller/AttractionController.java": {
       "filePath": "backend/src/main/java/com/travelmate/controller/AttractionController.java",
-      "contentHash": "dc68dc164d559b5d4c98af707c04cb8553397b6a8fbac6397444caf93544c50a",
+      "contentHash": "14231d60326faac806bd7fd39d2c3c1aec98931c38b21710eebe7da38276ea4d",
       "functions": [
         {
           "name": "searchAttractions",
@@ -3709,6 +3761,22 @@
           "lineCount": 30
         },
         {
+          "name": "getMyTicketOrders",
+          "params": [],
+          "returnType": "Result<List<AttractionOrder>>",
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "getTicketReceipt",
+          "params": [
+            "orderNo"
+          ],
+          "returnType": "Result<AttractionOrder>",
+          "exported": true,
+          "lineCount": 9
+        },
+        {
           "name": "getCurrentUserId",
           "params": [],
           "returnType": "Long",
@@ -3723,6 +3791,8 @@
             "searchAttractions",
             "getDetail",
             "buyTicket",
+            "getMyTicketOrders",
+            "getTicketReceipt",
             "getCurrentUserId"
           ],
           "properties": [
@@ -3730,7 +3800,7 @@
             "userMapper"
           ],
           "exported": true,
-          "lineCount": 85
+          "lineCount": 112
         }
       ],
       "imports": [
@@ -3762,6 +3832,12 @@
           "source": "com.travelmate.entity.Attraction",
           "specifiers": [
             "Attraction"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.AttractionOrder",
+          "specifiers": [
+            "AttractionOrder"
           ]
         },
         {
@@ -3811,9 +3887,11 @@
         "searchAttractions",
         "getDetail",
         "buyTicket",
+        "getMyTicketOrders",
+        "getTicketReceipt",
         "AttractionController"
       ],
-      "totalLines": 105,
+      "totalLines": 133,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/controller/CommentController.java": {
@@ -4046,9 +4124,114 @@
       "totalLines": 65,
       "hasStructuralAnalysis": true
     },
+    "backend/src/main/java/com/travelmate/controller/DestinationController.java": {
+      "filePath": "backend/src/main/java/com/travelmate/controller/DestinationController.java",
+      "contentHash": "bfe75cd823a4c94d120b4121366a823c236a733941eb6942f1e1a7eebc05da3f",
+      "functions": [
+        {
+          "name": "listDestinations",
+          "params": [],
+          "returnType": "Result<List<Destination>>",
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "getDestination",
+          "params": [
+            "slug"
+          ],
+          "returnType": "Result<Destination>",
+          "exported": true,
+          "lineCount": 11
+        }
+      ],
+      "classes": [
+        {
+          "name": "DestinationController",
+          "methods": [
+            "listDestinations",
+            "getDestination"
+          ],
+          "properties": [
+            "destinationMapper"
+          ],
+          "exported": true,
+          "lineCount": 27
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper",
+          "specifiers": [
+            "LambdaQueryWrapper"
+          ]
+        },
+        {
+          "source": "com.travelmate.common.Result",
+          "specifiers": [
+            "Result"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.Destination",
+          "specifiers": [
+            "Destination"
+          ]
+        },
+        {
+          "source": "com.travelmate.mapper.DestinationMapper",
+          "specifiers": [
+            "DestinationMapper"
+          ]
+        },
+        {
+          "source": "org.springframework.beans.factory.annotation.Autowired",
+          "specifiers": [
+            "Autowired"
+          ]
+        },
+        {
+          "source": "org.springframework.web.bind.annotation.GetMapping",
+          "specifiers": [
+            "GetMapping"
+          ]
+        },
+        {
+          "source": "org.springframework.web.bind.annotation.PathVariable",
+          "specifiers": [
+            "PathVariable"
+          ]
+        },
+        {
+          "source": "org.springframework.web.bind.annotation.RequestMapping",
+          "specifiers": [
+            "RequestMapping"
+          ]
+        },
+        {
+          "source": "org.springframework.web.bind.annotation.RestController",
+          "specifiers": [
+            "RestController"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        }
+      ],
+      "exports": [
+        "listDestinations",
+        "getDestination",
+        "DestinationController"
+      ],
+      "totalLines": 42,
+      "hasStructuralAnalysis": true
+    },
     "backend/src/main/java/com/travelmate/controller/FileController.java": {
       "filePath": "backend/src/main/java/com/travelmate/controller/FileController.java",
-      "contentHash": "ff46b43db3fc404717475ff5c10b6d70e23e912126b9f13cf145b0a8bcf47dc9",
+      "contentHash": "af3bced08ed1730989cfdaa5d5e46e56127bc35a29d24a213dce4a738f6b6aa2",
       "functions": [
         {
           "name": "upload",
@@ -4057,7 +4240,7 @@
           ],
           "returnType": "Result<Map<String, String>>",
           "exported": true,
-          "lineCount": 33
+          "lineCount": 34
         }
       ],
       "classes": [
@@ -4072,7 +4255,7 @@
             "uploadDir"
           ],
           "exported": true,
-          "lineCount": 44
+          "lineCount": 45
         }
       ],
       "imports": [
@@ -4123,7 +4306,7 @@
         "upload",
         "FileController"
       ],
-      "totalLines": 56,
+      "totalLines": 57,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/controller/FlightController.java": {
@@ -4353,7 +4536,7 @@
     },
     "backend/src/main/java/com/travelmate/controller/HotelController.java": {
       "filePath": "backend/src/main/java/com/travelmate/controller/HotelController.java",
-      "contentHash": "32986a7946ab9869449d3a7d68f8f7f328fa47000a1fa9b6e3cc06df4f3b0df9",
+      "contentHash": "507daf56428548a7a6692003a27041cb659f6bcad2e41cee942353e4a0e15d60",
       "functions": [
         {
           "name": "searchHotels",
@@ -4415,6 +4598,15 @@
           "lineCount": 13
         },
         {
+          "name": "requestRefund",
+          "params": [
+            "orderNo"
+          ],
+          "returnType": "Result<String>",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
           "name": "getMyOrders",
           "params": [],
           "returnType": "Result<List<HotelOrder>>",
@@ -4428,7 +4620,7 @@
           ],
           "returnType": "Result<HotelOrder>",
           "exported": true,
-          "lineCount": 13
+          "lineCount": 12
         },
         {
           "name": "getCurrentUserId",
@@ -4448,6 +4640,7 @@
             "createOrder",
             "payOrder",
             "cancelOrder",
+            "requestRefund",
             "getMyOrders",
             "getReceipt",
             "getCurrentUserId"
@@ -4458,7 +4651,7 @@
             "userMapper"
           ],
           "exported": true,
-          "lineCount": 166
+          "lineCount": 183
         }
       ],
       "imports": [
@@ -4578,11 +4771,12 @@
         "createOrder",
         "payOrder",
         "cancelOrder",
+        "requestRefund",
         "getMyOrders",
         "getReceipt",
         "HotelController"
       ],
-      "totalLines": 193,
+      "totalLines": 210,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/controller/LikeController.java": {
@@ -5485,7 +5679,7 @@
     },
     "backend/src/main/java/com/travelmate/controller/TrafficOrderController.java": {
       "filePath": "backend/src/main/java/com/travelmate/controller/TrafficOrderController.java",
-      "contentHash": "c38a7cb42446895b58b86531882f31f9ff096e98edae029c6188340a3be75aad",
+      "contentHash": "91e35d84b74b0f4c28c70a67410f4ca83b0e349333b60707f5dcfdcd6e9c5247",
       "functions": [
         {
           "name": "createFlightOrder",
@@ -5542,6 +5736,15 @@
           "lineCount": 4
         },
         {
+          "name": "requestRefund",
+          "params": [
+            "orderNo"
+          ],
+          "returnType": "Result<String>",
+          "exported": true,
+          "lineCount": 12
+        },
+        {
           "name": "getMyOrders",
           "params": [],
           "returnType": "Result<List<TrafficOrder>>",
@@ -5555,7 +5758,7 @@
           ],
           "returnType": "Result<TrafficOrder>",
           "exported": true,
-          "lineCount": 14
+          "lineCount": 10
         },
         {
           "name": "getCurrentUserId",
@@ -5575,6 +5778,7 @@
             "mockPayCompat",
             "cancelOrder",
             "cancelOrderCompat",
+            "requestRefund",
             "getMyOrders",
             "getReceipt",
             "getCurrentUserId"
@@ -5584,7 +5788,7 @@
             "userMapper"
           ],
           "exported": true,
-          "lineCount": 112
+          "lineCount": 121
         }
       ],
       "imports": [
@@ -5680,27 +5884,46 @@
         "mockPayCompat",
         "cancelOrder",
         "cancelOrderCompat",
+        "requestRefund",
         "getMyOrders",
         "getReceipt",
         "TrafficOrderController"
       ],
-      "totalLines": 135,
+      "totalLines": 144,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/controller/TrainController.java": {
       "filePath": "backend/src/main/java/com/travelmate/controller/TrainController.java",
-      "contentHash": "43df7cacf4c347fe035a6cbcd7d02df52604abf838bd7371edbebc03c868dc14",
+      "contentHash": "50f6277506fb19680c58a31a97d16196385ac6a6d54b584c7c331c7951952f59",
       "functions": [
         {
           "name": "search",
           "params": [
             "depStation",
             "arrStation",
-            "date"
+            "date",
+            "offset",
+            "limit"
           ],
           "returnType": "Result<List<Train>>",
           "exported": true,
-          "lineCount": 9
+          "lineCount": 11
+        },
+        {
+          "name": "liveSyncStatus",
+          "params": [],
+          "returnType": "Result<TrainLiveSyncStatus>",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "createWaitlist",
+          "params": [
+            "dto"
+          ],
+          "returnType": "Result<Long>",
+          "exported": true,
+          "lineCount": 12
         },
         {
           "name": "getDetail",
@@ -5728,14 +5951,19 @@
           "name": "TrainController",
           "methods": [
             "search",
+            "liveSyncStatus",
+            "createWaitlist",
             "getDetail",
             "getTransfer"
           ],
           "properties": [
-            "trainService"
+            "trainService",
+            "trainLiveSyncService",
+            "trainWaitlistService",
+            "userContext"
           ],
           "exported": true,
-          "lineCount": 47
+          "lineCount": 76
         }
       ],
       "imports": [
@@ -5746,15 +5974,45 @@
           ]
         },
         {
+          "source": "com.travelmate.common.UserContext",
+          "specifiers": [
+            "UserContext"
+          ]
+        },
+        {
+          "source": "com.travelmate.dto.TrainLiveSyncStatus",
+          "specifiers": [
+            "TrainLiveSyncStatus"
+          ]
+        },
+        {
+          "source": "com.travelmate.dto.TrainWaitlistCreateDTO",
+          "specifiers": [
+            "TrainWaitlistCreateDTO"
+          ]
+        },
+        {
           "source": "com.travelmate.entity.Train",
           "specifiers": [
             "Train"
           ]
         },
         {
+          "source": "com.travelmate.service.TrainLiveSyncService",
+          "specifiers": [
+            "TrainLiveSyncService"
+          ]
+        },
+        {
           "source": "com.travelmate.service.TrainService",
           "specifiers": [
             "TrainService"
+          ]
+        },
+        {
+          "source": "com.travelmate.service.TrainWaitlistService",
+          "specifiers": [
+            "TrainWaitlistService"
           ]
         },
         {
@@ -5778,11 +6036,13 @@
       ],
       "exports": [
         "search",
+        "liveSyncStatus",
+        "createWaitlist",
         "getDetail",
         "getTransfer",
         "TrainController"
       ],
-      "totalLines": 61,
+      "totalLines": 95,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/controller/UserProfileController.java": {
@@ -5938,7 +6198,7 @@
     },
     "backend/src/main/java/com/travelmate/dto/AiChatDTO.java": {
       "filePath": "backend/src/main/java/com/travelmate/dto/AiChatDTO.java",
-      "contentHash": "38dfab6fc19ec42918ae39dfe3cacef781b6963c9831770b50cdf22380b4b176",
+      "contentHash": "790531c56673a4104f146af142a683c70491c5d15d04e835366fe41b3c0f86e5",
       "functions": [],
       "classes": [
         {
@@ -5946,10 +6206,12 @@
           "methods": [],
           "properties": [
             "sessionId",
-            "message"
+            "message",
+            "clientDate",
+            "clientTimeZone"
           ],
           "exported": true,
-          "lineCount": 5
+          "lineCount": 7
         }
       ],
       "imports": [
@@ -5963,12 +6225,12 @@
       "exports": [
         "AiChatDTO"
       ],
-      "totalLines": 10,
+      "totalLines": 12,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/dto/AiPlanCreateDTO.java": {
       "filePath": "backend/src/main/java/com/travelmate/dto/AiPlanCreateDTO.java",
-      "contentHash": "a463ef8976832b1c89f097e09c9d8661d70273d63847c966b2892666f1c4db24",
+      "contentHash": "869ab957a242975586eba3e4a3c74f6e1df18161b0787804ae4aa163d90d2a4c",
       "functions": [],
       "classes": [
         {
@@ -5980,13 +6242,24 @@
             "budget",
             "peopleCount",
             "preferences",
-            "startDate"
+            "startDate",
+            "travelStyle",
+            "mustVisit",
+            "avoidPlaces",
+            "transportPreference",
+            "accommodationPreference"
           ],
           "exported": true,
-          "lineCount": 9
+          "lineCount": 15
         }
       ],
       "imports": [
+        {
+          "source": "com.fasterxml.jackson.annotation.JsonAlias",
+          "specifiers": [
+            "JsonAlias"
+          ]
+        },
         {
           "source": "lombok.Data",
           "specifiers": [
@@ -6003,7 +6276,7 @@
       "exports": [
         "AiPlanCreateDTO"
       ],
-      "totalLines": 16,
+      "totalLines": 23,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/dto/FlightOrderCreateDTO.java": {
@@ -6117,6 +6390,100 @@
       "totalLines": 12,
       "hasStructuralAnalysis": true
     },
+    "backend/src/main/java/com/travelmate/dto/TrainBrowserTicket.java": {
+      "filePath": "backend/src/main/java/com/travelmate/dto/TrainBrowserTicket.java",
+      "contentHash": "83a60b7ed04339eb777bf0f57516ad70425fa80604bf2954391154e481460053",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TrainBrowserTicket",
+          "methods": [],
+          "properties": [
+            "trainNo",
+            "departureStation",
+            "arrivalStation",
+            "departureTime",
+            "arrivalTime",
+            "duration",
+            "businessSeat",
+            "firstClassSeat",
+            "secondClassSeat",
+            "hardSeat",
+            "noSeat"
+          ],
+          "exported": true,
+          "lineCount": 14
+        }
+      ],
+      "imports": [
+        {
+          "source": "lombok.Data",
+          "specifiers": [
+            "Data"
+          ]
+        }
+      ],
+      "exports": [
+        "TrainBrowserTicket"
+      ],
+      "totalLines": 19,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/dto/TrainLiveSyncStatus.java": {
+      "filePath": "backend/src/main/java/com/travelmate/dto/TrainLiveSyncStatus.java",
+      "contentHash": "cd04dc5d0591c3996ffeffe389ecd520a15ff6c80c1ac5c6bded9b03f5de3fc2",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TrainLiveSyncStatus",
+          "methods": [],
+          "properties": [
+            "enabled",
+            "supportedRoute",
+            "synced",
+            "message",
+            "route",
+            "date",
+            "dataSource",
+            "trainCount",
+            "syncedAt"
+          ],
+          "exported": true,
+          "lineCount": 14
+        }
+      ],
+      "imports": [
+        {
+          "source": "lombok.AllArgsConstructor",
+          "specifiers": [
+            "AllArgsConstructor"
+          ]
+        },
+        {
+          "source": "lombok.Data",
+          "specifiers": [
+            "Data"
+          ]
+        },
+        {
+          "source": "lombok.NoArgsConstructor",
+          "specifiers": [
+            "NoArgsConstructor"
+          ]
+        },
+        {
+          "source": "java.time.LocalDateTime",
+          "specifiers": [
+            "LocalDateTime"
+          ]
+        }
+      ],
+      "exports": [
+        "TrainLiveSyncStatus"
+      ],
+      "totalLines": 23,
+      "hasStructuralAnalysis": true
+    },
     "backend/src/main/java/com/travelmate/dto/TrainOrderCreateDTO.java": {
       "filePath": "backend/src/main/java/com/travelmate/dto/TrainOrderCreateDTO.java",
       "contentHash": "867716703493089d71b6515b27aa76ee4e99f3454a5415fafee62d3703ad2a94",
@@ -6148,6 +6515,42 @@
         "TrainOrderCreateDTO"
       ],
       "totalLines": 22,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/dto/TrainWaitlistCreateDTO.java": {
+      "filePath": "backend/src/main/java/com/travelmate/dto/TrainWaitlistCreateDTO.java",
+      "contentHash": "1af0b4556cd9ec32f69f8bcea821f4ad83b26663e4c015005fe2e7b3c82f18cd",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TrainWaitlistCreateDTO",
+          "methods": [],
+          "properties": [
+            "trainId",
+            "trainNo",
+            "departureStation",
+            "arrivalStation",
+            "departureTime",
+            "seatType",
+            "ticketCount",
+            "passengerId"
+          ],
+          "exported": true,
+          "lineCount": 11
+        }
+      ],
+      "imports": [
+        {
+          "source": "lombok.Data",
+          "specifiers": [
+            "Data"
+          ]
+        }
+      ],
+      "exports": [
+        "TrainWaitlistCreateDTO"
+      ],
+      "totalLines": 16,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/entity/AiChat.java": {
@@ -6359,6 +6762,79 @@
       "totalLines": 68,
       "hasStructuralAnalysis": true
     },
+    "backend/src/main/java/com/travelmate/entity/AttractionOrder.java": {
+      "filePath": "backend/src/main/java/com/travelmate/entity/AttractionOrder.java",
+      "contentHash": "e15581aa0828d519e5c743318b54a0cd898efbd5df427517bbe6b1908f0d39d6",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AttractionOrder",
+          "methods": [],
+          "properties": [
+            "id",
+            "orderNo",
+            "userId",
+            "attractionId",
+            "attractionName",
+            "city",
+            "adultCount",
+            "childCount",
+            "ticketCount",
+            "guestName",
+            "guestPhone",
+            "amount",
+            "status",
+            "createTime",
+            "deleted"
+          ],
+          "exported": true,
+          "lineCount": 21
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.annotation.IdType",
+          "specifiers": [
+            "IdType"
+          ]
+        },
+        {
+          "source": "com.baomidou.mybatisplus.annotation.TableId",
+          "specifiers": [
+            "TableId"
+          ]
+        },
+        {
+          "source": "com.baomidou.mybatisplus.annotation.TableName",
+          "specifiers": [
+            "TableName"
+          ]
+        },
+        {
+          "source": "lombok.Data",
+          "specifiers": [
+            "Data"
+          ]
+        },
+        {
+          "source": "java.math.BigDecimal",
+          "specifiers": [
+            "BigDecimal"
+          ]
+        },
+        {
+          "source": "java.time.LocalDateTime",
+          "specifiers": [
+            "LocalDateTime"
+          ]
+        }
+      ],
+      "exports": [
+        "AttractionOrder"
+      ],
+      "totalLines": 32,
+      "hasStructuralAnalysis": true
+    },
     "backend/src/main/java/com/travelmate/entity/Comment.java": {
       "filePath": "backend/src/main/java/com/travelmate/entity/Comment.java",
       "contentHash": "f55311c2c2549bed0747f226fb3ee44f1285473d652b5326a279836651e2d8af",
@@ -6493,6 +6969,83 @@
         "Coupon"
       ],
       "totalLines": 46,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/entity/Destination.java": {
+      "filePath": "backend/src/main/java/com/travelmate/entity/Destination.java",
+      "contentHash": "b95c5b5cf4eee37acfddc35ea0fbb493c269c50fd751d2c52c71c3af1d088b6d",
+      "functions": [],
+      "classes": [
+        {
+          "name": "Destination",
+          "methods": [],
+          "properties": [
+            "id",
+            "slug",
+            "name",
+            "country",
+            "tag",
+            "keywords",
+            "img",
+            "desc",
+            "intro",
+            "highlights",
+            "culture",
+            "bestSeason",
+            "transport",
+            "sourceName",
+            "sourceUrl",
+            "sortOrder",
+            "status",
+            "createTime",
+            "updateTime"
+          ],
+          "exported": true,
+          "lineCount": 25
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.annotation.IdType",
+          "specifiers": [
+            "IdType"
+          ]
+        },
+        {
+          "source": "com.baomidou.mybatisplus.annotation.TableField",
+          "specifiers": [
+            "TableField"
+          ]
+        },
+        {
+          "source": "com.baomidou.mybatisplus.annotation.TableId",
+          "specifiers": [
+            "TableId"
+          ]
+        },
+        {
+          "source": "com.baomidou.mybatisplus.annotation.TableName",
+          "specifiers": [
+            "TableName"
+          ]
+        },
+        {
+          "source": "lombok.Data",
+          "specifiers": [
+            "Data"
+          ]
+        },
+        {
+          "source": "java.time.LocalDateTime",
+          "specifiers": [
+            "LocalDateTime"
+          ]
+        }
+      ],
+      "exports": [
+        "Destination"
+      ],
+      "totalLines": 36,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/entity/Flight.java": {
@@ -6687,7 +7240,7 @@
     },
     "backend/src/main/java/com/travelmate/entity/HotelOrder.java": {
       "filePath": "backend/src/main/java/com/travelmate/entity/HotelOrder.java",
-      "contentHash": "cb0d84316396fc8c606bd5ccefe79be1ecd70bac9833c30d7c8f6ebd2147ad60",
+      "contentHash": "8c66ba1c40ca92b140bd7878d6b7605cecd4e03cf0a339521a477c06235d2321",
       "functions": [],
       "classes": [
         {
@@ -6889,7 +7442,7 @@
     },
     "backend/src/main/java/com/travelmate/entity/Notification.java": {
       "filePath": "backend/src/main/java/com/travelmate/entity/Notification.java",
-      "contentHash": "06561dc428923f00ac223337e653731493ec284c28ba01cf2e4b60ac0daf08b8",
+      "contentHash": "7b7fcb5e7ccd63a13b7828d3a5e1bd20c26017cb5a2f83d073ab7684ff3b05ac",
       "functions": [],
       "classes": [
         {
@@ -7533,7 +8086,7 @@
     },
     "backend/src/main/java/com/travelmate/entity/TrafficOrder.java": {
       "filePath": "backend/src/main/java/com/travelmate/entity/TrafficOrder.java",
-      "contentHash": "5707857192fdb82fee7547223d3ace54b69f39c5ff72adf56b3f38721e2bc63d",
+      "contentHash": "c30b0d67fa6eda8351fa60e76461b9959094ababb056e3501db45700a5a41668",
       "functions": [],
       "classes": [
         {
@@ -7622,7 +8175,7 @@
     },
     "backend/src/main/java/com/travelmate/entity/Train.java": {
       "filePath": "backend/src/main/java/com/travelmate/entity/Train.java",
-      "contentHash": "0e902002ccbce314ae7226dfb8f4928a543da1da328ceb416fc3dfb0d2ad4ae5",
+      "contentHash": "826bb6e27d6c4f3d338216427350dd9dc229bfff51689dc7927f14c70d5f3f71",
       "functions": [],
       "classes": [
         {
@@ -7641,10 +8194,20 @@
             "secondClassPrice",
             "firstClassSeats",
             "secondClassSeats",
-            "status"
+            "status",
+            "businessClassSeats",
+            "hardSeatSeats",
+            "noSeatSeats",
+            "businessSeatText",
+            "firstClassSeatText",
+            "secondClassSeatText",
+            "hardSeatText",
+            "noSeatText",
+            "liveOnly",
+            "dataSource"
           ],
           "exported": true,
-          "lineCount": 18
+          "lineCount": 48
         }
       ],
       "imports": [
@@ -7652,6 +8215,12 @@
           "source": "com.baomidou.mybatisplus.annotation.IdType",
           "specifiers": [
             "IdType"
+          ]
+        },
+        {
+          "source": "com.baomidou.mybatisplus.annotation.TableField",
+          "specifiers": [
+            "TableField"
           ]
         },
         {
@@ -7688,7 +8257,72 @@
       "exports": [
         "Train"
       ],
-      "totalLines": 29,
+      "totalLines": 60,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/entity/TrainWaitlist.java": {
+      "filePath": "backend/src/main/java/com/travelmate/entity/TrainWaitlist.java",
+      "contentHash": "56b9b51c9cff4653f6a9434fe7199e8ea8e290efd7fc6c6afbde6a89c6c398ea",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TrainWaitlist",
+          "methods": [],
+          "properties": [
+            "id",
+            "userId",
+            "trainId",
+            "trainNo",
+            "departureStation",
+            "arrivalStation",
+            "departureTime",
+            "seatType",
+            "ticketCount",
+            "passengerName",
+            "passengerIdCard",
+            "status",
+            "createTime"
+          ],
+          "exported": true,
+          "lineCount": 18
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.annotation.IdType",
+          "specifiers": [
+            "IdType"
+          ]
+        },
+        {
+          "source": "com.baomidou.mybatisplus.annotation.TableId",
+          "specifiers": [
+            "TableId"
+          ]
+        },
+        {
+          "source": "com.baomidou.mybatisplus.annotation.TableName",
+          "specifiers": [
+            "TableName"
+          ]
+        },
+        {
+          "source": "lombok.Data",
+          "specifiers": [
+            "Data"
+          ]
+        },
+        {
+          "source": "java.time.LocalDateTime",
+          "specifiers": [
+            "LocalDateTime"
+          ]
+        }
+      ],
+      "exports": [
+        "TrainWaitlist"
+      ],
+      "totalLines": 28,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/entity/UserCoupon.java": {
@@ -8050,6 +8684,45 @@
       "totalLines": 31,
       "hasStructuralAnalysis": true
     },
+    "backend/src/main/java/com/travelmate/mapper/AttractionOrderMapper.java": {
+      "filePath": "backend/src/main/java/com/travelmate/mapper/AttractionOrderMapper.java",
+      "contentHash": "a367afbefc029184ac27b5d261e5a728d66094572e3e4fc03dd3904c276b8945",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AttractionOrderMapper",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.core.mapper.BaseMapper",
+          "specifiers": [
+            "BaseMapper"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.AttractionOrder",
+          "specifiers": [
+            "AttractionOrder"
+          ]
+        },
+        {
+          "source": "org.apache.ibatis.annotations.Mapper",
+          "specifiers": [
+            "Mapper"
+          ]
+        }
+      ],
+      "exports": [
+        "AttractionOrderMapper"
+      ],
+      "totalLines": 10,
+      "hasStructuralAnalysis": true
+    },
     "backend/src/main/java/com/travelmate/mapper/CommentMapper.java": {
       "filePath": "backend/src/main/java/com/travelmate/mapper/CommentMapper.java",
       "contentHash": "b4c03c30148c5f5f2306330ec30f437639b3d792d0be1306477534f1e4ac25ee",
@@ -8091,15 +8764,17 @@
     },
     "backend/src/main/java/com/travelmate/mapper/CouponMapper.java": {
       "filePath": "backend/src/main/java/com/travelmate/mapper/CouponMapper.java",
-      "contentHash": "a7552fe1f5a4d41ef61c1e857bccc7d424d1265399258192715a5b2a77648de1",
+      "contentHash": "de326e59e453096c26148ee8b4a31b11b5f3c613dca48590938ae0d220ba7826",
       "functions": [],
       "classes": [
         {
           "name": "CouponMapper",
-          "methods": [],
+          "methods": [
+            "deductStock"
+          ],
           "properties": [],
           "exported": true,
-          "lineCount": 3
+          "lineCount": 5
         }
       ],
       "imports": [
@@ -8120,10 +8795,61 @@
           "specifiers": [
             "Mapper"
           ]
+        },
+        {
+          "source": "org.apache.ibatis.annotations.Param",
+          "specifiers": [
+            "Param"
+          ]
+        },
+        {
+          "source": "org.apache.ibatis.annotations.Update",
+          "specifiers": [
+            "Update"
+          ]
         }
       ],
       "exports": [
         "CouponMapper"
+      ],
+      "totalLines": 14,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/mapper/DestinationMapper.java": {
+      "filePath": "backend/src/main/java/com/travelmate/mapper/DestinationMapper.java",
+      "contentHash": "b001bbcf98a78de4163d480851ae4a2170b4d7916f04ca0ae563e6c2bf59b250",
+      "functions": [],
+      "classes": [
+        {
+          "name": "DestinationMapper",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.core.mapper.BaseMapper",
+          "specifiers": [
+            "BaseMapper"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.Destination",
+          "specifiers": [
+            "Destination"
+          ]
+        },
+        {
+          "source": "org.apache.ibatis.annotations.Mapper",
+          "specifiers": [
+            "Mapper"
+          ]
+        }
+      ],
+      "exports": [
+        "DestinationMapper"
       ],
       "totalLines": 10,
       "hasStructuralAnalysis": true
@@ -8262,18 +8988,21 @@
     },
     "backend/src/main/java/com/travelmate/mapper/HotelOrderMapper.java": {
       "filePath": "backend/src/main/java/com/travelmate/mapper/HotelOrderMapper.java",
-      "contentHash": "b81f54446f6001dd5a9bae817e16ed9cf445fcd041c96366905179213d24f215",
+      "contentHash": "1276cfe9638efa7abca4c30cfa791affe955af410ae78748cb47ffe15714dbd4",
       "functions": [],
       "classes": [
         {
           "name": "HotelOrderMapper",
           "methods": [
             "markPaid",
-            "markCancelledFromPending"
+            "markCancelledFromPending",
+            "markRefundRequested",
+            "markRefundApproved",
+            "markRefundRejected"
           ],
           "properties": [],
           "exported": true,
-          "lineCount": 9
+          "lineCount": 18
         }
       ],
       "imports": [
@@ -8311,7 +9040,7 @@
       "exports": [
         "HotelOrderMapper"
       ],
-      "totalLines": 18,
+      "totalLines": 27,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/mapper/HotelRoomMapper.java": {
@@ -8826,18 +9555,21 @@
     },
     "backend/src/main/java/com/travelmate/mapper/TrafficOrderMapper.java": {
       "filePath": "backend/src/main/java/com/travelmate/mapper/TrafficOrderMapper.java",
-      "contentHash": "6bfd63cd04ca387c1f94f2b81108e013f148cd3e00263f081919da60ef872116",
+      "contentHash": "a5a40e74fe5b4519877e7bc01881162d0e27296b1c3e0e4a820de7ca15065cb5",
       "functions": [],
       "classes": [
         {
           "name": "TrafficOrderMapper",
           "methods": [
             "markPaid",
-            "markCancelledFromPending"
+            "markCancelledFromPending",
+            "markRefundRequested",
+            "markRefundApproved",
+            "markRefundRejected"
           ],
           "properties": [],
           "exported": true,
-          "lineCount": 9
+          "lineCount": 18
         }
       ],
       "imports": [
@@ -8875,7 +9607,7 @@
       "exports": [
         "TrafficOrderMapper"
       ],
-      "totalLines": 18,
+      "totalLines": 27,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/mapper/TrainMapper.java": {
@@ -8932,6 +9664,45 @@
         "TrainMapper"
       ],
       "totalLines": 28,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/mapper/TrainWaitlistMapper.java": {
+      "filePath": "backend/src/main/java/com/travelmate/mapper/TrainWaitlistMapper.java",
+      "contentHash": "935c89a91af2bd4b4c9aa607e4f6aa9be2abbb8c7623174fe4bb4880a6ca30cb",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TrainWaitlistMapper",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.core.mapper.BaseMapper",
+          "specifiers": [
+            "BaseMapper"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.TrainWaitlist",
+          "specifiers": [
+            "TrainWaitlist"
+          ]
+        },
+        {
+          "source": "org.apache.ibatis.annotations.Mapper",
+          "specifiers": [
+            "Mapper"
+          ]
+        }
+      ],
+      "exports": [
+        "TrainWaitlistMapper"
+      ],
+      "totalLines": 10,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/mapper/UserCouponMapper.java": {
@@ -8996,7 +9767,7 @@
     },
     "backend/src/main/java/com/travelmate/scheduler/OrderTimeoutScheduler.java": {
       "filePath": "backend/src/main/java/com/travelmate/scheduler/OrderTimeoutScheduler.java",
-      "contentHash": "24f41511b5fcd3a21ec168b65ba6484853fd2323acc3a376ae663d65cef46679",
+      "contentHash": "11cebc594d13c59d4a106a8cfe768a8958f2a5e1babf020862f4d8aac717c17f",
       "functions": [
         {
           "name": "cancelTimeoutOrders",
@@ -9213,7 +9984,7 @@
     },
     "backend/src/main/java/com/travelmate/scheduler/PostAuditScheduler.java": {
       "filePath": "backend/src/main/java/com/travelmate/scheduler/PostAuditScheduler.java",
-      "contentHash": "8fd7378b56b099bd12121f5cde827350f8fc95556fd1721ba02f0879717ebe52",
+      "contentHash": "1dbc9d32f0b89d493d9b62511286cd9a3d6d391260dcfba5e889c349b7e0b4c9",
       "functions": [
         {
           "name": "auditPendingPosts",
@@ -9352,7 +10123,7 @@
     },
     "backend/src/main/java/com/travelmate/service/AiService.java": {
       "filePath": "backend/src/main/java/com/travelmate/service/AiService.java",
-      "contentHash": "793a78a317b319d96defe5a123fe0b686e3417eaaf194d0f29830b793ca7bfe1",
+      "contentHash": "41a5bb5996a14259757b418b7c4d72150260e88bd6cfbd157d67087060f135fc",
       "functions": [],
       "classes": [
         {
@@ -9426,18 +10197,20 @@
     },
     "backend/src/main/java/com/travelmate/service/AttractionService.java": {
       "filePath": "backend/src/main/java/com/travelmate/service/AttractionService.java",
-      "contentHash": "df49bb513a79d48653cda6021c2477908574ec65439d5326301ab0f951684615",
+      "contentHash": "b2b8da9aa84fee05f1c00a1efb92999f5a93d255b79233fd80bec302b825b9d2",
       "functions": [],
       "classes": [
         {
           "name": "AttractionService",
           "methods": [
             "searchAttractions",
-            "buyTicket"
+            "buyTicket",
+            "getUserTicketOrders",
+            "getTicketOrderDetail"
           ],
           "properties": [],
           "exported": true,
-          "lineCount": 24
+          "lineCount": 34
         }
       ],
       "imports": [
@@ -9454,6 +10227,12 @@
           ]
         },
         {
+          "source": "com.travelmate.entity.AttractionOrder",
+          "specifiers": [
+            "AttractionOrder"
+          ]
+        },
+        {
           "source": "java.util.List",
           "specifiers": [
             "List"
@@ -9463,7 +10242,7 @@
       "exports": [
         "AttractionService"
       ],
-      "totalLines": 35,
+      "totalLines": 46,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/service/CommentService.java": {
@@ -9744,7 +10523,7 @@
     },
     "backend/src/main/java/com/travelmate/service/HotelOrderService.java": {
       "filePath": "backend/src/main/java/com/travelmate/service/HotelOrderService.java",
-      "contentHash": "514900e42f41ee732dcc026524b0612b86136d7fcec8d4a29a0350cf1d551c49",
+      "contentHash": "331ada0a2406ed529418ecd8129045597d6dedcd8a571ddb9380ecd168662efc",
       "functions": [],
       "classes": [
         {
@@ -9753,11 +10532,13 @@
             "createOrder",
             "payOrder",
             "cancelOrder",
+            "requestRefund",
+            "getOrderDetail",
             "getUserOrders"
           ],
           "properties": [],
           "exported": true,
-          "lineCount": 37
+          "lineCount": 47
         }
       ],
       "imports": [
@@ -9789,7 +10570,7 @@
       "exports": [
         "HotelOrderService"
       ],
-      "totalLines": 49,
+      "totalLines": 59,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/service/HotelRoomStockService.java": {
@@ -9877,415 +10658,9 @@
       "totalLines": 46,
       "hasStructuralAnalysis": true
     },
-    "backend/src/main/java/com/travelmate/service/LikeService.java": {
-      "filePath": "backend/src/main/java/com/travelmate/service/LikeService.java",
-      "contentHash": "5c1eaca93e7c0144f6ec83a7d510369480e143b7efc060f8a78507f4cb775788",
-      "functions": [],
-      "classes": [
-        {
-          "name": "LikeService",
-          "methods": [
-            "toggleLike",
-            "likeStatus",
-            "getMyCollects"
-          ],
-          "properties": [],
-          "exported": true,
-          "lineCount": 8
-        }
-      ],
-      "imports": [
-        {
-          "source": "java.util.Map",
-          "specifiers": [
-            "Map"
-          ]
-        }
-      ],
-      "exports": [
-        "LikeService"
-      ],
-      "totalLines": 13,
-      "hasStructuralAnalysis": true
-    },
-    "backend/src/main/java/com/travelmate/service/NotificationCenterService.java": {
-      "filePath": "backend/src/main/java/com/travelmate/service/NotificationCenterService.java",
-      "contentHash": "bd6d0802d8e043502f9a70545a0258afa1655d93984544826331cd3b188d7844",
-      "functions": [],
-      "classes": [
-        {
-          "name": "NotificationCenterService",
-          "methods": [
-            "createNotification",
-            "createNotification",
-            "listNotifications",
-            "markRead",
-            "deleteNotification",
-            "deleteAllNotifications",
-            "unreadCount"
-          ],
-          "properties": [],
-          "exported": true,
-          "lineCount": 16
-        }
-      ],
-      "imports": [
-        {
-          "source": "com.travelmate.entity.Notification",
-          "specifiers": [
-            "Notification"
-          ]
-        },
-        {
-          "source": "java.util.List",
-          "specifiers": [
-            "List"
-          ]
-        }
-      ],
-      "exports": [
-        "NotificationCenterService"
-      ],
-      "totalLines": 23,
-      "hasStructuralAnalysis": true
-    },
-    "backend/src/main/java/com/travelmate/service/PassengerService.java": {
-      "filePath": "backend/src/main/java/com/travelmate/service/PassengerService.java",
-      "contentHash": "b1f17c3ba72b40415e46e85c26e58f23acc8daed427685a6a7f620374bfb1235",
-      "functions": [],
-      "classes": [
-        {
-          "name": "PassengerService",
-          "methods": [
-            "getPassengerList",
-            "addPassenger",
-            "deletePassenger"
-          ],
-          "properties": [],
-          "exported": true,
-          "lineCount": 17
-        }
-      ],
-      "imports": [
-        {
-          "source": "com.baomidou.mybatisplus.extension.service.IService",
-          "specifiers": [
-            "IService"
-          ]
-        },
-        {
-          "source": "com.travelmate.entity.Passenger",
-          "specifiers": [
-            "Passenger"
-          ]
-        },
-        {
-          "source": "java.util.List",
-          "specifiers": [
-            "List"
-          ]
-        }
-      ],
-      "exports": [
-        "PassengerService"
-      ],
-      "totalLines": 25,
-      "hasStructuralAnalysis": true
-    },
-    "backend/src/main/java/com/travelmate/service/PostService.java": {
-      "filePath": "backend/src/main/java/com/travelmate/service/PostService.java",
-      "contentHash": "56d77e6e29eef97dac426dd343ff949922f8a41d158bae18ad5d26c77c415140",
-      "functions": [],
-      "classes": [
-        {
-          "name": "PostService",
-          "methods": [
-            "listPosts",
-            "getPostDetail",
-            "createPost",
-            "updatePost",
-            "deletePost",
-            "myPosts",
-            "getFollowingPosts"
-          ],
-          "properties": [],
-          "exported": true,
-          "lineCount": 16
-        }
-      ],
-      "imports": [
-        {
-          "source": "com.travelmate.entity.Post",
-          "specifiers": [
-            "Post"
-          ]
-        },
-        {
-          "source": "java.util.List",
-          "specifiers": [
-            "List"
-          ]
-        },
-        {
-          "source": "java.util.Map",
-          "specifiers": [
-            "Map"
-          ]
-        }
-      ],
-      "exports": [
-        "PostService"
-      ],
-      "totalLines": 24,
-      "hasStructuralAnalysis": true
-    },
-    "backend/src/main/java/com/travelmate/service/PriceHistoryService.java": {
-      "filePath": "backend/src/main/java/com/travelmate/service/PriceHistoryService.java",
-      "contentHash": "3ac4d511958ab11a3768449f5f0b89b0cbb5a25cd0479ba369ab1b1d48adaf5f",
-      "functions": [],
-      "classes": [
-        {
-          "name": "PriceHistoryService",
-          "methods": [
-            "getTrendData"
-          ],
-          "properties": [],
-          "exported": true,
-          "lineCount": 7
-        }
-      ],
-      "imports": [
-        {
-          "source": "com.baomidou.mybatisplus.extension.service.IService",
-          "specifiers": [
-            "IService"
-          ]
-        },
-        {
-          "source": "com.travelmate.entity.PriceHistory",
-          "specifiers": [
-            "PriceHistory"
-          ]
-        },
-        {
-          "source": "java.util.List",
-          "specifiers": [
-            "List"
-          ]
-        }
-      ],
-      "exports": [
-        "PriceHistoryService"
-      ],
-      "totalLines": 15,
-      "hasStructuralAnalysis": true
-    },
-    "backend/src/main/java/com/travelmate/service/ReviewService.java": {
-      "filePath": "backend/src/main/java/com/travelmate/service/ReviewService.java",
-      "contentHash": "c2e7b25c7199ae264033f318b913a85c90cc12691cddc91df298fe38535dfec4",
-      "functions": [],
-      "classes": [
-        {
-          "name": "ReviewService",
-          "methods": [
-            "addReview",
-            "getReviews"
-          ],
-          "properties": [],
-          "exported": true,
-          "lineCount": 18
-        }
-      ],
-      "imports": [
-        {
-          "source": "com.baomidou.mybatisplus.extension.service.IService",
-          "specifiers": [
-            "IService"
-          ]
-        },
-        {
-          "source": "com.travelmate.entity.Review",
-          "specifiers": [
-            "Review"
-          ]
-        },
-        {
-          "source": "java.util.List",
-          "specifiers": [
-            "List"
-          ]
-        }
-      ],
-      "exports": [
-        "ReviewService"
-      ],
-      "totalLines": 29,
-      "hasStructuralAnalysis": true
-    },
-    "backend/src/main/java/com/travelmate/service/SensitiveWordService.java": {
-      "filePath": "backend/src/main/java/com/travelmate/service/SensitiveWordService.java",
-      "contentHash": "3ac6c247b39590d789f123462781426ad740cea9258f6ba014b4aff4fea60c6d",
-      "functions": [],
-      "classes": [
-        {
-          "name": "SensitiveWordService",
-          "methods": [
-            "containsSensitiveWord",
-            "filter"
-          ],
-          "properties": [],
-          "exported": true,
-          "lineCount": 6
-        }
-      ],
-      "imports": [],
-      "exports": [
-        "SensitiveWordService"
-      ],
-      "totalLines": 9,
-      "hasStructuralAnalysis": true
-    },
-    "backend/src/main/java/com/travelmate/service/StockPreDeductResult.java": {
-      "filePath": "backend/src/main/java/com/travelmate/service/StockPreDeductResult.java",
-      "contentHash": "55f2c9c5ab26a346daf8fe53dcb7d504ca8cc16bb0f7b9713406fe1a906cd819",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 8,
-      "hasStructuralAnalysis": true
-    },
-    "backend/src/main/java/com/travelmate/service/TourProductService.java": {
-      "filePath": "backend/src/main/java/com/travelmate/service/TourProductService.java",
-      "contentHash": "8a903cbc390600930e23c8392beb2a8cb9224020041e93bd6d61c4efeff2c09f",
-      "functions": [],
-      "classes": [
-        {
-          "name": "TourProductService",
-          "methods": [
-            "listByType"
-          ],
-          "properties": [],
-          "exported": true,
-          "lineCount": 3
-        }
-      ],
-      "imports": [
-        {
-          "source": "com.baomidou.mybatisplus.extension.service.IService",
-          "specifiers": [
-            "IService"
-          ]
-        },
-        {
-          "source": "com.travelmate.entity.TourProduct",
-          "specifiers": [
-            "TourProduct"
-          ]
-        },
-        {
-          "source": "java.util.List",
-          "specifiers": [
-            "List"
-          ]
-        }
-      ],
-      "exports": [
-        "TourProductService"
-      ],
-      "totalLines": 10,
-      "hasStructuralAnalysis": true
-    },
-    "backend/src/main/java/com/travelmate/service/TrafficOrderService.java": {
-      "filePath": "backend/src/main/java/com/travelmate/service/TrafficOrderService.java",
-      "contentHash": "616bb4e2310d18aa527aec2b01da5cf27bbb5d939f3d8446c15cdf3a6dd56e9c",
-      "functions": [],
-      "classes": [
-        {
-          "name": "TrafficOrderService",
-          "methods": [
-            "createFlightOrder",
-            "createTrainOrder",
-            "payOrder",
-            "cancelOrder",
-            "getUserOrders"
-          ],
-          "properties": [],
-          "exported": true,
-          "lineCount": 37
-        }
-      ],
-      "imports": [
-        {
-          "source": "com.baomidou.mybatisplus.extension.service.IService",
-          "specifiers": [
-            "IService"
-          ]
-        },
-        {
-          "source": "com.travelmate.dto.FlightOrderCreateDTO",
-          "specifiers": [
-            "FlightOrderCreateDTO"
-          ]
-        },
-        {
-          "source": "com.travelmate.entity.TrafficOrder",
-          "specifiers": [
-            "TrafficOrder"
-          ]
-        }
-      ],
-      "exports": [
-        "TrafficOrderService"
-      ],
-      "totalLines": 44,
-      "hasStructuralAnalysis": true
-    },
-    "backend/src/main/java/com/travelmate/service/TrainService.java": {
-      "filePath": "backend/src/main/java/com/travelmate/service/TrainService.java",
-      "contentHash": "d7a6f15557595fa423591cf0ee6d88a8a5159eae2ac7c2d3c49dade7e09a65e3",
-      "functions": [],
-      "classes": [
-        {
-          "name": "TrainService",
-          "methods": [
-            "searchTrains",
-            "getTransferPlan"
-          ],
-          "properties": [],
-          "exported": true,
-          "lineCount": 16
-        }
-      ],
-      "imports": [
-        {
-          "source": "com.baomidou.mybatisplus.extension.service.IService",
-          "specifiers": [
-            "IService"
-          ]
-        },
-        {
-          "source": "com.travelmate.entity.Train",
-          "specifiers": [
-            "Train"
-          ]
-        },
-        {
-          "source": "java.util.List",
-          "specifiers": [
-            "List"
-          ]
-        }
-      ],
-      "exports": [
-        "TrainService"
-      ],
-      "totalLines": 24,
-      "hasStructuralAnalysis": true
-    },
     "backend/src/main/java/com/travelmate/service/impl/AiServiceImpl.java": {
       "filePath": "backend/src/main/java/com/travelmate/service/impl/AiServiceImpl.java",
-      "contentHash": "4413292139f77b94785a40a666ce94bc2c232874fe3e6d33ad8d928c6bf2eeca",
+      "contentHash": "52276a684a4475681582634a32c1c67243442930747b0ad0eda0dfd6aa232842",
       "functions": [
         {
           "name": "generatePlan",
@@ -10295,21 +10670,90 @@
           ],
           "returnType": "AiPlan",
           "exported": true,
-          "lineCount": 48
+          "lineCount": 76
+        },
+        {
+          "name": "normalizePlanRequest",
+          "params": [
+            "dto"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 24
+        },
+        {
+          "name": "normalizePlanText",
+          "params": [
+            "value",
+            "maxLength",
+            "fallback"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "blankToNone",
+          "params": [
+            "value"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "buildPlanPreferenceText",
+          "params": [
+            "dto"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "appendPreference",
+          "params": [
+            "text",
+            "label",
+            "value"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "normalizeStartDate",
+          "params": [
+            "startDate"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "estimatePerPersonDailyBudget",
+          "params": [
+            "dto"
+          ],
+          "returnType": "double",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "buildTravelContext",
+          "params": [
+            "destination"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 35
         },
         {
           "name": "checkApiKey",
           "params": [],
           "returnType": "void",
           "exported": false,
-          "lineCount": 15
-        },
-        {
-          "name": "loadKeyFromEnvFile",
-          "params": [],
-          "returnType": "String",
-          "exported": false,
-          "lineCount": 24
+          "lineCount": 8
         },
         {
           "name": "callDeepSeekForPlan",
@@ -10319,7 +10763,16 @@
           ],
           "returnType": "String",
           "exported": false,
-          "lineCount": 16
+          "lineCount": 23
+        },
+        {
+          "name": "normalizePlanContent",
+          "params": [
+            "content"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 19
         },
         {
           "name": "listMyPlans",
@@ -10348,17 +10801,92 @@
           ],
           "returnType": "AiChat",
           "exported": true,
-          "lineCount": 36
+          "lineCount": 40
+        },
+        {
+          "name": "normalizeChatRequest",
+          "params": [
+            "dto"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 19
         },
         {
           "name": "callDeepSeekWithTools",
           "params": [
             "history",
+            "userMessage",
+            "runtimeContext"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 60
+        },
+        {
+          "name": "callDeepSeekWithoutTools",
+          "params": [
+            "history",
+            "userMessage",
+            "runtimeContext"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 31
+        },
+        {
+          "name": "buildChatRuntimeContext",
+          "params": [
+            "dto"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "normalizeClientDate",
+          "params": [
+            "clientDate"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "normalizeClientTimeZone",
+          "params": [
+            "timeZone"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "isUsableChatContent",
+          "params": [
+            "content"
+          ],
+          "returnType": "boolean",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "containsToolProtocolLeak",
+          "params": [
+            "content"
+          ],
+          "returnType": "boolean",
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "buildLocalChatReply",
+          "params": [
             "userMessage"
           ],
           "returnType": "String",
           "exported": false,
-          "lineCount": 46
+          "lineCount": 20
         },
         {
           "name": "auditPost",
@@ -10443,7 +10971,7 @@
           ],
           "returnType": "String",
           "exported": false,
-          "lineCount": 66
+          "lineCount": 68
         },
         {
           "name": "extractToolCall",
@@ -10552,7 +11080,14 @@
           ],
           "returnType": "String",
           "exported": false,
-          "lineCount": 11
+          "lineCount": 13
+        },
+        {
+          "name": "resolveChatCompletionsUrl",
+          "params": [],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 19
         },
         {
           "name": "doHttpPost",
@@ -10580,7 +11115,56 @@
           ],
           "returnType": "String",
           "exported": false,
-          "lineCount": 29
+          "lineCount": 42
+        },
+        {
+          "name": "buildFallbackTransportAdvice",
+          "params": [
+            "dto"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "buildFallbackHotelAdvice",
+          "params": [
+            "dto"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "buildFallbackChecklist",
+          "params": [
+            "dest",
+            "dto"
+          ],
+          "returnType": "List<String>",
+          "exported": false,
+          "lineCount": 13
+        },
+        {
+          "name": "buildFallbackRiskNotes",
+          "params": [
+            "dest",
+            "dto"
+          ],
+          "returnType": "List<String>",
+          "exported": false,
+          "lineCount": 12
+        },
+        {
+          "name": "appendJsonArrayField",
+          "params": [
+            "json",
+            "fieldName",
+            "values"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 10
         },
         {
           "name": "buildDayPlan",
@@ -10590,11 +11174,65 @@
             "totalDays",
             "prefs",
             "people",
-            "dayBudget"
+            "dayBudget",
+            "date"
           ],
           "returnType": "DayPlan",
           "exported": false,
-          "lineCount": 32
+          "lineCount": 55
+        },
+        {
+          "name": "estimateActivityCost",
+          "params": [
+            "basePerPerson",
+            "people",
+            "dayBudget"
+          ],
+          "returnType": "int",
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "getAreaHint",
+          "params": [
+            "dest",
+            "day"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "buildDayTip",
+          "params": [
+            "dest",
+            "prefs",
+            "day",
+            "totalDays"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 18
+        },
+        {
+          "name": "buildMealHint",
+          "params": [
+            "dest",
+            "day"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "buildBackupPlan",
+          "params": [
+            "dest",
+            "day"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 16
         },
         {
           "name": "getThemesForDestination",
@@ -10625,6 +11263,37 @@
           "returnType": "String",
           "exported": false,
           "lineCount": 25
+        },
+        {
+          "name": "getBookingTip",
+          "params": [
+            "activity"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 13
+        },
+        {
+          "name": "clamp",
+          "params": [
+            "value",
+            "min",
+            "max"
+          ],
+          "returnType": "int",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "clampDouble",
+          "params": [
+            "value",
+            "min",
+            "max"
+          ],
+          "returnType": "double",
+          "exported": false,
+          "lineCount": 3
         }
       ],
       "classes": [
@@ -10632,13 +11301,29 @@
           "name": "AiServiceImpl",
           "methods": [
             "generatePlan",
+            "normalizePlanRequest",
+            "normalizePlanText",
+            "blankToNone",
+            "buildPlanPreferenceText",
+            "appendPreference",
+            "normalizeStartDate",
+            "estimatePerPersonDailyBudget",
+            "buildTravelContext",
             "checkApiKey",
-            "loadKeyFromEnvFile",
             "callDeepSeekForPlan",
+            "normalizePlanContent",
             "listMyPlans",
             "getPlanById",
             "chat",
+            "normalizeChatRequest",
             "callDeepSeekWithTools",
+            "callDeepSeekWithoutTools",
+            "buildChatRuntimeContext",
+            "normalizeClientDate",
+            "normalizeClientTimeZone",
+            "isUsableChatContent",
+            "containsToolProtocolLeak",
+            "buildLocalChatReply",
             "auditPost",
             "isApiKeyMissing",
             "findMatchedSensitiveWords",
@@ -10660,19 +11345,35 @@
             "buildThinkingConfigJson",
             "resolveModel",
             "resolveReasoningEffort",
+            "resolveChatCompletionsUrl",
             "doHttpPost",
             "escapeJson",
             "generateFallbackPlan",
+            "buildFallbackTransportAdvice",
+            "buildFallbackHotelAdvice",
+            "buildFallbackChecklist",
+            "buildFallbackRiskNotes",
+            "appendJsonArrayField",
             "buildDayPlan",
+            "estimateActivityCost",
+            "getAreaHint",
+            "buildDayTip",
+            "buildMealHint",
+            "buildBackupPlan",
             "getThemesForDestination",
             "getActivitiesForDestination",
-            "getActivityDescription"
+            "getActivityDescription",
+            "getBookingTip",
+            "clamp",
+            "clampDouble"
           ],
           "properties": [
             "log",
             "objectMapper",
+            "MAX_CHAT_MESSAGE_LENGTH",
             "apiKey",
             "baseUrl",
+            "chatCompletionsPath",
             "planModel",
             "chatModel",
             "thinkingEnabled",
@@ -10683,13 +11384,15 @@
             "sensitiveWordMapper",
             "flightService",
             "hotelService",
+            "attractionService",
             "apiKeyWarningLogged",
+            "CHAT_SYSTEM_PROMPT",
             "PLAN_SYSTEM_PROMPT",
             "POST_AUDIT_SYSTEM_PROMPT",
             "TOOLS_JSON"
           ],
           "exported": true,
-          "lineCount": 835
+          "lineCount": 1405
         }
       ],
       "imports": [
@@ -10790,6 +11493,12 @@
           ]
         },
         {
+          "source": "java.math.BigDecimal",
+          "specifiers": [
+            "BigDecimal"
+          ]
+        },
+        {
           "source": "java.net.URI",
           "specifiers": [
             "URI"
@@ -10814,24 +11523,6 @@
           ]
         },
         {
-          "source": "java.nio.file.Files",
-          "specifiers": [
-            "Files"
-          ]
-        },
-        {
-          "source": "java.nio.file.Path",
-          "specifiers": [
-            "Path"
-          ]
-        },
-        {
-          "source": "java.nio.file.Paths",
-          "specifiers": [
-            "Paths"
-          ]
-        },
-        {
           "source": "java.time.Duration",
           "specifiers": [
             "Duration"
@@ -10850,6 +11541,12 @@
           ]
         },
         {
+          "source": "java.util.ArrayList",
+          "specifiers": [
+            "ArrayList"
+          ]
+        },
+        {
           "source": "java.util.List",
           "specifiers": [
             "List"
@@ -10859,6 +11556,12 @@
           "source": "java.util.Comparator",
           "specifiers": [
             "Comparator"
+          ]
+        },
+        {
+          "source": "java.util.UUID",
+          "specifiers": [
+            "UUID"
           ]
         }
       ],
@@ -10875,12 +11578,12 @@
         "unreadCount",
         "AiServiceImpl"
       ],
-      "totalLines": 868,
+      "totalLines": 1438,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/service/impl/AttractionServiceImpl.java": {
       "filePath": "backend/src/main/java/com/travelmate/service/impl/AttractionServiceImpl.java",
-      "contentHash": "26ca118cddc8afc4a4175d2da2c42bbe174ac044fc1920a6b2265d7b06ab0a66",
+      "contentHash": "359a9cd6deeaed9b710b7f95f2cd32ba730c08f8e28afe4cc89eef52ec0899d4",
       "functions": [
         {
           "name": "searchAttractions",
@@ -10903,7 +11606,26 @@
           ],
           "returnType": "String",
           "exported": true,
-          "lineCount": 45
+          "lineCount": 72
+        },
+        {
+          "name": "getUserTicketOrders",
+          "params": [
+            "userId"
+          ],
+          "returnType": "List<AttractionOrder>",
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "getTicketOrderDetail",
+          "params": [
+            "userId",
+            "orderNo"
+          ],
+          "returnType": "AttractionOrder",
+          "exported": true,
+          "lineCount": 7
         }
       ],
       "classes": [
@@ -10911,13 +11633,16 @@
           "name": "AttractionServiceImpl",
           "methods": [
             "searchAttractions",
-            "buyTicket"
+            "buyTicket",
+            "getUserTicketOrders",
+            "getTicketOrderDetail"
           ],
           "properties": [
-            "notificationCenterService"
+            "notificationCenterService",
+            "attractionOrderMapper"
           ],
           "exported": true,
-          "lineCount": 66
+          "lineCount": 112
         }
       ],
       "imports": [
@@ -10940,9 +11665,21 @@
           ]
         },
         {
+          "source": "com.travelmate.entity.AttractionOrder",
+          "specifiers": [
+            "AttractionOrder"
+          ]
+        },
+        {
           "source": "com.travelmate.mapper.AttractionMapper",
           "specifiers": [
             "AttractionMapper"
+          ]
+        },
+        {
+          "source": "com.travelmate.mapper.AttractionOrderMapper",
+          "specifiers": [
+            "AttractionOrderMapper"
           ]
         },
         {
@@ -10992,14 +11729,28 @@
           "specifiers": [
             "UUID"
           ]
+        },
+        {
+          "source": "java.math.BigDecimal",
+          "specifiers": [
+            "BigDecimal"
+          ]
+        },
+        {
+          "source": "java.time.LocalDateTime",
+          "specifiers": [
+            "LocalDateTime"
+          ]
         }
       ],
       "exports": [
         "searchAttractions",
         "buyTicket",
+        "getUserTicketOrders",
+        "getTicketOrderDetail",
         "AttractionServiceImpl"
       ],
-      "totalLines": 83,
+      "totalLines": 133,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/service/impl/CommentServiceImpl.java": {
@@ -11193,7 +11944,7 @@
     },
     "backend/src/main/java/com/travelmate/service/impl/CouponServiceImpl.java": {
       "filePath": "backend/src/main/java/com/travelmate/service/impl/CouponServiceImpl.java",
-      "contentHash": "302f79a452bb9387bec6445445beb8701af93dbf678966bb3a76512d5855f9c5",
+      "contentHash": "c7c1d98f5d354b5e00d0bc09339bcca711cfbffac742cbf5162a88b080bc6aa6",
       "functions": [
         {
           "name": "listAvailable",
@@ -11219,7 +11970,7 @@
           ],
           "returnType": "String",
           "exported": true,
-          "lineCount": 30
+          "lineCount": 32
         },
         {
           "name": "listMyCoupons",
@@ -11328,7 +12079,7 @@
             "userCouponMapper"
           ],
           "exported": true,
-          "lineCount": 220
+          "lineCount": 222
         }
       ],
       "imports": [
@@ -11461,7 +12212,7 @@
         "useCoupon",
         "CouponServiceImpl"
       ],
-      "totalLines": 245,
+      "totalLines": 247,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/service/impl/FlightServiceImpl.java": {
@@ -11682,7 +12433,7 @@
     },
     "backend/src/main/java/com/travelmate/service/impl/HotelOrderServiceImpl.java": {
       "filePath": "backend/src/main/java/com/travelmate/service/impl/HotelOrderServiceImpl.java",
-      "contentHash": "7db0931827c5f06da055b7ec1cc49156f20f75106329eef89804b6831ef77396",
+      "contentHash": "983c4d3c3fd6b37215d50a640ca7155bc938f518680a96c151bcebfab776c282",
       "functions": [
         {
           "name": "createOrder",
@@ -11713,6 +12464,26 @@
           "returnType": "boolean",
           "exported": true,
           "lineCount": 32
+        },
+        {
+          "name": "requestRefund",
+          "params": [
+            "userId",
+            "orderNo"
+          ],
+          "returnType": "boolean",
+          "exported": true,
+          "lineCount": 28
+        },
+        {
+          "name": "getOrderDetail",
+          "params": [
+            "userId",
+            "orderNo"
+          ],
+          "returnType": "HotelOrder",
+          "exported": true,
+          "lineCount": 6
         },
         {
           "name": "getUserOrders",
@@ -11749,6 +12520,8 @@
             "createOrder",
             "payOrder",
             "cancelOrder",
+            "requestRefund",
+            "getOrderDetail",
             "getUserOrders",
             "validateCreateRequest",
             "normalizeRoomCount"
@@ -11761,7 +12534,7 @@
             "couponService"
           ],
           "exported": true,
-          "lineCount": 199
+          "lineCount": 235
         }
       ],
       "imports": [
@@ -11908,10 +12681,12 @@
         "createOrder",
         "payOrder",
         "cancelOrder",
+        "requestRefund",
+        "getOrderDetail",
         "getUserOrders",
         "HotelOrderServiceImpl"
       ],
-      "totalLines": 227,
+      "totalLines": 263,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/service/impl/HotelRoomStockServiceImpl.java": {
@@ -12445,7 +13220,7 @@
     },
     "backend/src/main/java/com/travelmate/service/impl/NotificationCenterServiceImpl.java": {
       "filePath": "backend/src/main/java/com/travelmate/service/impl/NotificationCenterServiceImpl.java",
-      "contentHash": "ba18d9ec83ed9a606633a5ecf4b3b6aad2e5dd9926cff601bb970a7aec37961f",
+      "contentHash": "9b35e4a53140a4ac2a3c60e780f9301fd6a0aa52fb880f36d1c189c730923b86",
       "functions": [
         {
           "name": "createNotification",
@@ -13329,7 +14104,7 @@
     },
     "backend/src/main/java/com/travelmate/service/impl/TrafficOrderServiceImpl.java": {
       "filePath": "backend/src/main/java/com/travelmate/service/impl/TrafficOrderServiceImpl.java",
-      "contentHash": "d93dfa26d1f201a1e7c08ededbe1be9cf5839f1781c91dff3f987e2fd852495a",
+      "contentHash": "224ec432123129b43dda07a338b40e34a8727068b3034fe275398f95419bd6e4",
       "functions": [
         {
           "name": "createFlightOrder",
@@ -13370,6 +14145,26 @@
           "returnType": "boolean",
           "exported": true,
           "lineCount": 33
+        },
+        {
+          "name": "requestRefund",
+          "params": [
+            "userId",
+            "orderNo"
+          ],
+          "returnType": "boolean",
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "getOrderDetail",
+          "params": [
+            "userId",
+            "orderNo"
+          ],
+          "returnType": "TrafficOrder",
+          "exported": true,
+          "lineCount": 11
         },
         {
           "name": "getUserOrders",
@@ -13444,6 +14239,8 @@
             "createTrainOrder",
             "payOrder",
             "cancelOrder",
+            "requestRefund",
+            "getOrderDetail",
             "getUserOrders",
             "fillTicketSnapshot",
             "validateFlightOrder",
@@ -13460,7 +14257,7 @@
             "notificationCenterService"
           ],
           "exported": true,
-          "lineCount": 285
+          "lineCount": 325
         }
       ],
       "imports": [
@@ -13608,15 +14405,606 @@
         "createTrainOrder",
         "payOrder",
         "cancelOrder",
+        "requestRefund",
+        "getOrderDetail",
         "getUserOrders",
         "TrafficOrderServiceImpl"
       ],
-      "totalLines": 313,
+      "totalLines": 353,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/impl/TrainBrowserSyncServiceImpl.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/TrainBrowserSyncServiceImpl.java",
+      "contentHash": "e7e483132ab430d054689532a924eccdd750ec83be2e4ccf754def05ee195dd1",
+      "functions": [
+        {
+          "name": "readPublicLeftTickets",
+          "params": [
+            "depStation",
+            "depCode",
+            "arrStation",
+            "arrCode",
+            "trainDate"
+          ],
+          "returnType": "List<TrainBrowserTicket>",
+          "exported": true,
+          "lineCount": 32
+        },
+        {
+          "name": "fillQueryForm",
+          "params": [
+            "page",
+            "depStation",
+            "depCode",
+            "arrStation",
+            "arrCode",
+            "trainDate"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 51
+        },
+        {
+          "name": "readRows",
+          "params": [
+            "page",
+            "depStation",
+            "arrStation"
+          ],
+          "returnType": "List<TrainBrowserTicket>",
+          "exported": false,
+          "lineCount": 29
+        },
+        {
+          "name": "detectPageFailure",
+          "params": [
+            "bodyText"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 21
+        },
+        {
+          "name": "text",
+          "params": [
+            "value"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "safe",
+          "params": [
+            "value"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 3
+        }
+      ],
+      "classes": [
+        {
+          "name": "TrainBrowserSyncServiceImpl",
+          "methods": [
+            "readPublicLeftTickets",
+            "fillQueryForm",
+            "readRows",
+            "detectPageFailure",
+            "text",
+            "safe"
+          ],
+          "properties": [
+            "INIT_URL",
+            "WAIT_FOR_RESULTS_SCRIPT",
+            "READ_ROWS_SCRIPT",
+            "headless",
+            "timeoutMs"
+          ],
+          "exported": true,
+          "lineCount": 188
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.microsoft.playwright.Browser",
+          "specifiers": [
+            "Browser"
+          ]
+        },
+        {
+          "source": "com.microsoft.playwright.BrowserType",
+          "specifiers": [
+            "BrowserType"
+          ]
+        },
+        {
+          "source": "com.microsoft.playwright.Locator",
+          "specifiers": [
+            "Locator"
+          ]
+        },
+        {
+          "source": "com.microsoft.playwright.Page",
+          "specifiers": [
+            "Page"
+          ]
+        },
+        {
+          "source": "com.microsoft.playwright.Playwright",
+          "specifiers": [
+            "Playwright"
+          ]
+        },
+        {
+          "source": "com.microsoft.playwright.options.WaitUntilState",
+          "specifiers": [
+            "WaitUntilState"
+          ]
+        },
+        {
+          "source": "com.travelmate.dto.TrainBrowserTicket",
+          "specifiers": [
+            "TrainBrowserTicket"
+          ]
+        },
+        {
+          "source": "com.travelmate.service.TrainBrowserSyncService",
+          "specifiers": [
+            "TrainBrowserSyncService"
+          ]
+        },
+        {
+          "source": "org.springframework.beans.factory.annotation.Value",
+          "specifiers": [
+            "Value"
+          ]
+        },
+        {
+          "source": "org.springframework.stereotype.Service",
+          "specifiers": [
+            "Service"
+          ]
+        },
+        {
+          "source": "org.springframework.util.StringUtils",
+          "specifiers": [
+            "StringUtils"
+          ]
+        },
+        {
+          "source": "java.time.LocalDate",
+          "specifiers": [
+            "LocalDate"
+          ]
+        },
+        {
+          "source": "java.util.ArrayList",
+          "specifiers": [
+            "ArrayList"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        },
+        {
+          "source": "java.util.Map",
+          "specifiers": [
+            "Map"
+          ]
+        }
+      ],
+      "exports": [
+        "readPublicLeftTickets",
+        "TrainBrowserSyncServiceImpl"
+      ],
+      "totalLines": 208,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/impl/TrainLiveSyncServiceImpl.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/TrainLiveSyncServiceImpl.java",
+      "contentHash": "c9dc66e8ca9280808f25f602f02f535c24bb8bbeea562f50436293d8e664e2a0",
+      "functions": [
+        {
+          "name": "TrainLiveSyncServiceImpl",
+          "params": [
+            "trainMapper",
+            "trainBrowserSyncService"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "syncIfSupported",
+          "params": [
+            "depStation",
+            "arrStation",
+            "date"
+          ],
+          "returnType": "TrainLiveSyncStatus",
+          "exported": true,
+          "lineCount": 66
+        },
+        {
+          "name": "getLastStatus",
+          "params": [],
+          "returnType": "TrainLiveSyncStatus",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "getCachedLiveTrains",
+          "params": [
+            "depStation",
+            "arrStation",
+            "date"
+          ],
+          "returnType": "List<Train>",
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "toTrain",
+          "params": [
+            "ticket",
+            "depStation",
+            "arrStation",
+            "trainDate"
+          ],
+          "returnType": "Train",
+          "exported": false,
+          "lineCount": 26
+        },
+        {
+          "name": "upsertTrain",
+          "params": [
+            "train"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 26
+        },
+        {
+          "name": "remember",
+          "params": [
+            "enabled",
+            "supported",
+            "synced",
+            "message",
+            "route",
+            "date",
+            "dataSource",
+            "trainCount"
+          ],
+          "returnType": "TrainLiveSyncStatus",
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "remember",
+          "params": [
+            "attemptKey",
+            "enabled",
+            "supported",
+            "synced",
+            "message",
+            "route",
+            "date",
+            "dataSource",
+            "trainCount"
+          ],
+          "returnType": "TrainLiveSyncStatus",
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "friendlyError",
+          "params": [
+            "ex"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "parseDateTime",
+          "params": [
+            "date",
+            "time"
+          ],
+          "returnType": "LocalDateTime",
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "parseArrivalDateTime",
+          "params": [
+            "departure",
+            "arrivalTime"
+          ],
+          "returnType": "LocalDateTime",
+          "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "durationMinutes",
+          "params": [
+            "value",
+            "departure",
+            "arrival"
+          ],
+          "returnType": "int",
+          "exported": false,
+          "lineCount": 23
+        },
+        {
+          "name": "estimatePrice",
+          "params": [
+            "train",
+            "firstClass"
+          ],
+          "returnType": "BigDecimal",
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "seatCount",
+          "params": [
+            "value"
+          ],
+          "returnType": "int",
+          "exported": false,
+          "lineCount": 14
+        },
+        {
+          "name": "trainType",
+          "params": [
+            "trainNo"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 12
+        },
+        {
+          "name": "normalizeStation",
+          "params": [
+            "station"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "routeKey",
+          "params": [
+            "depStation",
+            "arrStation"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "station",
+          "params": [
+            "name",
+            "code"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 3
+        }
+      ],
+      "classes": [
+        {
+          "name": "TrainLiveSyncServiceImpl",
+          "methods": [
+            "TrainLiveSyncServiceImpl",
+            "syncIfSupported",
+            "getLastStatus",
+            "getCachedLiveTrains",
+            "toTrain",
+            "upsertTrain",
+            "remember",
+            "remember",
+            "friendlyError",
+            "parseDateTime",
+            "parseArrivalDateTime",
+            "durationMinutes",
+            "estimatePrice",
+            "seatCount",
+            "trainType",
+            "normalizeStation",
+            "routeKey",
+            "station"
+          ],
+          "properties": [
+            "log",
+            "MAX_SYNC_DAYS",
+            "ATTEMPT_CACHE_TTL",
+            "SOURCE_12306_PAGE",
+            "SOURCE_LOCAL_DEMO_CACHE",
+            "SOURCE_LOCAL_DATABASE",
+            "trainMapper",
+            "trainBrowserSyncService",
+            "lastStatus",
+            "recentStatuses",
+            "recentLiveTrains",
+            "enabled",
+            "STATIONS"
+          ],
+          "exported": true,
+          "lineCount": 303
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper",
+          "specifiers": [
+            "LambdaQueryWrapper"
+          ]
+        },
+        {
+          "source": "com.travelmate.dto.TrainBrowserTicket",
+          "specifiers": [
+            "TrainBrowserTicket"
+          ]
+        },
+        {
+          "source": "com.travelmate.dto.TrainLiveSyncStatus",
+          "specifiers": [
+            "TrainLiveSyncStatus"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.Train",
+          "specifiers": [
+            "Train"
+          ]
+        },
+        {
+          "source": "com.travelmate.mapper.TrainMapper",
+          "specifiers": [
+            "TrainMapper"
+          ]
+        },
+        {
+          "source": "com.travelmate.service.TrainBrowserSyncService",
+          "specifiers": [
+            "TrainBrowserSyncService"
+          ]
+        },
+        {
+          "source": "com.travelmate.service.TrainLiveSyncService",
+          "specifiers": [
+            "TrainLiveSyncService"
+          ]
+        },
+        {
+          "source": "org.slf4j.Logger",
+          "specifiers": [
+            "Logger"
+          ]
+        },
+        {
+          "source": "org.slf4j.LoggerFactory",
+          "specifiers": [
+            "LoggerFactory"
+          ]
+        },
+        {
+          "source": "org.springframework.beans.factory.annotation.Value",
+          "specifiers": [
+            "Value"
+          ]
+        },
+        {
+          "source": "org.springframework.dao.DuplicateKeyException",
+          "specifiers": [
+            "DuplicateKeyException"
+          ]
+        },
+        {
+          "source": "org.springframework.stereotype.Service",
+          "specifiers": [
+            "Service"
+          ]
+        },
+        {
+          "source": "org.springframework.util.StringUtils",
+          "specifiers": [
+            "StringUtils"
+          ]
+        },
+        {
+          "source": "java.math.BigDecimal",
+          "specifiers": [
+            "BigDecimal"
+          ]
+        },
+        {
+          "source": "java.math.RoundingMode",
+          "specifiers": [
+            "RoundingMode"
+          ]
+        },
+        {
+          "source": "java.time.Duration",
+          "specifiers": [
+            "Duration"
+          ]
+        },
+        {
+          "source": "java.time.LocalDate",
+          "specifiers": [
+            "LocalDate"
+          ]
+        },
+        {
+          "source": "java.time.LocalDateTime",
+          "specifiers": [
+            "LocalDateTime"
+          ]
+        },
+        {
+          "source": "java.time.LocalTime",
+          "specifiers": [
+            "LocalTime"
+          ]
+        },
+        {
+          "source": "java.util.LinkedHashMap",
+          "specifiers": [
+            "LinkedHashMap"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        },
+        {
+          "source": "java.util.Locale",
+          "specifiers": [
+            "Locale"
+          ]
+        },
+        {
+          "source": "java.util.Map",
+          "specifiers": [
+            "Map"
+          ]
+        },
+        {
+          "source": "java.util.concurrent.ConcurrentHashMap",
+          "specifiers": [
+            "ConcurrentHashMap"
+          ]
+        },
+        {
+          "source": "java.util.concurrent.atomic.AtomicReference",
+          "specifiers": [
+            "AtomicReference"
+          ]
+        }
+      ],
+      "exports": [
+        "TrainLiveSyncServiceImpl",
+        "syncIfSupported",
+        "getLastStatus",
+        "getCachedLiveTrains",
+        "TrainLiveSyncServiceImpl"
+      ],
+      "totalLines": 333,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/java/com/travelmate/service/impl/TrainServiceImpl.java": {
       "filePath": "backend/src/main/java/com/travelmate/service/impl/TrainServiceImpl.java",
-      "contentHash": "e0c540a5ca8b5ca536c50cfe929f36bffeda40963fb035c5b9d3f11b9f9a9962",
+      "contentHash": "72aa7ed8342257ffbf2b24d44963b7a485e5fdda6446874c0a51b0f561c7a515",
       "functions": [
         {
           "name": "searchTrains",
@@ -13627,7 +15015,90 @@
           ],
           "returnType": "List<Train>",
           "exported": true,
-          "lineCount": 24
+          "lineCount": 4
+        },
+        {
+          "name": "searchTrains",
+          "params": [
+            "depStation",
+            "arrStation",
+            "depDate",
+            "offset",
+            "limit"
+          ],
+          "returnType": "List<Train>",
+          "exported": true,
+          "lineCount": 55
+        },
+        {
+          "name": "demoFallbackTrains",
+          "params": [
+            "depStation",
+            "arrStation",
+            "depDate"
+          ],
+          "returnType": "List<Train>",
+          "exported": false,
+          "lineCount": 19
+        },
+        {
+          "name": "shiftTrainDate",
+          "params": [
+            "source",
+            "targetDate"
+          ],
+          "returnType": "Train",
+          "exported": false,
+          "lineCount": 36
+        },
+        {
+          "name": "trainKey",
+          "params": [
+            "train"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "pageLiveResults",
+          "params": [
+            "liveMatches",
+            "offset",
+            "limit"
+          ],
+          "returnType": "List<Train>",
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "pageList",
+          "params": [
+            "trains",
+            "offset",
+            "limit"
+          ],
+          "returnType": "List<Train>",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "normalizeOffset",
+          "params": [
+            "offset"
+          ],
+          "returnType": "int",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "normalizeLimit",
+          "params": [
+            "limit"
+          ],
+          "returnType": "int",
+          "exported": false,
+          "lineCount": 7
         },
         {
           "name": "getTransferPlan",
@@ -13646,11 +15117,24 @@
           "name": "TrainServiceImpl",
           "methods": [
             "searchTrains",
+            "searchTrains",
+            "demoFallbackTrains",
+            "shiftTrainDate",
+            "trainKey",
+            "pageLiveResults",
+            "pageList",
+            "normalizeOffset",
+            "normalizeLimit",
             "getTransferPlan"
           ],
-          "properties": [],
+          "properties": [
+            "DEFAULT_RESULT_LIMIT",
+            "MAX_RESULT_LIMIT",
+            "trainLiveSyncService",
+            "trainStationResolver"
+          ],
           "exported": true,
-          "lineCount": 66
+          "lineCount": 205
         }
       ],
       "imports": [
@@ -13667,6 +15151,12 @@
           ]
         },
         {
+          "source": "com.travelmate.dto.TrainLiveSyncStatus",
+          "specifiers": [
+            "TrainLiveSyncStatus"
+          ]
+        },
+        {
           "source": "com.travelmate.entity.Train",
           "specifiers": [
             "Train"
@@ -13679,9 +15169,21 @@
           ]
         },
         {
+          "source": "com.travelmate.service.TrainLiveSyncService",
+          "specifiers": [
+            "TrainLiveSyncService"
+          ]
+        },
+        {
           "source": "com.travelmate.service.TrainService",
           "specifiers": [
             "TrainService"
+          ]
+        },
+        {
+          "source": "org.springframework.beans.factory.annotation.Autowired",
+          "specifiers": [
+            "Autowired"
           ]
         },
         {
@@ -13697,6 +15199,380 @@
           ]
         },
         {
+          "source": "java.time.LocalDate",
+          "specifiers": [
+            "LocalDate"
+          ]
+        },
+        {
+          "source": "java.time.LocalDateTime",
+          "specifiers": [
+            "LocalDateTime"
+          ]
+        },
+        {
+          "source": "java.util.ArrayList",
+          "specifiers": [
+            "ArrayList"
+          ]
+        },
+        {
+          "source": "java.util.Comparator",
+          "specifiers": [
+            "Comparator"
+          ]
+        },
+        {
+          "source": "java.util.LinkedHashMap",
+          "specifiers": [
+            "LinkedHashMap"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        },
+        {
+          "source": "java.util.Map",
+          "specifiers": [
+            "Map"
+          ]
+        }
+      ],
+      "exports": [
+        "searchTrains",
+        "searchTrains",
+        "getTransferPlan",
+        "TrainServiceImpl"
+      ],
+      "totalLines": 227,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/impl/TrainStationResolver.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/TrainStationResolver.java",
+      "contentHash": "f51ec5dbf37aff02a4bdc486a2db663bcebeeaddbd43765277b8aeea62b362a3",
+      "functions": [
+        {
+          "name": "routeCandidates",
+          "params": [
+            "depInput",
+            "arrInput"
+          ],
+          "returnType": "List<RouteCandidate>",
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "stationsFor",
+          "params": [
+            "input"
+          ],
+          "returnType": "List<String>",
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "city",
+          "params": [
+            "city"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "normalize",
+          "params": [
+            "value"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 3
+        }
+      ],
+      "classes": [
+        {
+          "name": "TrainStationResolver",
+          "methods": [
+            "routeCandidates",
+            "stationsFor",
+            "city",
+            "normalize"
+          ],
+          "properties": [
+            "MAX_ROUTE_CANDIDATES",
+            "CITY_STATIONS"
+          ],
+          "exported": true,
+          "lineCount": 76
+        }
+      ],
+      "imports": [
+        {
+          "source": "org.springframework.stereotype.Component",
+          "specifiers": [
+            "Component"
+          ]
+        },
+        {
+          "source": "org.springframework.util.StringUtils",
+          "specifiers": [
+            "StringUtils"
+          ]
+        },
+        {
+          "source": "java.util.ArrayList",
+          "specifiers": [
+            "ArrayList"
+          ]
+        },
+        {
+          "source": "java.util.LinkedHashMap",
+          "specifiers": [
+            "LinkedHashMap"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        },
+        {
+          "source": "java.util.Locale",
+          "specifiers": [
+            "Locale"
+          ]
+        },
+        {
+          "source": "java.util.Map",
+          "specifiers": [
+            "Map"
+          ]
+        }
+      ],
+      "exports": [
+        "routeCandidates",
+        "stationsFor",
+        "TrainStationResolver"
+      ],
+      "totalLines": 88,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/impl/TrainWaitlistServiceImpl.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/impl/TrainWaitlistServiceImpl.java",
+      "contentHash": "3cc083907bd2af304f69d5536c8bdfb263736855fb2800366de1193393b9ea55",
+      "functions": [
+        {
+          "name": "TrainWaitlistServiceImpl",
+          "params": [
+            "trainMapper",
+            "passengerMapper"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "createWaitlist",
+          "params": [
+            "userId",
+            "dto"
+          ],
+          "returnType": "Long",
+          "exported": true,
+          "lineCount": 34
+        },
+        {
+          "name": "firstText",
+          "params": [
+            "preferred",
+            "fallback"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "parseDateTime",
+          "params": [
+            "value"
+          ],
+          "returnType": "LocalDateTime",
+          "exported": false,
+          "lineCount": 14
+        },
+        {
+          "name": "normalizeCount",
+          "params": [
+            "count"
+          ],
+          "returnType": "int",
+          "exported": false,
+          "lineCount": 7
+        }
+      ],
+      "classes": [
+        {
+          "name": "TrainWaitlistServiceImpl",
+          "methods": [
+            "TrainWaitlistServiceImpl",
+            "createWaitlist",
+            "firstText",
+            "parseDateTime",
+            "normalizeCount"
+          ],
+          "properties": [
+            "trainMapper",
+            "passengerMapper"
+          ],
+          "exported": true,
+          "lineCount": 73
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.extension.service.impl.ServiceImpl",
+          "specifiers": [
+            "ServiceImpl"
+          ]
+        },
+        {
+          "source": "com.travelmate.dto.TrainWaitlistCreateDTO",
+          "specifiers": [
+            "TrainWaitlistCreateDTO"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.Passenger",
+          "specifiers": [
+            "Passenger"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.Train",
+          "specifiers": [
+            "Train"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.TrainWaitlist",
+          "specifiers": [
+            "TrainWaitlist"
+          ]
+        },
+        {
+          "source": "com.travelmate.mapper.PassengerMapper",
+          "specifiers": [
+            "PassengerMapper"
+          ]
+        },
+        {
+          "source": "com.travelmate.mapper.TrainMapper",
+          "specifiers": [
+            "TrainMapper"
+          ]
+        },
+        {
+          "source": "com.travelmate.mapper.TrainWaitlistMapper",
+          "specifiers": [
+            "TrainWaitlistMapper"
+          ]
+        },
+        {
+          "source": "com.travelmate.service.TrainWaitlistService",
+          "specifiers": [
+            "TrainWaitlistService"
+          ]
+        },
+        {
+          "source": "org.springframework.stereotype.Service",
+          "specifiers": [
+            "Service"
+          ]
+        },
+        {
+          "source": "org.springframework.util.StringUtils",
+          "specifiers": [
+            "StringUtils"
+          ]
+        },
+        {
+          "source": "java.time.LocalDateTime",
+          "specifiers": [
+            "LocalDateTime"
+          ]
+        }
+      ],
+      "exports": [
+        "TrainWaitlistServiceImpl",
+        "createWaitlist",
+        "TrainWaitlistServiceImpl"
+      ],
+      "totalLines": 90,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/LikeService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/LikeService.java",
+      "contentHash": "5c1eaca93e7c0144f6ec83a7d510369480e143b7efc060f8a78507f4cb775788",
+      "functions": [],
+      "classes": [
+        {
+          "name": "LikeService",
+          "methods": [
+            "toggleLike",
+            "likeStatus",
+            "getMyCollects"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 8
+        }
+      ],
+      "imports": [
+        {
+          "source": "java.util.Map",
+          "specifiers": [
+            "Map"
+          ]
+        }
+      ],
+      "exports": [
+        "LikeService"
+      ],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/NotificationCenterService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/NotificationCenterService.java",
+      "contentHash": "c61aca090161e58c12ac89e890932c373ce517951f964d3556126cac061ceaff",
+      "functions": [],
+      "classes": [
+        {
+          "name": "NotificationCenterService",
+          "methods": [
+            "createNotification",
+            "createNotification",
+            "listNotifications",
+            "markRead",
+            "deleteNotification",
+            "deleteAllNotifications",
+            "unreadCount"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 16
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.travelmate.entity.Notification",
+          "specifiers": [
+            "Notification"
+          ]
+        },
+        {
           "source": "java.util.List",
           "specifiers": [
             "List"
@@ -13704,11 +15580,505 @@
         }
       ],
       "exports": [
-        "searchTrains",
-        "getTransferPlan",
-        "TrainServiceImpl"
+        "NotificationCenterService"
       ],
-      "totalLines": 79,
+      "totalLines": 23,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/PassengerService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/PassengerService.java",
+      "contentHash": "b1f17c3ba72b40415e46e85c26e58f23acc8daed427685a6a7f620374bfb1235",
+      "functions": [],
+      "classes": [
+        {
+          "name": "PassengerService",
+          "methods": [
+            "getPassengerList",
+            "addPassenger",
+            "deletePassenger"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.extension.service.IService",
+          "specifiers": [
+            "IService"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.Passenger",
+          "specifiers": [
+            "Passenger"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        }
+      ],
+      "exports": [
+        "PassengerService"
+      ],
+      "totalLines": 25,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/PostService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/PostService.java",
+      "contentHash": "56d77e6e29eef97dac426dd343ff949922f8a41d158bae18ad5d26c77c415140",
+      "functions": [],
+      "classes": [
+        {
+          "name": "PostService",
+          "methods": [
+            "listPosts",
+            "getPostDetail",
+            "createPost",
+            "updatePost",
+            "deletePost",
+            "myPosts",
+            "getFollowingPosts"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 16
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.travelmate.entity.Post",
+          "specifiers": [
+            "Post"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        },
+        {
+          "source": "java.util.Map",
+          "specifiers": [
+            "Map"
+          ]
+        }
+      ],
+      "exports": [
+        "PostService"
+      ],
+      "totalLines": 24,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/PriceHistoryService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/PriceHistoryService.java",
+      "contentHash": "3ac4d511958ab11a3768449f5f0b89b0cbb5a25cd0479ba369ab1b1d48adaf5f",
+      "functions": [],
+      "classes": [
+        {
+          "name": "PriceHistoryService",
+          "methods": [
+            "getTrendData"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 7
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.extension.service.IService",
+          "specifiers": [
+            "IService"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.PriceHistory",
+          "specifiers": [
+            "PriceHistory"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        }
+      ],
+      "exports": [
+        "PriceHistoryService"
+      ],
+      "totalLines": 15,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/ReviewService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/ReviewService.java",
+      "contentHash": "c2e7b25c7199ae264033f318b913a85c90cc12691cddc91df298fe38535dfec4",
+      "functions": [],
+      "classes": [
+        {
+          "name": "ReviewService",
+          "methods": [
+            "addReview",
+            "getReviews"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 18
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.extension.service.IService",
+          "specifiers": [
+            "IService"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.Review",
+          "specifiers": [
+            "Review"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        }
+      ],
+      "exports": [
+        "ReviewService"
+      ],
+      "totalLines": 29,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/SensitiveWordService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/SensitiveWordService.java",
+      "contentHash": "3ac6c247b39590d789f123462781426ad740cea9258f6ba014b4aff4fea60c6d",
+      "functions": [],
+      "classes": [
+        {
+          "name": "SensitiveWordService",
+          "methods": [
+            "containsSensitiveWord",
+            "filter"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 6
+        }
+      ],
+      "imports": [],
+      "exports": [
+        "SensitiveWordService"
+      ],
+      "totalLines": 9,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/StockPreDeductResult.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/StockPreDeductResult.java",
+      "contentHash": "55f2c9c5ab26a346daf8fe53dcb7d504ca8cc16bb0f7b9713406fe1a906cd819",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 8,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/TourProductService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/TourProductService.java",
+      "contentHash": "8a903cbc390600930e23c8392beb2a8cb9224020041e93bd6d61c4efeff2c09f",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TourProductService",
+          "methods": [
+            "listByType"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.extension.service.IService",
+          "specifiers": [
+            "IService"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.TourProduct",
+          "specifiers": [
+            "TourProduct"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        }
+      ],
+      "exports": [
+        "TourProductService"
+      ],
+      "totalLines": 10,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/TrafficOrderService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/TrafficOrderService.java",
+      "contentHash": "46d3f68ebd00cd8bec0e12034e3994328e964f492ceb16c4dbf593ff361da26b",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TrafficOrderService",
+          "methods": [
+            "createFlightOrder",
+            "createTrainOrder",
+            "payOrder",
+            "cancelOrder",
+            "requestRefund",
+            "getOrderDetail",
+            "getUserOrders"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 47
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.extension.service.IService",
+          "specifiers": [
+            "IService"
+          ]
+        },
+        {
+          "source": "com.travelmate.dto.FlightOrderCreateDTO",
+          "specifiers": [
+            "FlightOrderCreateDTO"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.TrafficOrder",
+          "specifiers": [
+            "TrafficOrder"
+          ]
+        }
+      ],
+      "exports": [
+        "TrafficOrderService"
+      ],
+      "totalLines": 54,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/TrainBrowserSyncService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/TrainBrowserSyncService.java",
+      "contentHash": "581a7c050812cc027517a9454601431891b14cafa0c77f214504ef7a98ab8bc5",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TrainBrowserSyncService",
+          "methods": [
+            "readPublicLeftTickets"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 8
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.travelmate.dto.TrainBrowserTicket",
+          "specifiers": [
+            "TrainBrowserTicket"
+          ]
+        },
+        {
+          "source": "java.time.LocalDate",
+          "specifiers": [
+            "LocalDate"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        }
+      ],
+      "exports": [
+        "TrainBrowserSyncService"
+      ],
+      "totalLines": 16,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/TrainLiveSyncService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/TrainLiveSyncService.java",
+      "contentHash": "520fc8062d5bb30b81d3c8cf9ab3dadd6401a88361d1534ec135a368086b533f",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TrainLiveSyncService",
+          "methods": [
+            "syncIfSupported",
+            "getCachedLiveTrains",
+            "getLastStatus"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 7
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.travelmate.dto.TrainLiveSyncStatus",
+          "specifiers": [
+            "TrainLiveSyncStatus"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.Train",
+          "specifiers": [
+            "Train"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        }
+      ],
+      "exports": [
+        "TrainLiveSyncService"
+      ],
+      "totalLines": 15,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/TrainService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/TrainService.java",
+      "contentHash": "4ee3fb15c126a3f17d548b526b1be48bf7d6cf6c4aa0ba06c28fe6749ffc59fb",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TrainService",
+          "methods": [
+            "searchTrains",
+            "searchTrains",
+            "getTransferPlan"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 18
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.baomidou.mybatisplus.extension.service.IService",
+          "specifiers": [
+            "IService"
+          ]
+        },
+        {
+          "source": "com.travelmate.entity.Train",
+          "specifiers": [
+            "Train"
+          ]
+        },
+        {
+          "source": "java.util.List",
+          "specifiers": [
+            "List"
+          ]
+        }
+      ],
+      "exports": [
+        "TrainService"
+      ],
+      "totalLines": 26,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/service/TrainWaitlistService.java": {
+      "filePath": "backend/src/main/java/com/travelmate/service/TrainWaitlistService.java",
+      "contentHash": "5de4ba3765d32aee42c07329c3f71a71e4df96e4f56b231a1706f12ff30dcd78",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TrainWaitlistService",
+          "methods": [
+            "createWaitlist"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.travelmate.dto.TrainWaitlistCreateDTO",
+          "specifiers": [
+            "TrainWaitlistCreateDTO"
+          ]
+        }
+      ],
+      "exports": [
+        "TrainWaitlistService"
+      ],
+      "totalLines": 8,
+      "hasStructuralAnalysis": true
+    },
+    "backend/src/main/java/com/travelmate/TravelMateApplication.java": {
+      "filePath": "backend/src/main/java/com/travelmate/TravelMateApplication.java",
+      "contentHash": "edf380ea63ad2372d360893a48e6c6d55aa6aaa27cb70a30b0cbd19699b12c26",
+      "functions": [
+        {
+          "name": "main",
+          "params": [
+            "args"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "classes": [
+        {
+          "name": "TravelMateApplication",
+          "methods": [
+            "main"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 9
+        }
+      ],
+      "imports": [
+        {
+          "source": "org.springframework.boot.SpringApplication",
+          "specifiers": [
+            "SpringApplication"
+          ]
+        },
+        {
+          "source": "org.springframework.boot.autoconfigure.SpringBootApplication",
+          "specifiers": [
+            "SpringBootApplication"
+          ]
+        }
+      ],
+      "exports": [
+        "main",
+        "TravelMateApplication"
+      ],
+      "totalLines": 14,
       "hasStructuralAnalysis": true
     },
     "backend/src/main/resources/META-INF/spring.factories": {
@@ -13721,19 +16091,56 @@
       "totalLines": 3,
       "hasStructuralAnalysis": false
     },
-    "backend/src/main/resources/application.yml": {
-      "filePath": "backend/src/main/resources/application.yml",
-      "contentHash": "8fc021ee87c910331b1ac8c41448d8ae151e714de6e56362d1f1c0c2d7b77517",
-      "functions": [],
-      "classes": [],
-      "imports": [],
+    "backend/src/test/java/com/travelmate/backend/BackendApplicationTests.java": {
+      "filePath": "backend/src/test/java/com/travelmate/backend/BackendApplicationTests.java",
+      "contentHash": "23a94d0b71fe1ce4f99681d8b1c3e9f7b52315fb2debcace4518c8239b912e0d",
+      "functions": [
+        {
+          "name": "contextLoads",
+          "params": [],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 3
+        }
+      ],
+      "classes": [
+        {
+          "name": "BackendApplicationTests",
+          "methods": [
+            "contextLoads"
+          ],
+          "properties": [],
+          "exported": false,
+          "lineCount": 8
+        }
+      ],
+      "imports": [
+        {
+          "source": "com.travelmate.TravelMateApplication",
+          "specifiers": [
+            "TravelMateApplication"
+          ]
+        },
+        {
+          "source": "org.junit.jupiter.api.Test",
+          "specifiers": [
+            "Test"
+          ]
+        },
+        {
+          "source": "org.springframework.boot.test.context.SpringBootTest",
+          "specifiers": [
+            "SpringBootTest"
+          ]
+        }
+      ],
       "exports": [],
-      "totalLines": 37,
+      "totalLines": 15,
       "hasStructuralAnalysis": true
     },
     "backend/src/test/java/com/travelmate/SecurityConfigTests.java": {
       "filePath": "backend/src/test/java/com/travelmate/SecurityConfigTests.java",
-      "contentHash": "9f4702f4e7da57296da7b56639559f34c3e21cc8024bca42209929b88386af75",
+      "contentHash": "822cb63dc8c7b86d114f28649189e6741d250bf8fc31dee4edbabc2fbeea636d",
       "functions": [
         {
           "name": "unauthenticatedPostCreationIsRejectedBySecurityLayer",
@@ -13776,6 +16183,20 @@
           "returnType": "void",
           "exported": false,
           "lineCount": 5
+        },
+        {
+          "name": "unauthenticatedStaticImageRequestIsServed",
+          "params": [],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 5
+        },
+        {
+          "name": "deployedFrontendOriginIsAllowedForUserApi",
+          "params": [],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 8
         }
       ],
       "classes": [
@@ -13787,13 +16208,15 @@
             "unauthenticatedFollowingPostsRequestIsRejectedBySecurityLayer",
             "unauthenticatedPostDeletionIsRejectedBySecurityLayer",
             "unauthenticatedHotelOrdersRequestIsRejectedBySecurityLayer",
-            "unauthenticatedAdminRequestIsRejectedBySecurityLayer"
+            "unauthenticatedAdminRequestIsRejectedBySecurityLayer",
+            "unauthenticatedStaticImageRequestIsServed",
+            "deployedFrontendOriginIsAllowedForUserApi"
           ],
           "properties": [
             "mockMvc"
           ],
           "exported": false,
-          "lineCount": 45
+          "lineCount": 60
         }
       ],
       "imports": [
@@ -13846,9 +16269,21 @@
           ]
         },
         {
+          "source": "org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options",
+          "specifiers": [
+            "options"
+          ]
+        },
+        {
           "source": "org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post",
           "specifiers": [
             "post"
+          ]
+        },
+        {
+          "source": "org.springframework.test.web.servlet.result.MockMvcResultMatchers.header",
+          "specifiers": [
+            "header"
           ]
         },
         {
@@ -13859,164 +16294,17 @@
         }
       ],
       "exports": [],
-      "totalLines": 60,
-      "hasStructuralAnalysis": true
-    },
-    "backend/src/test/java/com/travelmate/backend/BackendApplicationTests.java": {
-      "filePath": "backend/src/test/java/com/travelmate/backend/BackendApplicationTests.java",
-      "contentHash": "23a94d0b71fe1ce4f99681d8b1c3e9f7b52315fb2debcace4518c8239b912e0d",
-      "functions": [
-        {
-          "name": "contextLoads",
-          "params": [],
-          "returnType": "void",
-          "exported": false,
-          "lineCount": 3
-        }
-      ],
-      "classes": [
-        {
-          "name": "BackendApplicationTests",
-          "methods": [
-            "contextLoads"
-          ],
-          "properties": [],
-          "exported": false,
-          "lineCount": 8
-        }
-      ],
-      "imports": [
-        {
-          "source": "com.travelmate.TravelMateApplication",
-          "specifiers": [
-            "TravelMateApplication"
-          ]
-        },
-        {
-          "source": "org.junit.jupiter.api.Test",
-          "specifiers": [
-            "Test"
-          ]
-        },
-        {
-          "source": "org.springframework.boot.test.context.SpringBootTest",
-          "specifiers": [
-            "SpringBootTest"
-          ]
-        }
-      ],
-      "exports": [],
-      "totalLines": 15,
-      "hasStructuralAnalysis": true
-    },
-    "docs/Product_Requirements_Document.md": {
-      "filePath": "docs/Product_Requirements_Document.md",
-      "contentHash": "4313eb61a2886326b1aa65da23199cf72d40a5202f28c137fc62b6f188ee3dc0",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 87,
-      "hasStructuralAnalysis": true
-    },
-    "docs/admin-csv-import.md": {
-      "filePath": "docs/admin-csv-import.md",
-      "contentHash": "02541c04e8af7f75fde13ba830fafb30b667309d193d13fa5318b1392db00d20",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 39,
-      "hasStructuralAnalysis": true
-    },
-    "docs/sql/init.sql": {
-      "filePath": "docs/sql/init.sql",
-      "contentHash": "9bd2f4a90fbb5244a59899c1313593199cda1740c42a0ab3c3bcdd2cb17773dc",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 1378,
-      "hasStructuralAnalysis": true
-    },
-    "docs/大模型使用说明.md": {
-      "filePath": "docs/大模型使用说明.md",
-      "contentHash": "22a3609f8306c0a6dacc13b7eda389002b635cfb1717fed895a6cbce0042dbae",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 140,
-      "hasStructuralAnalysis": true
-    },
-    "docs/测试报告.md": {
-      "filePath": "docs/测试报告.md",
-      "contentHash": "f3b1789b1a2594f93410081a8aff261fcaac5456ba4708d1a3c8290bc84857df",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 154,
-      "hasStructuralAnalysis": true
-    },
-    "docs/用户手册.md": {
-      "filePath": "docs/用户手册.md",
-      "contentHash": "968a11c841ed8190680e4d638afc2ebe688a4c9cb67fab26391ecdcbc0c11c67",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 182,
-      "hasStructuralAnalysis": true
-    },
-    "docs/部署文档.md": {
-      "filePath": "docs/部署文档.md",
-      "contentHash": "8585f852ee73c57c27b47f511bc8f064e93d710b2aa30737b5d277edbfc911ac",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 179,
-      "hasStructuralAnalysis": true
-    },
-    "frontend/index.html": {
-      "filePath": "frontend/index.html",
-      "contentHash": "b38792ba319d8fac966d21f6083786c0229d9c05bbdd9a13c25627bc1f5889a8",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 14,
-      "hasStructuralAnalysis": false
-    },
-    "frontend/package-lock.json": {
-      "filePath": "frontend/package-lock.json",
-      "contentHash": "e6004090e8fc0299165a7be970b7fba312bce01cfa5f0d607e9a859bcd44c2c2",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 1795,
-      "hasStructuralAnalysis": true
-    },
-    "frontend/package.json": {
-      "filePath": "frontend/package.json",
-      "contentHash": "e3283af509b9098dcfdec39394c921655008a424e7eaf8413b40664d6ea85ffc",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 24,
+      "totalLines": 77,
       "hasStructuralAnalysis": true
     },
     "frontend/src/App.vue": {
       "filePath": "frontend/src/App.vue",
-      "contentHash": "06526ac4f3320e6ee85ed9ce56c03a204438d287e3835251b6eb11aa2725c809",
+      "contentHash": "d8e0d0b3a95d8cf6acf06866731f3190f1590e4a1864d5c64a660800666fc076",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 1217,
+      "totalLines": 1251,
       "hasStructuralAnalysis": false
     },
     "frontend/src/components/CountUp.vue": {
@@ -14041,12 +16329,12 @@
     },
     "frontend/src/components/PageHeader.vue": {
       "filePath": "frontend/src/components/PageHeader.vue",
-      "contentHash": "3c3295e45b274c54ab5808f37ad4dc3bf67f968d5209d9891de13a05999a9889",
+      "contentHash": "581c58d2f534ba5bd3da5d40dd5a2a8255532d26cee3c11540a1cf78d73db8a2",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 84,
+      "totalLines": 96,
       "hasStructuralAnalysis": false
     },
     "frontend/src/components/PriceTrend.vue": {
@@ -14061,12 +16349,12 @@
     },
     "frontend/src/components/SafeImage.vue": {
       "filePath": "frontend/src/components/SafeImage.vue",
-      "contentHash": "e92326d156887cf86eafca6ccabeede8ad48c90b735faf0adebd62859d5f2741",
+      "contentHash": "61ed2fb50e7ea3a786fb66ef299e971f8a323c0466732b5e8933d3fb7d8280d5",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 56,
+      "totalLines": 57,
       "hasStructuralAnalysis": false
     },
     "frontend/src/components/SkeletonBox.vue": {
@@ -14081,7 +16369,7 @@
     },
     "frontend/src/data/destinations.js": {
       "filePath": "frontend/src/data/destinations.js",
-      "contentHash": "f664110b1dd7dae1fe734483b6175f083478d0853323d0b7704d467d442f801f",
+      "contentHash": "fc0feb1fc4de31e75855995f879b7421d74d06ae43f4c27fd1ceb8f55a7cf3a2",
       "functions": [],
       "classes": [],
       "imports": [],
@@ -14165,7 +16453,7 @@
     },
     "frontend/src/router/index.js": {
       "filePath": "frontend/src/router/index.js",
-      "contentHash": "8c7bc66593a91005ba3d008ccf6d302d73d1a40fe3c1cf03eceaafabbdbb4d5d",
+      "contentHash": "9a1f91e4e132302cb62d9f63062649233fe26df904d24e9126c23a99589269c0",
       "functions": [],
       "classes": [],
       "imports": [
@@ -14178,12 +16466,12 @@
         }
       ],
       "exports": [],
-      "totalLines": 154,
+      "totalLines": 160,
       "hasStructuralAnalysis": true
     },
     "frontend/src/stores/user.js": {
       "filePath": "frontend/src/stores/user.js",
-      "contentHash": "9113af10c6a7b0bc377ab0b1bea3f49c5d4044c8109dc00de2ceed90fb6a19cb",
+      "contentHash": "266ef95290d4998af8bc05832602b5eebfcf11f791a0efe60b2814ffbf382ccd",
       "functions": [],
       "classes": [],
       "imports": [
@@ -14213,27 +16501,118 @@
       "totalLines": 53,
       "hasStructuralAnalysis": true
     },
-    "frontend/src/styles/theme.css": {
-      "filePath": "frontend/src/styles/theme.css",
-      "contentHash": "4dd8e7f5f93c67846354ef7dcc5636360ad0ed7c2133f5f8951b9d1997d48b29",
-      "functions": [],
+    "frontend/src/utils/browseHistory.js": {
+      "filePath": "frontend/src/utils/browseHistory.js",
+      "contentHash": "beb964ae4e1928d1abe2751ae53816f87c84d80921d5f3255fe79e21c41550e9",
+      "functions": [
+        {
+          "name": "addBrowseHistory",
+          "params": [
+            "item"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "getBrowseHistory",
+          "params": [],
+          "exported": true,
+          "lineCount": 8
+        }
+      ],
       "classes": [],
       "imports": [],
-      "exports": [],
-      "totalLines": 539,
-      "hasStructuralAnalysis": false
+      "exports": [
+        "addBrowseHistory",
+        "getBrowseHistory"
+      ],
+      "totalLines": 21,
+      "hasStructuralAnalysis": true
+    },
+    "frontend/src/utils/destinations.js": {
+      "filePath": "frontend/src/utils/destinations.js",
+      "contentHash": "c62a7f9a3a0cf7ac9616ad905d8af0e8a0c8c999215c18ecedffc3deece34b79",
+      "functions": [
+        {
+          "name": "splitList",
+          "params": [
+            "value"
+          ],
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "normalizeDestination",
+          "params": [],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "fetchDestinationList",
+          "params": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "fetchDestinationBySlug",
+          "params": [
+            "slug"
+          ],
+          "exported": true,
+          "lineCount": 8
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@/utils/request",
+          "specifiers": [
+            "request"
+          ]
+        },
+        {
+          "source": "@/data/destinations",
+          "specifiers": [
+            "staticDestinations"
+          ]
+        }
+      ],
+      "exports": [
+        "normalizeDestination",
+        "fallbackDestinations",
+        "fetchDestinationList",
+        "fetchDestinationBySlug"
+      ],
+      "totalLines": 41,
+      "hasStructuralAnalysis": true
     },
     "frontend/src/utils/image.js": {
       "filePath": "frontend/src/utils/image.js",
-      "contentHash": "5d401dd1fcc11240af9bd023f06e8881e12e5e3e5df0a678a8390e5b5e6cddae",
+      "contentHash": "bd295965679b3595f0a9558d3c364d2b822695da2e6bbe5d38339a8f0e6203ab",
       "functions": [
         {
-          "name": "localSeedImage",
+          "name": "seedAsset",
           "params": [
-            "name"
+            "file"
           ],
-          "exported": true,
-          "lineCount": 28
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "stripWrappingQuotes",
+          "params": [
+            "value"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "toBackendAssetUrl",
+          "params": [
+            "path"
+          ],
+          "exported": false,
+          "lineCount": 6
         },
         {
           "name": "normalizeImageUrl",
@@ -14241,17 +16620,25 @@
             "url"
           ],
           "exported": true,
-          "lineCount": 4
+          "lineCount": 17
+        },
+        {
+          "name": "parseImageList",
+          "params": [
+            "images"
+          ],
+          "exported": true,
+          "lineCount": 29
         }
       ],
       "classes": [],
       "imports": [],
       "exports": [
         "FALLBACK_IMAGE",
-        "localSeedImage",
-        "normalizeImageUrl"
+        "normalizeImageUrl",
+        "parseImageList"
       ],
-      "totalLines": 36,
+      "totalLines": 62,
       "hasStructuralAnalysis": true
     },
     "frontend/src/utils/request.js": {
@@ -14298,64 +16685,34 @@
       "totalLines": 87,
       "hasStructuralAnalysis": true
     },
-    "frontend/src/views/Home.vue": {
-      "filePath": "frontend/src/views/Home.vue",
-      "contentHash": "34674bbf8a7905c0078710ad2fef2295bb860372b72ce0a05bd7bff1339e131b",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 1136,
-      "hasStructuralAnalysis": false
-    },
-    "frontend/src/views/Login.vue": {
-      "filePath": "frontend/src/views/Login.vue",
-      "contentHash": "5bc42e6d5d70c9f444040d92e2b43fbec265b680eff7f36ed51d03fcb87fd396",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 473,
-      "hasStructuralAnalysis": false
-    },
-    "frontend/src/views/NotFound.vue": {
-      "filePath": "frontend/src/views/NotFound.vue",
-      "contentHash": "9362e12b7327e6948c939e54c13896d99ea327c43d342200cfb5ff94436d51f4",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 69,
-      "hasStructuralAnalysis": false
-    },
     "frontend/src/views/admin/AdminDashboard.vue": {
       "filePath": "frontend/src/views/admin/AdminDashboard.vue",
-      "contentHash": "a68230c7da97d0d6a208fa52e41388a972f662053f1acca187532c8366b6d096",
+      "contentHash": "3a1ea4380a84ed4d93af8e122b0d2067c984cf09c27f50f8b76282d1a9b879f2",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 2728,
+      "totalLines": 3470,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/ai/AiPlan.vue": {
       "filePath": "frontend/src/views/ai/AiPlan.vue",
-      "contentHash": "61e6990ba64c98d4991f61d0b25cfb5d7f23fefb016d659fe8e0643645f9739b",
+      "contentHash": "a2ec214cda68c961a86820e153ae577eca65c829b30f8b5679b8bae64b8e254c",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 544,
+      "totalLines": 1540,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/community/Community.vue": {
       "filePath": "frontend/src/views/community/Community.vue",
-      "contentHash": "f0dd2b813bf7272af0933c32c76969941c1fd33509d250e0c37f448ca0e78475",
+      "contentHash": "aa5a44b8fd126c103f03abf66da087c37f1a81a090d7eee5b9c44ae7a843fb13",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 487,
+      "totalLines": 560,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/community/PostCreate.vue": {
@@ -14370,72 +16727,82 @@
     },
     "frontend/src/views/community/PostDetail.vue": {
       "filePath": "frontend/src/views/community/PostDetail.vue",
-      "contentHash": "3c93c600d7766e465877d99d29d6a2ae18163d679d66fb6eef26737d7b7645e8",
+      "contentHash": "f1a5f555edd453e7aa2d91cb814ab3aaf692980227cf50fcd9c6b38b1790be0a",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 572,
+      "totalLines": 624,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/destination/DestinationDetail.vue": {
       "filePath": "frontend/src/views/destination/DestinationDetail.vue",
-      "contentHash": "3350aaac99f420bd1484c1f0781453c0b2eb35f3fbefc8f045dca42cab40d7ea",
+      "contentHash": "2c88bb360833231944d7ca9bc6275207825553c856d93017d3f4a52af27b0899",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 243,
+      "totalLines": 250,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/destination/DestinationList.vue": {
       "filePath": "frontend/src/views/destination/DestinationList.vue",
-      "contentHash": "b5b8efe4bd3724a54ce67795ad64114f24e21005c3dbd29c41c5535fbec7aed5",
+      "contentHash": "aa65d79ce4da29d20e3ded3a8a7d5da7187da9e000aba921f7fdfb167840e7a8",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 195,
+      "totalLines": 208,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/flight/FlightSearch.vue": {
       "filePath": "frontend/src/views/flight/FlightSearch.vue",
-      "contentHash": "abd652c39528d76b8c9e08da9bb20bf8c9571862f765dd07966d26344ead7a3c",
+      "contentHash": "c7e8de068ef3f3e18abedcd8d3789e2b3cf5efb24d26b471a6f798796f46e853",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 540,
+      "totalLines": 563,
+      "hasStructuralAnalysis": false
+    },
+    "frontend/src/views/Home.vue": {
+      "filePath": "frontend/src/views/Home.vue",
+      "contentHash": "8d1d60ca97ff31a17503870de79717b4b4d784f186a5b20a80201449b8f4b24f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2407,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/hotel/AttractionList.vue": {
       "filePath": "frontend/src/views/hotel/AttractionList.vue",
-      "contentHash": "6c4a071433bf31a0baa91762f1ecf086d81d25750f4eb586c63ecfd0ada2ffb0",
+      "contentHash": "b4262ed935c618deb3400980366f0438bc3245dc42dca893a447994ee3143133",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 290,
+      "totalLines": 308,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/hotel/HotelDetail.vue": {
       "filePath": "frontend/src/views/hotel/HotelDetail.vue",
-      "contentHash": "ff588410268aa479155015096c51c0a5ca0ae73619b840488ade99d0783829b7",
+      "contentHash": "d788a469d96baa0112d3bd8afc5ff3a6767ecbc455f3ef165d04f0f8d8129119",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 627,
+      "totalLines": 641,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/hotel/HotelSearch.vue": {
       "filePath": "frontend/src/views/hotel/HotelSearch.vue",
-      "contentHash": "5d67b8a69290e310dc9d5904dc3dd1baf94c36521aee595ebb2313d2556e532a",
+      "contentHash": "964735f488d1ed7a53f27b26fc283f610fac92048633d7bb7b1930245b214490",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 247,
+      "totalLines": 269,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/info/InfoPage.vue": {
@@ -14446,6 +16813,26 @@
       "imports": [],
       "exports": [],
       "totalLines": 103,
+      "hasStructuralAnalysis": false
+    },
+    "frontend/src/views/Login.vue": {
+      "filePath": "frontend/src/views/Login.vue",
+      "contentHash": "6f87817b0c238b1639a225bd987c4f79cb631c46416fdeed4c58f22ba78c1196",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 610,
+      "hasStructuralAnalysis": false
+    },
+    "frontend/src/views/NotFound.vue": {
+      "filePath": "frontend/src/views/NotFound.vue",
+      "contentHash": "9362e12b7327e6948c939e54c13896d99ea327c43d342200cfb5ff94436d51f4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 69,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/order/CouponCenter.vue": {
@@ -14460,27 +16847,37 @@
     },
     "frontend/src/views/order/MyOrders.vue": {
       "filePath": "frontend/src/views/order/MyOrders.vue",
-      "contentHash": "df9bb055c02436f3fb35169f9afd68b2bd90a422d3cbee27b366e63e7d9210a3",
+      "contentHash": "fd81ce4d6306d6be27fabf23b437f4392eb4bf1ea5dd96cda090b17d6a0ad830",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 433,
+      "totalLines": 593,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/train/TrainSearch.vue": {
       "filePath": "frontend/src/views/train/TrainSearch.vue",
-      "contentHash": "7dc3696a207f455733b9ead0b02070ae08943a65c85aabefeaa4ebbe4ea3daf3",
+      "contentHash": "77f8604c81f08746857cc6a79f1baaedb1329fd7eb21b8d217187619555b3cec",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 565,
+      "totalLines": 759,
+      "hasStructuralAnalysis": false
+    },
+    "frontend/src/views/user/MyCollections.vue": {
+      "filePath": "frontend/src/views/user/MyCollections.vue",
+      "contentHash": "7181d2636f9f95b8d8fddc95f4c63f3492cde8bf2753047be248932f9d91c2a4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 185,
       "hasStructuralAnalysis": false
     },
     "frontend/src/views/user/NotificationCenter.vue": {
       "filePath": "frontend/src/views/user/NotificationCenter.vue",
-      "contentHash": "2de29aa33ad9225044088eaad437f8a36a9b450bbe6a5b129eaea9b994bb5d10",
+      "contentHash": "718afbbecc42d84a1702a694dc45f3ac0edcb0d3e9c0ab7de1939bc6f5baa074",
       "functions": [],
       "classes": [],
       "imports": [],
@@ -14490,7 +16887,7 @@
     },
     "frontend/src/views/user/UserProfile.vue": {
       "filePath": "frontend/src/views/user/UserProfile.vue",
-      "contentHash": "0e85e70afa43f5228e52707d729094d98333a9cebebb221a38ec9eeed753bf8c",
+      "contentHash": "206f1d3df02afec1b4a87212640456fd55bbafbc64a38747bec0f4aae2fd86cf",
       "functions": [],
       "classes": [],
       "imports": [],
@@ -14500,7 +16897,7 @@
     },
     "frontend/vite.config.js": {
       "filePath": "frontend/vite.config.js",
-      "contentHash": "0cafdb40497b0fa9bdde59028417b7d0a3ccf7947c254c1045304c0cdaea65da",
+      "contentHash": "e348644c16690ced0dbfc087a0f05249709dd16c1e5af1d04b7ca2e6ecbe6f4e",
       "functions": [],
       "classes": [],
       "imports": [
@@ -14524,18 +16921,18 @@
         }
       ],
       "exports": [],
-      "totalLines": 27,
+      "totalLines": 31,
       "hasStructuralAnalysis": true
     },
-    "package.json": {
-      "filePath": "package.json",
-      "contentHash": "b5c023e7ed9a0333f3041ab9f84e677cbd78d091126c479db32729ddb79b0694",
+    "null": {
+      "filePath": "null",
+      "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 17,
-      "hasStructuralAnalysis": true
+      "totalLines": 1,
+      "hasStructuralAnalysis": false
     },
     "pptgenerate.js": {
       "filePath": "pptgenerate.js",
@@ -14763,37 +17160,34 @@
       "totalLines": 1237,
       "hasStructuralAnalysis": true
     },
-    "scripts/check-image-links.mjs": {
-      "filePath": "scripts/check-image-links.mjs",
-      "contentHash": "68e81d22aa393c57bb1dc6ae2d30fd558f97383d805c366967fa0bfe6bfd3326",
-      "functions": [],
-      "classes": [],
-      "imports": [
-        {
-          "source": "node:fs",
-          "specifiers": [
-            "fs"
-          ]
-        },
-        {
-          "source": "node:path",
-          "specifiers": [
-            "path"
-          ]
-        }
-      ],
-      "exports": [],
-      "totalLines": 48,
-      "hasStructuralAnalysis": true
-    },
     "setup.ps1": {
       "filePath": "setup.ps1",
-      "contentHash": "1c37565286dfa592e7a43fca9a42267c01a53cfccf23764bcbafa7ae3e0fca23",
+      "contentHash": "e33d888f9976a617e7fb3b149ca3cc11f1bc5e239ac775d54c72cc2381c6a07f",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 122,
+      "totalLines": 136,
+      "hasStructuralAnalysis": false
+    },
+    "start-backend.ps1": {
+      "filePath": "start-backend.ps1",
+      "contentHash": "30258dacf6ba5a77bd875c25f989644d1c2f02e83cd7beda8633925ac14a5adc",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 39,
+      "hasStructuralAnalysis": false
+    },
+    "start-frontend.ps1": {
+      "filePath": "start-frontend.ps1",
+      "contentHash": "3d8741e33c9d8b4296278c6e59f76e37b3a144c917d107a57d143866367cb20f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 29,
       "hasStructuralAnalysis": false
     },
     "start.bat": {
@@ -14808,63 +17202,13 @@
     },
     "start.ps1": {
       "filePath": "start.ps1",
-      "contentHash": "37ee444fd0d95f4bf42217c6d14f8238f5597da33b82f3f47058a684ea3bc7f0",
+      "contentHash": "5a66dd0127b8a467eb9e9e86781b1dc1caf96740f2e126ca6bfe9532e28b9f82",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
       "totalLines": 404,
       "hasStructuralAnalysis": false
-    },
-    "大作业说明.md": {
-      "filePath": "大作业说明.md",
-      "contentHash": "3bf5f22a38d064c12558061c5328f64b39a58a9bb1ca202e993b5bec25ca0511",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 138,
-      "hasStructuralAnalysis": true
-    },
-    "数据库建议.md": {
-      "filePath": "数据库建议.md",
-      "contentHash": "3b1a02841019d4445664f54d82964f32ab269822eafa0546c4565437b99ea9a4",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 103,
-      "hasStructuralAnalysis": true
-    },
-    "详细实施计划.md": {
-      "filePath": "详细实施计划.md",
-      "contentHash": "39f7f7a5cc8e0a29e13bdae527dcdfd686a5d5601e22f57d094feda1fe463ea0",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 263,
-      "hasStructuralAnalysis": true
-    },
-    "软件概要设计说明书.md": {
-      "filePath": "软件概要设计说明书.md",
-      "contentHash": "9627a884439f9b4babdfce587a61402e4ff3539592af3885265f7ffd8bbdd99e",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 531,
-      "hasStructuralAnalysis": true
-    },
-    "软工小组大作业每人详细步骤.md": {
-      "filePath": "软工小组大作业每人详细步骤.md",
-      "contentHash": "50af99b9e7488a8d83a15feab4ce2ae6e0de07a588ac12422965ff3d7aa91a5a",
-      "functions": [],
-      "classes": [],
-      "imports": [],
-      "exports": [],
-      "totalLines": 226,
-      "hasStructuralAnalysis": true
     }
   }
 }

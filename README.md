@@ -212,6 +212,31 @@ npm run dev
 
 访问 http://localhost:3000
 
+### 自动化测试
+
+当前仓库提供统一测试入口，用于执行后端 JUnit/MockMvc、前端依赖检查、生产构建、Playwright E2E smoke 测试和启动脚本 DryRun：
+
+```powershell
+.\scripts\run-tests.ps1
+```
+
+也可以按需单独运行：
+
+```powershell
+cd backend
+.\mvnw.cmd test
+
+cd ..\frontend
+npm install
+npm run build
+npx playwright test --reporter=list --workers=1
+
+cd ..
+.\start.ps1 -DryRun
+```
+
+测试说明见 [docs/test-runbook.md](docs/test-runbook.md)，正式测试结果见根目录 [测试报告.md](测试报告.md)。
+
 ---
 
 ## 当前实现状态

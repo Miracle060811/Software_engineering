@@ -90,7 +90,7 @@
             @click="$router.push(`/hotel/${hotel.id}`)"
           >
             <SafeImage
-              :src="hotel.coverImg"
+              :src="resolveHotelCover(hotel)"
               image-class="hotel-img"
               :alt="hotel.name"
             />
@@ -130,6 +130,16 @@ import SafeImage from "@/components/SafeImage.vue";
 const route = useRoute();
 const hotels = ref([]);
 const loading = ref(false);
+
+const hotelCoverOverrides = {
+  32: "/images/real/hotels/shanghai-treasury.webp",
+  "上海人民广场南京东路珍宝酒店": "/images/real/hotels/shanghai-treasury.webp",
+};
+
+const resolveHotelCover = (hotel) => {
+  if (!hotel) return "";
+  return hotelCoverOverrides[hotel.id] || hotelCoverOverrides[hotel.name] || hotel.coverImg;
+};
 
 const searchForm = ref({
   city: route.query.city || "",

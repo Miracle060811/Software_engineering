@@ -43,7 +43,7 @@
       <el-row v-else :gutter="20">
         <el-col :span="8" v-for="attr in attractions" :key="attr.id" style="margin-bottom:20px">
           <el-card class="attr-card" :body-style="{ padding: 0 }">
-            <SafeImage :src="attr.coverImg" image-class="attr-img" :alt="attr.name" />
+            <SafeImage :src="resolveAttractionCover(attr)" image-class="attr-img" :alt="attr.name" />
             <div class="attr-info">
               <div class="attr-name">{{ attr.name }}</div>
               <div class="attr-desc">{{ attr.description }}</div>
@@ -169,6 +169,20 @@ const selectedAttraction = ref(null);
 const bookForm = ref({ adultCount: 1, childCount: 0, guestName: "", guestPhone: "" });
 const dayTours = ref([]);
 const nearTours = ref([]);
+
+const attractionCoverOverrides = {
+  7: "https://commons.wikimedia.org/wiki/Special:Redirect/file/1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg",
+  29: "https://commons.wikimedia.org/wiki/Special:Redirect/file/HuangHe_Tower.jpg",
+  31: "/images/real/attractions/tianshan-tianchi.jpg",
+  "九寨沟风景名胜区": "https://commons.wikimedia.org/wiki/Special:Redirect/file/1_jiuzhaigou_valley_wu_hua_hai_2011b.jpg",
+  "黄鹤楼": "https://commons.wikimedia.org/wiki/Special:Redirect/file/HuangHe_Tower.jpg",
+  "纳木错": "/images/real/attractions/tianshan-tianchi.jpg",
+};
+
+const resolveAttractionCover = (attr) => {
+  if (!attr) return "";
+  return attractionCoverOverrides[attr.id] || attractionCoverOverrides[attr.name] || attr.coverImg;
+};
 
 const totalTicketPrice = computed(() => {
   if (!selectedAttraction.value) return 0;
