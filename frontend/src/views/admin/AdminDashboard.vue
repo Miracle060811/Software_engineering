@@ -622,30 +622,6 @@
                   min-width="160"
                   show-overflow-tooltip
                 />
-                <el-table-column label="点赞量" width="132">
-                  <template #default="scope">
-                    <el-input-number
-                      v-model="scope.row.likeCount"
-                      :min="0"
-                      :step="1"
-                      controls-position="right"
-                      size="small"
-                      style="width: 112px"
-                    />
-                  </template>
-                </el-table-column>
-                <el-table-column label="收藏量" width="132">
-                  <template #default="scope">
-                    <el-input-number
-                      v-model="scope.row.collectCount"
-                      :min="0"
-                      :step="1"
-                      controls-position="right"
-                      size="small"
-                      style="width: 112px"
-                    />
-                  </template>
-                </el-table-column>
                 <el-table-column label="状态" width="100">
                   <template #default="scope"
                     ><el-tag :type="postStatusType(scope.row.status)">{{
@@ -658,38 +634,39 @@
                   label="发布时间"
                   width="180"
                 />
-                <el-table-column label="操作" width="340" fixed="right">
+                <el-table-column label="操作" width="430" fixed="right">
                   <template #default="scope">
-                    <el-button
-                      size="small"
-                      type="success"
-                      @click="approvePost(scope.row.id)"
-                      >{{
-                        scope.row.status === 1 ? "保持通过" : "改为通过"
-                      }}</el-button
-                    >
-                    <el-button
-                      size="small"
-                      type="primary"
-                      plain
-                      @click="savePostMetrics(scope.row)"
-                      >保存数据</el-button
-                    >
-                    <el-button
-                      size="small"
-                      type="danger"
-                      @click="rejectPost(scope.row.id)"
-                      >{{
-                        scope.row.status === 2 ? "修改原因" : "改为拒绝"
-                      }}</el-button
-                    >
-                    <el-button
-                      size="small"
-                      type="danger"
-                      plain
-                      @click="disablePostAuthor(scope.row)"
-                      >封禁作者</el-button
-                    >
+                    <div class="post-audit-actions">
+                      <el-button
+                        v-if="scope.row.status !== 1"
+                        size="small"
+                        type="success"
+                        @click="approvePost(scope.row.id)"
+                        >改为通过</el-button
+                      >
+                      <el-button
+                        size="small"
+                        type="primary"
+                        plain
+                        @click="openPostMetricsDialog(scope.row)"
+                        >修改数据</el-button
+                      >
+                      <el-button
+                        size="small"
+                        type="danger"
+                        @click="rejectPost(scope.row.id)"
+                        >{{
+                          scope.row.status === 2 ? "修改原因" : "改为拒绝"
+                        }}</el-button
+                      >
+                      <el-button
+                        size="small"
+                        type="danger"
+                        plain
+                        @click="disablePostAuthor(scope.row)"
+                        >封禁作者</el-button
+                      >
+                    </div>
                   </template>
                 </el-table-column>
               </el-table>
@@ -1259,6 +1236,38 @@
       </template>
     </el-dialog>
 
+    <el-dialog
+      v-model="postMetricsDialogVisible"
+      title="修改游记互动数据"
+      width="420px"
+    >
+      <el-form :model="postMetricsForm" label-width="90px" class="entity-form">
+        <el-form-item label="游记标题">
+          <div class="form-readonly-text">{{ postMetricsForm.title || "-" }}</div>
+        </el-form-item>
+        <el-form-item label="点赞量">
+          <el-input-number
+            v-model="postMetricsForm.likeCount"
+            :min="0"
+            :step="1"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="收藏量">
+          <el-input-number
+            v-model="postMetricsForm.collectCount"
+            :min="0"
+            :step="1"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="postMetricsDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="savePostMetrics">确认保存</el-button>
+      </template>
+    </el-dialog>
+
     <el-drawer
       v-model="roomDrawerVisible"
       :title="
@@ -1739,6 +1748,13 @@ const reviewReplies = ref([]);
 const sensitiveWords = ref([]);
 const logs = ref([]);
 const users = ref([]);
+const postMetricsDialogVisible = ref(false);
+const postMetricsForm = ref({
+  id: null,
+  title: "",
+  likeCount: 0,
+  collectCount: 0,
+});
 
 const flightLoading = ref(false);
 const trainLoading = ref(false);
@@ -2965,9 +2981,19 @@ const removeSensitiveWord = async (row) => {
   } catch (error) {}
 };
 
-const savePostMetrics = async (row) => {
-  const likeCount = Number(row.likeCount);
-  const collectCount = Number(row.collectCount);
+const openPostMetricsDialog = (row) => {
+  postMetricsForm.value = {
+    id: row.id,
+    title: row.title || "",
+    likeCount: Number(row.likeCount || 0),
+    collectCount: Number(row.collectCount || 0),
+  };
+  postMetricsDialogVisible.value = true;
+};
+
+const savePostMetrics = async () => {
+  const likeCount = Number(postMetricsForm.value.likeCount);
+  const collectCount = Number(postMetricsForm.value.collectCount);
   if (
     !Number.isInteger(likeCount) ||
     likeCount < 0 ||
@@ -2978,11 +3004,12 @@ const savePostMetrics = async (row) => {
     return;
   }
   try {
-    await request.post(`/api/admin/posts/${row.id}/metrics`, {
+    await request.post(`/api/admin/posts/${postMetricsForm.value.id}/metrics`, {
       likeCount,
       collectCount,
     });
     ElMessage.success("互动数据已保存");
+    postMetricsDialogVisible.value = false;
     await fetchPosts();
   } catch (error) {}
 };
@@ -3479,6 +3506,17 @@ onUnmounted(() => {
 
 .muted-text {
   color: var(--el-text-color-secondary);
+}
+
+.post-audit-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.post-audit-actions :deep(.el-button) {
+  margin-left: 0;
 }
 
 .import-grid {
