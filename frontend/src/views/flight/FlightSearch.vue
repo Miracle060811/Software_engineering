@@ -252,7 +252,7 @@ const priceTrendTicket = ref(null);
 const searchForm = ref({
   depCity: route.query.depCity || "",
   arrCity: route.query.arrCity || "",
-  date: "",
+  date: route.query.date || new Date().toISOString().slice(0, 10),
 });
 
 const bookForm = ref({ passengerId: null, seatType: "economy", ticketCount: 1, userCouponId: null });
@@ -297,7 +297,7 @@ const fetchFlights = async () => {
 };
 
 const resetForm = () => {
-  searchForm.value = { depCity: "", arrCity: "", date: "" };
+  searchForm.value = { depCity: "", arrCity: "", date: new Date().toISOString().slice(0, 10) };
   fetchFlights();
 };
 
