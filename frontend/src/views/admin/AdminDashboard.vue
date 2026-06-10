@@ -820,7 +820,7 @@
               v-model:current-page="logPage"
               v-model:page-size="logSize"
               :total="logTotal"
-              layout="prev, pager, next"
+              layout="total, prev, pager, next"
               @current-change="fetchLogs"
             />
           </div>
@@ -1782,7 +1782,7 @@ const postStatusFilter = ref("pending");
 const reviewAuditTab = ref("posts");
 
 const logPage = ref(1);
-const logSize = ref(10);
+const logSize = ref(200);
 const logTotal = ref(0);
 
 const flightDialogVisible = ref(false);
