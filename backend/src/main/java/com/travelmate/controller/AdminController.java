@@ -1851,16 +1851,18 @@ public class AdminController {
     @GetMapping("/logs")
     public Result<Map<String, Object>> listLogs(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "200") int size) {
         checkAdmin();
-        Page<SysLog> pageObj = new Page<>(page, size);
+        int safePage = Math.max(page, 1);
+        int safeSize = Math.max(1, Math.min(size, 200));
+        Page<SysLog> pageObj = new Page<>(safePage, safeSize);
         Page<SysLog> result = sysLogMapper.selectPage(pageObj,
                 new LambdaQueryWrapper<SysLog>().orderByDesc(SysLog::getCreateTime));
         Map<String, Object> data = new HashMap<>();
         data.put("records", result.getRecords());
         data.put("total", result.getTotal());
-        data.put("page", page);
-        data.put("size", size);
+        data.put("page", safePage);
+        data.put("size", safeSize);
         return Result.success(data);
     }
 }
