@@ -48,21 +48,33 @@ exit /b %EXIT_CODE%
 :usage
 echo TravelMate Windows launcher
 echo.
+echo This file only locates PowerShell and delegates all startup logic to start.ps1.
+echo Keep service order, Redis checks, env loading, and npm behavior in start.ps1.
+echo.
 echo Usage:
 echo   start.bat [options]
 echo.
 echo Options are passed through to start.ps1:
-echo   -DbPassword ^<password^>       MySQL password
-echo   -DeepseekApiKey ^<key^>        DeepSeek API key
-echo   -BackendOnly                 Start backend only
-echo   -FrontendOnly                Start frontend only
+echo   -DbPassword ^<password^>       Override MySQL password
+echo   -DeepseekApiKey ^<key^>        Override DeepSeek API key
+echo   -BackendOnly                 Start backend only; skip frontend
+echo   -FrontendOnly                Start frontend only; skip backend and Redis
 echo   -SkipRedis                   Skip Redis auto-start/check
-echo   -SkipFrontendInstall         Do not run npm install automatically
+echo   -SkipFrontendInstall         Do not run npm install when frontend/node_modules is missing
 echo   -DryRun                      Print commands without starting services
+echo.
+echo start.ps1 also loads .env automatically when present:
+echo   DB_PASSWORD=your MySQL password
+echo   DEEPSEEK_API_KEY=your DeepSeek API key
+echo.
+echo Backend password priority:
+echo   -DbPassword ^> SPRING_DATASOURCE_PASSWORD ^> DB_PASSWORD ^> backend/application-local.yml
 echo.
 echo Examples:
 echo   start.bat
-echo   start.bat -DbPassword 061010
+echo   start.bat -DbPassword your_mysql_password
+echo   start.bat -DeepseekApiKey your_deepseek_key
 echo   start.bat -BackendOnly -SkipRedis
 echo   start.bat -FrontendOnly -SkipFrontendInstall
+echo   start.bat -DryRun
 exit /b 0
