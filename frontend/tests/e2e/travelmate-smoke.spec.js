@@ -213,7 +213,8 @@ test("Wikimedia covers only request supported thumbnail sizes", async ({ page })
 test("auth-only routes redirect anonymous users to login", async ({ page }) => {
   for (const path of ["/post/create", "/my-orders", "/notifications", "/collections", "/admin"]) {
     await page.goto(path);
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
+    expect(new URL(page.url()).searchParams.get("redirect")).toBe(path);
   }
 });
 
