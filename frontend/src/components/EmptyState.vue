@@ -2,7 +2,7 @@
   <div class="empty-state" :class="{ 'empty-compact': compact }">
     <div class="empty-icon-wrap">
       <slot name="icon">
-        <el-icon :size="compact ? 48 : 72" color="#A0AEC0">
+        <el-icon :size="compact ? 48 : 72" color="var(--tm-primary)">
           <component :is="iconComponent" />
         </el-icon>
       </slot>
@@ -51,7 +51,6 @@ const iconComponent = computed(() => iconMap[props.icon] || iconMap.document)
   justify-content: center;
   padding: 64px 24px;
   text-align: center;
-  animation: fadeInScale 0.4s ease;
 }
 
 .empty-state.empty-compact {
@@ -62,12 +61,12 @@ const iconComponent = computed(() => iconMap[props.icon] || iconMap.document)
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #F7F8FA 0%, #EEF1F5 100%);
+  background: var(--tm-paper-3);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
-  transition: all 0.3s ease;
+  color: var(--tm-primary);
 }
 
 .empty-compact .empty-icon-wrap {
@@ -76,21 +75,16 @@ const iconComponent = computed(() => iconMap[props.icon] || iconMap.document)
   margin-bottom: 14px;
 }
 
-.empty-icon-wrap:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-}
-
 .empty-title {
   font-size: 18px;
-  font-weight: 700;
-  color: #3D3D5C;
+  font-weight: 650;
+  color: var(--tm-ink);
   margin-bottom: 6px;
 }
 
 .empty-desc {
   font-size: 14px;
-  color: #A0A0B8;
+  color: var(--tm-muted);
   max-width: 320px;
   line-height: 1.6;
 }

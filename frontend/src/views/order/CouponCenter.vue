@@ -130,9 +130,13 @@ const fetchAvailable = async () => {
 };
 
 const fetchMy = async () => {
+  if (!localStorage.getItem("token")) {
+    myCoupons.value = [];
+    return;
+  }
   myLoading.value = true;
   try {
-    const data = await request.get("/api/coupon/my");
+    const data = await request.get("/api/coupon/my", { silent: true });
     myCoupons.value = Array.isArray(data) ? data : [];
   } catch (e) {
     myCoupons.value = [];

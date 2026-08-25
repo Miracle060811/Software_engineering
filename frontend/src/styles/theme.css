@@ -1,164 +1,118 @@
-/* ============================================
-   TravelMate 全局主题 v2 — 温暖旅行风格
-   主色调：碧海 Teal + 日落暖橙 + 夜空蓝
-   ============================================ */
-
-/* ---- Element Plus CSS 变量覆盖 ---- */
 :root {
-  /* 主色 — 碧海 Teal */
-  --el-color-primary: #0D9488;
-  --el-color-primary-light-1: #14A89A;
-  --el-color-primary-light-2: #1DBCAE;
-  --el-color-primary-light-3: #2DD4C0;
-  --el-color-primary-light-4: #47E0D0;
-  --el-color-primary-light-5: #6BE8DC;
-  --el-color-primary-light-6: #8FEFE5;
-  --el-color-primary-light-7: #B3F6EF;
-  --el-color-primary-light-8: #D7FBF7;
-  --el-color-primary-light-9: #ECFDFA;
-  --el-color-primary-dark-2: #0A7B72;
+  --tm-deep: #073f37;
+  --tm-deep-2: #082f2a;
+  --tm-primary: #07594e;
+  --tm-primary-hover: #064a41;
+  --tm-teal: #008c7b;
+  --tm-gold: #c3944a;
+  --tm-gold-soft: #e6d1a8;
+  --tm-paper: #f4efe5;
+  --tm-paper-2: #fffaf0;
+  --tm-paper-3: #ebe3d5;
+  --tm-ink: #18201c;
+  --tm-ink-soft: #36443d;
+  --tm-muted: #69736c;
+  --tm-line: rgba(29, 42, 36, 0.12);
+  --tm-line-soft: rgba(29, 42, 36, 0.075);
+  --tm-white: #fffdf8;
+  --tm-danger: #a84d45;
+  --tm-warning: #b7772e;
+  --tm-success: #397b63;
+  --tm-blue: #48756d;
+  --tm-green: #397b63;
+  --tm-olive: #6f7655;
+  --tm-clay: #a66f52;
+  --tm-bark: #604f3d;
+  --tm-sand: #d8c6a4;
+  --tm-accent: var(--tm-gold);
+  --tm-page: var(--tm-paper);
+  --tm-surface: rgba(255, 250, 240, 0.92);
+  --tm-surface-raised: var(--tm-paper-2);
+  --tm-primary-soft: rgba(7, 89, 78, 0.1);
+  --tm-font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --tm-font-sans: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --tm-radius-xs: 6px;
+  --tm-radius-sm: 10px;
+  --tm-radius-md: 16px;
+  --tm-radius-lg: 22px;
+  --tm-radius-xl: 30px;
+  --tm-shadow-soft: 0 10px 30px rgba(18, 28, 23, 0.07);
+  --tm-shadow-card: 0 18px 50px rgba(18, 28, 23, 0.1);
+  --tm-shadow-float: 0 24px 64px rgba(18, 28, 23, 0.15);
+  --tm-shadow-card-hover: 0 22px 58px rgba(18, 28, 23, 0.13);
+  --tm-shadow-hover: var(--tm-shadow-card-hover);
+  --tm-content-detail: 980px;
+  --tm-page-max-width: 1480px;
+  --tm-page-padding: clamp(20px, 4vw, 64px);
+  --tm-gradient-primary: linear-gradient(135deg, var(--tm-deep), var(--tm-primary));
+  --tm-gradient-brand: linear-gradient(135deg, var(--tm-deep), var(--tm-gold));
+  --tm-gradient-warm: linear-gradient(135deg, var(--tm-paper-2), var(--tm-paper-3));
+  --tm-transition: 180ms ease;
 
-  /* 功能色 */
-  --el-color-success: #10B981;
-  --el-color-success-light-3: #6EE7B7;
-  --el-color-success-light-5: #A7F3D0;
-  --el-color-success-light-7: #D1FAE5;
-  --el-color-success-light-8: #ECFDF5;
-  --el-color-success-light-9: #F0FDF4;
-  --el-color-success-dark-2: #059669;
-
-  --el-color-warning: #F59E0B;
-  --el-color-warning-light-3: #FCD34D;
-  --el-color-warning-light-5: #FDE68A;
-  --el-color-warning-light-7: #FEF3C7;
-  --el-color-warning-light-8: #FFFBEB;
-  --el-color-warning-light-9: #FFFDF5;
-  --el-color-warning-dark-2: #D97706;
-
-  --el-color-danger: #EF4444;
-  --el-color-danger-light-3: #FCA5A5;
-  --el-color-danger-light-5: #FECACA;
-  --el-color-danger-light-7: #FEE2E2;
-  --el-color-danger-light-8: #FEF2F2;
-  --el-color-danger-light-9: #FFF5F5;
-  --el-color-danger-dark-2: #DC2626;
-
-  --el-color-info: #6366F1;
-  --el-color-info-light-3: #A5B4FC;
-  --el-color-info-light-5: #C7D2FE;
-  --el-color-info-light-7: #E0E7FF;
-  --el-color-info-light-8: #EEF2FF;
-  --el-color-info-light-9: #F5F7FF;
-  --el-color-info-dark-2: #4F46E5;
-
-  /* 背景 & 文字 */
-  --el-bg-color: #ffffff;
-  --el-bg-color-page: #F7F8FA;
-  --el-bg-color-overlay: #ffffff;
-  --el-text-color-primary: #1A1A2E;
-  --el-text-color-regular: #3D3D5C;
-  --el-text-color-secondary: #71718B;
-  --el-text-color-placeholder: #A0A0B8;
-  --el-text-color-disabled: #C8C8D8;
-
-  /* 边框 */
-  --el-border-color: #E4E7ED;
-  --el-border-color-light: #F0F2F5;
-  --el-border-color-lighter: #F7F8FA;
-  --el-border-color-extra-light: #FAFBFC;
-  --el-border-color-dark: #CDD0D6;
-
-  /* 圆角 */
-  --el-border-radius-base: 12px;
-  --el-border-radius-small: 8px;
-  --el-border-radius-round: 24px;
-  --el-border-radius-circle: 50%;
-
-  /* 阴影 — 更柔和自然 */
-  --el-box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  --el-box-shadow-light: 0 2px 10px rgba(0, 0, 0, 0.04);
-  --el-box-shadow-lighter: 0 1px 5px rgba(0, 0, 0, 0.02);
-  --el-box-shadow-dark: 0 8px 40px rgba(0, 0, 0, 0.1);
-
-  /* 字体 */
-  --el-font-family: "Inter", "PingFang SC", "Microsoft YaHei", "Helvetica Neue",
-    system-ui, -apple-system, sans-serif;
-  --el-font-size-extra-large: 22px;
-  --el-font-size-large: 18px;
-  --el-font-size-medium: 16px;
-  --el-font-size-base: 14px;
-  --el-font-size-small: 13px;
-  --el-font-size-extra-small: 12px;
-
-  /* 过渡 */
-  --el-transition-duration: 0.3s;
-  --el-transition-duration-fast: 0.18s;
-  --el-transition-function: cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* 组件级别 */
-  --el-menu-hover-bg-color: var(--el-color-primary-light-9);
-  --el-menu-active-color: var(--el-color-primary);
-  --el-table-header-bg-color: #F8F9FB;
-  --el-table-row-hover-bg-color: #ECFDFA;
-  --el-tag-border-radius: 8px;
-  --el-button-border-radius: 10px;
-
-  /* ========== 自定义设计令牌 ========== */
-
-  /* 品牌渐变 */
-  --tm-gradient-brand: linear-gradient(135deg, #0D9488 0%, #0EA5E9 50%, #6366F1 100%);
-  --tm-gradient-warm: linear-gradient(135deg, #F59E0B 0%, #F97316 50%, #EF4444 100%);
-  --tm-gradient-ocean: linear-gradient(135deg, #06B6D4 0%, #0D9488 50%, #10B981 100%);
-  --tm-gradient-sunset: linear-gradient(135deg, #FF6B6B 0%, #FECA57 50%, #FF9FF3 100%);
-
-  /* 旅行主题色 */
-  --tm-color-sky: #38BDF8;
-  --tm-color-ocean: #0EA5E9;
-  --tm-color-sunset: #F97316;
-  --tm-color-forest: #22C55E;
-  --tm-color-sand: #FCD34D;
-  --tm-color-coral: #FB7185;
-
-  /* 卡片悬浮 */
-  --tm-shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
-  --tm-shadow-card-hover: 0 1px 3px rgba(0,0,0,0.06), 0 12px 36px rgba(0,0,0,0.08);
-
-  /* 页面最大宽度 */
-  --tm-page-max-width: 1400px;
-  --tm-page-padding: 40px;
-
-  /* 页面内容宽度标准 */
-  --tm-content-wide: 1200px;
-  --tm-content-normal: 960px;
-  --tm-content-narrow: 860px;
-  --tm-content-detail: 1100px;
-
-  /* 卡片圆角标准 */
-  --tm-card-radius: 16px;
-  --tm-card-radius-sm: 12px;
-  --tm-card-radius-lg: 20px;
+  --el-color-primary: #07594e;
+  --el-color-primary-light-3: #4b887f;
+  --el-color-primary-light-5: #83aaa4;
+  --el-color-primary-light-7: #bdceca;
+  --el-color-primary-light-8: #d9e4e1;
+  --el-color-primary-light-9: #eef4f2;
+  --el-color-primary-dark-2: #06483f;
+  --el-color-success: #397b63;
+  --el-color-warning: #b7772e;
+  --el-color-danger: #a84d45;
+  --el-color-info: #69736c;
+  --el-text-color-primary: #18201c;
+  --el-text-color-regular: #36443d;
+  --el-text-color-secondary: #69736c;
+  --el-border-color: rgba(29, 42, 36, 0.14);
+  --el-border-color-light: rgba(29, 42, 36, 0.1);
+  --el-border-color-lighter: rgba(29, 42, 36, 0.075);
+  --el-fill-color-blank: #fffaf0;
+  --el-fill-color-light: #f1eadf;
+  --el-bg-color: #fffaf0;
+  --el-bg-color-page: #f4efe5;
+  --el-border-radius-base: 10px;
+  --el-font-family: var(--tm-font-sans);
 }
 
-/* ---- 全局重置 ---- */
 *,
 *::before,
 *::after {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
 html {
+  min-width: 320px;
+  color-scheme: light;
   scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background: var(--tm-paper);
 }
 
 body {
-  font-family: var(--el-font-family);
-  background: #F7F8FA;
-  color: var(--el-text-color-primary);
-  line-height: 1.6;
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  color: var(--tm-ink);
+  background:
+    radial-gradient(circle at 8% 4%, rgba(195, 148, 74, 0.075), transparent 30%),
+    var(--tm-paper);
+  font-family: var(--tm-font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
 }
 
 a {
@@ -167,42 +121,51 @@ a {
 }
 
 img {
-  max-width: 100%;
   display: block;
+  max-width: 100%;
 }
 
-/* 滚动条美化 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #CCD5DE;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #A0AEC0;
+h1,
+h2,
+h3,
+h4,
+p {
+  margin-top: 0;
 }
 
-/* 选中文字颜色 */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
 ::selection {
-  background: #0D9488;
-  color: #fff;
+  color: var(--tm-paper-2);
+  background: var(--tm-primary);
 }
 
-/* ========== 动画关键帧 ========== */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+:focus-visible {
+  outline: 2px solid var(--tm-gold);
+  outline-offset: 3px;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--tm-paper-3);
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid var(--tm-paper-3);
+  border-radius: 999px;
+  background: rgba(7, 63, 55, 0.42);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(7, 63, 55, 0.64);
 }
 
 @keyframes fadeIn {
@@ -210,584 +173,192 @@ img {
   to { opacity: 1; }
 }
 
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-@keyframes countUp {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* 页面进入动画类 */
-.page-enter-active {
-  animation: fadeInUp 0.4s var(--el-transition-function);
-}
-.page-leave-active {
-  animation: fadeIn 0.2s var(--el-transition-function) reverse;
-}
-
-/* ---- Element Plus 组件微调 ---- */
-
-/* 按钮 */
-.el-button--primary {
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  transition: all 0.3s var(--el-transition-function);
-}
-.el-button--primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.35);
-}
-.el-button--primary:active {
-  transform: translateY(0);
+  from { background-position: 180% 0; }
+  to { background-position: -180% 0; }
 }
 
 .el-button {
-  transition: all 0.3s var(--el-transition-function);
+  min-height: 40px;
+  border-radius: var(--tm-radius-sm);
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  transition: color var(--tm-transition), background-color var(--tm-transition), border-color var(--tm-transition), box-shadow var(--tm-transition);
 }
 
-/* 卡片 */
+.el-button:hover,
+.el-button:focus-visible {
+  transform: none;
+}
+
+.el-button--primary {
+  border-color: var(--tm-primary);
+  color: var(--tm-paper-2);
+  background: var(--tm-primary);
+  box-shadow: 0 8px 22px rgba(7, 89, 78, 0.16);
+}
+
+.el-button--primary:hover,
+.el-button--primary:focus {
+  border-color: var(--tm-primary-hover);
+  background: var(--tm-primary-hover);
+  box-shadow: 0 10px 25px rgba(7, 89, 78, 0.2);
+}
+
+.el-button--default,
+.el-button.is-plain {
+  border-color: var(--tm-line);
+  color: var(--tm-deep);
+  background: rgba(255, 250, 240, 0.82);
+}
+
+.el-button--default:hover,
+.el-button.is-plain:hover {
+  border-color: rgba(7, 89, 78, 0.34);
+  color: var(--tm-primary);
+  background: var(--tm-paper-2);
+}
+
 .el-card {
-  border: 1px solid var(--el-border-color-light);
-  transition: all 0.4s var(--el-transition-function);
-  border-radius: 16px;
-}
-.el-card:hover {
-  box-shadow: var(--tm-shadow-card-hover);
-}
-
-/* 输入框 */
-.el-input__wrapper {
-  transition: all 0.3s var(--el-transition-function);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-  border-radius: 10px;
-}
-.el-input__wrapper:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-.el-input__wrapper.is-focus {
-  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+  overflow: hidden;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-paper-2);
+  box-shadow: var(--tm-shadow-soft);
 }
 
-/* 输入框尺寸统一 */
-.el-input--large .el-input__wrapper {
-  border-radius: 12px;
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner,
+.el-date-editor.el-input__wrapper,
+.el-date-editor .el-input__wrapper {
+  border-radius: var(--tm-radius-sm);
+  background: rgba(255, 253, 248, 0.96);
+  box-shadow: 0 0 0 1px var(--tm-line) inset;
+  transition: box-shadow var(--tm-transition), background-color var(--tm-transition);
 }
 
-/* 菜单 */
-.el-menu {
-  border-right: none !important;
+.el-input__wrapper,
+.el-select__wrapper {
+  min-height: 42px;
 }
 
-/* 表格 */
-.el-table th.el-table__cell {
+.el-input__wrapper:hover,
+.el-select__wrapper:hover,
+.el-textarea__inner:hover {
+  box-shadow: 0 0 0 1px rgba(7, 89, 78, 0.35) inset;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused,
+.el-textarea__inner:focus {
+  background: var(--tm-white);
+  box-shadow: 0 0 0 1px var(--tm-primary) inset, 0 0 0 3px rgba(7, 89, 78, 0.09) !important;
+}
+
+.el-form-item__label {
+  color: var(--tm-ink-soft);
   font-weight: 600;
-  color: var(--el-text-color-primary);
-  background: #F8F9FB;
-  border-radius: 0;
 }
 
-/* 标签 */
 .el-tag {
-  font-weight: 500;
-}
-
-/* Dialog */
-.el-dialog {
-  border-radius: 20px !important;
-  overflow: hidden;
-}
-.el-dialog__header {
-  padding: 24px 28px 18px;
-  border-bottom: 1px solid var(--el-border-color-light);
-}
-.el-dialog__body {
-  padding: 28px;
-}
-.el-dialog__footer {
-  padding: 18px 28px 24px;
-  border-top: 1px solid var(--el-border-color-light);
-}
-
-/* Drawer */
-.el-drawer {
-  border-radius: 20px 0 0 20px !important;
-}
-
-/* Tabs */
-.el-tabs__item {
-  font-weight: 500;
-  transition: color 0.3s;
-}
-.el-tabs__active-bar {
-  height: 3px;
-  border-radius: 2px;
-  background: var(--el-color-primary);
-}
-
-/* Menu item */
-.el-menu-item {
-  transition: all 0.25s var(--el-transition-function);
-}
-
-/* Dropdown */
-.el-dropdown-menu__item:not(.is-disabled):hover {
-  background-color: var(--el-color-primary-light-9) !important;
-  color: var(--el-color-primary) !important;
-}
-
-/* Pagination */
-.el-pagination .el-pager li.is-active {
+  height: 28px;
+  border-radius: 999px;
+  border-color: rgba(7, 89, 78, 0.15);
+  color: var(--tm-primary);
+  background: rgba(7, 89, 78, 0.075);
   font-weight: 600;
 }
 
-/* Skeleton */
-.el-skeleton__item {
-  border-radius: 10px;
+.el-dialog,
+.el-drawer {
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-paper-2);
+  box-shadow: var(--tm-shadow-float);
 }
 
-/* Select / DatePicker 下拉 */
-.el-select-dropdown,
-.el-picker-panel {
-  border-radius: 14px !important;
-  overflow: hidden;
+.el-dialog__title,
+.el-drawer__title {
+  color: var(--tm-ink);
+  font-family: var(--tm-font-serif);
+  font-weight: 650;
 }
 
-/* Message / Notification */
-.el-message {
-  border-radius: 12px !important;
-}
-.el-notification {
-  border-radius: 16px !important;
+.el-tabs__item {
+  color: var(--tm-muted);
+  font-weight: 600;
 }
 
-/* Avatar 增强 */
-.el-avatar {
+.el-tabs__item.is-active,
+.el-tabs__item:hover {
+  color: var(--tm-primary);
+}
+
+.el-tabs__active-bar {
+  background: var(--tm-gold);
+}
+
+.el-table {
+  --el-table-header-bg-color: #eee6d9;
+  --el-table-tr-bg-color: #fffaf0;
+  --el-table-row-hover-bg-color: #f4eee3;
+  --el-table-border-color: rgba(29, 42, 36, 0.1);
+  border-radius: var(--tm-radius-sm);
+  color: var(--tm-ink-soft);
+}
+
+.el-table th.el-table__cell {
+  color: var(--tm-deep);
   font-weight: 700;
 }
 
-/* Breadcrumb */
-.el-breadcrumb__inner {
-  font-weight: 500;
+.el-menu {
+  border-right: 0;
 }
 
-/* NProgress 进度条定制 */
+.el-pagination {
+  --el-pagination-button-bg-color: var(--tm-paper-2);
+  --el-pagination-hover-color: var(--tm-primary);
+}
+
+.el-dropdown-menu,
+.el-select-dropdown,
+.el-picker-panel,
+.el-popover.el-popper {
+  border-color: var(--tm-line);
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-paper-2);
+  box-shadow: var(--tm-shadow-card);
+}
+
+.el-message-box {
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-paper-2);
+}
+
 #nprogress .bar {
-  background: linear-gradient(90deg, #0D9488, #0EA5E9, #6366F1) !important;
-  height: 3px !important;
-  box-shadow: 0 0 8px rgba(13, 148, 136, 0.3);
+  height: 3px;
+  background: var(--tm-gold);
 }
 
 #nprogress .peg {
-  box-shadow: 0 0 12px rgba(13, 148, 136, 0.5), 0 0 6px rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 0 10px rgba(195, 148, 74, 0.55);
 }
 
-/* 响应式全局微调 */
-@media (max-width: 768px) {
-  :root {
-    --tm-page-padding: 16px;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-  .el-dialog {
-    width: 92% !important;
-    border-radius: 16px !important;
-  }
-}
-
-/* ========== 深色模式 ========== */
-html.dark {
-  --el-color-primary: #2DD4C0;
-  --el-color-primary-light-1: #14A89A;
-  --el-color-primary-light-2: #1DBCAE;
-  --el-color-primary-light-3: #2DD4C0;
-  --el-color-primary-light-4: #47E0D0;
-  --el-color-primary-light-5: #6BE8DC;
-  --el-color-primary-light-6: #8FEFE5;
-  --el-color-primary-light-7: #B3F6EF;
-  --el-color-primary-light-8: #134E4A;
-  --el-color-primary-light-9: #0F2F2D;
-  --el-color-primary-dark-2: #5EEADB;
-
-  --el-color-success: #34D399;
-  --el-color-success-light-3: #6EE7B7;
-  --el-color-success-light-5: #34D399;
-  --el-color-success-light-7: #065F46;
-  --el-color-success-light-8: #064E3B;
-  --el-color-success-light-9: #022C22;
-  --el-color-success-dark-2: #6EE7B7;
-
-  --el-color-warning: #FBBF24;
-  --el-color-warning-light-3: #FCD34D;
-  --el-color-warning-light-5: #FBBF24;
-  --el-color-warning-light-7: #78350F;
-  --el-color-warning-light-8: #451A03;
-  --el-color-warning-light-9: #2E1100;
-  --el-color-warning-dark-2: #FDE68A;
-
-  --el-color-danger: #F87171;
-  --el-color-danger-light-3: #FCA5A5;
-  --el-color-danger-light-5: #F87171;
-  --el-color-danger-light-7: #7F1D1D;
-  --el-color-danger-light-8: #450A0A;
-  --el-color-danger-light-9: #200505;
-  --el-color-danger-dark-2: #FCA5A5;
-
-  --el-color-info: #818CF8;
-  --el-color-info-light-3: #A5B4FC;
-  --el-color-info-light-5: #818CF8;
-  --el-color-info-light-7: #1E1B4B;
-  --el-color-info-light-8: #0F0D2E;
-  --el-color-info-light-9: #06051A;
-  --el-color-info-dark-2: #A5B4FC;
-
-  --el-bg-color: #1E293B;
-  --el-bg-color-page: #0F172A;
-  --el-bg-color-overlay: #1E293B;
-  --el-text-color-primary: #F1F5F9;
-  --el-text-color-regular: #CBD5E1;
-  --el-text-color-secondary: #94A3B8;
-  --el-text-color-placeholder: #64748B;
-  --el-text-color-disabled: #475569;
-
-  --el-border-color: #334155;
-  --el-border-color-light: #1E293B;
-  --el-border-color-lighter: #1A2332;
-  --el-border-color-extra-light: #0F1A2A;
-  --el-border-color-dark: #475569;
-
-  --el-box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  --el-box-shadow-light: 0 2px 10px rgba(0, 0, 0, 0.2);
-  --el-box-shadow-lighter: 0 1px 5px rgba(0, 0, 0, 0.15);
-  --el-box-shadow-dark: 0 8px 40px rgba(0, 0, 0, 0.5);
-
-  --el-fill-color-blank: #1E293B;
-  --el-fill-color-light: #334155;
-
-  --tm-shadow-card: 0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.2);
-  --tm-shadow-card-hover: 0 1px 3px rgba(0,0,0,0.3), 0 12px 36px rgba(0,0,0,0.4);
-
-  --el-menu-hover-bg-color: var(--el-color-primary-light-9);
-  --el-table-header-bg-color: #1E293B;
-  --el-table-row-hover-bg-color: #0F2F2D;
-
-  color-scheme: dark;
-}
-
-html.dark body {
-  background: var(--el-bg-color-page);
-  color: var(--el-text-color-primary);
-}
-
-html.dark .el-card {
-  background: var(--el-bg-color);
-  border-color: var(--el-border-color-light);
-}
-
-html.dark .el-dialog {
-  background: var(--el-bg-color);
-}
-
-html.dark .el-drawer {
-  background: var(--el-bg-color);
-}
-
-html.dark ::-webkit-scrollbar-thumb {
-  background: #475569;
-}
-html.dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748B;
-}
-
-/* ========== TravelMate product polish: blue-green operating palette ========== */
-:root {
-  color-scheme: light;
-
-  --el-color-primary: oklch(0.55 0.12 190);
-  --el-color-primary-light-1: oklch(0.60 0.12 190);
-  --el-color-primary-light-2: oklch(0.66 0.11 190);
-  --el-color-primary-light-3: oklch(0.72 0.10 190);
-  --el-color-primary-light-4: oklch(0.78 0.08 190);
-  --el-color-primary-light-5: oklch(0.84 0.06 190);
-  --el-color-primary-light-6: oklch(0.89 0.045 190);
-  --el-color-primary-light-7: oklch(0.93 0.032 190);
-  --el-color-primary-light-8: oklch(0.96 0.022 190);
-  --el-color-primary-light-9: oklch(0.985 0.012 190);
-  --el-color-primary-dark-2: oklch(0.45 0.12 190);
-
-  --tm-ink: oklch(0.24 0.026 215);
-  --tm-ink-soft: oklch(0.42 0.022 215);
-  --tm-muted: oklch(0.56 0.018 215);
-  --tm-page: oklch(0.982 0.008 205);
-  --tm-surface: oklch(0.996 0.004 205);
-  --tm-surface-raised: oklch(0.99 0.007 205);
-  --tm-line: oklch(0.91 0.015 205);
-  --tm-line-soft: oklch(0.95 0.01 205);
-  --tm-blue: oklch(0.58 0.13 225);
-  --tm-teal: oklch(0.55 0.12 190);
-  --tm-green: oklch(0.62 0.13 165);
-  --tm-primary-soft: oklch(0.972 0.024 190);
-  --tm-accent: oklch(0.57 0.14 178);
-  --tm-warning: oklch(0.70 0.13 82);
-  --tm-danger: oklch(0.62 0.18 28);
-
-  --el-bg-color: var(--tm-surface);
-  --el-bg-color-page: var(--tm-page);
-  --el-bg-color-overlay: var(--tm-surface);
-  --el-text-color-primary: var(--tm-ink);
-  --el-text-color-regular: var(--tm-ink-soft);
-  --el-text-color-secondary: var(--tm-muted);
-  --el-text-color-placeholder: oklch(0.69 0.014 215);
-  --el-border-color: var(--tm-line);
-  --el-border-color-light: var(--tm-line-soft);
-  --el-border-color-lighter: oklch(0.965 0.008 205);
-
-  --el-color-success: var(--tm-green);
-  --el-color-warning: var(--tm-warning);
-  --el-color-danger: var(--tm-danger);
-  --el-color-info: var(--tm-blue);
-
-  --el-border-radius-base: 8px;
-  --el-border-radius-small: 6px;
-  --el-border-radius-round: 999px;
-  --el-button-border-radius: 8px;
-  --el-tag-border-radius: 999px;
-
-  --tm-gradient-brand: linear-gradient(135deg, oklch(0.55 0.12 190), oklch(0.58 0.13 225));
-  --tm-gradient-ocean: linear-gradient(135deg, oklch(0.58 0.13 225), oklch(0.55 0.12 190));
-  --tm-gradient-warm: linear-gradient(135deg, oklch(0.70 0.13 82), oklch(0.62 0.18 28));
-  --tm-card-radius: 8px;
-  --tm-card-radius-sm: 6px;
-  --tm-card-radius-lg: 10px;
-  --tm-shadow-card: 0 1px 2px oklch(0.24 0.026 215 / 0.05), 0 8px 24px oklch(0.24 0.026 215 / 0.055);
-  --tm-shadow-card-hover: 0 2px 4px oklch(0.24 0.026 215 / 0.07), 0 16px 42px oklch(0.24 0.026 215 / 0.09);
-  --tm-shadow-hover: var(--tm-shadow-card-hover);
-}
-
-body {
-  background:
-    linear-gradient(180deg, oklch(0.985 0.014 195) 0%, var(--tm-page) 320px),
-    var(--tm-page);
-  color: var(--tm-ink);
-}
-
-::selection {
-  background: oklch(0.86 0.065 190);
-  color: var(--tm-ink);
-}
-
-.el-card {
-  border-radius: var(--tm-card-radius);
-  border-color: var(--tm-line-soft);
-  background: var(--tm-surface);
-  box-shadow: var(--tm-shadow-card);
-}
-
-.el-card:hover {
-  box-shadow: var(--tm-shadow-card-hover);
-}
-
-.el-button {
-  font-weight: 650;
-  letter-spacing: 0;
-}
-
-.el-button--primary {
-  background: var(--el-color-primary);
-  border-color: var(--el-color-primary);
-  box-shadow: 0 8px 18px oklch(0.55 0.12 190 / 0.16);
-}
-
-.el-button--primary:hover {
-  background: var(--el-color-primary-dark-2);
-  border-color: var(--el-color-primary-dark-2);
-  box-shadow: 0 10px 22px oklch(0.55 0.12 190 / 0.20);
-}
-
-.el-input__wrapper,
-.el-select__wrapper,
-.el-textarea__inner {
-  border-radius: 8px;
-  box-shadow: 0 0 0 1px var(--tm-line-soft);
-  background: oklch(0.998 0.003 205);
-}
-
-.el-input__wrapper:hover,
-.el-select__wrapper:hover,
-.el-textarea__inner:hover {
-  box-shadow: 0 0 0 1px oklch(0.78 0.04 198);
-}
-
-.el-input__wrapper.is-focus,
-.el-select__wrapper.is-focused,
-.el-textarea__inner:focus {
-  box-shadow: 0 0 0 2px oklch(0.55 0.12 190 / 0.20);
-}
-
-.el-tag {
-  border-radius: 999px;
-  font-weight: 650;
-}
-
-.el-dialog {
-  border-radius: 10px !important;
-}
-
-#nprogress .bar {
-  background: var(--el-color-primary) !important;
-}
-
-/* ========== Natural retreat visual direction: sand, olive, clay ========== */
-:root {
-  color-scheme: light;
-
-  --el-color-primary: oklch(0.551 0.097 180);
-  --el-color-primary-light-1: oklch(0.60 0.086 180);
-  --el-color-primary-light-2: oklch(0.66 0.074 180);
-  --el-color-primary-light-3: oklch(0.72 0.060 180);
-  --el-color-primary-light-4: oklch(0.78 0.047 180);
-  --el-color-primary-light-5: oklch(0.84 0.034 180);
-  --el-color-primary-light-6: oklch(0.89 0.025 180);
-  --el-color-primary-light-7: oklch(0.92 0.019 180);
-  --el-color-primary-light-8: oklch(0.95 0.014 180);
-  --el-color-primary-light-9: oklch(0.965 0.008 197);
-  --el-color-primary-dark-2: oklch(0.42 0.085 180);
-
-  --tm-ink: oklch(0.239 0.006 180);
-  --tm-ink-soft: oklch(0.38 0.012 190);
-  --tm-muted: oklch(0.58 0.008 197);
-  --tm-page: oklch(0.964 0.008 197);
-  --tm-surface: oklch(0.985 0.002 248);
-  --tm-surface-raised: oklch(0.995 0.004 197);
-  --tm-line: oklch(0.888 0.004 197);
-  --tm-line-soft: oklch(0.935 0.006 197);
-  --tm-primary-soft: oklch(0.935 0.030 180);
-  --tm-blue: oklch(0.64 0.038 220);
-  --tm-teal: oklch(0.551 0.097 180);
-  --tm-green: oklch(0.551 0.097 180);
-  --tm-olive: oklch(0.551 0.097 180);
-  --tm-clay: oklch(0.68 0.040 205);
-  --tm-bark: oklch(0.32 0.050 180);
-  --tm-sand: oklch(0.949 0.000 90);
-  --tm-accent: var(--tm-clay);
-  --tm-warning: oklch(0.66 0.080 72);
-  --tm-danger: oklch(0.50 0.120 32);
-
-  --el-bg-color: var(--tm-surface);
-  --el-bg-color-page: var(--tm-page);
-  --el-bg-color-overlay: var(--tm-surface-raised);
-  --el-text-color-primary: var(--tm-ink);
-  --el-text-color-regular: var(--tm-ink-soft);
-  --el-text-color-secondary: var(--tm-muted);
-  --el-text-color-placeholder: oklch(0.64 0.018 84);
-  --el-border-color: var(--tm-line);
-  --el-border-color-light: var(--tm-line-soft);
-  --el-border-color-lighter: oklch(0.949 0.000 90);
-
-  --el-color-success: var(--tm-olive);
-  --el-color-warning: var(--tm-warning);
-  --el-color-danger: var(--tm-danger);
-  --el-color-info: oklch(0.46 0.030 82);
-
-  --tm-gradient-brand: linear-gradient(135deg, var(--tm-olive), oklch(0.72 0.060 180));
-  --tm-gradient-ocean: linear-gradient(135deg, oklch(0.72 0.052 190), oklch(0.58 0.080 180));
-  --tm-gradient-warm: linear-gradient(135deg, oklch(0.88 0.026 205), oklch(0.76 0.038 180));
-  --tm-card-radius: 8px;
-  --tm-card-radius-sm: 6px;
-  --tm-card-radius-lg: 8px;
-  --tm-shadow-card: 0 1px 2px oklch(0.25 0.014 96 / 0.045), 0 18px 46px oklch(0.25 0.014 96 / 0.070);
-  --tm-shadow-card-hover: 0 2px 4px oklch(0.25 0.014 96 / 0.060), 0 26px 60px oklch(0.25 0.014 96 / 0.100);
-  --tm-shadow-hover: var(--tm-shadow-card-hover);
-}
-
-body {
-  background:
-    linear-gradient(180deg, oklch(0.985 0.002 248) 0%, var(--tm-page) 520px),
-    var(--tm-page);
-  color: var(--tm-ink);
-}
-
-::selection {
-  background: oklch(0.80 0.052 106);
-  color: var(--tm-ink);
-}
-
-.el-card {
-  border-color: var(--tm-line);
-  background: var(--tm-surface);
-  box-shadow: var(--tm-shadow-card);
-}
-
-.el-button--primary {
-  background: var(--tm-olive);
-  border-color: var(--tm-olive);
-  color: #fff;
-  --el-button-text-color: #fff;
-  --el-button-hover-text-color: #fff;
-  --el-button-active-text-color: #fff;
-  box-shadow: 0 10px 22px oklch(0.42 0.085 180 / 0.16);
-}
-
-.el-button--primary:hover {
-  background: var(--tm-bark);
-  border-color: var(--tm-bark);
-  color: #fff;
-  box-shadow: 0 14px 28px oklch(0.32 0.050 180 / 0.18);
-}
-
-.el-input__wrapper,
-.el-select__wrapper,
-.el-textarea__inner {
-  background: oklch(0.985 0.002 248);
-  box-shadow: 0 0 0 1px var(--tm-line);
-}
-
-.el-input__wrapper:hover,
-.el-select__wrapper:hover,
-.el-textarea__inner:hover {
-  box-shadow: 0 0 0 1px var(--tm-olive);
-}
-
-.el-input__wrapper.is-focus,
-.el-select__wrapper.is-focused,
-.el-textarea__inner:focus {
-  box-shadow: 0 0 0 2px oklch(0.551 0.097 180 / 0.22);
 }

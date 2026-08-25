@@ -502,7 +502,7 @@ onMounted(() => {
   gap: 8px;
 }
 .fallback-avatar {
-  background: linear-gradient(135deg, #0d9488, #0ea5e9);
+  background: var(--tm-primary);
   color: #fff;
   font-weight: 700;
 }

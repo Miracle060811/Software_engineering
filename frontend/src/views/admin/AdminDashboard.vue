@@ -612,7 +612,7 @@
                 />
                 <el-table-column
                   prop="aiSuggestion"
-                  label="AI建议"
+                  label="审核建议"
                   min-width="180"
                   show-overflow-tooltip
                 />
@@ -2185,7 +2185,7 @@ const renderCharts = () => {
       textStyle: { fontSize: 14 },
     },
     tooltip: { trigger: "item", formatter: "{b}: {c} 单 ({d}%)" },
-    color: ["#0D9488", "#F59E0B", "#3B82F6", "#EF4444"],
+    color: ["#07594e", "#c3944a", "#6f7655", "#a66f52"],
     series: [
       {
         type: "pie",
@@ -2248,8 +2248,8 @@ const renderCharts = () => {
         type: "line",
         smooth: true,
         data: (data.userGrowth || []).map((item) => item.count),
-        lineStyle: { color: "#6366F1", width: 3 },
-        itemStyle: { color: "#6366F1" },
+        lineStyle: { color: "#07594e", width: 3 },
+        itemStyle: { color: "#07594e" },
       },
     ],
   });

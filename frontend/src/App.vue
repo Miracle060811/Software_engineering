@@ -1,7 +1,11 @@
 <template>
   <div id="app">
     <!-- 导航栏 -->
-    <header class="navbar" v-if="!isAuthPage">
+    <header
+      v-if="!isAuthPage"
+      class="navbar"
+      :class="{ 'navbar-home': isHomePage, 'navbar-scrolled': isScrolled }"
+    >
       <div class="nav-inner">
         <!-- Logo -->
         <div class="nav-logo" @click="$router.push('/')">
@@ -342,7 +346,7 @@
     </el-dialog>
 
     <!-- 面包屑导航 -->
-    <div class="breadcrumb-bar" v-if="breadcrumbItems.length && !isAuthPage">
+    <div class="breadcrumb-bar" v-if="breadcrumbItems.length && !isAuthPage && !isHomePage">
       <div class="breadcrumb-inner">
         <el-breadcrumb separator="/">
           <el-breadcrumb-item
@@ -357,7 +361,7 @@
     </div>
 
     <!-- 主内容区 -->
-    <main class="main-content" :class="{ 'no-header': isAuthPage }">
+    <main class="main-content" :class="{ 'no-header': isAuthPage, 'home-shell': isHomePage }">
       <router-view v-slot="{ Component, route }">
         <transition name="page" mode="out-in">
           <component :is="Component" :key="route.fullPath" />
@@ -374,43 +378,20 @@
               <el-icon style="margin-right: 4px"><Promotion /></el-icon>伴游
               TravelMate
             </h3>
-            <p>一站式智慧出行平台，让你的每次旅行都精彩</p>
-            <div class="footer-social">
-              <button
-                v-for="member in teamMembers"
-                :key="member.name"
-                class="team-avatar-btn"
-                type="button"
-                :title="`${member.name} · ${member.moduleCode}模块`"
-                @click="selectedTeamMember = member"
-              >
-                <el-avatar
-                  :size="36"
-                  class="team-avatar"
-                  :style="{ background: member.gradient }"
-                >
-                  <SafeImage
-                    :src="member.avatar"
-                    :alt="`${member.name} 头像`"
-                    image-class="team-avatar-img"
-                    sizes="36px"
-                    root-margin="200px 0px"
-                  />
-                </el-avatar>
-              </button>
-            </div>
+            <p>TravelMate 伴游，为每一次出发整理路线、交通、住宿与目的地灵感。</p>
           </div>
           <div class="footer-col">
-            <h4>出行服务</h4>
-            <a @click="footerNav('/flight-search')">机票预订</a>
-            <a @click="footerNav('/train-search')">火车票预订</a>
-            <a @click="footerNav('/hotel-search')">酒店预订</a>
+            <h4>旅行服务</h4>
+            <a @click="footerNav('/ai-plan')">行程规划</a>
+            <a @click="footerNav('/flight-search')">交通预订</a>
+            <a @click="footerNav('/hotel-search')">酒店住宿</a>
             <a @click="footerNav('/attractions')">景点门票</a>
           </div>
           <div class="footer-col">
             <h4>发现更多</h4>
-            <a @click="footerNav('/ai-plan')">AI 行程规划</a>
-            <a @click="footerNav('/community')">旅行社区</a>
+            <a @click="footerNav('/destinations')">目的地</a>
+            <a @click="footerNav('/community')">旅行笔记</a>
+            <a @click="footerNav('/coupons')">优惠权益</a>
             <a @click="footerNav('/my-orders')">我的订单</a>
           </div>
           <div class="footer-col">
@@ -423,9 +404,7 @@
         </div>
         <div class="footer-bottom">
           <span>&copy; 2026 TravelMate 伴游 — 软件工程课程项目</span>
-          <span class="footer-credit"
-            >Made with passion by TravelMate Team</span
-          >
+          <span class="footer-credit">TravelMate Team</span>
         </div>
       </div>
     </footer>
@@ -519,6 +498,7 @@ const showMobileMenu = ref(false);
 const searchTab = ref("flight");
 const searchInputRef = ref(null);
 const selectedTeamMember = ref(null);
+const isScrolled = ref(false);
 
 const teamMembers = [
   {
@@ -526,7 +506,7 @@ const teamMembers = [
     initial: "Y",
     moduleCode: "E",
     module: "管理后台与可观测性",
-    bio: "负责后台运营管理、内容审核、系统日志与数据看板相关设计。",
+    bio: "负责后台运营管理、内容审核、系统日志与数据看板。",
     contact: "微信号待补充",
     avatar: yfanAvatar,
     gradient: "linear-gradient(135deg, oklch(0.551 0.097 180), oklch(0.72 0.060 190))",
@@ -536,7 +516,7 @@ const teamMembers = [
     initial: "Y",
     moduleCode: "A",
     module: "大交通票务 / 订单库存",
-    bio: "负责机票、火车票、库存防超卖和订单预占流程相关设计。",
+    bio: "负责机票、火车票、库存防超卖和订单预占流程。",
     contact: "微信号待补充",
     avatar: yangYouthAvatar,
     gradient: "linear-gradient(135deg, oklch(0.62 0.080 180), oklch(0.78 0.045 205))",
@@ -545,8 +525,8 @@ const teamMembers = [
     name: "Sylphira",
     initial: "S",
     moduleCode: "C",
-    module: "AI 智能规划",
-    bio: "负责 AI 行程生成、智能客服、Prompt 设计和工具调用相关能力。",
+    module: "路线整理工作台",
+    bio: "负责行程生成、旅行助手、偏好整理和路线草案相关能力。",
     contact: "微信号待补充",
     avatar: sylphiraAvatar,
     gradient: "linear-gradient(135deg, oklch(0.58 0.070 205), oklch(0.70 0.055 180))",
@@ -556,7 +536,7 @@ const teamMembers = [
     initial: "M",
     moduleCode: "B",
     module: "住宿与本地生活",
-    bio: "负责酒店、房型、景点、本地玩乐和评价体系相关设计。",
+    bio: "负责酒店、房型、景点、本地玩乐和评价体系。",
     contact: "微信号待补充",
     avatar: mojireeAvatar,
     gradient: "linear-gradient(135deg, oklch(0.64 0.075 180), oklch(0.84 0.034 180))",
@@ -566,7 +546,7 @@ const teamMembers = [
     initial: "D",
     moduleCode: "D",
     module: "社区与用户中心",
-    bio: "负责旅行社区、互动关系、评论收藏和用户中心相关设计。",
+    bio: "负责旅行社区、互动关系、评论收藏和用户中心。",
     contact: "微信号待补充",
     avatar: dxcAvatar,
     gradient: "linear-gradient(135deg, oklch(0.32 0.050 180), oklch(0.551 0.097 180))",
@@ -603,7 +583,7 @@ const navLinks = [
     ],
   },
   { path: "/community", label: "社区", activePaths: ["/community", "/post"] },
-  { path: "/ai-plan", label: "AI规划" },
+  { path: "/ai-plan", label: "路线规划" },
   { path: "/coupons", label: "优惠券" },
 ];
 
@@ -612,6 +592,11 @@ const mobileNavLinks = computed(() =>
 );
 
 const isAuthPage = computed(() => route.path === "/login");
+const isHomePage = computed(() => route.path === "/");
+
+const updateNavbarState = () => {
+  isScrolled.value = window.scrollY > 28;
+};
 
 // ---------- 面包屑 ----------
 const breadcrumbRouteMap = {
@@ -635,7 +620,7 @@ const breadcrumbRouteMap = {
     { label: "酒店详情" },
   ],
   AttractionList: [{ label: "首页", to: "/" }, { label: "景点门票" }],
-  AiPlan: [{ label: "首页", to: "/" }, { label: "AI 行程规划" }],
+  AiPlan: [{ label: "首页", to: "/" }, { label: "路线规划" }],
   Community: [{ label: "首页", to: "/" }, { label: "旅行社区" }],
   PostCreate: [
     { label: "首页", to: "/" },
@@ -766,6 +751,8 @@ onMounted(() => {
   document.documentElement.classList.remove("dark");
   localStorage.removeItem("theme");
   window.addEventListener("notification-updated", handleNotificationUpdated);
+  window.addEventListener("scroll", updateNavbarState, { passive: true });
+  updateNavbarState();
   if (userStore.isLoggedIn) {
     userStore.fetchUserInfo();
     fetchUnreadCount();
@@ -775,6 +762,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("notification-updated", handleNotificationUpdated);
+  window.removeEventListener("scroll", updateNavbarState);
 });
 
 watch(
@@ -794,6 +782,7 @@ watch(
 watch(
   () => route.fullPath,
   () => {
+    updateNavbarState();
     if (userStore.isLoggedIn) {
       fetchUnreadCount();
       fetchPrivateUnreadCount();
@@ -1133,8 +1122,8 @@ watch(
 
 /* ==================== Footer ==================== */
 .app-footer {
-  background: linear-gradient(180deg, oklch(0.985 0.002 248), oklch(0.964 0.008 197));
-  border-top: 1px solid var(--tm-line-soft);
+  background: linear-gradient(180deg, #0a3832, #082f2a);
+  border-top: 1px solid rgba(195, 148, 74, 0.26);
   margin-top: auto;
 }
 
@@ -1154,14 +1143,14 @@ watch(
 .footer-col h3 {
   font-size: 18px;
   font-weight: 700;
-  color: var(--tm-ink);
+  color: var(--tm-paper-2);
   margin-bottom: 12px;
 }
 
 .footer-col h4 {
   font-size: 14px;
   font-weight: 700;
-  color: var(--tm-ink);
+  color: var(--tm-gold-soft);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 16px;
@@ -1169,7 +1158,7 @@ watch(
 
 .footer-col p {
   font-size: 14px;
-  color: var(--el-text-color-secondary);
+  color: rgba(255, 250, 240, 0.86);
   line-height: 1.7;
   margin-bottom: 16px;
 }
@@ -1177,13 +1166,13 @@ watch(
 .footer-col a {
   display: block;
   font-size: 14px;
-  color: var(--el-text-color-secondary);
+  color: rgba(255, 250, 240, 0.82);
   padding: 5px 0;
   cursor: pointer;
   transition: color 0.2s ease;
 }
 .footer-col a:hover {
-  color: var(--el-color-primary);
+  color: var(--tm-gold-soft);
 }
 
 .footer-social {
@@ -1281,9 +1270,9 @@ watch(
   justify-content: space-between;
   align-items: center;
   padding-top: 20px;
-  border-top: 1px solid var(--tm-line-soft);
+  border-top: 1px solid rgba(255, 250, 240, 0.14);
   font-size: 13px;
-  color: var(--el-text-color-placeholder);
+  color: rgba(255, 250, 240, 0.72);
 }
 
 .footer-credit {
@@ -1304,4 +1293,5 @@ watch(
     text-align: center;
   }
 }
+
 </style>

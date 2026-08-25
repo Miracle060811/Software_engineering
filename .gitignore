@@ -22,6 +22,13 @@ frontend/test-results/
 uploads/
 backend/uploads/
 
+# 本地文档、截图与临时交付包
+/docs/前五天四人小组任务安排.md
+/说明书/
+/前端截图(1)/
+/管理员界面/
+/travelmate_editorial_low_ai_v82_package.zip
+
 # IDE / OS
 .idea/
 .vscode/

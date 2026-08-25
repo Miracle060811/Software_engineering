@@ -2,7 +2,7 @@
   <div class="notification-page">
     <PageHeader
       title="通知中心"
-      subtitle="查看 AI 行程、酒店订单和系统提醒"
+      subtitle="查看路线、酒店订单和系统提醒"
       :icon="Bell"
       :breadcrumbs="[
         { label: '首页', to: '/' },
@@ -33,7 +33,7 @@
             round
             @click="deleteAllNotifications"
           >
-            一键删除
+            批量删除
           </el-button>
         </div>
       </template>
@@ -49,7 +49,7 @@
       v-else-if="notifications.length === 0"
       icon="bell"
       title="暂无通知"
-      description="当有新的 AI 行程、酒店订单或系统消息时，会在这里显示"
+      description="当有新的路线、酒店订单或系统消息时，会在这里显示"
     />
 
     <!-- 通知列表 -->
@@ -162,7 +162,7 @@ const deleteNotification = async (item) => {
 
 const deleteAllNotifications = async () => {
   try {
-    await ElMessageBox.confirm("确认删除全部通知吗？该操作不可恢复。", "一键删除通知", {
+    await ElMessageBox.confirm("确认删除全部通知吗？该操作不可恢复。", "批量删除通知", {
       type: "warning",
       confirmButtonText: "全部删除",
       cancelButtonText: "暂不删除",
@@ -205,7 +205,7 @@ const markAllRead = async () => {
 
 const getTypeLabel = (type) => {
   const map = {
-    ai_plan: "AI 行程",
+    ai_plan: "路线行程",
     hotel_order: "酒店订单",
     traffic_order: "大交通订单",
     attraction_order: "景点门票",

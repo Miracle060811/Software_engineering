@@ -111,8 +111,8 @@ watch(() => route.params.slug, loadDestination);
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.3)),
-    linear-gradient(0deg, rgba(15, 23, 42, 0.78), transparent 58%);
+    linear-gradient(90deg, rgba(5, 42, 36, 0.88), rgba(5, 42, 36, 0.26)),
+    linear-gradient(0deg, rgba(5, 42, 36, 0.72), transparent 58%);
 }
 
 .hero-content {
@@ -207,7 +207,7 @@ watch(() => route.params.slug, loadDestination);
   height: 10px;
   border-radius: 50%;
   margin-top: 9px;
-  background: linear-gradient(135deg, var(--el-color-primary), var(--tm-color-sunset));
+  background: var(--tm-gold);
 }
 
 .source-card a {

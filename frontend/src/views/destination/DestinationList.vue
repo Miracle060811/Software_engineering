@@ -7,8 +7,7 @@
         <p>精选 {{ destinations.length }} 个高频旅行城市，整理真实目的地资料、代表景点和实用出行建议。</p>
       </div>
       <el-button type="primary" round @click="$router.push('/ai-plan')">
-        <el-icon><MagicStick /></el-icon>
-        AI 规划行程
+        整理旅行路线
       </el-button>
     </section>
 
@@ -48,7 +47,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { ArrowRight, MagicStick } from "@element-plus/icons-vue";
+import { ArrowRight } from "@element-plus/icons-vue";
 import SafeImage from "@/components/SafeImage.vue";
 import { fallbackDestinations, fetchDestinationList } from "@/utils/destinations";
 import { getResponsiveImageData } from "@/utils/image";
@@ -57,13 +56,9 @@ const destinations = ref(fallbackDestinations);
 
 const heroStyle = computed(() => ({
   background:
-    "linear-gradient(135deg, rgba(13, 148, 136, 0.94), rgba(14, 165, 233, 0.88)), url('" +
-    getResponsiveImageData(
-      destinations.value.find((item) => item.slug === "hangzhou")?.img ||
-        destinations.value[0]?.img ||
-        "",
-    ).src +
-    "') center/cover",
+    "linear-gradient(90deg, rgba(5, 42, 36, 0.92), rgba(5, 42, 36, 0.28)), url('" +
+    getResponsiveImageData("/images/editorial/guilin-cinematic-v82.jpg").src +
+    "') center 48%/cover",
 }));
 
 onMounted(async () => {
@@ -125,7 +120,7 @@ onMounted(async () => {
 }
 
 .destination-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-2px);
   border-color: var(--el-color-primary-light-7);
   box-shadow: var(--tm-shadow-card-hover);
 }
@@ -140,11 +135,11 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.45s ease;
+  transition: none;
 }
 
 .destination-card:hover img {
-  transform: scale(1.06);
+  transform: none;
 }
 
 .image-wrap span {

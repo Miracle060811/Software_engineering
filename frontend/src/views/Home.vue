@@ -1,110 +1,94 @@
 <template>
   <div class="home-page">
-    <!-- ========== Hero 区 ========== -->
     <section class="hero-section">
       <div class="hero-bg">
         <SafeImage
           :src="heroPhoto"
           :fallback="FALLBACK_IMAGE"
           image-class="hero-photo-img"
-          alt="海岛旅行风景"
+          alt="桂林漓江山水"
+          loading="eager"
+          fetchpriority="high"
           sizes="100vw"
         />
         <div class="hero-overlay"></div>
       </div>
 
       <div class="hero-content">
-        <div class="hero-copy">
-          <div class="hero-badge">
-            <span class="badge-dot"></span>
-            AI 驱动的智能旅行规划
-          </div>
-          <h1 class="hero-title">
-            慢下来，
-            <span class="title-gradient">去抵达</span>
-          </h1>
-          <p class="hero-sub">
-            把交通、住宿、景点与 AI 行程规划收进一处，让出发前的安排安静、有序，也更接近你想要的旅行节奏。
-          </p>
-          <div class="hero-chips" aria-label="TravelMate 服务">
-            <span>交通</span>
-            <span>出游</span>
-            <span>社区</span>
-            <span>AI规划</span>
-            <span>优惠券</span>
-          </div>
-          <div class="hero-actions">
-            <el-button type="primary" size="large" round @click="$router.push('/ai-plan')">
-              <el-icon><MagicStick /></el-icon>
-              <span>AI 生成行程</span>
-            </el-button>
-            <el-button size="large" round class="hero-secondary-btn" @click="$router.push('/destinations')">
-              看热门城市
-            </el-button>
-          </div>
-        </div>
-
-        <div class="hero-gallery">
-          <button
-            class="hero-image-card hero-image-main"
-            type="button"
-            @click="goDestination(showcaseDestinations[0])"
-          >
-            <SafeImage
-              :src="showcaseDestinations[0].img"
-              :alt="showcaseDestinations[0].name"
-              image-class="hero-gallery-img"
-              loading="eager"
-              fetchpriority="high"
-              sizes="(max-width: 900px) 100vw, 50vw"
-            />
-            <div class="hero-image-caption">
-              <span>{{ showcaseDestinations[0].tag }}</span>
-              <strong>{{ showcaseDestinations[0].name }}</strong>
+        <div class="hero-main">
+          <div class="hero-copy">
+            <div class="hero-badge">
+              <span class="badge-dot"></span>
+              TRAVELMATE ATLAS
             </div>
-          </button>
-          <div class="hero-mini-grid">
-            <button
-              v-for="dest in showcaseDestinations.slice(1)"
-              :key="dest.slug"
-              class="hero-image-card"
-              type="button"
-              @click="goDestination(dest)"
-            >
-              <SafeImage
-                :src="dest.img"
-                :alt="dest.name"
-                image-class="hero-gallery-img"
-                loading="eager"
-                sizes="(max-width: 900px) 50vw, 25vw"
-              />
-              <div class="hero-image-caption">
-                <span>{{ dest.tag }}</span>
-                <strong>{{ dest.name }}</strong>
-              </div>
-            </button>
+            <h1 class="hero-title">
+              把远方，
+              <span class="title-gradient">排成明天的路。</span>
+            </h1>
+            <p class="hero-sub">
+              把真实笔记、季节、预算和兴趣放在同一张地图上。TravelMate 不替你赶路，只把散落的信息整理成一条可出发、也有余地的旅程。
+            </p>
+            <div class="hero-actions">
+              <el-button type="primary" size="large" round @click="$router.push('/ai-plan')">
+                开始整理路线
+              </el-button>
+              <el-button size="large" round class="hero-secondary-btn" @click="$router.push('/destinations')">
+                翻阅目的地
+              </el-button>
+            </div>
           </div>
+
+          <aside class="route-preview" aria-label="桂林山水慢行路线预览">
+            <div class="route-preview-head">
+              <span>ROUTE PREVIEW</span>
+              <strong>桂林 · 3天</strong>
+            </div>
+            <h2>{{ recommendedTrip.title }}</h2>
+            <button class="route-cover" type="button" @click="$router.push('/destination/guilin')">
+              <SafeImage
+                :src="routePreviewPhoto"
+                :fallback="FALLBACK_IMAGE"
+                alt="桂林山水路线"
+                sizes="(max-width: 900px) 100vw, 34vw"
+              />
+              <span>漓江 · 阳朔 · 龙脊梯田</span>
+            </button>
+            <div class="route-days">
+              <div v-for="item in recommendedTrip.days" :key="item.day" class="route-day">
+                <span>{{ item.day }}</span>
+                <strong>{{ item.title }}</strong>
+              </div>
+            </div>
+            <el-button class="route-preview-action" type="primary" @click="$router.push('/ai-plan')">
+              生成我的行程 <span aria-hidden="true">→</span>
+            </el-button>
+          </aside>
         </div>
 
-        <!-- 搜索卡片 -->
-        <div class="search-card">
-          <div class="search-card-head">
-            <strong>快速出发</strong>
-            <span>选择类型后输入目的地</span>
+        <div class="route-planner">
+          <div class="planner-overview">
+            <div class="planner-steps" aria-label="路线规划步骤">
+              <div v-for="step in plannerSteps" :key="step.index" class="planner-step">
+                <span class="planner-index">{{ step.index }}</span>
+                <span class="planner-divider" aria-hidden="true"></span>
+                <span class="planner-copy">
+                  <strong>{{ step.title }}</strong>
+                  <small>{{ step.subtitle }}</small>
+                </span>
+              </div>
+            </div>
+            <el-button class="planner-primary" type="primary" @click="$router.push('/ai-plan')">
+              开始规划 <span aria-hidden="true">→</span>
+            </el-button>
           </div>
+
           <el-tabs v-model="searchTab" class="hero-search-tabs">
-            <el-tab-pane name="flight">
-              <template #label><el-icon style="margin-right:4px"><Promotion /></el-icon>机票</template>
-            </el-tab-pane>
-            <el-tab-pane name="train">
-              <template #label><el-icon style="margin-right:4px"><Tickets /></el-icon>火车票</template>
-            </el-tab-pane>
-            <el-tab-pane name="hotel">
-              <template #label><el-icon style="margin-right:4px"><House /></el-icon>酒店</template>
-            </el-tab-pane>
+            <el-tab-pane name="flight" label="机票" />
+            <el-tab-pane name="train" label="火车票" />
+            <el-tab-pane name="hotel" label="酒店" />
           </el-tabs>
 
-          <div class="search-row search-row-traffic" v-if="searchTab === 'flight'">
+          <div v-if="searchTab === 'flight'" class="search-row search-row-traffic">
             <div class="search-field">
               <span class="field-label">出发</span>
               <el-input
@@ -156,7 +140,7 @@
             </el-button>
           </div>
 
-          <div class="search-row search-row-traffic" v-if="searchTab === 'train'">
+          <div v-if="searchTab === 'train'" class="search-row search-row-traffic">
             <div class="search-field">
               <span class="field-label">出发站</span>
               <el-input
@@ -207,7 +191,7 @@
             </el-button>
           </div>
 
-          <div class="search-row search-row-hotel" v-if="searchTab === 'hotel'">
+          <div v-if="searchTab === 'hotel'" class="search-row search-row-hotel">
             <div class="search-field">
               <span class="field-label">目的地</span>
               <el-input
@@ -241,9 +225,8 @@
             </el-button>
           </div>
 
-          <!-- 热门搜索提示 -->
           <div class="search-hints">
-            <span class="hint-label">热门搜索:</span>
+            <span class="hint-label">热门搜索：</span>
             <el-tag
               v-for="hint in hotSearches"
               :key="hint"
@@ -258,12 +241,11 @@
       </div>
     </section>
 
-    <!-- ========== 统计数据 ========== -->
     <section class="stats-section">
       <div class="stats-grid">
         <div class="stat-item" v-for="stat in stats" :key="stat.label">
-          <div class="stat-icon-wrap" :style="{ background: stat.gradient }">
-            <el-icon class="stat-icon-el" :size="24"><component :is="stat.icon" /></el-icon>
+          <div class="stat-icon-wrap">
+            <span class="stat-index">{{ stat.index }}</span>
           </div>
           <div class="stat-body">
             <CountUp :target="stat.num" class="stat-num" />
@@ -295,129 +277,26 @@
       </div>
     </section>
 
-    <!-- ========== 安静规划步骤 ========== -->
-    <section class="itinerary-section">
-      <div class="itinerary-panel">
-        <div class="itinerary-copy">
-          <span class="section-kicker">ROUTE PREVIEW</span>
-          <h2>先看一条完整路线，再决定怎么出发</h2>
-          <p>
-            TravelMate 会把城市、交通、住宿和每日节奏放在同一张路线里，避免只看到孤立的票务或酒店信息。
-          </p>
-          <div class="itinerary-meta">
-            <span>{{ recommendedTrip.route }}</span>
-            <span>{{ recommendedTrip.budget }}</span>
-          </div>
-          <div class="itinerary-tags">
-            <span v-for="tag in recommendedTrip.tags" :key="tag">{{ tag }}</span>
-          </div>
-          <div class="itinerary-actions">
-            <el-button type="primary" round @click="$router.push('/ai-plan')">
-              <el-icon><MagicStick /></el-icon>
-              生成我的行程
-            </el-button>
-            <el-button text type="primary" @click="$router.push('/destinations')">
-              看更多城市 <el-icon><ArrowRight /></el-icon>
-            </el-button>
-          </div>
-        </div>
-
-        <div class="itinerary-board">
-          <div class="itinerary-board-head">
-            <span>{{ recommendedTrip.title }}</span>
-            <strong>4 Days</strong>
-          </div>
-          <div class="itinerary-days">
-            <div class="itinerary-day" v-for="item in recommendedTrip.days" :key="item.day">
-              <span class="day-index">{{ item.day }}</span>
-              <div>
-                <strong>{{ item.title }}</strong>
-                <small>{{ item.meta }}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="retreat-section">
-      <div class="retreat-panel">
-        <div class="retreat-copy">
-          <div class="retreat-heading">
-            <span class="section-kicker">CALM PLANNING</span>
-            <h2>
-              <span>把复杂行程</span>
-              <span>拆成三段</span>
-              <span>安静地准备</span>
-            </h2>
-          </div>
-          <p>
-            参考自然 retreat 的慢节奏，把票务、住宿和路线从拥挤流程里拆开。每一步都保留明确入口，也留出足够的呼吸感。
-          </p>
-          <div class="retreat-actions" aria-label="旅行准备入口">
-            <button type="button" @click="$router.push('/flight-search')">查票价</button>
-            <button type="button" @click="$router.push('/hotel-search')">选住宿</button>
-            <button type="button" @click="$router.push('/ai-plan')">生成路线</button>
-          </div>
-        </div>
-
-        <div class="retreat-visual">
-          <div class="retreat-image-wrap">
-            <SafeImage
-              :src="retreatPhoto"
-              :fallback="FALLBACK_IMAGE"
-              image-class="retreat-photo"
-              alt="安静旅行规划"
-              sizes="(max-width: 900px) 100vw, 50vw"
-            />
-            <div class="retreat-image-overlay"></div>
-          </div>
-          <div class="retreat-steps">
-            <button class="retreat-step" type="button" @click="$router.push('/flight-search')">
-              <span class="step-index">01</span>
-              <span>
-                <strong>先确定抵达方式</strong>
-                <small>机票、火车票与价格趋势，先把大的时间框架定下来。</small>
-              </span>
-            </button>
-            <button class="retreat-step" type="button" @click="$router.push('/hotel-search')">
-              <span class="step-index">02</span>
-              <span>
-                <strong>再选择停留空间</strong>
-                <small>酒店、房型、评分和位置，让每天醒来都接近想去的地方。</small>
-              </span>
-            </button>
-            <button class="retreat-step" type="button" @click="$router.push('/ai-plan')">
-              <span class="step-index">03</span>
-              <span>
-                <strong>最后交给 AI 编排</strong>
-                <small>把偏好、预算和天数整理成一份可执行的慢行路线。</small>
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- ========== 热门城市 ========== -->
-    <section class="dest-section">
-      <div class="section-header">
+    <section class="dest-section editorial-section">
+      <div class="section-header editorial-header">
         <div>
-          <h2 class="section-title">热门城市</h2>
-          <p class="section-sub">精选热门旅行目的地，发现你的下一站</p>
+          <span class="section-kicker">DESTINATIONS</span>
+          <h2 class="section-title">值得停留的城市</h2>
+          <p class="section-sub">从山水、老街到海岸，把下一站交给真实风景。</p>
         </div>
-        <el-button text type="primary" @click="$router.push('/destinations')">
-          查看全部 <el-icon><ArrowRight /></el-icon>
+        <el-button class="section-link-btn" text type="primary" @click="$router.push('/destinations')">
+          查看全部城市 <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
 
-      <div class="dest-grid">
+      <div class="dest-grid editorial-dest-grid">
         <button
-          class="dest-card"
+          class="dest-card editorial-dest-card"
           type="button"
           v-for="(dest, idx) in hotDestinations"
           :key="dest.slug"
-          :style="{ animationDelay: idx * 0.08 + 's' }"
+          :class="{ 'is-featured': idx === 0 }"
           @click="goDestination(dest)"
         >
           <div class="dest-img-wrap">
@@ -435,6 +314,10 @@
             </div>
           </div>
           <div class="dest-body">
+            <div class="dest-copy-head">
+              <span>{{ String(idx + 1).padStart(2, "0") }}</span>
+              <strong>{{ dest.keywords?.[0] || dest.tag }}</strong>
+            </div>
             <p class="dest-desc">{{ dest.desc }}</p>
             <div class="dest-tags">
               <el-tag
@@ -453,74 +336,67 @@
     </section>
 
     <!-- ========== 功能入口 ========== -->
-    <section class="feature-section">
-      <div class="section-header">
+    <section class="feature-section editorial-section">
+      <div class="section-header editorial-header">
         <div>
-          <h2 class="section-title">发现更多精彩</h2>
-          <p class="section-sub">不止出行，还有更多旅行灵感等你探索</p>
+          <span class="section-kicker">SERVICES</span>
+          <h2 class="section-title">出发前，把事情安排妥当</h2>
+          <p class="section-sub">路线、交通、住宿和门票集中整理，少一点反复切换，多一点从容出发。</p>
         </div>
       </div>
 
-      <div class="feature-grid">
-        <button class="feature-card" type="button" @click="$router.push('/ai-plan')">
-          <div class="feat-visual feat-visual-ai">
-            <SafeImage :src="featurePhotos.ai" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="AI 智能规划" sizes="(max-width: 768px) 100vw, 33vw" />
+      <div class="feature-grid editorial-feature-grid">
+        <button
+          v-for="card in serviceCards"
+          :key="card.title"
+          class="feature-card editorial-feature-card"
+          type="button"
+          @click="$router.push(card.path)"
+        >
+          <div class="feat-visual">
+            <SafeImage
+              :src="card.photo"
+              :fallback="FALLBACK_IMAGE"
+              image-class="feat-photo"
+              :alt="card.title"
+              sizes="(max-width: 768px) 100vw, 33vw"
+            />
             <div class="feat-photo-overlay"></div>
-            <span class="feat-number">01</span>
+            <span class="feat-number">{{ card.index }}</span>
           </div>
           <div class="feat-body">
-            <h3 class="feat-title">AI 智能规划</h3>
-            <p class="feat-desc">一键生成专属行程方案，让你的旅行更轻松高效</p>
-            <span class="feat-link">开始规划 <el-icon><ArrowRight /></el-icon></span>
-          </div>
-        </button>
-
-        <button class="feature-card" type="button" @click="$router.push('/community')">
-          <div class="feat-visual feat-visual-community">
-            <SafeImage :src="featurePhotos.community" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="旅行社区" sizes="(max-width: 768px) 100vw, 33vw" />
-            <div class="feat-photo-overlay"></div>
-            <span class="feat-number">02</span>
-          </div>
-          <div class="feat-body">
-            <h3 class="feat-title">旅行社区</h3>
-            <p class="feat-desc">分享你的旅途故事，发现更多旅行达人游记</p>
-            <span class="feat-link">探索社区 <el-icon><ArrowRight /></el-icon></span>
-          </div>
-        </button>
-
-        <button class="feature-card" type="button" @click="$router.push('/attractions')">
-          <div class="feat-visual feat-visual-attraction">
-            <SafeImage :src="featurePhotos.attraction" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="景点门票" sizes="(max-width: 768px) 100vw, 33vw" />
-            <div class="feat-photo-overlay"></div>
-            <span class="feat-number">03</span>
-          </div>
-          <div class="feat-body">
-            <h3 class="feat-title">景点门票</h3>
-            <p class="feat-desc">探索各地必打卡景点，在线购票免排队</p>
-            <span class="feat-link">探索景点 <el-icon><ArrowRight /></el-icon></span>
+            <span class="feat-label">{{ card.label }}</span>
+            <h3 class="feat-title">{{ card.title }}</h3>
+            <p class="feat-desc">{{ card.desc }}</p>
+            <span class="feat-link">{{ card.action }} <el-icon><ArrowRight /></el-icon></span>
           </div>
         </button>
       </div>
     </section>
 
     <!-- ========== CTA Banner ========== -->
-    <section class="cta-section">
-      <div class="cta-card">
+    <section class="cta-section editorial-section">
+      <div class="cta-card editorial-cta-card">
         <div class="cta-content">
-          <h2 class="cta-title">准备好开始你的下一次旅行了吗？</h2>
-          <p class="cta-sub">加入 <strong>50万+</strong> 旅行者，用 TravelMate 规划完美旅程</p>
-          <el-button type="primary" size="large" round @click="$router.push('/ai-plan')">
-            <el-icon style="margin-right:6px"><MagicStick /></el-icon>免费开始规划
-          </el-button>
+          <span class="section-kicker">PLAN YOUR NEXT TRIP</span>
+          <h2 class="cta-title">下一次出发，从一条清楚的路线开始</h2>
+          <p class="cta-sub">告诉 TravelMate 你的时间、预算和想看的风景，我们帮你整理成可出发的行程。</p>
+          <div class="cta-actions">
+            <el-button type="primary" size="large" round @click="$router.push('/ai-plan')">
+              开始规划路线 <span aria-hidden="true">→</span>
+            </el-button>
+            <el-button size="large" round @click="$router.push('/community')">
+              先看旅行笔记
+            </el-button>
+          </div>
         </div>
-        <div class="cta-decoration">
-          <div
-            v-for="(avatar, idx) in travelerAvatars"
-            :key="avatar.name"
-            class="cta-avatar"
-            :class="`cta-avatar-${idx + 1}`"
-          >
-            <SafeImage :src="avatar.src" :alt="avatar.name" sizes="64px" root-margin="200px 0px" />
+        <div class="cta-route-note" aria-label="路线整理方式">
+          <div v-for="item in ctaNotes" :key="item.title" class="cta-note-item">
+            <span>{{ item.index }}</span>
+            <div>
+              <strong>{{ item.title }}</strong>
+              <small>{{ item.desc }}</small>
+            </div>
           </div>
         </div>
       </div>
@@ -537,13 +413,6 @@ import {
   LocationFilled,
   Calendar,
   ArrowRight,
-  Promotion,
-  Tickets,
-  House,
-  UserFilled,
-  Aim,
-  ChatDotSquare,
-  MagicStick,
 } from "@element-plus/icons-vue";
 import CountUp from "../components/CountUp.vue";
 import SafeImage from "@/components/SafeImage.vue";
@@ -573,17 +442,16 @@ const trainForm = ref({ depStation: "", arrStation: "", date: addDays(1) });
 const hotelForm = ref({ city: "", dateRange: [addDays(1), addDays(3)] });
 
 const hotSearches = ["北京", "上海", "三亚", "成都", "杭州", "西安"];
-const heroPhoto =
-  destinations.find((item) => item.slug === "guilin")?.img || FALLBACK_IMAGE;
-
-const showcaseDestinations = ["guilin", "hangzhou", "chengdu"]
-  .map((slug) => destinations.find((item) => item.slug === slug))
-  .filter(Boolean);
+const heroPhoto = "/images/editorial/li-river-sunset-v82.jpg";
+const routePreviewPhoto = "/images/editorial/route-card-v82.jpg";
 
 const featurePhotos = {
-  ai: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&h=620&q=80",
-  community: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&h=620&q=80",
-  attraction: "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?auto=format&fit=crop&w=1200&h=620&q=80",
+  route: "/images/editorial/route-card-v82.jpg",
+  community: "/images/editorial/street-card-v82.jpg",
+  attraction: "/images/editorial/guilin-cinematic-v82.jpg",
+  traffic: "/images/editorial/train-card-v82.jpg",
+  hotel: "/images/editorial/coffee-card-v82.jpg",
+  coupon: "/images/editorial/guilin-cinematic-v82.jpg",
 };
 
 const historyTypeLabel = (type) =>
@@ -593,40 +461,94 @@ onMounted(() => {
   recentHistory.value = getBrowseHistory().slice(0, 4);
 });
 
-const retreatPhoto =
-  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&h=760&q=80";
-
 const stats = [
   {
-    icon: Promotion,
-    gradient: "linear-gradient(135deg, oklch(0.551 0.097 180), oklch(0.68 0.070 190))",
+    index: "01",
     num: 1280,
     label: "航线覆盖",
   },
   {
-    icon: UserFilled,
-    gradient: "linear-gradient(135deg, oklch(0.64 0.068 180), oklch(0.78 0.042 205))",
+    index: "02",
     num: 523600,
     label: "用户信赖",
   },
   {
-    icon: Aim,
-    gradient: "linear-gradient(135deg, oklch(0.72 0.052 190), oklch(0.56 0.090 180))",
+    index: "03",
     num: 99.9,
     label: "出票成功率 (%)",
     isDecimal: true,
   },
   {
-    icon: ChatDotSquare,
-    gradient: "linear-gradient(135deg, oklch(0.58 0.064 205), oklch(0.42 0.085 180))",
+    index: "04",
     num: 24,
     label: "小时客服在线",
   },
 ];
 
-const hotDestinations = [...destinations]
-  .sort(() => Math.random() - 0.5)
-  .slice(0, 6);
+const hotDestinations = destinations.slice(0, 6);
+
+const serviceCards = [
+  {
+    index: "01",
+    label: "行程",
+    title: "定制你的旅行路线",
+    desc: "输入时间、预算和偏好，整理出更适合你的每日安排。",
+    action: "开始规划",
+    path: "/ai-plan",
+    photo: featurePhotos.route,
+  },
+  {
+    index: "02",
+    label: "交通",
+    title: "把路程接顺",
+    desc: "机票、火车与本地交通统一查看，减少来回切换。",
+    action: "查看交通",
+    path: "/flight-search",
+    photo: featurePhotos.traffic,
+  },
+  {
+    index: "03",
+    label: "住宿",
+    title: "住在合适的位置",
+    desc: "按路线节奏选择住宿区域，让每天少绕路。",
+    action: "挑选住宿",
+    path: "/hotel-search",
+    photo: featurePhotos.hotel,
+  },
+  {
+    index: "04",
+    label: "门票",
+    title: "提前安排想去的地方",
+    desc: "把热门景点、开放时间和票务信息放进同一份行程。",
+    action: "查看景点",
+    path: "/attractions",
+    photo: featurePhotos.attraction,
+  },
+  {
+    index: "05",
+    label: "笔记",
+    title: "看看真实出发的人怎么走",
+    desc: "从别人的路线、照片和避坑里找到自己的灵感。",
+    action: "翻阅笔记",
+    path: "/community",
+    photo: featurePhotos.community,
+  },
+  {
+    index: "06",
+    label: "权益",
+    title: "出发前看看可用优惠",
+    desc: "把交通、住宿和门票优惠集中整理，能省则省。",
+    action: "查看优惠",
+    path: "/coupons",
+    photo: featurePhotos.coupon,
+  },
+];
+
+const ctaNotes = [
+  { index: "01", title: "告诉我们时间", desc: "出发日期、天数和同行人数。" },
+  { index: "02", title: "选择旅行偏好", desc: "美食、海岸、老街或轻徒步。" },
+  { index: "03", title: "带着路线出发", desc: "交通、住宿和门票一起查看。" },
+];
 
 const recommendedTrip = {
   title: "桂林山水慢行",
@@ -634,30 +556,17 @@ const recommendedTrip = {
   budget: "人均约 2800 起",
   tags: ["江畔住宿", "轻徒步", "清晨游船"],
   days: [
-    { day: "D1", title: "抵达桂林", meta: "象鼻山 · 两江四湖夜景" },
-    { day: "D2", title: "漓江到阳朔", meta: "竹筏 · 西街 · 山景民宿" },
-    { day: "D3", title: "骑行遇龙河", meta: "田园午餐 · 日落观景" },
-    { day: "D4", title: "龙脊梯田返程", meta: "清晨梯田 · 高铁/航班衔接" },
+    { day: "D1", title: "抵达后慢慢进入城市", meta: "象鼻山 · 两江四湖夜景" },
+    { day: "D2", title: "山水主线 + 老街补白", meta: "竹筏 · 西街 · 山景民宿" },
+    { day: "D3", title: "轻徒步与从容返程", meta: "清晨梯田 · 高铁/航班衔接" },
   ],
 };
 
-const travelerAvatars = [
-  {
-    name: "旅行者头像 1",
-    src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
-  },
-  {
-    name: "旅行者头像 2",
-    src: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
-  },
-  {
-    name: "旅行者头像 3",
-    src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
-  },
-  {
-    name: "旅行者头像 4",
-    src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&crop=faces&w=300&h=300&q=80",
-  },
+const plannerSteps = [
+  { index: "01", title: "从哪里出发", subtitle: "选择出发城市" },
+  { index: "02", title: "想抵达哪里", subtitle: "输入目的地或灵感" },
+  { index: "03", title: "什么时候出发", subtitle: "选择日期与天数" },
+  { index: "04", title: "旅程偏好", subtitle: "主题 / 预算 / 节奏" },
 ];
 
 const swapFlightCities = () => {
@@ -2420,6 +2329,1003 @@ const quickSearch = (hint) => {
   }
   .cta-title {
     font-size: 22px;
+  }
+}
+
+/* ==================== 沉浸式首页首屏 ==================== */
+.home-page {
+  margin: 0;
+  background: oklch(0.965 0.010 104);
+}
+
+.hero-section {
+  position: relative;
+  display: block;
+  min-height: 860px;
+  padding: 98px clamp(24px, 4vw, 64px) 24px;
+  overflow: hidden;
+  background: oklch(0.24 0.052 177);
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+}
+
+.hero-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 52%;
+  filter: saturate(0.9) contrast(1.07) brightness(0.82);
+  animation: none;
+  transform: none;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, oklch(0.16 0.060 177 / 0.96) 0%, oklch(0.20 0.055 177 / 0.84) 31%, oklch(0.28 0.042 122 / 0.38) 62%, oklch(0.29 0.035 70 / 0.20) 100%),
+    linear-gradient(180deg, oklch(0.12 0.035 177 / 0.42) 0%, transparent 38%, oklch(0.12 0.035 177 / 0.52) 100%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: min(100%, 1510px);
+  margin: 0 auto;
+}
+
+.hero-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(350px, 410px);
+  gap: clamp(54px, 8vw, 132px);
+  align-items: center;
+  min-height: 455px;
+}
+
+.hero-copy {
+  max-width: 690px;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  color: oklch(0.84 0.095 82);
+  font-size: 13px;
+  font-weight: 760;
+  letter-spacing: 0.12em;
+}
+
+.badge-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  background: oklch(0.76 0.115 74);
+  animation: none;
+}
+
+.hero-title {
+  margin: 0 0 26px;
+  color: oklch(0.96 0.018 88);
+  font-family: "Songti SC", "STSong", "SimSun", Georgia, serif;
+  font-size: clamp(68px, 6.8vw, 112px);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  text-shadow: 0 8px 34px oklch(0.10 0.030 177 / 0.24);
+}
+
+.title-gradient {
+  display: block;
+  margin-top: 8px;
+  color: oklch(0.80 0.105 78);
+  font-style: normal;
+}
+
+.hero-sub {
+  max-width: 42ch;
+  margin: 0 0 30px;
+  color: oklch(0.90 0.018 92 / 0.88);
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 0;
+}
+
+.hero-actions :deep(.el-button) {
+  height: 52px;
+  padding: 0 28px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 740;
+}
+
+.hero-actions :deep(.el-button--primary) {
+  background: oklch(0.40 0.092 177);
+  border-color: oklch(0.53 0.074 177);
+  box-shadow: 0 16px 30px oklch(0.10 0.040 177 / 0.26);
+}
+
+.hero-secondary-btn {
+  color: oklch(0.94 0.018 88);
+  background: oklch(0.18 0.044 177 / 0.30);
+  border-color: oklch(0.89 0.020 88 / 0.50);
+}
+
+.hero-secondary-btn:hover,
+.hero-secondary-btn:focus-visible {
+  color: oklch(0.98 0.014 88);
+  background: oklch(0.26 0.052 177 / 0.68);
+  border-color: oklch(0.89 0.020 88 / 0.82);
+}
+
+.route-preview {
+  padding: 18px;
+  border: 1px solid oklch(0.92 0.012 90 / 0.58);
+  border-radius: 30px;
+  background: rgba(244, 239, 229, 0.68);
+  box-shadow: 0 30px 70px oklch(0.10 0.030 177 / 0.28);
+  backdrop-filter: blur(16px) saturate(0.86);
+  -webkit-backdrop-filter: blur(16px) saturate(0.86);
+}
+
+.route-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.route-preview-head > span {
+  color: oklch(0.57 0.082 76);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.route-preview-head > strong {
+  padding: 7px 12px;
+  border-radius: 999px;
+  color: oklch(0.30 0.072 177);
+  background: oklch(0.92 0.012 90 / 0.76);
+  font-size: 13px;
+}
+
+.route-preview h2 {
+  margin: 12px 0;
+  color: oklch(0.27 0.060 177);
+  font-family: "Songti SC", "STSong", "SimSun", Georgia, serif;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.route-cover {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 142px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 20px;
+  background: oklch(0.28 0.050 177);
+  cursor: pointer;
+}
+
+.route-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 52%;
+  filter: saturate(0.78) contrast(1.02) brightness(0.88);
+  transition: none;
+}
+
+.route-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 34%, oklch(0.12 0.038 177 / 0.66));
+}
+
+.route-cover span {
+  position: absolute;
+  z-index: 1;
+  left: 18px;
+  bottom: 13px;
+  color: oklch(0.96 0.018 88);
+  font-size: 13px;
+  font-weight: 740;
+}
+
+.route-cover:hover img,
+.route-cover:focus-visible img {
+  transform: none;
+}
+
+.route-days {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0;
+}
+
+.route-day {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 5px 12px;
+  border: 1px solid oklch(0.74 0.014 92 / 0.54);
+  border-radius: 15px;
+  background: oklch(0.88 0.010 92 / 0.62);
+}
+
+.route-day > span {
+  color: oklch(0.63 0.095 74);
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 800;
+}
+
+.route-day > strong {
+  color: oklch(0.31 0.058 177);
+  font-size: 14px;
+}
+
+.route-preview-action {
+  width: 100%;
+  height: 44px;
+  margin-top: 2px;
+  border-radius: 15px;
+  background: oklch(0.34 0.084 177);
+  border-color: oklch(0.34 0.084 177);
+  font-size: 15px;
+}
+
+.route-planner {
+  margin-top: 18px;
+  padding: 18px 22px 16px;
+  border: 1px solid oklch(0.92 0.012 90 / 0.74);
+  border-radius: 30px;
+  background: oklch(0.95 0.014 88 / 0.97);
+  box-shadow: 0 28px 64px oklch(0.10 0.030 177 / 0.24);
+}
+
+.planner-overview {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.planner-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  flex: 1;
+}
+
+.planner-step {
+  display: grid;
+  grid-template-columns: auto 1px minmax(0, 1fr);
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+  padding: 0 22px;
+}
+
+.planner-step:first-child {
+  padding-left: 2px;
+}
+
+.planner-index {
+  color: oklch(0.64 0.104 74);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.planner-divider {
+  width: 1px;
+  height: 42px;
+  background: oklch(0.72 0.032 78 / 0.62);
+}
+
+.planner-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.planner-copy strong {
+  overflow: hidden;
+  color: oklch(0.29 0.054 177);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planner-copy small {
+  overflow: hidden;
+  color: oklch(0.54 0.018 92);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planner-primary {
+  flex: 0 0 auto;
+  height: 54px;
+  padding: 0 24px;
+  border-radius: 16px;
+  background: oklch(0.34 0.084 177);
+  border-color: oklch(0.34 0.084 177);
+  font-size: 15px;
+}
+
+.hero-search-tabs {
+  margin-top: 14px;
+}
+
+.hero-search-tabs :deep(.el-tabs__header) {
+  margin: 0 0 8px;
+}
+
+.hero-search-tabs :deep(.el-tabs__nav) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  padding: 3px;
+  border: 1px solid oklch(0.82 0.016 88 / 0.72);
+  border-radius: 14px;
+  background: oklch(0.92 0.012 88 / 0.72);
+}
+
+.hero-search-tabs :deep(.el-tabs__item) {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 11px;
+  color: oklch(0.45 0.025 177);
+  font-size: 13px;
+}
+
+.hero-search-tabs :deep(.el-tabs__item.is-active) {
+  color: oklch(0.95 0.014 88);
+  background: oklch(0.38 0.078 177);
+  box-shadow: none;
+}
+
+.search-field {
+  padding: 7px 10px 9px;
+  border-color: oklch(0.80 0.018 88 / 0.74);
+  border-radius: 13px;
+  background: oklch(0.98 0.006 88 / 0.74);
+}
+
+.field-label {
+  margin-bottom: 5px;
+  color: oklch(0.48 0.020 92);
+}
+
+.search-input :deep(.el-input__wrapper),
+.search-date :deep(.el-input__wrapper) {
+  height: 38px;
+  border: 0;
+  background: transparent;
+}
+
+.search-btn {
+  height: 58px;
+  min-width: 112px;
+  border-radius: 14px;
+  background: oklch(0.34 0.084 177);
+  border-color: oklch(0.34 0.084 177);
+  box-shadow: none;
+}
+
+.search-hints {
+  display: none;
+}
+
+.hint-tag {
+  background: oklch(0.92 0.012 88 / 0.76);
+  border-color: oklch(0.80 0.018 88 / 0.72);
+}
+
+.stats-section {
+  width: min(100%, 1510px);
+  margin: 0 auto;
+  padding: 34px clamp(24px, 4vw, 64px) 0;
+}
+
+.stats-grid {
+  padding-top: 0;
+}
+
+@media (max-width: 1200px) {
+  .hero-main {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 48px;
+  }
+
+  .planner-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 18px;
+  }
+
+  .planner-step:nth-child(3) {
+    padding-left: 2px;
+  }
+}
+
+@media (max-width: 992px) {
+  .hero-section {
+    min-height: auto;
+    padding-top: 102px;
+  }
+
+  .hero-main {
+    grid-template-columns: 1fr;
+    gap: 42px;
+  }
+
+  .hero-copy {
+    max-width: 640px;
+  }
+
+  .route-preview {
+    width: min(100%, 620px);
+  }
+
+  .planner-overview {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .planner-primary {
+    width: 100%;
+  }
+
+  .search-row-traffic,
+  .search-row-hotel {
+    grid-template-columns: 1fr;
+  }
+
+  .search-swap {
+    display: none;
+  }
+
+  .search-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-page {
+    margin: 0;
+  }
+
+  .hero-section {
+    padding: 88px 16px 22px;
+  }
+
+  .hero-overlay {
+    background:
+      linear-gradient(180deg, oklch(0.15 0.056 177 / 0.94) 0%, oklch(0.18 0.052 177 / 0.80) 48%, oklch(0.13 0.040 177 / 0.88) 100%),
+      linear-gradient(90deg, oklch(0.14 0.050 177 / 0.62), transparent);
+  }
+
+  .hero-main {
+    gap: 32px;
+  }
+
+  .hero-title {
+    font-size: clamp(54px, 17vw, 76px);
+  }
+
+  .hero-sub {
+    font-size: 15px;
+  }
+
+  .hero-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hero-actions :deep(.el-button) {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .route-preview {
+    width: 100%;
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .route-planner {
+    padding: 20px 16px 16px;
+    border-radius: 24px;
+  }
+
+  .planner-steps {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .planner-step,
+  .planner-step:nth-child(3) {
+    padding: 0;
+  }
+
+  .planner-divider {
+    height: 34px;
+  }
+
+  .planner-copy strong,
+  .planner-copy small {
+    white-space: normal;
+  }
+
+  .stats-section {
+    padding: 24px 16px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-photo-img {
+    animation: none;
+  }
+}
+
+/* ==================== v82 editorial lower-home refresh ==================== */
+.editorial-section {
+  width: min(100%, 1510px);
+  margin: 0 auto;
+  padding: clamp(72px, 8vw, 118px) clamp(24px, 4vw, 64px) 0;
+}
+
+.editorial-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 34px;
+  border-bottom: 1px solid color-mix(in srgb, var(--tm-deep) 13%, transparent);
+  padding-bottom: 20px;
+}
+
+.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  color: var(--tm-gold);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.section-kicker::before {
+  content: "";
+  width: 44px;
+  height: 1px;
+  background: currentColor;
+}
+
+.section-title {
+  max-width: 760px;
+  margin: 0;
+  color: var(--tm-deep);
+  font-family: var(--tm-font-serif);
+  font-size: clamp(34px, 4vw, 58px);
+  font-weight: 650;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+
+.section-sub {
+  max-width: 720px;
+  margin: 14px 0 0;
+  color: var(--tm-ink-soft);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.section-link-btn {
+  flex: 0 0 auto;
+  color: var(--tm-deep);
+  font-weight: 760;
+}
+
+.editorial-dest-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+
+.editorial-dest-card {
+  grid-column: span 4;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--tm-deep) 12%, transparent);
+  border-radius: 24px;
+  background: var(--tm-paper-2);
+  box-shadow: 0 16px 44px rgba(18, 28, 23, 0.08);
+  text-align: left;
+}
+
+.editorial-dest-card.is-featured {
+  grid-column: span 6;
+  grid-row: auto;
+}
+
+.editorial-dest-card:nth-child(2),
+.editorial-dest-card:nth-child(3) {
+  grid-column: span 3;
+}
+
+.editorial-dest-card:nth-child(n + 4) {
+  grid-column: span 4;
+}
+
+.editorial-dest-card .dest-img-wrap {
+  height: 230px;
+  border-radius: 22px 22px 0 0;
+}
+
+.editorial-dest-card.is-featured .dest-img-wrap {
+  height: 230px;
+}
+
+.editorial-dest-card .dest-img {
+  filter: saturate(0.9) contrast(1.04) brightness(0.92);
+}
+
+.editorial-dest-card .dest-gradient {
+  background:
+    linear-gradient(180deg, rgba(6, 44, 38, 0.04), rgba(6, 44, 38, 0.72)),
+    linear-gradient(90deg, rgba(6, 44, 38, 0.62), transparent 58%);
+}
+
+.editorial-dest-card .dest-badge {
+  top: 18px;
+  left: 18px;
+  right: auto;
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 250, 240, 0.5);
+  border-radius: 999px;
+  color: var(--tm-paper-2);
+  background: rgba(6, 44, 38, 0.46);
+  backdrop-filter: blur(6px);
+}
+
+.editorial-dest-card .dest-img-info {
+  left: 20px;
+  right: 20px;
+  bottom: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.editorial-dest-card .dest-city {
+  color: var(--tm-paper-2);
+  font-family: var(--tm-font-serif);
+  font-size: clamp(25px, 2.2vw, 34px);
+  line-height: 1;
+}
+
+.editorial-dest-card.is-featured .dest-city {
+  font-size: clamp(30px, 3vw, 42px);
+}
+
+.editorial-dest-card .dest-country {
+  color: rgba(255, 250, 240, 0.76);
+}
+
+.editorial-dest-card .dest-body {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 20px 20px 22px;
+}
+
+.dest-copy-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 13px;
+  color: var(--tm-gold);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dest-copy-head span {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.dest-copy-head strong {
+  color: var(--tm-primary);
+  font-weight: 760;
+}
+
+.editorial-dest-card .dest-desc {
+  min-height: 76px;
+  margin-bottom: 18px;
+  color: var(--tm-ink-soft);
+  font-size: 14px;
+  line-height: 1.75;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.editorial-dest-card .dest-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.editorial-dest-card .el-tag {
+  border-color: rgba(7, 89, 78, 0.16);
+  color: var(--tm-primary);
+  background: rgba(7, 89, 78, 0.06);
+}
+
+.editorial-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+
+.editorial-feature-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--tm-deep) 12%, transparent);
+  border-radius: 26px;
+  background: var(--tm-paper-2);
+  box-shadow: 0 16px 44px rgba(18, 28, 23, 0.08);
+  text-align: left;
+}
+
+.editorial-feature-card:first-child {
+  grid-row: auto;
+}
+
+.editorial-feature-card:first-child .feat-visual {
+  height: 220px;
+}
+
+.editorial-feature-card .feat-visual {
+  height: 220px;
+  min-height: 0;
+  border-radius: 24px 24px 0 0;
+}
+
+.editorial-feature-card .feat-photo {
+  filter: saturate(0.86) contrast(1.03) brightness(0.94);
+}
+
+.editorial-feature-card .feat-photo-overlay {
+  background:
+    linear-gradient(180deg, transparent 34%, rgba(6, 44, 38, 0.76)),
+    linear-gradient(90deg, rgba(6, 44, 38, 0.45), transparent 62%);
+}
+
+.editorial-feature-card .feat-body {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  align-content: start;
+  padding: 24px 24px 26px;
+  text-align: left;
+}
+
+.editorial-feature-card .feat-body::before {
+  display: none;
+}
+
+.feat-label {
+  margin-bottom: 10px;
+  color: var(--tm-gold);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.editorial-feature-card .feat-title {
+  margin-bottom: 10px;
+  color: var(--tm-deep);
+  font-family: var(--tm-font-serif);
+  font-size: clamp(24px, 2.4vw, 36px);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.editorial-feature-card .feat-desc {
+  min-height: 76px;
+  color: var(--tm-ink-soft);
+  font-size: 14px;
+  line-height: 1.8;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.editorial-feature-card .feat-link {
+  margin-top: 12px;
+  color: var(--tm-primary);
+  font-weight: 760;
+}
+
+.editorial-cta-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.52fr);
+  align-items: center;
+  gap: 36px;
+  padding: clamp(34px, 5vw, 62px);
+  border: 1px solid rgba(195, 148, 74, 0.28);
+  border-radius: 30px;
+  background: linear-gradient(135deg, #fffaf0 0%, #f3eadb 100%);
+  box-shadow: 0 18px 50px rgba(18, 28, 23, 0.08);
+}
+
+.editorial-cta-card::before {
+  border-top: 0;
+  border-left: 5px solid var(--tm-gold);
+}
+
+.editorial-cta-card .cta-title {
+  max-width: 760px;
+  color: var(--tm-deep);
+  font-family: var(--tm-font-serif);
+  font-size: clamp(34px, 4vw, 56px);
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+}
+
+.editorial-cta-card .cta-sub {
+  max-width: 640px;
+  color: var(--tm-ink-soft);
+  line-height: 1.8;
+}
+
+.cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cta-actions .el-button:not(.el-button--primary) {
+  color: var(--tm-deep);
+  background: rgba(255, 250, 240, 0.72);
+}
+
+.cta-route-note {
+  display: grid;
+  gap: 12px;
+}
+
+.cta-note-item {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 16px;
+  align-items: start;
+  padding: 18px;
+  border: 1px solid rgba(7, 89, 78, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 250, 240, 0.72);
+}
+
+.cta-note-item > span {
+  color: var(--tm-gold);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.cta-note-item strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--tm-deep);
+  font-size: 16px;
+}
+
+.cta-note-item small {
+  color: var(--tm-muted);
+  line-height: 1.6;
+}
+
+@media (max-width: 1080px) {
+  .editorial-dest-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .editorial-dest-card,
+  .editorial-dest-card.is-featured,
+  .editorial-dest-card:nth-child(2),
+  .editorial-dest-card:nth-child(3),
+  .editorial-dest-card:nth-child(n + 4) {
+    grid-column: auto;
+  }
+
+  .editorial-feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .editorial-feature-card:first-child .feat-visual,
+  .editorial-feature-card .feat-visual {
+    height: 260px;
+  }
+
+  .editorial-cta-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .editorial-section {
+    padding: 64px 16px 0;
+  }
+
+  .editorial-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .editorial-dest-grid,
+  .editorial-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .editorial-dest-card,
+  .editorial-dest-card.is-featured,
+  .editorial-dest-card:nth-child(2),
+  .editorial-dest-card:nth-child(3),
+  .editorial-dest-card:nth-child(n + 4) {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .editorial-dest-card.is-featured .dest-img-wrap,
+  .editorial-dest-card .dest-img-wrap,
+  .editorial-feature-card:first-child .feat-visual,
+  .editorial-feature-card .feat-visual {
+    height: 240px;
+  }
+
+  .editorial-dest-card.is-featured .dest-city {
+    font-size: 34px;
+  }
+
+  .cta-actions .el-button {
+    width: 100%;
+    margin-left: 0;
   }
 }
 </style>

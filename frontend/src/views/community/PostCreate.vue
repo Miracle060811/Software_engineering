@@ -199,11 +199,11 @@ const submitPost = async () => {
       result = await request.post("/api/post/create", buildPostData());
     }
     if (result?.status === 2) {
-      ElMessage.warning(result.rejectReason || "游记未通过 AI 审核");
+      ElMessage.warning(result.rejectReason || "游记未通过内容审核");
     } else if (result?.status === 1) {
-      ElMessage.success("游记已通过 AI 审核并发布");
+      ElMessage.success("游记已通过内容审核并发布");
     } else {
-      ElMessage.info("游记已提交 AI 审核");
+      ElMessage.info("游记已提交内容审核");
     }
     router.push("/community");
   } catch (e) {

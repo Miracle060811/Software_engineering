@@ -48,14 +48,14 @@
       type="info"
       show-icon
       :closable="false"
-      title="发布后的游记会由内置 AI 自动审核，通过后会出现在推荐流；草稿只在这里和个人主页中显示。"
+      title="发布后的游记会进入内容审核，通过后会出现在推荐流；草稿只在这里和个人主页中显示。"
     />
 
     <div v-if="activeTab === 'mine'" class="mine-filters">
       <el-radio-group v-model="mineStatusFilter" size="small" @change="fetchPosts">
         <el-radio-button label="all">全部</el-radio-button>
         <el-radio-button label="draft">草稿</el-radio-button>
-        <el-radio-button label="pending">AI审核中</el-radio-button>
+        <el-radio-button label="pending">审核中</el-radio-button>
         <el-radio-button label="published">已发布</el-radio-button>
         <el-radio-button label="rejected">已拒绝</el-radio-button>
       </el-radio-group>
@@ -202,7 +202,7 @@ const emptyTitle = computed(() => {
 
 const emptyDescription = computed(() => {
   if (activeTab.value === "following") return "关注更多用户，查看他们的旅行分享";
-  if (activeTab.value === "mine") return "发布内容会由 AI 自动审核，草稿会保存在这里";
+  if (activeTab.value === "mine") return "发布内容会进入审核流程，草稿会保存在这里";
   return "还没有人分享游记，快来发布第一篇吧";
 });
 
@@ -318,7 +318,7 @@ const filterMinePosts = (list) => {
 };
 
 const statusLabel = (status) =>
-  ({ 0: "AI审核中", 1: "已发布", 2: "已拒绝", 3: "草稿" })[status] || `状态${status}`;
+  ({ 0: "审核中", 1: "已发布", 2: "已拒绝", 3: "草稿" })[status] || `状态${status}`;
 
 const statusType = (status) =>
   status === 1 ? "success" : status === 2 ? "danger" : status === 3 ? "info" : "warning";
@@ -395,20 +395,20 @@ watch(
 }
 
 .post-grid {
-  columns: 2;
-  column-gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
 }
 
 .post-card {
-  break-inside: avoid;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 22px;
   overflow: hidden;
   border: 1px solid var(--tm-line-soft);
   background: var(--tm-surface);
   transition: all 0.28s ease;
-  display: inline-block;
+  display: block;
   width: 100%;
 }
 .my-post-card {
@@ -424,6 +424,7 @@ watch(
   position: relative;
   overflow: hidden;
   aspect-ratio: 16 / 9;
+  min-height: 220px;
   background: var(--tm-primary-soft);
 }
 .post-img-overlay {
@@ -548,7 +549,7 @@ watch(
 
 @media (max-width: 768px) {
   .post-grid {
-    columns: 1;
+    grid-template-columns: 1fr;
   }
   .header-actions {
     flex-direction: column;

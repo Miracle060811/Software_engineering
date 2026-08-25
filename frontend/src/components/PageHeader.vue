@@ -33,14 +33,9 @@ defineProps({
 
 <style scoped>
 .page-header {
-  margin-bottom: 24px;
-  animation: fadeInUp 0.45s ease;
-  padding: 22px 24px;
-  border: 1px solid oklch(0.78 0.026 82 / 0.44);
-  border-radius: 8px;
-  background:
-    linear-gradient(135deg, oklch(0.975 0.018 82), oklch(0.915 0.030 82));
-  box-shadow: var(--tm-shadow-card);
+  margin-bottom: 28px;
+  padding: 12px 0 24px;
+  border-bottom: 1px solid var(--tm-line);
 }
 
 .page-header-main {
@@ -52,32 +47,32 @@ defineProps({
 }
 
 .page-title {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 30px;
-  font-weight: 500;
+  margin: 0;
+  font-family: var(--tm-font-serif);
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 650;
   color: var(--tm-ink);
-  letter-spacing: 0;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .page-title-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
-  background: oklch(0.90 0.032 82);
-  color: var(--tm-bark);
+  width: 34px;
+  height: 34px;
+  color: var(--tm-gold);
 }
 
 .page-subtitle {
   font-size: 15px;
   color: var(--tm-muted);
-  margin-top: 6px;
-  line-height: 1.5;
+  margin: 8px 0 0 48px;
+  line-height: 1.7;
 }
 
 .page-header-extra {
@@ -85,11 +80,12 @@ defineProps({
 }
 
 @media (max-width: 640px) {
-  .page-title {
-    font-size: 22px;
-  }
   .page-header-main {
     flex-direction: column;
+  }
+
+  .page-subtitle {
+    margin-left: 0;
   }
 }
 </style>

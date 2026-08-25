@@ -60,7 +60,7 @@
             <el-radio-group v-if="isSelf" v-model="postStatusFilter" size="small">
               <el-radio-button label="all">全部</el-radio-button>
               <el-radio-button label="draft">草稿</el-radio-button>
-              <el-radio-button label="pending">AI审核中</el-radio-button>
+              <el-radio-button label="pending">审核中</el-radio-button>
               <el-radio-button label="published">已发布</el-radio-button>
               <el-radio-button label="rejected">已拒绝</el-radio-button>
             </el-radio-group>
@@ -72,7 +72,7 @@
           type="info"
           show-icon
           :closable="false"
-          title="普通发布会进入 AI审核中 状态；审核通过后才会出现在社区推荐流。草稿只对自己可见。"
+          title="普通发布会进入审核中状态；审核通过后才会出现在社区推荐流。草稿只对自己可见。"
         />
         <el-empty v-if="visiblePosts.length === 0" description="暂无游记" />
         <el-row :gutter="16">
@@ -490,7 +490,7 @@ const getFirstImage = (images) => {
 const hasImages = (images) => !!getFirstImage(images);
 
 const statusLabel = (status) =>
-  ({ 0: "AI审核中", 1: "已发布", 2: "已拒绝", 3: "草稿" })[status] || `状态${status}`;
+  ({ 0: "审核中", 1: "已发布", 2: "已拒绝", 3: "草稿" })[status] || `状态${status}`;
 
 const statusType = (status) =>
   status === 1 ? "success" : status === 2 ? "danger" : status === 3 ? "info" : "warning";
@@ -715,7 +715,7 @@ onMounted(fetchProfile);
   background: #F8FAFC;
 }
 .follow-avatar {
-  background: linear-gradient(135deg, #0d9488, #0ea5e9);
+  background: var(--tm-primary);
   color: #fff;
   font-weight: 700;
 }

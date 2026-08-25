@@ -2,8 +2,8 @@
   <div class="ai-plan-page">
     <section class="planner-hero">
       <div class="planner-hero-copy">
-        <span class="section-kicker">AI TRAVEL STUDIO</span>
-        <h1>把旅行想法整理成可执行路线</h1>
+        <span class="section-kicker">ROUTE PLANNING DESK</span>
+        <h1>把旅行想法整理成每天都能照着走的路线</h1>
         <p>
           输入目的地、人数、预算和偏好，TravelMate 会把每日节奏、交通衔接、住宿建议和费用估算放进一份清晰行程。
         </p>
@@ -30,7 +30,7 @@
       <aside class="planner-sidebar">
         <section class="input-card">
           <div class="panel-head">
-            <span><el-icon><Cpu /></el-icon> 智能规划</span>
+            <span><el-icon><Cpu /></el-icon> 路线整理</span>
             <strong>先定旅行轮廓</strong>
           </div>
           <el-form :model="planForm" label-position="top" label-width="auto">
@@ -359,20 +359,20 @@
       </main>
     </div>
 
-    <!-- AI 客服浮窗按钮 -->
+    <!-- 旅行助手浮窗按钮 -->
     <button
       class="chat-fab"
       type="button"
-      aria-label="打开 AI 旅行助手"
+      aria-label="打开旅行助手"
       @click="chatDrawerVisible = true"
     >
       <el-icon :size="24"><ChatDotSquare /></el-icon>
     </button>
 
-    <!-- AI 客服抽屉 -->
+    <!-- 旅行助手抽屉 -->
     <el-drawer
       v-model="chatDrawerVisible"
-      title="AI 旅行助手"
+      title="旅行助手"
       direction="rtl"
       size="420px"
     >
@@ -392,7 +392,7 @@
         <div class="chat-input-area">
           <el-input
             v-model="chatInput"
-            placeholder="问问AI旅行助手..."
+            placeholder="问问旅行助手..."
             @keyup.enter="sendChat"
           />
           <el-button type="primary" :loading="chatLoading" @click="sendChat"
@@ -521,7 +521,7 @@ const chatDrawerVisible = ref(false);
 const chatMessages = ref([
   {
     role: "assistant",
-    content: "你好！我是AI旅行助手，有任何旅行问题都可以问我",
+    content: "你好，我是 TravelMate 旅行助手。有任何路线、交通或住宿问题都可以问我。",
   },
 ]);
 const chatInput = ref("");
@@ -615,8 +615,12 @@ const generatePlan = async () => {
 };
 
 const fetchHistoryPlans = async () => {
+  if (!localStorage.getItem("token")) {
+    historyPlans.value = [];
+    return;
+  }
   try {
-    const data = await request.get("/api/ai/plan/list");
+    const data = await request.get("/api/ai/plan/list", { silent: true });
     historyPlans.value = Array.isArray(data) ? data : [];
   } catch (e) {
     historyPlans.value = [];

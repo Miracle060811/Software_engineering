@@ -1,0 +1,1387 @@
+/* TravelMate v82：全站旅行杂志视觉层。业务组件只负责结构与交互。 */
+
+#app {
+  min-height: 100vh;
+  color: var(--tm-ink);
+  background: var(--tm-paper);
+}
+
+#app .main-content:not(.home-shell):not(.no-header) {
+  width: min(100%, var(--tm-page-max-width));
+  min-height: calc(100vh - 72px);
+  margin: 0 auto;
+  padding: 34px var(--tm-page-padding) 72px;
+  background: transparent;
+}
+
+#app .main-content.home-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+#app .main-content.no-header {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+#app .navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  height: 72px;
+  border-bottom: 1px solid var(--tm-line);
+  color: var(--tm-ink);
+  background: rgba(244, 239, 229, 0.95);
+  box-shadow: 0 6px 24px rgba(18, 28, 23, 0.05);
+  backdrop-filter: blur(12px);
+}
+
+#app .navbar.navbar-home {
+  position: fixed;
+  left: 0;
+  right: 0;
+  border-bottom-color: rgba(255, 250, 240, 0.14);
+  color: var(--tm-paper-2);
+  background: linear-gradient(180deg, rgba(5, 35, 30, 0.7), transparent);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+#app .navbar.navbar-home.navbar-scrolled {
+  border-bottom-color: var(--tm-line);
+  color: var(--tm-ink);
+  background: rgba(244, 239, 229, 0.96);
+  box-shadow: 0 6px 24px rgba(18, 28, 23, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+#app .nav-inner {
+  width: min(100%, 1920px);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 clamp(24px, 3.2vw, 64px);
+}
+
+#app .nav-logo {
+  gap: 11px;
+  color: inherit;
+}
+
+#app .logo-icon {
+  width: 36px;
+  height: 36px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: var(--tm-gold);
+  background: transparent;
+}
+
+#app .logo-text {
+  color: inherit;
+  font-family: var(--tm-font-serif);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+#app .logo-text strong {
+  margin-left: 5px;
+  color: var(--tm-gold-soft);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+#app .navbar:not(.navbar-home) .logo-text strong,
+#app .navbar-home.navbar-scrolled .logo-text strong {
+  color: var(--tm-gold);
+}
+
+#app .nav-link-btn.el-button,
+#app .navbar .nav-badge .el-button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+  font-weight: 650;
+}
+
+#app .nav-link-btn.el-button--primary {
+  color: var(--tm-gold-soft);
+  background: transparent;
+  box-shadow: inset 0 -2px var(--tm-gold);
+}
+
+#app .navbar:not(.navbar-home) .nav-link-btn.el-button--primary,
+#app .navbar-home.navbar-scrolled .nav-link-btn.el-button--primary {
+  color: var(--tm-primary);
+}
+
+#app .navbar-home:not(.navbar-scrolled) .nav-link-btn:hover,
+#app .navbar-home:not(.navbar-scrolled) .nav-search-btn:hover,
+#app .navbar-home:not(.navbar-scrolled) .nav-badge .el-button:hover {
+  color: var(--tm-gold-soft);
+  background: rgba(255, 250, 240, 0.08);
+}
+
+#app .navbar-home:not(.navbar-scrolled) .nav-dropdown .nav-link-btn.el-button {
+  color: var(--tm-paper-2);
+}
+
+#app .user-chip {
+  border: 1px solid rgba(7, 89, 78, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.58);
+}
+
+#app .navbar-home:not(.navbar-scrolled) .user-chip {
+  border-color: rgba(255, 250, 240, 0.24);
+  color: var(--tm-paper-2);
+  background: rgba(7, 47, 42, 0.38);
+}
+
+#app .breadcrumb-bar {
+  border-bottom: 1px solid var(--tm-line-soft);
+  background: rgba(244, 239, 229, 0.9);
+}
+
+#app .breadcrumb-inner {
+  width: min(100%, var(--tm-page-max-width));
+  margin: 0 auto;
+  padding: 12px var(--tm-page-padding);
+}
+
+#app .page-enter-active,
+#app .page-leave-active {
+  transition: opacity 150ms ease;
+}
+
+#app .page-enter-from,
+#app .page-leave-to {
+  opacity: 0;
+  transform: none;
+}
+
+/* 通用编辑式内容 */
+#app [class$="-page"] {
+  color: var(--tm-ink);
+}
+
+#app [class$="-page"] :is(.section-title, .card-title, .panel-title) {
+  font-family: var(--tm-font-serif);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+#app :is(
+  .search-box,
+  .filter-card,
+  .create-card,
+  .hotel-header-card,
+  .section-card,
+  .post-header-card,
+  .comment-card,
+  .profile-card,
+  .posts-card,
+  .order-tabs,
+  .notification-card,
+  .collection-card,
+  .info-card,
+  .panel-card,
+  .stat-card
+).el-card,
+#app :is(.search-box, .filter-card, .order-tabs, .panel-card, .stat-card) {
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: rgba(255, 250, 240, 0.94);
+  box-shadow: var(--tm-shadow-soft);
+}
+
+#app :is(.flight-card, .train-card, .hotel-card, .attr-card, .post-card, .order-card, .coupon-card, .collection-card) {
+  overflow: hidden;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-paper-2);
+  box-shadow: 0 10px 30px rgba(18, 28, 23, 0.07);
+  transition: border-color var(--tm-transition), box-shadow var(--tm-transition), transform var(--tm-transition);
+}
+
+#app :is(.flight-card, .train-card, .hotel-card, .attr-card, .post-card, .order-card, .coupon-card, .collection-card):hover {
+  border-color: rgba(7, 89, 78, 0.24);
+  box-shadow: var(--tm-shadow-card);
+  transform: translateY(-2px);
+}
+
+#app :is(.hotel-img, .attr-img, .post-cover, .destination-img, .dest-img, .collection-cover, .hotel-main-image, .detail-hero-image) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  background: var(--tm-paper-3);
+}
+
+#app .card-tag,
+#app .category-tag,
+#app .type-tag,
+#app .status-tag {
+  border-radius: 999px;
+  color: var(--tm-primary);
+  background: rgba(7, 89, 78, 0.08);
+}
+
+#app .price,
+#app .price-value,
+#app .amount,
+#app .coupon-value {
+  color: var(--tm-clay);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+/* 首页以下：暖米白旅行杂志 */
+#app .home-page {
+  background: var(--tm-paper);
+}
+
+#app .home-page > section:not(.hero-section) {
+  color: var(--tm-ink);
+}
+
+#app .home-page :is(.section-title, .cta-title) {
+  font-family: var(--tm-font-serif);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+#app .home-page .stat-item {
+  border-color: var(--tm-line);
+  background: transparent;
+  box-shadow: none;
+}
+
+#app .home-page .stat-icon-wrap {
+  border: 1px solid rgba(195, 148, 74, 0.34);
+  border-radius: 50%;
+  color: var(--tm-gold);
+  background: transparent;
+  box-shadow: none;
+}
+
+#app .home-page .stat-index {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#app .home-page :is(.dest-card, .feat-card) {
+  overflow: hidden;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-paper-2);
+  box-shadow: var(--tm-shadow-soft);
+}
+
+#app .home-page :is(.dest-card, .feat-card):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--tm-shadow-card);
+}
+
+#app .home-page :is(.dest-img, .feat-photo) {
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.88) contrast(1.03);
+}
+
+/* 目的地 */
+#app .destination-list-page .list-hero {
+  min-height: 290px;
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg);
+  box-shadow: var(--tm-shadow-card);
+}
+
+#app .destination-list-page .list-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(5, 42, 36, 0.78), rgba(5, 42, 36, 0.08));
+}
+
+#app .destination-list-page .hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+#app .destination-list-page .destination-grid {
+  gap: 24px;
+}
+
+#app .destination-list-page .destination-card {
+  overflow: hidden;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-paper-2);
+  box-shadow: var(--tm-shadow-soft);
+}
+
+#app .destination-list-page .destination-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--tm-shadow-card);
+}
+
+#app .destination-detail-page .detail-hero {
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg);
+  box-shadow: var(--tm-shadow-card);
+}
+
+#app .destination-detail-page :is(.overview-card, .guide-card, .side-card) {
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-paper-2);
+  box-shadow: var(--tm-shadow-soft);
+}
+
+/* 搜索、交通、出游 */
+#app :is(.flight-search-page, .train-search-page, .hotel-search-page, .attraction-page) .search-box {
+  margin-bottom: 26px;
+  padding: 6px;
+}
+
+#app :is(.flight-search-page, .train-search-page, .hotel-search-page, .attraction-page) .search-row,
+#app :is(.flight-search-page, .train-search-page, .hotel-search-page, .attraction-page) .filter-row {
+  gap: 14px;
+}
+
+#app .hotel-card .hotel-img-wrap,
+#app .hotel-card .hotel-img {
+  width: 240px;
+  min-width: 240px;
+  height: 176px;
+}
+
+#app .attr-card .attr-img-wrap,
+#app .attr-card .attr-img {
+  width: 230px;
+  min-width: 230px;
+  height: 172px;
+}
+
+#app .hotel-detail-page .hotel-gallery img {
+  object-fit: cover;
+  object-position: center;
+}
+
+#app .hotel-detail-page .hotel-header-card,
+#app .hotel-detail-page .section-card {
+  margin-bottom: 22px;
+}
+
+/* 路线规划：保留能力，去掉平台模板感 */
+#app .ai-plan-page .planner-hero {
+  overflow: hidden;
+  border: 1px solid rgba(255, 250, 240, 0.15);
+  border-radius: var(--tm-radius-lg);
+  color: var(--tm-paper-2);
+  background:
+    linear-gradient(90deg, rgba(5, 42, 36, 0.94), rgba(7, 63, 55, 0.72)),
+    url("/images/editorial/train-card-v82.jpg") center 54% / cover no-repeat;
+  box-shadow: var(--tm-shadow-card);
+}
+
+#app .ai-plan-page .planner-hero :is(h1, h2, h3, p) {
+  color: inherit;
+}
+
+#app .ai-plan-page :is(.planner-sidebar, .input-card, .preset-panel, .history-card, .planner-main, .empty-plan, .plan-summary-card, .day-card, .activity-card) {
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-paper-2);
+  box-shadow: var(--tm-shadow-soft);
+}
+
+#app .ai-plan-page .planner-main {
+  min-width: 0;
+}
+
+#app .ai-plan-page .chat-fab {
+  border: 0;
+  color: var(--tm-paper-2);
+  background: var(--tm-primary);
+  box-shadow: 0 14px 34px rgba(7, 63, 55, 0.24);
+}
+
+/* 社区、游记 */
+#app .community-page .post-grid {
+  gap: 24px;
+}
+
+#app .community-page .post-card {
+  break-inside: avoid;
+}
+
+#app .community-page .post-img-wrap {
+  overflow: hidden;
+  background: var(--tm-paper-3);
+}
+
+#app .community-page .post-cover {
+  min-height: 220px;
+  max-height: 420px;
+  object-fit: cover;
+}
+
+#app :is(.post-create-page, .post-detail-page) :is(.create-card, .post-header-card, .comment-card) {
+  border-color: var(--tm-line);
+  background: var(--tm-paper-2);
+}
+
+#app .post-detail-page .post-cover {
+  max-height: 620px;
+  object-position: center;
+}
+
+/* 订单、优惠券、通知、收藏、消息、个人页 */
+#app .my-orders-page .order-card {
+  margin-bottom: 18px;
+}
+
+#app .coupon-center-page .coupon-card {
+  background: var(--tm-paper-2);
+}
+
+#app .coupon-center-page .coupon-left {
+  color: var(--tm-paper-2);
+  background: var(--tm-primary);
+}
+
+#app .notifications-page .notification-card,
+#app .notification-page .notification-card {
+  margin-bottom: 12px;
+}
+
+#app .messages-page .message-shell {
+  overflow: hidden;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-paper-2);
+  box-shadow: var(--tm-shadow-card);
+}
+
+#app .messages-page .contact-panel {
+  border-right: 1px solid var(--tm-line);
+  background: #eee6d9;
+}
+
+#app .messages-page .contact-item.active {
+  color: var(--tm-primary);
+  background: rgba(7, 89, 78, 0.09);
+}
+
+#app .collections-page .collection-grid {
+  gap: 22px;
+}
+
+#app .collections-page .collection-cover {
+  aspect-ratio: 4 / 3;
+}
+
+#app .user-profile-page :is(.profile-card, .posts-card),
+#app .profile-page :is(.profile-card, .posts-card) {
+  border-color: var(--tm-line);
+  background: var(--tm-paper-2);
+}
+
+#app .user-profile-page .profile-cover,
+#app .profile-page .profile-cover {
+  background:
+    linear-gradient(90deg, rgba(5, 42, 36, 0.72), rgba(5, 42, 36, 0.12)),
+    url("/images/editorial/guilin-cinematic-v82.jpg") center 46% / cover no-repeat !important;
+}
+
+/* 信息页 */
+#app .info-page .info-hero {
+  border: 1px solid rgba(255, 250, 240, 0.12);
+  border-radius: var(--tm-radius-lg);
+  color: var(--tm-paper-2);
+  background:
+    linear-gradient(90deg, rgba(5, 42, 36, 0.9), rgba(5, 42, 36, 0.4)),
+    url("/images/editorial/street-card-v82.jpg") center 48% / cover no-repeat;
+  box-shadow: var(--tm-shadow-card);
+}
+
+#app .info-page .info-hero :is(h1, p) {
+  color: inherit;
+}
+
+/* 登录 / 注册 */
+#app .login-page {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(360px, 1.15fr) minmax(480px, 0.85fr);
+  min-height: 100vh;
+  padding: 0;
+  overflow: hidden;
+  background: var(--tm-paper);
+}
+
+#app .login-page::before {
+  content: "";
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 100vh;
+  background:
+    linear-gradient(90deg, rgba(5, 42, 36, 0.12), rgba(5, 42, 36, 0.58)),
+    linear-gradient(180deg, transparent 58%, rgba(5, 42, 36, 0.78)),
+    url("/images/editorial/li-river-sunset-v82.jpg") center 52% / cover no-repeat;
+}
+
+#app .login-page::after {
+  content: "把远方，排成明天的路。";
+  position: absolute;
+  left: clamp(36px, 6vw, 96px);
+  bottom: clamp(42px, 8vh, 96px);
+  width: min(7em, 58vw);
+  color: var(--tm-paper-2);
+  font-family: var(--tm-font-serif);
+  font-size: clamp(36px, 4.4vw, 70px);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: -0.04em;
+  text-shadow: 0 10px 30px rgba(5, 35, 30, 0.22);
+}
+
+#app .login-page .login-bg {
+  display: none;
+}
+
+#app .login-page .login-box {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  width: min(100% - 56px, 520px);
+  max-height: calc(100vh - 56px);
+  margin: 28px auto;
+  padding: clamp(30px, 4vw, 52px);
+  overflow-y: auto;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-lg);
+  background: rgba(255, 250, 240, 0.96);
+  box-shadow: var(--tm-shadow-card);
+  backdrop-filter: none;
+}
+
+#app .login-page :is(.login-title, .brand-title, h1, h2) {
+  color: var(--tm-deep);
+  font-family: var(--tm-font-serif);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+#app .login-page :is(.login-subtitle, .brand-subtitle) {
+  color: var(--tm-muted);
+}
+
+#app .login-page .el-tabs__nav-wrap::after {
+  background: var(--tm-line);
+}
+
+#app .login-page .el-form-item {
+  margin-bottom: 20px;
+}
+
+/* TravelMate 品牌后台 */
+#app .admin-page {
+  min-height: 100vh;
+  color: var(--tm-ink);
+  background: var(--tm-paper);
+}
+
+#app .admin-page .admin-aside {
+  border-right: 1px solid rgba(255, 250, 240, 0.1);
+  color: var(--tm-paper-2);
+  background: var(--tm-deep-2);
+  box-shadow: 10px 0 32px rgba(5, 35, 30, 0.08);
+}
+
+#app .admin-page .admin-logo,
+#app .admin-page .admin-brand {
+  color: var(--tm-paper-2);
+  font-family: var(--tm-font-serif);
+}
+
+#app .admin-page .admin-menu {
+  border: 0;
+  background: transparent;
+}
+
+#app .admin-page .admin-menu .el-menu-item {
+  margin: 4px 12px;
+  border-radius: var(--tm-radius-sm);
+  color: rgba(255, 250, 240, 0.72);
+  background: transparent;
+}
+
+#app .admin-page .admin-menu .el-menu-item:hover {
+  color: var(--tm-paper-2);
+  background: rgba(255, 250, 240, 0.08);
+}
+
+#app .admin-page .admin-menu .el-menu-item.is-active {
+  color: var(--tm-gold-soft);
+  background: rgba(195, 148, 74, 0.15);
+  box-shadow: inset 3px 0 var(--tm-gold);
+}
+
+#app .admin-page .admin-main,
+#app .admin-page .admin-content {
+  min-width: 0;
+  background: var(--tm-paper);
+}
+
+#app .admin-page .admin-header {
+  border-bottom: 1px solid var(--tm-line);
+  background: rgba(255, 250, 240, 0.92);
+  box-shadow: none;
+}
+
+#app .admin-page .stat-card {
+  min-height: 132px;
+}
+
+#app .admin-page .stat-icon {
+  border: 1px solid rgba(195, 148, 74, 0.28);
+  color: var(--tm-gold);
+  background: transparent !important;
+}
+
+#app .admin-page .stat-value {
+  color: var(--tm-deep);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+#app .admin-page .panel-card {
+  box-shadow: var(--tm-shadow-soft);
+}
+
+#app .admin-page .el-table {
+  background: transparent;
+}
+
+/* 404 */
+#app .not-found-page {
+  color: var(--tm-ink);
+  background: var(--tm-paper);
+}
+
+#app .not-found-page .not-found-code,
+#app .not-found-page .not-found-title {
+  color: var(--tm-deep);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  animation: none;
+}
+
+/* 页脚 */
+#app .app-footer {
+  border-top: 1px solid rgba(255, 250, 240, 0.1);
+  color: rgba(255, 250, 240, 0.72);
+  background: var(--tm-deep-2);
+}
+
+#app .app-footer h3,
+#app .app-footer h4 {
+  color: var(--tm-paper-2);
+  font-family: var(--tm-font-serif);
+}
+
+#app .app-footer a:hover {
+  color: var(--tm-gold-soft);
+}
+
+@media (max-width: 1100px) {
+  #app .login-page {
+    grid-template-columns: minmax(300px, 0.8fr) minmax(440px, 1fr);
+  }
+
+  #app .ai-plan-page .planner-layout {
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  }
+
+  #app .hotel-card .hotel-img-wrap,
+  #app .hotel-card .hotel-img,
+  #app .attr-card .attr-img-wrap,
+  #app .attr-card .attr-img {
+    width: 200px;
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 820px) {
+  #app .main-content:not(.home-shell):not(.no-header) {
+    padding: 24px 18px 56px;
+  }
+
+  #app .navbar {
+    height: 64px;
+  }
+
+  #app .nav-inner {
+    padding: 0 18px;
+  }
+
+  #app .logo-text {
+    font-size: 21px;
+  }
+
+  #app .logo-text strong {
+    display: none;
+  }
+
+  #app .login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100svh;
+    padding: 24px;
+    background:
+      linear-gradient(rgba(5, 42, 36, 0.62), rgba(5, 42, 36, 0.62)),
+      url("/images/editorial/li-river-sunset-v82.jpg") center 52% / cover no-repeat;
+  }
+
+  #app .login-page::before,
+  #app .login-page::after {
+    display: none;
+  }
+
+  #app .login-page .login-box {
+    width: min(100%, 520px);
+    max-height: calc(100svh - 48px);
+    margin: 0;
+  }
+
+  #app :is(.hotel-card, .attr-card) {
+    display: block;
+  }
+
+  #app .hotel-card .hotel-img-wrap,
+  #app .hotel-card .hotel-img,
+  #app .attr-card .attr-img-wrap,
+  #app .attr-card .attr-img {
+    width: 100%;
+    min-width: 0;
+    height: 210px;
+  }
+
+  #app .ai-plan-page .planner-layout {
+    display: block;
+  }
+
+  #app .ai-plan-page .planner-sidebar {
+    margin-bottom: 20px;
+  }
+
+  #app .messages-page .message-shell {
+    border-radius: var(--tm-radius-md);
+  }
+
+  #app .admin-page > .el-container {
+    display: block;
+  }
+
+  #app .admin-page .admin-aside {
+    width: 100% !important;
+    min-height: auto;
+  }
+
+  #app .admin-page .admin-menu {
+    display: flex;
+    overflow-x: auto;
+    padding: 0 8px 10px;
+  }
+
+  #app .admin-page .admin-menu .el-menu-item {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 560px) {
+  #app .main-content:not(.home-shell):not(.no-header) {
+    padding-inline: 14px;
+  }
+
+  #app .login-page {
+    padding: 14px;
+  }
+
+  #app .login-page .login-box {
+    max-height: calc(100svh - 28px);
+    padding: 26px 20px;
+    border-radius: var(--tm-radius-md);
+  }
+
+  #app .community-page .post-grid,
+  #app .collections-page .collection-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== v82 structural refresh: page-level editorial system ==================== */
+#app :is(.page-header, .section-header, .posts-header, .toolbar) {
+  min-width: 0;
+}
+
+#app .page-header {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 26px;
+  padding: clamp(26px, 4vw, 44px);
+  border: 1px solid rgba(7, 89, 78, 0.12);
+  border-radius: var(--tm-radius-lg);
+  background:
+    linear-gradient(135deg, rgba(255, 250, 240, 0.96), rgba(238, 229, 212, 0.92)),
+    radial-gradient(circle at 88% 14%, rgba(195, 148, 74, 0.16), transparent 30%);
+  box-shadow: var(--tm-shadow-soft);
+}
+
+#app .page-header::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 28px;
+  bottom: 28px;
+  width: 5px;
+  border-radius: 0 999px 999px 0;
+  background: var(--tm-gold);
+}
+
+#app .page-header :is(.page-title, h1) {
+  color: var(--tm-deep);
+  font-family: var(--tm-font-serif);
+  font-size: clamp(30px, 3.2vw, 48px);
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+}
+
+#app .page-header :is(.page-subtitle, p) {
+  color: var(--tm-ink-soft);
+  line-height: 1.75;
+}
+
+#app :is(.search-box, .filter-card) {
+  padding: 4px;
+  border-color: rgba(7, 89, 78, 0.12) !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(135deg, rgba(255, 250, 240, 0.98), rgba(242, 234, 220, 0.94)) !important;
+  box-shadow: 0 12px 36px rgba(18, 28, 23, 0.07) !important;
+}
+
+#app :is(.search-box, .filter-card) .el-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 14px;
+  align-items: flex-end;
+}
+
+#app :is(.search-box, .filter-card) .el-form-item {
+  margin: 0;
+}
+
+#app :is(.search-box, .filter-card) .el-form-item__label {
+  color: var(--tm-deep);
+  font-weight: 720;
+}
+
+#app :is(.flight-search-page, .train-search-page, .hotel-search-page, .attraction-page) {
+  max-width: none;
+}
+
+#app :is(.flight-search-page, .train-search-page, .hotel-search-page, .attraction-page)::before,
+#app :is(.community-page, .coupon-center-page, .my-orders-page, .user-profile-page)::before {
+  content: "";
+  position: fixed;
+  inset: 72px 0 auto;
+  z-index: -1;
+  height: 300px;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(195, 148, 74, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(255, 250, 240, 0.72), rgba(244, 239, 229, 0));
+  pointer-events: none;
+}
+
+/* traffic cards: readable itinerary strips */
+#app :is(.flight-card, .train-card).el-card {
+  border-radius: 24px;
+  background: var(--tm-paper-2);
+}
+
+#app :is(.flight-row, .train-row) {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.7fr) minmax(280px, 1.35fr) minmax(110px, 0.45fr) minmax(210px, 0.8fr);
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  padding: 8px;
+}
+
+#app :is(.flight-airline, .train-no-col) {
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(7, 89, 78, 0.06);
+}
+
+#app :is(.airline-name, .train-no) {
+  color: var(--tm-deep);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+#app :is(.flight-time, .train-time-col) {
+  min-width: 0;
+}
+
+#app :is(.time-depart, .time-arrive, .depart-time, .arrive-time) {
+  color: var(--tm-deep);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(25px, 2vw, 34px);
+  font-weight: 800;
+}
+
+#app :is(.flight-route, .train-route-info, .duration-label, .flight-no) {
+  color: var(--tm-muted);
+}
+
+#app :is(.price-num, .price-num-sm, .seat-fare, .order-amount) {
+  color: var(--tm-clay);
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 800;
+}
+
+#app .seat-status-list {
+  border: 1px solid rgba(7, 89, 78, 0.1);
+  border-radius: 18px;
+  padding: 12px;
+  background: rgba(244, 239, 229, 0.62);
+}
+
+#app .train-actions,
+#app .flight-price-col,
+#app .order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* hotels / attractions: magazine cards */
+#app .hotel-search-page > .el-row,
+#app .attraction-page > .el-row,
+#app .coupon-center-page .el-row,
+#app .user-profile-page .posts-card .el-row {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+#app .hotel-search-page > .el-row > .el-col,
+#app .attraction-page > .el-row > .el-col,
+#app .coupon-center-page .el-row > .el-col,
+#app .user-profile-page .posts-card .el-row > .el-col {
+  width: auto !important;
+  max-width: none !important;
+  flex: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+#app :is(.hotel-card, .attr-card) {
+  cursor: pointer;
+  border-radius: 24px !important;
+}
+
+#app .hotel-card .hotel-img,
+#app .attr-card .attr-img {
+  width: 100% !important;
+  height: 230px !important;
+  object-fit: cover;
+  object-position: center;
+}
+
+#app :is(.hotel-info, .attr-info, .post-info) {
+  padding: 20px;
+}
+
+#app :is(.hotel-name, .attr-name, .post-title) {
+  color: var(--tm-deep);
+  font-family: var(--tm-font-serif);
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+#app :is(.hotel-location, .attr-location, .post-meta, .post-location, .order-detail) {
+  color: var(--tm-muted);
+  line-height: 1.7;
+}
+
+/* community: travel notes, not forum list */
+#app .community-page .header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+#app .community-page .feed-tabs,
+#app .coupon-center-page .coupon-tabs,
+#app .my-orders-page .order-tabs {
+  border: 1px solid var(--tm-line);
+  border-radius: 24px;
+  padding: 8px 18px 24px;
+  background: rgba(255, 250, 240, 0.86);
+  box-shadow: var(--tm-shadow-soft);
+}
+
+#app .community-page .post-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+#app .community-page .post-card {
+  border-radius: 24px !important;
+}
+
+#app .community-page .post-img-wrap {
+  min-height: 0;
+}
+
+#app .community-page .post-cover {
+  width: 100%;
+  height: 270px;
+  min-height: 0;
+  max-height: none;
+  object-position: center;
+}
+
+#app .post-tags,
+#app .summary-tags,
+#app .dest-tags {
+  gap: 8px;
+}
+
+/* route planner workstation */
+#app .ai-plan-page .planner-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+#app .ai-plan-page .planner-hero {
+  min-height: 290px;
+  padding: clamp(34px, 5vw, 58px);
+}
+
+#app .ai-plan-page .planner-hero-copy h1 {
+  max-width: 780px;
+  font-family: var(--tm-font-serif);
+  font-size: clamp(34px, 4.5vw, 64px);
+  letter-spacing: -0.045em;
+}
+
+#app .ai-plan-page .input-card .panel-head span {
+  color: var(--tm-gold);
+}
+
+#app .ai-plan-page .generate-btn {
+  width: 100%;
+  min-height: 50px;
+  border-radius: 999px;
+}
+
+/* coupons as member benefits */
+#app .coupon-center-page .coupon-card {
+  position: relative;
+  min-height: 260px;
+  padding: 8px;
+  border-radius: 24px !important;
+  background:
+    linear-gradient(135deg, var(--tm-paper-2), #f2e6d4) !important;
+}
+
+#app .coupon-center-page .coupon-card::before {
+  content: "TravelMate Privilege";
+  display: block;
+  margin-bottom: 22px;
+  color: var(--tm-gold);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#app .coupon-center-page .coupon-header {
+  align-items: baseline;
+}
+
+#app .coupon-center-page .coupon-value {
+  color: var(--tm-deep);
+  font-size: clamp(36px, 4vw, 54px);
+  line-height: 1;
+}
+
+#app .coupon-center-page .coupon-type {
+  color: var(--tm-primary);
+  background: rgba(7, 89, 78, 0.08);
+}
+
+#app .coupon-center-page .coupon-action {
+  margin-top: 20px;
+  color: var(--tm-paper-2);
+  background: var(--tm-primary);
+  border-color: var(--tm-primary);
+}
+
+/* orders as trip ledger */
+#app .my-orders-page .order-card {
+  border-radius: 24px !important;
+}
+
+#app .my-orders-page .order-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--tm-line-soft);
+}
+
+#app .my-orders-page .order-no {
+  color: var(--tm-muted);
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 0.03em;
+}
+
+#app .my-orders-page .order-route {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin: 16px 0 8px;
+}
+
+#app .my-orders-page .route-city,
+#app .my-orders-page .hotel-name-row {
+  color: var(--tm-deep);
+  font-family: var(--tm-font-serif);
+  font-size: 26px;
+  font-weight: 650;
+}
+
+/* profile as travel dossier */
+#app .user-profile-page .profile-card {
+  overflow: hidden;
+  border-radius: 28px !important;
+}
+
+#app .user-profile-page .profile-header {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: center;
+  padding: 34px;
+  border-radius: 24px;
+  background:
+    linear-gradient(90deg, rgba(5, 42, 36, 0.82), rgba(5, 42, 36, 0.36)),
+    url("/images/editorial/guilin-cinematic-v82.jpg") center 46% / cover no-repeat;
+}
+
+#app .user-profile-page .profile-avatar {
+  border: 4px solid rgba(255, 250, 240, 0.82);
+  box-shadow: 0 18px 40px rgba(5, 35, 30, 0.22);
+}
+
+#app .user-profile-page :is(.profile-name, .profile-bio),
+#app .user-profile-page .profile-stats :is(.stat-num, .stat-label) {
+  color: var(--tm-paper-2);
+}
+
+#app .user-profile-page .profile-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+#app .user-profile-page .profile-stats .stat-item {
+  min-width: 92px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 250, 240, 0.2);
+  border-radius: 16px;
+  background: rgba(255, 250, 240, 0.1);
+}
+
+/* branded admin, warm and data-clear */
+#app .admin-page .admin-aside {
+  min-height: 100vh;
+  padding-top: 18px;
+}
+
+#app .admin-page .admin-logo {
+  margin: 0 16px 18px;
+  padding: 18px 16px;
+  border: 1px solid rgba(255, 250, 240, 0.12);
+  border-radius: 18px;
+  color: var(--tm-gold-soft);
+  background: rgba(255, 250, 240, 0.06);
+  font-size: 18px;
+  font-weight: 760;
+}
+
+#app .admin-page .section-title {
+  margin: 0 0 18px;
+  color: var(--tm-deep);
+  font-family: var(--tm-font-serif);
+  font-size: clamp(28px, 3vw, 42px);
+  letter-spacing: -0.035em;
+}
+
+#app .admin-page .stat-row {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 18px !important;
+}
+
+#app .admin-page .stat-row > .el-col {
+  width: auto !important;
+  max-width: none !important;
+  flex: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+#app .admin-page .stat-card {
+  border-radius: 22px !important;
+  background:
+    linear-gradient(135deg, rgba(255, 250, 240, 0.98), rgba(239, 229, 210, 0.92)) !important;
+}
+
+#app .admin-page .stat-value {
+  font-size: clamp(26px, 2.6vw, 38px);
+}
+
+#app .admin-page .chart-row {
+  margin-bottom: 18px;
+}
+
+#app .admin-page :is(.panel-card, .alert-card) {
+  border-radius: 22px !important;
+}
+
+#app .admin-page .el-table th.el-table__cell {
+  color: var(--tm-deep);
+  background: #efe5d6;
+}
+
+#app .admin-page .el-table .cell {
+  line-height: 1.55;
+}
+
+/* footer: clean brand ending */
+#app .app-footer {
+  margin-top: 72px;
+  border-top: 1px solid rgba(195, 148, 74, 0.22);
+  color: rgba(255, 250, 240, 0.78);
+  background:
+    linear-gradient(180deg, #0a3832, #082f2a);
+}
+
+#app .footer-inner {
+  padding-top: 56px;
+}
+
+#app .footer-grid {
+  gap: clamp(26px, 4vw, 58px);
+}
+
+#app .footer-col p,
+#app .footer-col a,
+#app .footer-bottom {
+  color: rgba(255, 250, 240, 0.76);
+}
+
+#app .footer-col a {
+  width: fit-content;
+}
+
+#app .team-avatar-btn {
+  border-color: rgba(255, 250, 240, 0.2);
+  background: rgba(255, 250, 240, 0.08);
+}
+
+@media (max-width: 1100px) {
+  #app :is(.flight-row, .train-row) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #app .hotel-search-page > .el-row,
+  #app .attraction-page > .el-row,
+  #app .coupon-center-page .el-row,
+  #app .community-page .post-grid,
+  #app .user-profile-page .posts-card .el-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #app .admin-page .stat-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  #app :is(.search-box, .filter-card) .el-form,
+  #app :is(.flight-row, .train-row),
+  #app .ai-plan-page .planner-layout,
+  #app .user-profile-page .profile-header {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  #app .train-actions,
+  #app .flight-price-col,
+  #app .order-actions {
+    justify-content: flex-start;
+  }
+
+  #app .hotel-search-page > .el-row,
+  #app .attraction-page > .el-row,
+  #app .coupon-center-page .el-row,
+  #app .community-page .post-grid,
+  #app .user-profile-page .posts-card .el-row,
+  #app .admin-page .stat-row {
+    grid-template-columns: 1fr;
+  }
+
+  #app .footer-grid {
+    grid-template-columns: 1fr;
+  }
+}
