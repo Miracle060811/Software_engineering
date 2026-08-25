@@ -1,0 +1,21 @@
+{
+  "UC01": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java", "backend/src/test/java/com/travelmate/SecurityConfigTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
+  "UC02": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
+  "UC03": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java", "backend/src/test/java/com/travelmate/service/impl/TrainLiveQuerySupportTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
+  "UC04": { "status": "planned", "tests": [] },
+  "UC05": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java", "backend/src/test/java/com/travelmate/ResultAndStockBoundaryTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
+  "UC06": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/ResultAndStockBoundaryTests.java"] },
+  "UC07": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
+  "UC08": { "status": "partial", "tests": ["frontend/tests/e2e-real/travelmate-real.spec.js"] },
+  "UC09": { "status": "planned", "tests": [] },
+  "UC10": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
+  "UC11": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/service/impl/AiPlanValidationTests.java", "backend/src/test/java/com/travelmate/service/impl/TravelPlaceServiceTests.java", "backend/src/test/java/com/travelmate/service/impl/TravelWeatherServiceTests.java"] },
+  "UC12": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java"] },
+  "UC13": { "status": "planned", "tests": [] },
+  "UC14": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/SecurityConfigTests.java", "backend/src/test/java/com/travelmate/FileControllerTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
+  "UC15": { "status": "planned", "tests": [] },
+  "UC16": { "status": "planned", "tests": [] },
+  "UC17": { "status": "planned", "tests": [] },
+  "UC18": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/SecurityConfigTests.java"] },
+  "UC19": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/SecurityConfigTests.java"] }
+}

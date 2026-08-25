@@ -237,6 +237,26 @@ cd ..
 
 测试说明见 [docs/test-runbook.md](docs/test-runbook.md)，正式测试结果见根目录 [测试报告.md](测试报告.md)。
 
+### GitHub Actions CI
+
+正式 CI 配置位于 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)。向任意分支 push、向 `main` 提交 Pull Request，或在 Actions 页面手动触发时，会执行：
+
+- 追溯门禁：检查仓库中不存在被跟踪的生成产物，并核对 UC01—UC19 的业务清单、详细设计、对象图、Mermaid 源文件和测试证据矩阵；
+- 后端：启动 MySQL 8 和 Redis、导入 `docs/sql/init.sql`、运行 Maven `verify`，上传 Surefire 报告和经过测试的 JAR；
+- 前端：执行 `npm ci`、生产构建和 Mock Playwright 冒烟测试，上传 HTML 报告和 `dist`；
+- 真实联调 E2E：复用后端作业生成的 JAR，连接真实 MySQL/Redis，启动真实前后端并验证注册登录、代表性 API 契约和航班搜索页面；
+- 总质量门禁：只有追溯、后端、前端和真实 E2E 四个阶段全部成功，`CI quality gate` 才会通过。
+
+用例测试证据维护在 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json)，可在本地执行：
+
+```powershell
+npm run check:traceability
+```
+
+当前矩阵只反映已有自动化证据，不把“代码可定位”当作“测试通过”；UC08 的预订闭环和 UC10 的订单核销仍保持未闭环状态。
+
+流水线运行后，按 [`05_management/pipeline-records/README.md`](05_management/pipeline-records/README.md) 保存每日成功和失败记录。
+
 ---
 
 ## 当前实现状态
@@ -394,9 +414,13 @@ Software_engineering/
 │       ├── data/                      ← destinations 兜底资料 + infoPages 静态资料
 │       ├── router/index.js            ← 路由配置（23 路由）
 │       └── utils/request.js           ← Axios 封装（含 JWT 自动注入）
-└── docs/
-    └── sql/init.sql                   ← 数据库初始化（含 Mock 数据）
+├── docs/
+│   └── sql/init.sql                   ← 数据库初始化（含 Mock 数据）
+└── 05_management/
+    └── pipeline-records/              ← 每日 CI/CD 流水线记录、模板与证据说明
 ```
+
+每日流水线记录的填写方法见 [`05_management/pipeline-records/README.md`](05_management/pipeline-records/README.md)。
 
 ---
 

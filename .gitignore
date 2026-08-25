@@ -17,6 +17,11 @@ frontend-vite-dev*.log
 backend-dev*.log
 frontend/playwright-report/
 frontend/test-results/
+frontend/playwright-report-real/
+frontend/test-results-real/
+/04_tests/reports/ci/
+/backend-ci.log
+/backend-ci.pid
 
 # 本地上传文件
 uploads/
