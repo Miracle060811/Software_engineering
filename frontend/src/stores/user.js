@@ -8,16 +8,21 @@ export const useUserStore = defineStore("user", () => {
 
   async function login(username, password) {
     const res = await request.post("/user/login", null, {
-      params: { username, password },
+      params: { username: username.trim(), password },
     });
     token.value = res;
     localStorage.setItem("token", res);
-    await fetchUserInfo();
+    try {
+      await fetchUserInfo();
+    } catch (e) {
+      logout();
+      throw e;
+    }
   }
 
   async function register(username, password) {
     await request.post("/user/register", null, {
-      params: { username, password },
+      params: { username: username.trim(), password },
     });
   }
 
@@ -28,6 +33,7 @@ export const useUserStore = defineStore("user", () => {
       localStorage.setItem("userInfo", JSON.stringify(res));
     } catch (e) {
       console.error("获取用户信息失败", e);
+      throw e;
     }
   }
 

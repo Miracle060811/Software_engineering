@@ -370,7 +370,7 @@
     </main>
 
     <!-- 底部 Footer -->
-    <footer class="app-footer" v-if="!isAuthPage">
+    <footer class="app-footer">
       <div class="footer-inner">
         <div class="footer-grid">
           <div class="footer-col footer-brand">
@@ -379,6 +379,37 @@
               TravelMate
             </h3>
             <p>TravelMate 伴游，为每一次出发整理路线、交通、住宿与目的地灵感。</p>
+            <div class="footer-team" aria-label="TravelMate 开发团队">
+              <span class="footer-team-label">开发团队</span>
+              <div class="footer-social">
+                <div
+                  v-for="member in teamMembers"
+                  :key="member.name"
+                  class="team-member"
+                >
+                  <button
+                    type="button"
+                    class="team-avatar-btn"
+                    :aria-label="`查看 ${member.name} 的开发者信息`"
+                    @click="selectedTeamMember = member"
+                  >
+                    <el-avatar
+                      :size="36"
+                      class="team-avatar"
+                      :style="{ background: member.gradient }"
+                    >
+                      <SafeImage
+                        :src="member.avatar"
+                        :alt="`${member.name} 头像`"
+                        image-class="team-avatar-img"
+                        loading="lazy"
+                      />
+                    </el-avatar>
+                  </button>
+                  <span class="team-member-name">{{ member.name }}</span>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="footer-col">
             <h4>旅行服务</h4>
@@ -433,7 +464,7 @@
           <div>
             <div class="team-dialog-name">{{ selectedTeamMember.name }}</div>
             <div class="team-dialog-role">
-              {{ selectedTeamMember.moduleCode }} · {{ selectedTeamMember.module }}
+              {{ selectedTeamMember.module }}
             </div>
           </div>
         </div>
@@ -485,7 +516,6 @@ import SafeImage from "@/components/SafeImage.vue";
 import yfanAvatar from "@/assets/team/YFan.jpg";
 import yangYouthAvatar from "@/assets/team/YangYouth.jpg";
 import sylphiraAvatar from "@/assets/team/Sylphira.jpg";
-import mojireeAvatar from "@/assets/team/Mojiree.jpg";
 import dxcAvatar from "@/assets/team/DXC.jpg";
 
 const route = useRoute();
@@ -507,7 +537,7 @@ const teamMembers = [
     moduleCode: "E",
     module: "管理后台与可观测性",
     bio: "负责后台运营管理、内容审核、系统日志与数据看板。",
-    contact: "微信号待补充",
+    contact: "lly250812",
     avatar: yfanAvatar,
     gradient: "linear-gradient(135deg, oklch(0.551 0.097 180), oklch(0.72 0.060 190))",
   },
@@ -517,7 +547,7 @@ const teamMembers = [
     moduleCode: "A",
     module: "大交通票务 / 订单库存",
     bio: "负责机票、火车票、库存防超卖和订单预占流程。",
-    contact: "微信号待补充",
+    contact: "yang0v0Youth",
     avatar: yangYouthAvatar,
     gradient: "linear-gradient(135deg, oklch(0.62 0.080 180), oklch(0.78 0.045 205))",
   },
@@ -527,19 +557,9 @@ const teamMembers = [
     moduleCode: "C",
     module: "路线整理工作台",
     bio: "负责行程生成、旅行助手、偏好整理和路线草案相关能力。",
-    contact: "微信号待补充",
+    contact: "Sylphira",
     avatar: sylphiraAvatar,
     gradient: "linear-gradient(135deg, oklch(0.58 0.070 205), oklch(0.70 0.055 180))",
-  },
-  {
-    name: "Mojiree",
-    initial: "M",
-    moduleCode: "B",
-    module: "住宿与本地生活",
-    bio: "负责酒店、房型、景点、本地玩乐和评价体系。",
-    contact: "微信号待补充",
-    avatar: mojireeAvatar,
-    gradient: "linear-gradient(135deg, oklch(0.64 0.075 180), oklch(0.84 0.034 180))",
   },
   {
     name: "DXC",
@@ -547,7 +567,7 @@ const teamMembers = [
     moduleCode: "D",
     module: "社区与用户中心",
     bio: "负责旅行社区、互动关系、评论收藏和用户中心。",
-    contact: "微信号待补充",
+    contact: "dxc20061016",
     avatar: dxcAvatar,
     gradient: "linear-gradient(135deg, oklch(0.32 0.050 180), oklch(0.551 0.097 180))",
   },
@@ -1122,7 +1142,7 @@ watch(
 
 /* ==================== Footer ==================== */
 .app-footer {
-  background: linear-gradient(180deg, #0a3832, #082f2a);
+  background: linear-gradient(180deg, #15564c, #10483f);
   border-top: 1px solid rgba(195, 148, 74, 0.26);
   margin-top: auto;
 }
@@ -1180,6 +1200,34 @@ watch(
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.footer-team {
+  margin-top: 20px;
+}
+
+.footer-team-label {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--tm-paper-2);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.team-member {
+  display: flex;
+  min-width: 58px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.team-member-name {
+  color: rgba(255, 250, 240, 0.78);
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .team-avatar-btn {

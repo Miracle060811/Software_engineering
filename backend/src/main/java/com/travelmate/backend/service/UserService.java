@@ -38,12 +38,16 @@ public class UserService {
     }
 
     public String login(String username, String password) {
+        if (username == null || password == null) {
+            return null;
+        }
+        String normalizedUsername = username.trim();
         User user = userMapper.selectOne(new QueryWrapper<User>()
-                .eq("username", username)
+                .eq("username", normalizedUsername)
                 .eq("status", 1)
                 .eq("deleted", 0));
         if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-            return jwtUtil.generateToken(username);
+            return jwtUtil.generateToken(normalizedUsername);
         }
         return null;
     }

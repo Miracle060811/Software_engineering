@@ -251,13 +251,14 @@
 
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { User, Lock, Promotion } from "@element-plus/icons-vue";
 import { useUserStore } from "../stores/user";
 import request from "../utils/request";
 
 const router = useRouter();
+const route = useRoute();
 const userStore = useUserStore();
 const activeTab = ref("login");
 const loading = ref(false);
@@ -366,9 +367,10 @@ const handleLogin = async () => {
   if (!valid) return;
   loading.value = true;
   try {
-    await userStore.login(loginForm.value.username, loginForm.value.password);
+    await userStore.login(loginForm.value.username.trim(), loginForm.value.password);
     ElMessage.success("登录成功，欢迎回来！");
-    router.push("/");
+    const redirect = route.query.redirect;
+    router.push(typeof redirect === "string" && redirect.startsWith("/") ? redirect : "/");
   } catch (e) {
     // error handled in request.js
   } finally {
@@ -381,6 +383,7 @@ const handleRegister = async () => {
     && !registerForm.value.password
     && !registerForm.value.confirmPassword;
   if (isBlankRegisterForm) {
+    await registerFormRef.value?.validate().catch(() => false);
     blankRegisterClickCount.value += 1;
     if (blankRegisterClickCount.value >= 3) {
       blankRegisterClickCount.value = 0;
@@ -395,12 +398,12 @@ const handleRegister = async () => {
   loading.value = true;
   try {
     await userStore.register(
-      registerForm.value.username,
+      registerForm.value.username.trim(),
       registerForm.value.password,
     );
     ElMessage.success("注册成功！请登录");
     activeTab.value = "login";
-    loginForm.value.username = registerForm.value.username;
+    loginForm.value.username = registerForm.value.username.trim();
     registerForm.value = { username: "", password: "", confirmPassword: "" };
   } catch (e) {
     // error handled in request.js
