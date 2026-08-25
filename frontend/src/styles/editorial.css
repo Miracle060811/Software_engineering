@@ -306,19 +306,6 @@
   box-shadow: var(--tm-shadow-card);
 }
 
-#app .destination-list-page .list-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(5, 42, 36, 0.78), rgba(5, 42, 36, 0.08));
-}
-
-#app .destination-list-page .hero-content {
-  position: relative;
-  z-index: 1;
-}
-
 #app .destination-list-page .destination-grid {
   gap: 24px;
 }
@@ -1126,9 +1113,7 @@
     linear-gradient(135deg, var(--tm-paper-2), #f2e6d4) !important;
 }
 
-#app .coupon-center-page .coupon-card::before {
-  content: "TravelMate Privilege";
-  display: block;
+#app .coupon-center-page .coupon-eyebrow {
   margin-bottom: 22px;
   color: var(--tm-gold);
   font-family: Georgia, "Times New Roman", serif;

@@ -23,6 +23,7 @@
         <el-row v-else :gutter="16">
           <el-col v-for="c in availableCoupons" :key="c.id" :xs="24" :sm="12" :md="8" class="coupon-col">
             <el-card class="coupon-card" shadow="hover">
+              <div class="coupon-eyebrow" aria-hidden="true">TravelMate Privilege</div>
               <div class="coupon-header">
                 <span class="coupon-value">
                   <template v-if="c.discountType === 0">¥{{ c.discountValue }}</template>
@@ -61,6 +62,7 @@
         <el-row v-else :gutter="16">
           <el-col v-for="c in myCoupons" :key="c.id" :xs="24" :sm="12" :md="8" class="coupon-col">
             <el-card class="coupon-card" :class="{ 'coupon-used': c.status !== 0 }" shadow="hover">
+              <div class="coupon-eyebrow" aria-hidden="true">TravelMate Privilege</div>
               <div class="coupon-header">
                 <span class="coupon-value">
                   <template v-if="c.discountType === 0">¥{{ c.discountValue }}</template>
