@@ -386,11 +386,16 @@
               >
                 <el-avatar
                   :size="36"
-                  :src="member.avatar"
                   class="team-avatar"
                   :style="{ background: member.gradient }"
                 >
-                  {{ member.initial }}
+                  <SafeImage
+                    :src="member.avatar"
+                    :alt="`${member.name} 头像`"
+                    image-class="team-avatar-img"
+                    sizes="36px"
+                    root-margin="200px 0px"
+                  />
                 </el-avatar>
               </button>
             </div>
@@ -435,11 +440,16 @@
         <div class="team-dialog-header" v-if="selectedTeamMember">
           <el-avatar
             :size="56"
-            :src="selectedTeamMember.avatar"
             class="team-dialog-avatar"
             :style="{ background: selectedTeamMember.gradient }"
           >
-            {{ selectedTeamMember.initial }}
+            <SafeImage
+              :src="selectedTeamMember.avatar"
+              :alt="`${selectedTeamMember.name} 头像`"
+              image-class="team-avatar-img"
+              loading="eager"
+              sizes="56px"
+            />
           </el-avatar>
           <div>
             <div class="team-dialog-name">{{ selectedTeamMember.name }}</div>
@@ -492,6 +502,7 @@ import {
 } from "@element-plus/icons-vue";
 import { useUserStore } from "./stores/user";
 import request from "@/utils/request";
+import SafeImage from "@/components/SafeImage.vue";
 import yfanAvatar from "@/assets/team/YFan.jpg";
 import yangYouthAvatar from "@/assets/team/YangYouth.jpg";
 import sylphiraAvatar from "@/assets/team/Sylphira.jpg";
@@ -1207,6 +1218,13 @@ watch(
   font-size: 13px;
   font-weight: 800;
   box-shadow: inset 0 0 0 2px oklch(0.985 0.002 248 / 0.72);
+}
+
+.team-avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 .team-dialog :deep(.el-dialog) {

@@ -14,13 +14,19 @@
 
     <section class="destination-grid">
       <article
-        v-for="dest in destinations"
+        v-for="(dest, index) in destinations"
         :key="dest.slug"
         class="destination-card"
         @click="$router.push(`/destination/${dest.slug}`)"
       >
         <div class="image-wrap">
-          <SafeImage :src="dest.img" :alt="dest.name" />
+          <SafeImage
+            :src="dest.img"
+            :alt="dest.name"
+            :loading="index < 3 ? 'eager' : 'lazy'"
+            :fetchpriority="index === 0 ? 'high' : 'auto'"
+            sizes="(max-width: 768px) 100vw, 33vw"
+          />
           <span>{{ dest.tag }}</span>
         </div>
         <div class="card-body">
@@ -45,15 +51,18 @@ import { computed, onMounted, ref } from "vue";
 import { ArrowRight, MagicStick } from "@element-plus/icons-vue";
 import SafeImage from "@/components/SafeImage.vue";
 import { fallbackDestinations, fetchDestinationList } from "@/utils/destinations";
+import { getResponsiveImageData } from "@/utils/image";
 
 const destinations = ref(fallbackDestinations);
 
 const heroStyle = computed(() => ({
   background:
     "linear-gradient(135deg, rgba(13, 148, 136, 0.94), rgba(14, 165, 233, 0.88)), url('" +
-    (destinations.value.find((item) => item.slug === "hangzhou")?.img ||
-      destinations.value[0]?.img ||
-      "") +
+    getResponsiveImageData(
+      destinations.value.find((item) => item.slug === "hangzhou")?.img ||
+        destinations.value[0]?.img ||
+        "",
+    ).src +
     "') center/cover",
 }));
 

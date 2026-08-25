@@ -46,7 +46,7 @@
           >
             <el-icon><Plus /></el-icon>
           </el-upload>
-          <div class="upload-tip">支持 JPG/PNG，每张不超过 10MB</div>
+          <div class="upload-tip">支持 JPG/PNG/WebP/GIF，每张不超过 10MB，上传前自动压缩</div>
         </el-form-item>
 
         <el-form-item label="内容" prop="content">
@@ -90,6 +90,7 @@ import { ElMessage } from "element-plus";
 import { Edit, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import PageHeader from "@/components/PageHeader.vue";
+import { optimizeImageForUpload } from "@/utils/imageUpload";
 
 const router = useRouter();
 const route = useRoute();
@@ -124,18 +125,13 @@ const uploadHeaders = computed(() => {
   return token ? { Authorization: "Bearer " + token } : {};
 });
 
-const beforeUpload = (file) => {
-  const isImage = file.type.startsWith("image/");
-  if (!isImage) {
-    ElMessage.error("只能上传图片文件");
+const beforeUpload = async (file) => {
+  try {
+    return await optimizeImageForUpload(file);
+  } catch (error) {
+    ElMessage.error(error.message || "图片压缩失败");
     return false;
   }
-  const isLt10M = file.size / 1024 / 1024 < 10;
-  if (!isLt10M) {
-    ElMessage.error("图片大小不能超过 10MB");
-    return false;
-  }
-  return true;
 };
 
 const handleUploadSuccess = (res) => {

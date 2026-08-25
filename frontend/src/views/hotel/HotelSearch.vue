@@ -80,7 +80,7 @@
     <el-row v-else :gutter="20">
         <el-col
           :span="8"
-          v-for="hotel in hotels"
+          v-for="(hotel, index) in hotels"
           :key="hotel.id"
           style="margin-bottom: 20px"
         >
@@ -93,6 +93,9 @@
               :src="resolveHotelCover(hotel)"
               image-class="hotel-img"
               :alt="hotel.name"
+              :loading="index < 3 ? 'eager' : 'lazy'"
+              :fetchpriority="index === 0 ? 'high' : 'auto'"
+              sizes="(max-width: 768px) 100vw, 33vw"
             />
             <div class="hotel-info">
               <div class="hotel-name">{{ hotel.name }}</div>

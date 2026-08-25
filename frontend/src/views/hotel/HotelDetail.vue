@@ -86,6 +86,7 @@
               list-type="picture-card"
               :on-success="onUploadSuccess"
               :on-remove="onUploadRemove"
+              :before-upload="beforeReviewImageUpload"
               :file-list="uploadFiles"
               :limit="6"
             >
@@ -209,6 +210,7 @@ import { StarFilled, LocationFilled, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import SafeImage from "@/components/SafeImage.vue";
 import { FALLBACK_IMAGE, parseImageList } from "@/utils/image";
+import { optimizeImageForUpload } from "@/utils/imageUpload";
 import { addBrowseHistory } from "@/utils/browseHistory";
 
 const route = useRoute();
@@ -421,6 +423,15 @@ watch(calcTotalPrice, () => {
 const onUploadSuccess = (res) => {
   const url = res?.url || res?.data?.url || (typeof res?.data === "string" ? res.data : "");
   if (url) uploadedImageUrls.value.push(url);
+};
+
+const beforeReviewImageUpload = async (file) => {
+  try {
+    return await optimizeImageForUpload(file);
+  } catch (error) {
+    ElMessage.error(error.message || "图片压缩失败");
+    return false;
+  }
 };
 
 const onUploadRemove = (file) => {

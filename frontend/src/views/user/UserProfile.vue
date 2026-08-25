@@ -222,6 +222,7 @@ import request from "@/utils/request";
 import { useUserStore } from "@/stores/user";
 import SafeImage from "@/components/SafeImage.vue";
 import { parseImageList } from "@/utils/image";
+import { optimizeImageForUpload } from "@/utils/imageUpload";
 
 const route = useRoute();
 const router = useRouter();
@@ -370,16 +371,13 @@ const openPrivateMessage = () => {
   });
 };
 
-const beforeAvatarUpload = (file) => {
-  if (!file.type.startsWith("image/")) {
-    ElMessage.error("只能上传图片文件");
+const beforeAvatarUpload = async (file) => {
+  try {
+    return await optimizeImageForUpload(file, { maxDimension: 960, quality: 0.8 });
+  } catch (error) {
+    ElMessage.error(error.message || "头像压缩失败");
     return false;
   }
-  if (file.size / 1024 / 1024 >= 10) {
-    ElMessage.error("图片大小不能超过 10MB");
-    return false;
-  }
-  return true;
 };
 
 const handleAvatarUploadSuccess = (res) => {

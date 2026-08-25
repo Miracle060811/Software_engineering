@@ -7,6 +7,14 @@ const result = (data) => ({
 });
 
 async function mockTravelMateApi(page) {
+  // Playwright evaluates matching routes in reverse registration order, so keep the catch-all first.
+  await page.route("**/api/**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(result([])),
+    });
+  });
+
   await page.route("**/user/login**", async (route) => {
     await route.fulfill({
       contentType: "application/json",
@@ -132,12 +140,6 @@ async function mockTravelMateApi(page) {
     });
   });
 
-  await page.route("**/api/**", async (route) => {
-    await route.fulfill({
-      contentType: "application/json",
-      body: JSON.stringify(result([])),
-    });
-  });
 }
 
 test.beforeEach(async ({ page }) => {
@@ -162,6 +164,22 @@ test("public pages render without backend dependency", async ({ page }) => {
     await expect(page.locator("body")).toBeVisible();
     await expect(page.locator("body")).not.toHaveText("");
   }
+});
+
+test("community covers use responsive generated images", async ({ page }) => {
+  const imageRequests = [];
+  page.on("request", (request) => {
+    if (request.resourceType() === "image") imageRequests.push(request.url());
+  });
+
+  await page.goto("/community");
+  const cover = page.locator(".post-cover").first();
+  await expect(cover).toHaveAttribute("loading", "eager");
+  await expect(cover).toHaveAttribute("fetchpriority", "high");
+  await expect(cover).toHaveAttribute("decoding", "async");
+  await expect(cover).toHaveAttribute("srcset", /images\/generated\/posts\/beijing-forbidden-city-480\.webp/);
+  await expect.poll(() => cover.evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
+  expect(imageRequests.some((url) => url.includes("/images/real/posts/beijing-forbidden-city.jpg"))).toBe(false);
 });
 
 test("auth-only routes redirect anonymous users to login", async ({ page }) => {

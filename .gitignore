@@ -15,6 +15,8 @@ frontend/node_modules/.vite/
 frontend/vite-dev*.log
 frontend-vite-dev*.log
 backend-dev*.log
+frontend/playwright-report/
+frontend/test-results/
 
 # 本地上传文件
 uploads/

@@ -8,7 +8,7 @@
           :fallback="FALLBACK_IMAGE"
           image-class="hero-photo-img"
           alt="海岛旅行风景"
-          loading="eager"
+          sizes="100vw"
         />
         <div class="hero-overlay"></div>
       </div>
@@ -50,7 +50,14 @@
             type="button"
             @click="goDestination(showcaseDestinations[0])"
           >
-            <SafeImage :src="showcaseDestinations[0].img" :alt="showcaseDestinations[0].name" image-class="hero-gallery-img" />
+            <SafeImage
+              :src="showcaseDestinations[0].img"
+              :alt="showcaseDestinations[0].name"
+              image-class="hero-gallery-img"
+              loading="eager"
+              fetchpriority="high"
+              sizes="(max-width: 900px) 100vw, 50vw"
+            />
             <div class="hero-image-caption">
               <span>{{ showcaseDestinations[0].tag }}</span>
               <strong>{{ showcaseDestinations[0].name }}</strong>
@@ -64,7 +71,13 @@
               type="button"
               @click="goDestination(dest)"
             >
-              <SafeImage :src="dest.img" :alt="dest.name" image-class="hero-gallery-img" />
+              <SafeImage
+                :src="dest.img"
+                :alt="dest.name"
+                image-class="hero-gallery-img"
+                loading="eager"
+                sizes="(max-width: 900px) 50vw, 25vw"
+              />
               <div class="hero-image-caption">
                 <span>{{ dest.tag }}</span>
                 <strong>{{ dest.name }}</strong>
@@ -355,6 +368,7 @@
               :fallback="FALLBACK_IMAGE"
               image-class="retreat-photo"
               alt="安静旅行规划"
+              sizes="(max-width: 900px) 100vw, 50vw"
             />
             <div class="retreat-image-overlay"></div>
           </div>
@@ -407,7 +421,12 @@
           @click="goDestination(dest)"
         >
           <div class="dest-img-wrap">
-            <SafeImage :src="dest.img" :alt="dest.name" image-class="dest-img" />
+            <SafeImage
+              :src="dest.img"
+              :alt="dest.name"
+              image-class="dest-img"
+              sizes="(max-width: 768px) 100vw, 33vw"
+            />
             <div class="dest-gradient"></div>
             <div class="dest-badge">{{ dest.tag }}</div>
             <div class="dest-img-info">
@@ -445,7 +464,7 @@
       <div class="feature-grid">
         <button class="feature-card" type="button" @click="$router.push('/ai-plan')">
           <div class="feat-visual feat-visual-ai">
-            <SafeImage :src="featurePhotos.ai" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="AI 智能规划" />
+            <SafeImage :src="featurePhotos.ai" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="AI 智能规划" sizes="(max-width: 768px) 100vw, 33vw" />
             <div class="feat-photo-overlay"></div>
             <span class="feat-number">01</span>
           </div>
@@ -458,7 +477,7 @@
 
         <button class="feature-card" type="button" @click="$router.push('/community')">
           <div class="feat-visual feat-visual-community">
-            <SafeImage :src="featurePhotos.community" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="旅行社区" />
+            <SafeImage :src="featurePhotos.community" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="旅行社区" sizes="(max-width: 768px) 100vw, 33vw" />
             <div class="feat-photo-overlay"></div>
             <span class="feat-number">02</span>
           </div>
@@ -471,7 +490,7 @@
 
         <button class="feature-card" type="button" @click="$router.push('/attractions')">
           <div class="feat-visual feat-visual-attraction">
-            <SafeImage :src="featurePhotos.attraction" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="景点门票" />
+            <SafeImage :src="featurePhotos.attraction" :fallback="FALLBACK_IMAGE" image-class="feat-photo" alt="景点门票" sizes="(max-width: 768px) 100vw, 33vw" />
             <div class="feat-photo-overlay"></div>
             <span class="feat-number">03</span>
           </div>
@@ -501,7 +520,7 @@
             class="cta-avatar"
             :class="`cta-avatar-${idx + 1}`"
           >
-            <SafeImage :src="avatar.src" :alt="avatar.name" />
+            <SafeImage :src="avatar.src" :alt="avatar.name" sizes="64px" root-margin="200px 0px" />
           </div>
         </div>
       </div>

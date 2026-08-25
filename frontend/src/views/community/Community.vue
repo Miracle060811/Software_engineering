@@ -80,7 +80,7 @@
     <template v-else>
       <div class="post-grid">
         <el-card
-          v-for="post in posts"
+          v-for="(post, index) in posts"
           :key="post.id"
           :class="['post-card', { 'my-post-card': activeTab === 'mine' }]"
           :body-style="{ padding: 0 }"
@@ -92,7 +92,9 @@
               :fallback="getPostFallbackImage(post)"
               image-class="post-cover"
               :alt="post.title"
-              loading="eager"
+              :loading="index < 2 ? 'eager' : 'lazy'"
+              :fetchpriority="index === 0 ? 'high' : 'auto'"
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
             <div class="post-img-overlay"></div>
           </div>
