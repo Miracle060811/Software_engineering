@@ -15,6 +15,9 @@ playwright-report/
 test-results/
 coverage/
 .nyc_output/
+04_tests/reports/ci/
+frontend/playwright-report-real/
+frontend/test-results-real/
 
 # 本地上传文件
 uploads/

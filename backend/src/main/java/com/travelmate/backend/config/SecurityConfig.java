@@ -54,6 +54,7 @@ public class SecurityConfig {
                                                                 "/user/register", "/user/login",
                                                                 "/user/admin-register",
                                                                 "/user/reset-password",
+                                                                "/actuator/health",
                                                                 "/favicon.ico",
                                                                 "/assets/**",
                                                                 "/images/**",

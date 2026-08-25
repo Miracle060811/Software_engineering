@@ -67,10 +67,10 @@ public class AttractionController {
         }
 
         Integer adultCount = body.get("adultCount") != null
-                ? Integer.valueOf(body.get("adultCount").toString())
-                : (body.get("count") != null ? Integer.valueOf(body.get("count").toString()) : 1);
+                ? Integer.parseInt(body.get("adultCount").toString())
+                : (body.get("count") != null ? Integer.parseInt(body.get("count").toString()) : 1);
         Integer childCount = body.get("childCount") != null
-                ? Integer.valueOf(body.get("childCount").toString())
+                ? Integer.parseInt(body.get("childCount").toString())
                 : 0;
         String guestName = body.get("guestName") != null
                 ? body.get("guestName").toString()

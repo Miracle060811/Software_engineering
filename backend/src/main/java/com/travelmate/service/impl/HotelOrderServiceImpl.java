@@ -96,7 +96,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
             order.setUserId(userId);
             order.setHotelId(dto.getHotelId());
             order.setRoomId(dto.getRoomId());
-            order.setHotelName(hotel != null ? hotel.getName() : "");
+            order.setHotelName(hotel.getName());
             order.setRoomType(room.getRoomType());
             order.setRoomCount(roomCount);
             order.setCheckInDate(checkIn);

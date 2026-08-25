@@ -8,10 +8,11 @@ const designPath = path.join(root, "document", "5组-软件详细设计说明.md
 const diagramPath = path.join(root, "document", "详细设计说明");
 const diagramSourcePath = path.join(diagramPath, "source");
 const matrixPath = path.join(root, "docs", "ci", "use-case-test-matrix.json");
+const policyPath = path.join(root, "docs", "ci", "test-quality-policy.json");
 const reportPath = path.resolve(root, process.env.TRACEABILITY_REPORT || "04_tests/reports/ci/use-case-traceability.md");
 const errors = [];
 
-for (const requiredPath of [listPath, designPath, diagramPath, diagramSourcePath, matrixPath]) {
+for (const requiredPath of [listPath, designPath, diagramPath, diagramSourcePath, matrixPath, policyPath]) {
   if (!fs.existsSync(requiredPath)) errors.push(`缺少文件或目录：${path.relative(root, requiredPath)}`);
 }
 
@@ -23,6 +24,7 @@ if (errors.length) {
 const listText = fs.readFileSync(listPath, "utf8");
 const designText = fs.readFileSync(designPath, "utf8");
 const matrix = JSON.parse(fs.readFileSync(matrixPath, "utf8"));
+const policy = JSON.parse(fs.readFileSync(policyPath, "utf8"));
 const diagrams = fs.readdirSync(diagramPath);
 const sources = fs.readdirSync(diagramSourcePath);
 const allowedStatuses = new Set(["covered", "partial", "planned"]);
@@ -60,6 +62,21 @@ for (const id of Object.keys(matrix)) {
 }
 
 const count = (status) => rows.filter((row) => row.status === status).length;
+const evidenceScore = count("covered") * 2 + count("partial");
+
+if (!Number.isInteger(policy.maximumPlanned) || policy.maximumPlanned < 0) {
+  errors.push("test-quality-policy.json 的 maximumPlanned 必须是非负整数");
+}
+if (!Number.isInteger(policy.minimumEvidenceScore) || policy.minimumEvidenceScore < 0) {
+  errors.push("test-quality-policy.json 的 minimumEvidenceScore 必须是非负整数");
+}
+if (count("planned") > policy.maximumPlanned) {
+  errors.push(`尚待测试用例增加：${count("planned")} > ${policy.maximumPlanned}`);
+}
+if (evidenceScore < policy.minimumEvidenceScore) {
+  errors.push(`自动化证据分下降：${evidenceScore} < ${policy.minimumEvidenceScore}`);
+}
+
 const report = [
   "# CI 用例追溯检查报告",
   "",
@@ -67,6 +84,8 @@ const report = [
   `- 完整覆盖：${count("covered")}`,
   `- 部分覆盖：${count("partial")}`,
   `- 尚待测试：${count("planned")}`,
+  `- 自动化证据分：${evidenceScore}（门槛：${policy.minimumEvidenceScore}）`,
+  `- 尚待测试上限：${policy.maximumPlanned}`,
   `- 结构错误：${errors.length}`,
   "",
   "| 用例 | 测试状态 | 测试证据数 | 清单 | 详细设计 | PNG | Mermaid 源文件 |",

@@ -488,7 +488,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   ArrowDown,
@@ -502,12 +502,8 @@ import {
   Close,
   Right,
   Promotion,
-  Notebook,
-  Cpu,
   Tickets,
   House,
-  HomeFilled,
-  Present,
   StarFilled,
 } from "@element-plus/icons-vue";
 import { useUserStore } from "./stores/user";

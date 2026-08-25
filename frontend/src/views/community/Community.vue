@@ -286,7 +286,7 @@ const clearTagFilter = () => {
   fetchPosts();
 };
 
-const getPostFallbackImage = (post) => {
+const getPostFallbackImage = () => {
   return FALLBACK_IMAGE;
 };
 

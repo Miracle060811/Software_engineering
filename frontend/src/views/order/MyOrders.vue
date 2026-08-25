@@ -249,7 +249,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Promotion, Tickets, House } from "@element-plus/icons-vue";
+import { Tickets, House } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import mockCheckinQr from "@/assets/mock-checkin-qr.png";
 import PageHeader from "@/components/PageHeader.vue";

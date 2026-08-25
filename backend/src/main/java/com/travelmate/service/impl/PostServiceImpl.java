@@ -99,7 +99,7 @@ public class PostServiceImpl implements PostService {
         post.setStatus(draft ? 3 : 0);
         post.setRejectReason(null);
         // 可见范围: 0=公开, 1=仅关注者, 2=私密 (默认公开)
-        Integer visibility = body.get("visibility") != null ? Integer.valueOf(body.get("visibility").toString()) : 0;
+        Integer visibility = body.get("visibility") != null ? Integer.parseInt(body.get("visibility").toString()) : 0;
         post.setVisibility(visibility);
         post.setLikeCount(0);
         post.setCommentCount(0);
@@ -136,7 +136,7 @@ public class PostServiceImpl implements PostService {
         post.setDestination(destination);
         post.setTags(tags);
         post.setStatus(draft ? 3 : 0);
-        Integer visibility = body.get("visibility") != null ? Integer.valueOf(body.get("visibility").toString()) : 0;
+        Integer visibility = body.get("visibility") != null ? Integer.parseInt(body.get("visibility").toString()) : 0;
         post.setVisibility(visibility);
         post.setRejectReason(null);
         post.setUpdateTime(LocalDateTime.now());
@@ -200,7 +200,7 @@ public class PostServiceImpl implements PostService {
     }
 
     private boolean isDraft(Map<String, Object> body) {
-        return body.get("status") != null && Integer.valueOf(body.get("status").toString()) == 3;
+        return body.get("status") != null && Integer.parseInt(body.get("status").toString()) == 3;
     }
 
     private String normalizePostText(Object value, boolean draft, String draftDefault, String emptyMessage, int maxLength, String lengthMessage) {

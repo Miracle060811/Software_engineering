@@ -67,6 +67,12 @@ class SecurityConfigTests {
     }
 
     @Test
+    void healthEndpointIsPublicAndReportsServiceStatus() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void frontendHistoryRoutesAreForwardedWithoutAuthentication() throws Exception {
         mockMvc.perform(get("/login"))
                 .andExpect(status().isOk())

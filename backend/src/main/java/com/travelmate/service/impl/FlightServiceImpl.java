@@ -89,7 +89,7 @@ public class FlightServiceImpl extends ServiceImpl<FlightMapper, Flight> impleme
 
         int[][] departureTimes = {{7, 30}, {10, 0}, {13, 30}, {17, 0}, {20, 30}};
         double[] priceFactors = {0.85, 0.925, 1.0, 1.075, 1.15};
-        int routeSeed = Math.abs((depCity + arrCity).hashCode());
+        int routeSeed = Math.floorMod((depCity + arrCity).hashCode(), 100);
 
         List<Flight> flights = new ArrayList<>();
         for (int i = 0; i < departureTimes.length; i++) {
@@ -102,7 +102,7 @@ public class FlightServiceImpl extends ServiceImpl<FlightMapper, Flight> impleme
             BigDecimal bizPrice = baseBusiness.multiply(BigDecimal.valueOf(priceFactors[i]))
                     .setScale(0, RoundingMode.HALF_UP);
 
-            String flightNo = airline[0] + (1000 + (routeSeed % 100) + i * 11);
+            String flightNo = airline[0] + (1000 + routeSeed + i * 11);
 
             // 先查是否已存在（避免重复插入）
             LambdaQueryWrapper<Flight> existCheck = new LambdaQueryWrapper<>();

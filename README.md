@@ -313,13 +313,15 @@ cd ..
 
 ### GitHub Actions CI
 
-正式 CI 配置位于 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)。向任意分支 push、向 `main` 提交 Pull Request，或在 Actions 页面手动触发时，会执行：
+正式 CI 配置位于 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)。任意分支每次 push、向 `main` 提交 Pull Request，或在 Actions 页面手动触发时都会启动。文档类改动只执行轻量校验；代码、SQL、脚本和 workflow 改动才执行构建测试：
 
-- 追溯门禁：检查仓库中不存在被跟踪的生成产物，并核对 UC01—UC19 的业务清单、详细设计、对象图、Mermaid 源文件和测试证据矩阵；
-- 后端：启动 MySQL 8 和 Redis、导入 `docs/sql/init.sql`、运行 Maven `verify`，上传 Surefire 报告和经过测试的 JAR；
-- 前端：执行 `npm ci`、生产构建和 Mock Playwright 冒烟测试，上传 HTML 报告和 `dist`；
-- 真实联调 E2E：复用后端作业生成的 JAR，连接真实 MySQL/Redis，启动真实前后端并验证注册登录、代表性 API 契约和航班搜索页面；
-- 总质量门禁：只有追溯、后端、前端和真实 E2E 四个阶段全部成功，`CI quality gate` 才会通过。
+- 追溯门禁：检查仓库中不存在被跟踪的生成产物，并通过 `docs/ci/test-quality-policy.json` 对 UC01—UC19 的自动化证据分和 `planned` 数量执行不可回退门禁；
+- 后端：使用固定摘要的 MySQL/Redis 镜像，导入 `docs/sql/init.sql`，运行 Maven `verify`、JaCoCo 10% 行覆盖率门槛、SpotBugs High 门槛，并禁止零测试通过；
+- 前端：执行锁定依赖的 `npm ci`、ESLint、生产依赖漏洞审计、Vite 生产构建和 Mock Playwright 冒烟测试；
+- 真实联调 E2E：仅在 `main`、面向 `main` 的 PR 或手动运行中执行，复用经过测试的 JAR，并通过 `/actuator/health` 判断后端就绪；
+- 总质量门禁：根据改动类型要求所有应运行阶段成功，允许文档提交跳过无关的构建和 E2E。
+
+安全流水线位于 [`.github/workflows/security.yml`](.github/workflows/security.yml) 和 [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)，包含 Gitleaks、PR 依赖评审、定期 OWASP Maven 依赖扫描，以及 Java/JavaScript CodeQL `security-extended` 扫描。所有第三方 Actions 均固定到完整 commit SHA。
 
 用例测试证据维护在 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json)，可在本地执行：
 
@@ -327,7 +329,7 @@ cd ..
 npm run check:traceability
 ```
 
-当前矩阵只反映已有自动化证据，不把“代码可定位”当作“测试通过”；UC08 的预订闭环和 UC10 的订单核销仍保持未闭环状态。
+当前矩阵只反映已有自动化证据，不把“代码可定位”当作“测试通过”。质量策略以当前证据为显式基线：后续提交不得降低自动化证据分或增加 `planned` 用例；每补齐一批测试，应同步提高 `minimumEvidenceScore` 并降低 `maximumPlanned`。
 
 流水线运行后，按 [`05_management/pipeline-records/README.md`](05_management/pipeline-records/README.md) 保存每日成功和失败记录。
 
