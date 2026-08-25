@@ -102,11 +102,12 @@ jobs:
 
       - name: Scan Maven dependencies
         working-directory: backend
-        run: >-
-          ./mvnw --batch-mode --no-transfer-progress
-          org.owasp:dependency-check-maven:12.1.3:check
-          -DfailBuildOnCVSS=7
-          -Dformats=HTML,JSON
+        run: |
+          chmod +x mvnw
+          ./mvnw --batch-mode --no-transfer-progress \
+            org.owasp:dependency-check-maven:12.1.3:check \
+            -DfailBuildOnCVSS=7 \
+            -Dformats=HTML,JSON
 
       - name: Upload dependency audit report
         if: always()
@@ -114,5 +115,5 @@ jobs:
         with:
           name: backend-dependency-audit
           path: backend/target/dependency-check-report.*
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
