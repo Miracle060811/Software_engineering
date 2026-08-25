@@ -4,7 +4,7 @@
     <header
       v-if="!isAuthPage"
       class="navbar"
-      :class="{ 'navbar-home': isHomePage, 'navbar-scrolled': isScrolled }"
+      :class="{ 'navbar-home': isHomePage }"
     >
       <div class="nav-inner">
         <!-- Logo -->
@@ -528,7 +528,6 @@ const showMobileMenu = ref(false);
 const searchTab = ref("flight");
 const searchInputRef = ref(null);
 const selectedTeamMember = ref(null);
-const isScrolled = ref(false);
 
 const teamMembers = [
   {
@@ -613,10 +612,6 @@ const mobileNavLinks = computed(() =>
 
 const isAuthPage = computed(() => route.path === "/login");
 const isHomePage = computed(() => route.path === "/");
-
-const updateNavbarState = () => {
-  isScrolled.value = window.scrollY > 28;
-};
 
 // ---------- 面包屑 ----------
 const breadcrumbRouteMap = {
@@ -771,8 +766,6 @@ onMounted(() => {
   document.documentElement.classList.remove("dark");
   localStorage.removeItem("theme");
   window.addEventListener("notification-updated", handleNotificationUpdated);
-  window.addEventListener("scroll", updateNavbarState, { passive: true });
-  updateNavbarState();
   if (userStore.isLoggedIn) {
     userStore.fetchUserInfo();
     fetchUnreadCount();
@@ -782,7 +775,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("notification-updated", handleNotificationUpdated);
-  window.removeEventListener("scroll", updateNavbarState);
 });
 
 watch(
@@ -802,7 +794,6 @@ watch(
 watch(
   () => route.fullPath,
   () => {
-    updateNavbarState();
     if (userStore.isLoggedIn) {
       fetchUnreadCount();
       fetchPrivateUnreadCount();
@@ -945,7 +936,7 @@ watch(
 }
 
 .user-avatar {
-  background: var(--tm-gradient-brand);
+  background: var(--tm-primary);
   color: oklch(0.985 0.002 248);
   font-weight: 700;
   font-size: 14px;

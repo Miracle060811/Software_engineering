@@ -44,17 +44,9 @@
   position: fixed;
   left: 0;
   right: 0;
-  border-bottom-color: rgba(255, 250, 240, 0.14);
-  color: var(--tm-paper-2);
-  background: linear-gradient(180deg, rgba(5, 35, 30, 0.7), transparent);
-  box-shadow: none;
-  backdrop-filter: none;
-}
-
-#app .navbar.navbar-home.navbar-scrolled {
   border-bottom-color: var(--tm-line);
   color: var(--tm-ink);
-  background: rgba(244, 239, 229, 0.96);
+  background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 6px 24px rgba(18, 28, 23, 0.08);
   backdrop-filter: blur(12px);
 }
@@ -97,8 +89,7 @@
   letter-spacing: 0.01em;
 }
 
-#app .navbar:not(.navbar-home) .logo-text strong,
-#app .navbar-home.navbar-scrolled .logo-text strong {
+#app .navbar .logo-text strong {
   color: var(--tm-gold);
 }
 
@@ -119,32 +110,14 @@
   box-shadow: inset 0 -2px var(--tm-gold);
 }
 
-#app .navbar:not(.navbar-home) .nav-link-btn.el-button--primary,
-#app .navbar-home.navbar-scrolled .nav-link-btn.el-button--primary {
+#app .navbar .nav-link-btn.el-button--primary {
   color: var(--tm-primary);
-}
-
-#app .navbar-home:not(.navbar-scrolled) .nav-link-btn:hover,
-#app .navbar-home:not(.navbar-scrolled) .nav-search-btn:hover,
-#app .navbar-home:not(.navbar-scrolled) .nav-badge .el-button:hover {
-  color: var(--tm-gold-soft);
-  background: rgba(255, 250, 240, 0.08);
-}
-
-#app .navbar-home:not(.navbar-scrolled) .nav-dropdown .nav-link-btn.el-button {
-  color: var(--tm-paper-2);
 }
 
 #app .user-chip {
   border: 1px solid rgba(7, 89, 78, 0.14);
   border-radius: 999px;
   background: rgba(255, 250, 240, 0.58);
-}
-
-#app .navbar-home:not(.navbar-scrolled) .user-chip {
-  border-color: rgba(255, 250, 240, 0.24);
-  color: var(--tm-paper-2);
-  background: rgba(7, 47, 42, 0.38);
 }
 
 #app .breadcrumb-bar {
