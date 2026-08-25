@@ -1,0 +1,308 @@
+name: TravelMate CI
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    name: Repository and use-case validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Reject tracked generated artifacts
+        shell: bash
+        run: |
+          tracked="$(git ls-files -ci --exclude-standard)"
+          if [[ -n "$tracked" ]]; then
+            echo "The following ignored build artifacts are still tracked:"
+            echo "$tracked"
+            exit 1
+          fi
+
+      - name: Validate UC01-UC19 traceability
+        env:
+          TRACEABILITY_REPORT: 04_tests/reports/ci/use-case-traceability.md
+        run: npm run check:traceability
+
+      - name: Upload traceability report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: use-case-traceability-report
+          path: 04_tests/reports/ci/use-case-traceability.md
+          if-no-files-found: error
+          retention-days: 30
+
+  backend:
+    name: Backend integration tests and package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: travelmate-ci
+          MYSQL_DATABASE: travelmate
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptravelmate-ci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      SPRING_DATASOURCE_PASSWORD: travelmate-ci
+      DEEPSEEK_API_KEY: ""
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Initialize MySQL schema and test data
+        run: >-
+          docker exec -i ${{ job.services.mysql.id }}
+          mysql --default-character-set=utf8mb4 -uroot -ptravelmate-ci
+          < docs/sql/init.sql
+
+      - name: Run backend tests and package
+        working-directory: backend
+        run: |
+          chmod +x mvnw
+          ./mvnw --batch-mode --no-transfer-progress verify
+
+      - name: Upload backend test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: backend/target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload backend package
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-package
+          path: backend/target/*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+  frontend:
+    name: Frontend build and mocked smoke E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E tests
+        working-directory: frontend
+        run: npx playwright test --reporter=list,html --workers=1
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-playwright-report
+          path: frontend/playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload frontend build
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          if-no-files-found: error
+          retention-days: 14
+
+  real-e2e:
+    name: Real backend E2E
+    needs:
+      - validation
+      - backend
+      - frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: travelmate-ci
+          MYSQL_DATABASE: travelmate
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptravelmate-ci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      CI: "true"
+      SPRING_DATASOURCE_PASSWORD: travelmate-ci
+      DEEPSEEK_API_KEY: ""
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Download tested backend package
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-package
+          path: ci-artifacts/backend
+
+      - name: Initialize MySQL schema and test data
+        run: >-
+          docker exec -i ${{ job.services.mysql.id }}
+          mysql --default-character-set=utf8mb4 -uroot -ptravelmate-ci
+          < docs/sql/init.sql
+
+      - name: Start tested backend package
+        shell: bash
+        run: |
+          java -jar ci-artifacts/backend/*.jar > backend-ci.log 2>&1 &
+          echo $! > backend-ci.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent "http://127.0.0.1:8080/api/flight/search" > /dev/null; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat backend-ci.log
+          exit 1
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run real backend E2E tests
+        working-directory: frontend
+        run: npx playwright test --config=playwright.real.config.js --workers=1
+
+      - name: Upload real E2E report and backend log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-backend-e2e-evidence
+          path: |
+            frontend/playwright-report-real/
+            frontend/test-results-real/
+            backend-ci.log
+          if-no-files-found: warn
+          retention-days: 30
+
+  ci-gate:
+    name: CI quality gate
+    if: always()
+    needs:
+      - validation
+      - backend
+      - frontend
+      - real-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Require every CI stage to pass
+        shell: bash
+        run: |
+          echo "validation=${{ needs.validation.result }}"
+          echo "backend=${{ needs.backend.result }}"
+          echo "frontend=${{ needs.frontend.result }}"
+          echo "real-e2e=${{ needs.real-e2e.result }}"
+          [[ "${{ needs.validation.result }}" == "success" ]]
+          [[ "${{ needs.backend.result }}" == "success" ]]
+          [[ "${{ needs.frontend.result }}" == "success" ]]
+          [[ "${{ needs.real-e2e.result }}" == "success" ]]

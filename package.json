@@ -2,7 +2,8 @@
   "scripts": {
     "optimize:images": "node scripts/optimize-images.mjs",
     "check:images": "node scripts/check-image-links.mjs",
-    "check:images:remote": "node scripts/check-image-links.mjs --remote"
+    "check:images:remote": "node scripts/check-image-links.mjs --remote",
+    "check:traceability": "node scripts/check-use-case-traceability.mjs"
   },
   "dependencies": {
     "@wangeditor/editor": "^5.1.23",
