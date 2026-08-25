@@ -902,12 +902,21 @@
   background: rgba(7, 89, 78, 0.06);
 }
 
-#app :is(.airline-name, .train-no) {
+#app .airline-name {
   color: var(--tm-deep);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 24px;
   font-weight: 800;
   line-height: 1.1;
+}
+
+#app .train-no {
+  color: var(--tm-deep);
+  font-family: var(--tm-font-sans);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
 #app :is(.flight-time, .train-time-col) {
@@ -916,19 +925,26 @@
 
 #app :is(.time-depart, .time-arrive, .depart-time, .arrive-time) {
   color: var(--tm-deep);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--tm-font-sans);
   font-size: clamp(25px, 2vw, 34px);
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 #app :is(.flight-route, .train-route-info, .duration-label, .flight-no) {
   color: var(--tm-muted);
 }
 
+#app .flight-no {
+  font-family: var(--tm-font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
 #app :is(.price-num, .price-num-sm, .seat-fare, .order-amount) {
   color: var(--tm-clay);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--tm-font-sans);
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 #app .seat-status-list {

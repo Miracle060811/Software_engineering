@@ -368,7 +368,11 @@ const handleLogin = async () => {
   loading.value = true;
   try {
     await userStore.login(loginForm.value.username.trim(), loginForm.value.password);
-    ElMessage.success("登录成功，欢迎回来！");
+    ElMessage({
+      type: "success",
+      message: "登录成功，欢迎回来！",
+      duration: 1000,
+    });
     const redirect = route.query.redirect;
     router.push(typeof redirect === "string" && redirect.startsWith("/") ? redirect : "/");
   } catch (e) {
