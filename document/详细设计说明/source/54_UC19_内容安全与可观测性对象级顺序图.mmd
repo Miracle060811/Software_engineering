@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC19 内容安全与可观测性——对象级顺序图
+    participant P0 as 管理员
+    participant P1 as AdminDashboard.vue
+    participant P2 as AdminController
+    participant P3 as Post/Report/SensitiveWordMapper
+    participant P4 as SysLogMapper
+    participant P5 as NotificationCenterService
+    P0->>P1: 查看待审举报日志与指标
+    P1->>P2: GET/POST /api/admin/**
+    P2->>P3: 查询待审并条件处理
+    P3-->>P2: 返回审核/工单终态
+    P2->>P4: 查询 sys_log 和聚合指标
+    P4-->>P2: 返回日志与统计
+    P2->>P5: 审核完成通知用户
+    P5->>P2: 通知失败不回滚审核
+    Note over P0,P5: 重复处理保持终态；统计或通知故障不得回滚已经提交的审核结果。

@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC19 管理员内容审核代表流程——对象级顺序图
+    participant P0 as 管理员
+    participant P1 as AdminDashboard.vue
+    participant P2 as JwtFilter
+    participant P3 as AdminController
+    participant P4 as PostMapper
+    participant P5 as SysLogAspect/SysLogMapper
+    P0->>P1: 选择审核通过或拒绝
+    P1->>P2: POST /api/admin/posts/{id}/approve|reject
+    P2->>P3: 校验管理员角色并放行
+    P3->>P4: 按待审状态条件更新
+    P4-->>P3: 返回更新结果
+    P3->>P5: 写审计日志
+    P5->>P3: 日志失败仅告警
+    P3-->>P1: 返回审核终态
+    Note over P0,P5: 当前没有 /admin/login、AuthService、ContentAuditController、ContentMapper；管理员登录复用 /user/login。

@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC06 酒店订单支付取消退款——对象级顺序图
+    participant P0 as 用户
+    participant P1 as MyOrders.vue
+    participant P2 as HotelController
+    participant P3 as HotelOrderServiceImpl
+    participant P4 as HotelOrderMapper
+    participant P5 as HotelRoomStockServiceImpl
+    P0->>P1: 选择订单操作
+    P1->>P2: POST /api/hotel/order/{orderNo}/动作
+    P2->>P3: pay/cancel/requestRefund
+    P3->>P4: 按用户和当前状态条件更新
+    P4-->>P3: 返回更新结果
+    P3->>P5: 取消/退款时回补库存
+    P5-->>P3: 回补成功或幂等跳过
+    P3-->>P2: 返回终态
+    Note over P0,P5: 重复请求不得重复回补；超时关闭由 OrderTimeoutScheduler 复用同一状态与库存规则。

@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC13 通知中心与站内私信——对象级顺序图
+    participant P0 as 用户
+    participant P1 as NotificationCenter/PrivateMessages.vue
+    participant P2 as AiController/PrivateMessageController
+    participant P3 as NotificationCenterServiceImpl
+    participant P4 as PrivateMessageServiceImpl
+    participant P5 as Notification/MessageMapper
+    P0->>P1: 查看通知或发送私信
+    P1->>P2: 调用 notification/private-message 接口
+    P2->>P3: list/markRead/unreadCount
+    P3->>P5: 查询或更新通知
+    P2->>P4: listConversation/sendMessage
+    P4->>P5: 校验接收者并写消息
+    P5-->>P4: 返回记录
+    P4-->>P2: 返回会话/未读数
+    Note over P0,P5: 用户只能读取自己的通知和会话；通知失败不回滚核心交易。

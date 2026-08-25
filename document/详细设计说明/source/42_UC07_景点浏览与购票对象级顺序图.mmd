@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC07 景点浏览与购票——对象级顺序图
+    participant P0 as 用户
+    participant P1 as AttractionList.vue
+    participant P2 as AttractionController
+    participant P3 as AttractionServiceImpl
+    participant P4 as AttractionMapper
+    participant P5 as AttractionOrderMapper
+    P0->>P1: 选择景点和票数
+    P1->>P2: GET /search 并 POST /{id}/ticket
+    P2->>P3: searchAttractions()/buyTicket()
+    P3->>P4: 读取景点价格与票量
+    P4-->>P3: 返回景点
+    P3->>P5: 计算金额并新增门票订单
+    P5-->>P3: 返回 orderNo
+    P3-->>P2: 返回订单凭证入口
+    Note over P0,P5: 成人/儿童票数与金额必须服务端计算；用户只能查看自己的凭证。

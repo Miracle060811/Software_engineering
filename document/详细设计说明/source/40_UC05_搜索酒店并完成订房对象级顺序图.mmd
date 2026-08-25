@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC05 搜索酒店并完成订房——对象级顺序图
+    participant P0 as 用户
+    participant P1 as HotelDetail.vue
+    participant P2 as HotelController
+    participant P3 as HotelOrderServiceImpl
+    participant P4 as HotelRoomStockServiceImpl
+    participant P5 as HotelRoom/OrderMapper
+    P0->>P1: 选择日期、房型和房间数
+    P1->>P2: POST /api/hotel/order/create
+    P2->>P3: createOrder(userId,dto)
+    P3->>P4: preDeductRoom(roomId,count)
+    P4-->>P3: 成功/Redis 不可用/库存不足
+    P3->>P5: 数据库条件扣减并插入订单
+    P5-->>P3: 返回 orderNo；失败则回滚预减
+    P3-->>P2: 返回待支付订单号
+    Note over P0,P5: 数据库是库存最终事实源；Redis 不可用可降级，数据库失败必须回滚缓存预减。

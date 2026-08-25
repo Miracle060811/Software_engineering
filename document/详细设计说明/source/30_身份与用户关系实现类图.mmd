@@ -1,0 +1,68 @@
+classDiagram
+    %% 身份与用户关系实现类图
+    class UserController {
+        <<Controller>>
+        +register_
+        +login_
+        +changePassword_
+    }
+    class UserService {
+        <<Service>>
+        +register_
+        +login_
+        +getUserByUsername_
+    }
+    class UserMapper {
+        <<Mapper>>
+        +selectOne_
+        +insert_
+        +updateById_
+    }
+    class User {
+        <<Entity>>
+        +id: Long
+        +username: String
+        +role/status: Integer
+    }
+    class FollowController {
+        <<Controller>>
+        +toggleFollow_
+        +fans_
+        +following_
+    }
+    class FollowServiceImpl {
+        <<Service>>
+        +toggleFollow_
+        +fans_
+        +followStatus_
+    }
+    class FollowMapper {
+        <<Mapper>>
+        +selectOne_
+        +insert_
+        +delete_
+    }
+    class Follow {
+        <<Entity>>
+        +followerId: Long
+        +followeeId: Long
+        +createTime: LocalDateTime
+    }
+    class JwtFilter {
+        <<Security>>
+        +doFilterInternal_
+    }
+    class JwtUtil {
+        <<Security>>
+        +generateToken_
+        +validateToken_
+        +getUsername_
+    }
+    UserController --> UserService : 调用
+    UserService --> UserMapper : 读写
+    UserMapper --> User : 映射
+    FollowController --> FollowServiceImpl : 调用
+    FollowServiceImpl --> FollowMapper : 读写
+    FollowMapper --> Follow : 映射
+    UserService --> JwtUtil : 签发 JWT
+    JwtFilter --> JwtUtil : 解析校验

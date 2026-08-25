@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC02 大交通订单代表流程——对象级顺序图
+    participant P0 as 用户
+    participant P1 as FlightSearch.vue
+    participant P2 as TrafficOrderController
+    participant P3 as TrafficOrderServiceImpl
+    participant P4 as FlightMapper
+    participant P5 as TrafficOrderMapper
+    P0->>P1: 选择航班与乘客
+    P1->>P2: POST /api/order/flight/create
+    P2->>P3: createFlightOrder()
+    P3->>P4: 条件扣减座位
+    P4-->>P3: 扣减成功/库存不足
+    P3->>P5: 新增待支付订单
+    P5-->>P3: 返回 orderNo
+    P3-->>P2: 返回订单号
+    Note over P0,P5: 此图仅为 UC02 代表流程；UC03、UC04、UC16 分别见图片 38、39、51。

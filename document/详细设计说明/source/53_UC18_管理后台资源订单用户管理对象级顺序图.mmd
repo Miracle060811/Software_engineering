@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC18 管理后台资源订单用户管理——对象级顺序图
+    participant P0 as 管理员
+    participant P1 as AdminDashboard.vue
+    participant P2 as JwtFilter/SecurityConfig
+    participant P3 as AdminController
+    participant P4 as 各业务Mapper
+    participant P5 as SysLogAspect/SysLogMapper
+    P0->>P1: 执行资源 CRUD 或订单用户操作
+    P1->>P2: 携带 Bearer Token 请求 /api/admin/**
+    P2->>P3: 管理员角色校验后放行
+    P3->>P4: 按资源类型查询/写入/条件更新
+    P4-->>P3: 返回影响行数或冲突
+    P3->>P5: AOP 写操作摘要和耗时
+    P5->>P3: 日志失败仅告警
+    P3-->>P1: 返回管理结果
+    Note over P0,P5: 当前由 AdminController 直接协调 Mapper/少量 Service；不得写成尚不存在的独立微服务。

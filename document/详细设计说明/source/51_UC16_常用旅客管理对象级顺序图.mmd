@@ -1,0 +1,15 @@
+sequenceDiagram
+    title UC16 常用旅客管理——对象级顺序图
+    participant P0 as 用户
+    participant P1 as FlightSearch/TrainSearch.vue
+    participant P2 as PassengerController
+    participant P3 as PassengerServiceImpl
+    participant P4 as PassengerMapper
+    P0->>P1: 查看新增或删除旅客
+    P1->>P2: GET /list；POST /add；DELETE /{id}
+    P2->>P3: get/add/deletePassenger
+    P3->>P4: 按 userId 查询或写入
+    P4-->>P3: 返回结果
+    P3-->>P2: 返回本人旅客数据
+    P2-->>P1: 刷新旅客列表
+    Note over P0,P4: 旅客必须绑定当前用户；删除操作按 id + userId 校验归属。

@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC17 用户主页与关注关系——对象级顺序图
+    participant P0 as 用户
+    participant P1 as UserProfile.vue
+    participant P2 as UserProfile/FollowController
+    participant P3 as FollowServiceImpl
+    participant P4 as UserMapper/FollowMapper
+    participant P5 as NotificationCenterService
+    P0->>P1: 查看主页或切换关注
+    P1->>P2: GET profile；POST /api/follow/{userId}
+    P2->>P3: toggleFollow(follower,followee)
+    P3->>P4: 校验用户并幂等更新关系
+    P4-->>P3: 返回关注状态
+    P3->>P5: 关注成功时通知对方
+    P5->>P3: 通知失败不回滚关系
+    P3-->>P2: 返回主页和关系状态
+    Note over P0,P5: 禁止关注自己；主页响应不得暴露密码、手机号等非公开字段。

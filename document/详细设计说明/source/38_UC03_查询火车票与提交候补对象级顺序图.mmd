@@ -1,0 +1,18 @@
+sequenceDiagram
+    title UC03 查询火车票与提交候补——对象级顺序图
+    participant P0 as 用户
+    participant P1 as TrainSearch.vue
+    participant P2 as TrainController
+    participant P3 as TrainServiceImpl
+    participant P4 as TrainWaitlistServiceImpl
+    participant P5 as TrainMapper/WaitlistMapper
+    P0->>P1: 输入车站、日期和席别
+    P1->>P2: GET /api/train/search
+    P2->>P3: searchTrains()
+    P3->>P5: 查询本地/同步缓存
+    P5-->>P3: 返回车次
+    P1->>P2: 无票时 POST /waitlist
+    P2->>P4: createWaitlist(userId,dto)
+    P4->>P5: 校验车次旅客并写候补
+    P5-->>P4: 返回候补 ID
+    Note over P0,P5: 公共余票同步失败时回退本地数据；候补记录必须绑定当前用户和有效旅客。

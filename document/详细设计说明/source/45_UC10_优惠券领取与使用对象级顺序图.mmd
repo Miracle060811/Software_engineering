@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC10 优惠券领取与使用——对象级顺序图
+    participant P0 as 用户
+    participant P1 as CouponCenter.vue
+    participant P2 as CouponController
+    participant P3 as CouponServiceImpl
+    participant P4 as CouponMapper/UserCouponMapper
+    participant P5 as 订单服务
+    P0->>P1: 查看并领取优惠券
+    P1->>P2: GET /list；POST /claim/{id}
+    P2->>P3: listAvailable()/claimCoupon()
+    P3->>P4: 校验库存有效期并写用户券
+    P4-->>P3: 返回领取结果
+    P5->>P3: 下单时 useCoupon()
+    P3->>P4: 校验门槛并更新 used_time
+    P4-->>P3: 返回减免金额
+    Note over P0,P5: 领取逻辑已实现；订单核销调用和测试证据仍需补齐，不能标记已验证。

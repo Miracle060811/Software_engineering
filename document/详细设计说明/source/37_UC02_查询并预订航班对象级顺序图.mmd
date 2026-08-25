@@ -1,0 +1,18 @@
+sequenceDiagram
+    title UC02 查询并预订航班——对象级顺序图
+    participant P0 as 用户
+    participant P1 as FlightSearch.vue
+    participant P2 as FlightController
+    participant P3 as TrafficOrderController
+    participant P4 as TrafficOrderServiceImpl
+    participant P5 as FlightMapper/OrderMapper
+    P0->>P1: 输入城市、日期并选择乘客
+    P1->>P2: GET /api/flight/search
+    P2->>P5: 查询航班
+    P5-->>P2: 返回航班列表
+    P1->>P3: POST /api/order/flight/create
+    P3->>P4: createFlightOrder(userId,dto)
+    P4->>P5: 条件扣减座位并新增订单
+    P5-->>P4: 返回 orderNo；库存不足则失败
+    P4-->>P3: 返回待支付订单号
+    Note over P0,P5: 库存扣减与订单写入处于同一事务；库存不足时不得创建订单。

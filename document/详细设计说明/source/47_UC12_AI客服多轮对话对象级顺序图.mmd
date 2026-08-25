@@ -1,0 +1,18 @@
+sequenceDiagram
+    title UC12 AI客服多轮对话——对象级顺序图
+    participant P0 as 用户
+    participant P1 as AiPlan.vue
+    participant P2 as AiController
+    participant P3 as AiServiceImpl
+    participant P4 as DeepSeek API
+    participant P5 as AiChatMapper
+    P0->>P1: 发送问题与 sessionId
+    P1->>P2: POST /api/ai/chat
+    P2->>P3: chat(dto,userId)
+    P3->>P5: 读取必要历史消息
+    P5-->>P3: 返回上下文
+    P3->>P4: 发送受约束 Prompt
+    P4-->>P3: 返回回答或失败
+    P3->>P5: 保存问答记录
+    P3-->>P2: 返回回答/可解释失败
+    Note over P0,P5: 订单、价格和库存必须由站内接口确认；外部失败时不得编造答案。

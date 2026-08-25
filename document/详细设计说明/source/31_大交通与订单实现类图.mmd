@@ -1,0 +1,111 @@
+classDiagram
+    %% 大交通与订单实现类图
+    class FlightController {
+        <<Controller>>
+        +searchFlights_
+        +getFlightById_
+    }
+    class FlightServiceImpl {
+        <<Service>>
+        +searchFlights_
+        +getById_
+    }
+    class FlightMapper {
+        <<Mapper>>
+        +selectList_
+        +selectById_
+        +update_
+    }
+    class Flight {
+        <<Entity>>
+        +flightNo: String
+        +availableSeats: Integer
+        +price: BigDecimal
+    }
+    class TrainController {
+        <<Controller>>
+        +searchTrains_
+        +createWaitlist_
+    }
+    class TrainServiceImpl {
+        <<Service>>
+        +searchTrains_
+        +getTransferPlan_
+    }
+    class TrainMapper {
+        <<Mapper>>
+        +selectList_
+        +selectById_
+        +update_
+    }
+    class Train {
+        <<Entity>>
+        +trainNo: String
+        +seatInventory: Integer
+        +depDate: LocalDate
+    }
+    class TrafficOrderController {
+        <<Controller>>
+        +createFlightOrder_
+        +createTrainOrder_
+        +mockPay_/cancel_
+    }
+    class TrafficOrderServiceImpl {
+        <<Service>>
+        +createFlightOrder_
+        +createTrainOrder_
+        +pay/cancel/refund_
+    }
+    class TrafficOrderMapper {
+        <<Mapper>>
+        +insert_
+        +selectOne_
+        +updateById_
+    }
+    class TrafficOrder {
+        <<Entity>>
+        +orderNo: String
+        +orderType/status: Integer
+        +userId: Long
+    }
+    class PassengerController {
+        <<Controller>>
+        +list_
+        +add_
+        +delete_
+    }
+    class PassengerServiceImpl {
+        <<Service>>
+        +getPassengerList_
+        +addPassenger_
+        +deletePassenger_
+    }
+    class PassengerMapper {
+        <<Mapper>>
+        +selectList_
+        +insert_
+        +delete_
+    }
+    class Passenger {
+        <<Entity>>
+        +userId: Long
+        +name: String
+        +idCard: String
+    }
+    class OrderTimeoutScheduler {
+        <<Scheduler>>
+        +closeExpiredOrders_
+    }
+    FlightController --> FlightServiceImpl : 查询
+    FlightServiceImpl --> FlightMapper : 读写
+    FlightMapper --> Flight : 映射
+    TrainController --> TrainServiceImpl : 查询
+    TrainServiceImpl --> TrainMapper : 读写
+    TrainMapper --> Train : 映射
+    TrafficOrderController --> TrafficOrderServiceImpl : 下单/状态命令
+    TrafficOrderServiceImpl --> TrafficOrderMapper : 读写
+    TrafficOrderMapper --> TrafficOrder : 映射
+    PassengerController --> PassengerServiceImpl : 维护
+    PassengerServiceImpl --> PassengerMapper : 读写
+    PassengerMapper --> Passenger : 映射
+    OrderTimeoutScheduler --> TrafficOrderServiceImpl : 超时关闭

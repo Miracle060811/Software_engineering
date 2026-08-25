@@ -1,0 +1,127 @@
+classDiagram
+    %% 酒店景点与权益实现类图
+    class HotelController {
+        <<Controller>>
+        +searchHotels_
+        +createOrder_
+        +pay/cancel/refund_
+    }
+    class HotelOrderServiceImpl {
+        <<Service>>
+        +createOrder_
+        +payOrder_
+        +cancel/refund_
+    }
+    class HotelOrderMapper {
+        <<Mapper>>
+        +insert_
+        +selectOne_
+        +updateById_
+    }
+    class HotelOrder {
+        <<Entity>>
+        +orderNo: String
+        +roomCount: Integer
+        +status: Integer
+    }
+    class HotelRoomStockServiceImpl {
+        <<Service>>
+        +preDeductRoom_
+        +rollbackPreDeduct_
+        +syncWithDatabase_
+    }
+    class HotelRoomMapper {
+        <<Mapper>>
+        +selectById_
+        +deductStock_
+        +updateById_
+    }
+    class HotelRoom {
+        <<Entity>>
+        +hotelId: Long
+        +availableRooms: Integer
+        +price: BigDecimal
+    }
+    class AttractionController {
+        <<Controller>>
+        +search_
+        +buyTicket_
+        +receipt_
+    }
+    class AttractionServiceImpl {
+        <<Service>>
+        +searchAttractions_
+        +buyTicket_
+        +getOrderDetail_
+    }
+    class AttractionOrderMapper {
+        <<Mapper>>
+        +insert_
+        +selectOne_
+    }
+    class AttractionOrder {
+        <<Entity>>
+        +orderNo: String
+        +adult/childCount: Integer
+        +totalAmount: BigDecimal
+    }
+    class CouponController {
+        <<Controller>>
+        +list_
+        +claim_
+        +myCoupons_
+    }
+    class CouponServiceImpl {
+        <<Service>>
+        +listAvailable_
+        +claimCoupon_
+        +useCoupon_
+    }
+    class UserCouponMapper {
+        <<Mapper>>
+        +selectOne_
+        +insert_
+        +updateById_
+    }
+    class UserCoupon {
+        <<Entity>>
+        +userId/couponId: Long
+        +status: Integer
+        +usedTime: LocalDateTime
+    }
+    class ReviewController {
+        <<Controller>>
+        +addReview_
+        +listReviews_
+    }
+    class ReviewServiceImpl {
+        <<Service>>
+        +addReview_
+        +getReviews_
+    }
+    class ReviewMapper {
+        <<Mapper>>
+        +insert_
+        +selectList_
+    }
+    class Review {
+        <<Entity>>
+        +targetId/type: Long/Integer
+        +rating: Integer
+        +content: String
+    }
+    HotelController --> HotelOrderServiceImpl : 订单命令
+    HotelOrderServiceImpl --> HotelOrderMapper : 读写
+    HotelOrderMapper --> HotelOrder : 映射
+    HotelOrderServiceImpl --> HotelRoomStockServiceImpl : 预减/回补
+    HotelRoomStockServiceImpl --> HotelRoomMapper : 库存更新
+    HotelRoomMapper --> HotelRoom : 映射
+    AttractionController --> AttractionServiceImpl : 查询/购票
+    AttractionServiceImpl --> AttractionOrderMapper : 写订单
+    AttractionOrderMapper --> AttractionOrder : 映射
+    CouponController --> CouponServiceImpl : 领券
+    CouponServiceImpl --> UserCouponMapper : 读写
+    UserCouponMapper --> UserCoupon : 映射
+    ReviewController --> ReviewServiceImpl : 评价
+    ReviewServiceImpl --> ReviewMapper : 读写
+    ReviewMapper --> Review : 映射

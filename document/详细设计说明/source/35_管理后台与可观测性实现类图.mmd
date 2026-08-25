@@ -1,0 +1,88 @@
+classDiagram
+    %% 管理后台与可观测性实现类图
+    class SecurityConfig {
+        <<Security>>
+        +securityFilterChain_
+    }
+    class JwtFilter {
+        <<Security>>
+        +doFilterInternal_
+    }
+    class AdminController {
+        <<Controller>>
+        +dashboardData_
+        +manageResources_
+        +audit/resolve_
+    }
+    class HotelRoomStockServiceImpl {
+        <<Service>>
+        +preDeductRoom_
+        +rollbackPreDeduct_
+        +syncWithDatabase_
+    }
+    class HotelRoomMapper {
+        <<Mapper>>
+        +selectById_
+        +updateById_
+    }
+    class HotelRoom {
+        <<Entity>>
+        +hotelId: Long
+        +availableRooms: Integer
+        +price: BigDecimal
+    }
+    class PostMapper {
+        <<Mapper>>
+        +selectPage_
+        +updateById_
+    }
+    class Post {
+        <<Entity>>
+        +id/userId: Long
+        +status: Integer
+        +auditReason: String
+    }
+    class NotificationCenterServiceImpl {
+        <<Service>>
+        +createNotification_
+        +listNotifications_
+    }
+    class NotificationMapper {
+        <<Mapper>>
+        +insert_
+        +selectList_
+    }
+    class Notification {
+        <<Entity>>
+        +userId: Long
+        +type/title: String
+        +isRead: Integer
+    }
+    class SysLogAspect {
+        <<Aspect>>
+        +logAround_
+    }
+    class SysLogMapper {
+        <<Mapper>>
+        +insert_
+        +selectPage_
+    }
+    class SysLog {
+        <<Entity>>
+        +username/ip: String
+        +method: String
+        +duration/status: Long/Integer
+    }
+    SecurityConfig --> JwtFilter : 注册过滤器
+    JwtFilter --> AdminController : 鉴权放行
+    AdminController --> HotelRoomStockServiceImpl : 库存管理
+    HotelRoomStockServiceImpl --> HotelRoomMapper : 读写
+    HotelRoomMapper --> HotelRoom : 映射
+    AdminController --> PostMapper : 审核状态更新
+    PostMapper --> Post : 映射
+    AdminController --> NotificationCenterServiceImpl : 审核通知
+    NotificationCenterServiceImpl --> NotificationMapper : 写通知
+    NotificationMapper --> Notification : 映射
+    SysLogAspect --> AdminController : AOP 拦截
+    SysLogAspect --> SysLogMapper : 写审计日志
+    SysLogMapper --> SysLog : 映射

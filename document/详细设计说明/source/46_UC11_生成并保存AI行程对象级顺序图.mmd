@@ -1,0 +1,18 @@
+sequenceDiagram
+    title UC11 生成并保存AI行程——对象级顺序图
+    participant P0 as 用户
+    participant P1 as AiPlan.vue
+    participant P2 as AiController
+    participant P3 as AiServiceImpl
+    participant P4 as DeepSeek API/本地模板
+    participant P5 as AiPlanMapper
+    P0->>P1: 提交目的地日期预算偏好
+    P1->>P2: POST /api/ai/plan/generate
+    P2->>P3: generatePlan(dto,userId)
+    P3->>P4: 调用模型并校验 JSON
+    P4-->>P3: 返回结构化结果或失败
+    P3->>P4: 失败时切换本地模板
+    P3->>P5: 保存计划与降级标记
+    P5-->>P3: 返回计划 ID
+    P3-->>P2: 返回可渲染计划
+    Note over P0,P5: API Key 缺失、超时或非法 JSON 时必须降级；不得把模型文本当实时库存承诺。

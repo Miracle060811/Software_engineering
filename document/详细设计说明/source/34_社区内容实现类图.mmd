@@ -1,0 +1,103 @@
+classDiagram
+    %% 社区内容实现类图
+    class PostController {
+        <<Controller>>
+        +listPosts_
+        +createPost_
+        +update/deletePost_
+    }
+    class PostServiceImpl {
+        <<Service>>
+        +listPosts_
+        +createPost_
+        +update/deletePost_
+    }
+    class PostMapper {
+        <<Mapper>>
+        +insert_
+        +selectPage_
+        +updateById_
+    }
+    class Post {
+        <<Entity>>
+        +userId: Long
+        +title/content: String
+        +status: Integer
+    }
+    class SensitiveWordServiceImpl {
+        <<Service>>
+        +containsSensitiveWord_
+        +filter_
+    }
+    class SysSensitiveWordMapper {
+        <<Mapper>>
+        +selectList_
+        +insert_
+        +delete_
+    }
+    class SysSensitiveWord {
+        <<Entity>>
+        +word: String
+        +status: Integer
+        +createTime: LocalDateTime
+    }
+    class LikeController {
+        <<Controller>>
+        +toggle_
+        +status_
+        +myCollects_
+    }
+    class LikeServiceImpl {
+        <<Service>>
+        +toggleLike_
+        +likeStatus_
+        +getMyCollects_
+    }
+    class LikeMapper {
+        <<Mapper>>
+        +selectOne_
+        +insert_
+        +delete_
+    }
+    class Like {
+        <<Entity>>
+        +userId/targetId: Long
+        +targetType: Integer
+        +createTime: LocalDateTime
+    }
+    class CommentController {
+        <<Controller>>
+        +list_
+        +add_
+        +delete_
+    }
+    class CommentServiceImpl {
+        <<Service>>
+        +listComments_
+        +addComment_
+        +deleteComment_
+    }
+    class CommentMapper {
+        <<Mapper>>
+        +selectList_
+        +insert_
+        +delete_
+    }
+    class Comment {
+        <<Entity>>
+        +postId/userId: Long
+        +parentId: Long
+        +content: String
+    }
+    PostController --> PostServiceImpl : 帖子接口
+    PostServiceImpl --> PostMapper : 读写
+    PostMapper --> Post : 映射
+    PostServiceImpl --> SensitiveWordServiceImpl : 发布前检测
+    SensitiveWordServiceImpl --> SysSensitiveWordMapper : 读取词库
+    SysSensitiveWordMapper --> SysSensitiveWord : 映射
+    LikeController --> LikeServiceImpl : 互动接口
+    LikeServiceImpl --> LikeMapper : 幂等读写
+    LikeMapper --> Like : 映射
+    CommentController --> CommentServiceImpl : 评论接口
+    CommentServiceImpl --> CommentMapper : 树状读写
+    CommentMapper --> Comment : 映射

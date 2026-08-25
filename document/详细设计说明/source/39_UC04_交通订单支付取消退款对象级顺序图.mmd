@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC04 交通订单支付取消退款——对象级顺序图
+    participant P0 as 用户
+    participant P1 as MyOrders.vue
+    participant P2 as TrafficOrderController
+    participant P3 as TrafficOrderServiceImpl
+    participant P4 as TrafficOrderMapper
+    participant P5 as NotificationCenterService
+    P0->>P1: 选择支付/取消/退款
+    P1->>P2: POST /api/order/{orderNo}/动作
+    P2->>P3: 校验当前用户与状态
+    P3->>P4: 读取并条件更新订单
+    P4-->>P3: 返回更新行数
+    P3->>P5: 成功后创建通知
+    P5->>P3: 通知失败仅记录告警
+    P3-->>P2: 返回当前终态
+    Note over P0,P5: 仅允许合法状态跃迁；取消和退款的库存回补必须幂等。

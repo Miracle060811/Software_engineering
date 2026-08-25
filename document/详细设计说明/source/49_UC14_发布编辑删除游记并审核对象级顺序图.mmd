@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC14 发布编辑删除游记并审核——对象级顺序图
+    participant P0 as 用户/管理员
+    participant P1 as PostCreate.vue/AdminDashboard.vue
+    participant P2 as PostController/AdminController
+    participant P3 as PostServiceImpl
+    participant P4 as SensitiveWordServiceImpl
+    participant P5 as PostMapper
+    P0->>P1: 提交游记或审核动作
+    P1->>P2: POST /api/post/create 或 /admin/posts/{id}/approve
+    P2->>P3: createPost()/条件审核
+    P3->>P4: containsSensitiveWord()
+    P4-->>P3: 返回检测结果
+    P3->>P5: 保存待审或条件更新终态
+    P5-->>P3: 返回状态
+    P3-->>P2: 返回审核结果
+    Note over P0,P5: 帖子仅允许 0待审→1通过/2拒绝；命中敏感词或越权编辑时拒绝。

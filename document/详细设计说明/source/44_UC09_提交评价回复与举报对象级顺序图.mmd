@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC09 提交评价回复与举报——对象级顺序图
+    participant P0 as 用户/管理员
+    participant P1 as 详情页/后台
+    participant P2 as Review/Reply/ReportController
+    participant P3 as ReviewServiceImpl
+    participant P4 as Review/Reply/ReportMapper
+    participant P5 as AdminController
+    P0->>P1: 提交评价、回复或举报
+    P1->>P2: 调用对应 /api 接口
+    P2->>P3: 校验评分与目标
+    P3->>P4: 写入关联记录
+    P4-->>P3: 返回记录 ID
+    P0->>P5: 管理员处理举报
+    P5->>P4: 条件更新工单或删除评价
+    P4-->>P5: 返回终态
+    Note over P0,P5: 重复评价、重复举报与越权回复必须拒绝；举报处理需保留终态。

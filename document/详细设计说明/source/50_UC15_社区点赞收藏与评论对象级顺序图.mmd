@@ -1,0 +1,17 @@
+sequenceDiagram
+    title UC15 社区点赞收藏与评论——对象级顺序图
+    participant P0 as 用户
+    participant P1 as PostDetail.vue
+    participant P2 as Like/CommentController
+    participant P3 as LikeServiceImpl
+    participant P4 as CommentServiceImpl
+    participant P5 as Like/CommentMapper
+    P0->>P1: 点赞收藏或提交评论
+    P1->>P2: POST /api/like/toggle 或 /comment/add
+    P2->>P3: toggleLike(userId,body)
+    P3->>P5: 按用户目标幂等写入/删除
+    P2->>P4: addComment(body,userId)
+    P4->>P5: 校验父评论并写入
+    P5-->>P4: 返回评论记录
+    P3-->>P2: 返回当前互动状态
+    Note over P0,P5: 重复互动保持幂等；只能删除自己的评论，父评论必须属于同一帖子。

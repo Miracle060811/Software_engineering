@@ -1,0 +1,18 @@
+sequenceDiagram
+    title UC01 用户注册登录与账户安全——对象级顺序图
+    participant P0 as 用户
+    participant P1 as Login.vue
+    participant P2 as UserController
+    participant P3 as UserService
+    participant P4 as UserMapper
+    participant P5 as JwtUtil
+    P0->>P1: 提交注册/登录信息
+    P1->>P2: POST /user/register 或 /login
+    P2->>P3: register()/login()
+    P3->>P4: 查询用户并写入 BCrypt 密码
+    P4-->>P3: 返回用户记录/写入结果
+    P3->>P5: generateToken(username)
+    P5-->>P3: 返回 JWT；失败则不签发
+    P3-->>P2: 返回登录结果
+    P2-->>P1: Result<Token>
+    Note over P0,P5: 用户名重复、密码错误、账号禁用或 Token 过期时拒绝访问；密码不得明文落库。

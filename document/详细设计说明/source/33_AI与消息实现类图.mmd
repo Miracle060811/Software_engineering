@@ -1,0 +1,90 @@
+classDiagram
+    %% AI与消息实现类图
+    class AiController {
+        <<Controller>>
+        +generatePlan_
+        +chat_
+        +listNotifications_
+    }
+    class AiServiceImpl {
+        <<Service>>
+        +generatePlan_
+        +chat_
+        +auditPost_
+    }
+    class AiPlanMapper {
+        <<Mapper>>
+        +insert_
+        +selectList_
+        +selectById_
+    }
+    class AiPlan {
+        <<Entity>>
+        +userId: Long
+        +requestJson: String
+        +planJson: String
+    }
+    class AiChatMapper {
+        <<Mapper>>
+        +insert_
+        +selectList_
+    }
+    class AiChat {
+        <<Entity>>
+        +userId: Long
+        +sessionId: String
+        +content/role: String
+    }
+    class NotificationCenterServiceImpl {
+        <<Service>>
+        +createNotification_
+        +markRead_
+        +unreadCount_
+    }
+    class NotificationMapper {
+        <<Mapper>>
+        +insert_
+        +selectList_
+        +update_
+    }
+    class Notification {
+        <<Entity>>
+        +userId: Long
+        +type/title: String
+        +isRead: Integer
+    }
+    class PrivateMessageController {
+        <<Controller>>
+        +contacts_
+        +conversation_
+        +send_
+    }
+    class PrivateMessageServiceImpl {
+        <<Service>>
+        +listContacts_
+        +listConversation_
+        +sendMessage_
+    }
+    class PrivateMessageMapper {
+        <<Mapper>>
+        +insert_
+        +selectList_
+        +update_
+    }
+    class PrivateMessage {
+        <<Entity>>
+        +sender/receiverId: Long
+        +content: String
+        +isRead: Integer
+    }
+    AiController --> AiServiceImpl : 行程/问答
+    AiServiceImpl --> AiPlanMapper : 保存计划
+    AiPlanMapper --> AiPlan : 映射
+    AiServiceImpl --> AiChatMapper : 保存会话
+    AiChatMapper --> AiChat : 映射
+    AiController --> NotificationCenterServiceImpl : 通知接口
+    NotificationCenterServiceImpl --> NotificationMapper : 读写
+    NotificationMapper --> Notification : 映射
+    PrivateMessageController --> PrivateMessageServiceImpl : 私信接口
+    PrivateMessageServiceImpl --> PrivateMessageMapper : 读写
+    PrivateMessageMapper --> PrivateMessage : 映射
