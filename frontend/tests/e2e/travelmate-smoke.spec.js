@@ -122,6 +122,17 @@ async function mockTravelMateApi(page) {
           commentCount: 3,
           createTime: "2026-06-01 12:00:00",
         },
+        {
+          id: 2,
+          title: "三亚海岛路线",
+          content: "蜈支洲岛与亚龙湾路线记录",
+          destination: "三亚",
+          images: "https://upload.wikimedia.org/wikipedia/commons/1/19/Wuzhizhou_Island_-_01.jpg",
+          nickname: "测试用户",
+          likeCount: 8,
+          commentCount: 2,
+          createTime: "2026-06-01 13:00:00",
+        },
       ])),
     });
   });
@@ -180,6 +191,23 @@ test("community covers use responsive generated images", async ({ page }) => {
   await expect(cover).toHaveAttribute("srcset", /images\/generated\/posts\/beijing-forbidden-city-480\.webp/);
   await expect.poll(() => cover.evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
   expect(imageRequests.some((url) => url.includes("/images/real/posts/beijing-forbidden-city.jpg"))).toBe(false);
+});
+
+test("Wikimedia covers only request supported thumbnail sizes", async ({ page }) => {
+  await page.route("https://upload.wikimedia.org/**", async (route) => {
+    await route.fulfill({
+      contentType: "image/svg+xml",
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="9"><rect width="16" height="9" fill="#168f7e"/></svg>',
+    });
+  });
+
+  await page.goto("/community");
+  const cover = page.locator(".post-cover").nth(1);
+  await expect(cover).toHaveAttribute("srcset", /500px-Wuzhizhou_Island_-_01\.jpg 500w/);
+  await expect(cover).toHaveAttribute("srcset", /960px-Wuzhizhou_Island_-_01\.jpg 960w/);
+  await expect(cover).toHaveAttribute("srcset", /1280px-Wuzhizhou_Island_-_01\.jpg 1280w/);
+  await expect(cover).not.toHaveAttribute("srcset", /(?:480|1440)px-/);
+  await expect.poll(() => cover.evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
 });
 
 test("auth-only routes redirect anonymous users to login", async ({ page }) => {

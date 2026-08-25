@@ -2,7 +2,8 @@ const seedAsset = (file) => `${import.meta.env.BASE_URL}images/seed/${file}`;
 const generatedAsset = (file) => `${import.meta.env.BASE_URL}images/generated/${file}`;
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/+$/, "") || "";
 const LOCAL_RESPONSIVE_WIDTHS = [480, 960];
-const REMOTE_RESPONSIVE_WIDTHS = [480, 960, 1440];
+// Wikimedia rejects hotlinked thumbnails that are not one of its production size steps.
+const REMOTE_RESPONSIVE_WIDTHS = [500, 960, 1280];
 
 export const FALLBACK_IMAGE = seedAsset("fallback.svg");
 

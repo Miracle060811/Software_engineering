@@ -74,6 +74,7 @@ const imageElement = ref(null);
 const imageData = computed(() => getResponsiveImageData(props.src, props.fallback));
 const activated = ref(props.loading === "eager");
 const settled = ref(false);
+const triedWithoutSrcset = ref(false);
 const triedOriginal = ref(false);
 const currentSrc = ref(activated.value ? imageData.value.src : TRANSPARENT_PIXEL);
 const currentSrcset = ref(activated.value ? imageData.value.srcset : "");
@@ -95,6 +96,7 @@ const scheduleLoadTimeout = () => {
 
 const applyImageData = () => {
   settled.value = false;
+  triedWithoutSrcset.value = false;
   triedOriginal.value = false;
   currentSrc.value = imageData.value.src;
   currentSrcset.value = imageData.value.srcset;
@@ -114,6 +116,12 @@ watch(imageData, () => {
 
 const useFallback = () => {
   clearLoadTimeout();
+  if (!triedWithoutSrcset.value && currentSrcset.value) {
+    triedWithoutSrcset.value = true;
+    currentSrcset.value = "";
+    scheduleLoadTimeout();
+    return;
+  }
   if (!triedOriginal.value && imageData.value.original !== currentSrc.value) {
     triedOriginal.value = true;
     currentSrc.value = imageData.value.original;
