@@ -71,9 +71,15 @@ request.interceptors.response.use(
     if (!error.response) {
       if (shouldNotify(error.config)) {
         const timedOut = error.code === "ECONNABORTED" || /timeout/i.test(error.message || "");
+        const requestUrl = error.config?.url || "";
+        const timeoutMessage = requestUrl.includes("/api/train")
+          ? "查询超时，12306 当前响应较慢，请稍后重试"
+          : requestUrl.includes("/api/ai")
+            ? "AI 服务响应较慢，请稍后重试"
+            : "请求超时，请稍后重试";
         ElMessage.error(
           timedOut
-            ? "查询超时，12306 当前响应较慢，请稍后重试"
+            ? timeoutMessage
             : "无法连接后端服务，请确认前后端都已启动",
         );
       }

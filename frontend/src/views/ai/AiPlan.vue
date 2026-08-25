@@ -2,10 +2,10 @@
   <div class="ai-plan-page">
     <section class="planner-hero">
       <div class="planner-hero-copy">
-        <span class="section-kicker">ROUTE PLANNING DESK</span>
+        <span class="section-kicker">AI ROUTE PLANNING DESK</span>
         <h1>把旅行想法整理成每天都能照着走的路线</h1>
         <p>
-          输入目的地、人数、预算和偏好，TravelMate 会把每日节奏、交通衔接、住宿建议和费用估算放进一份清晰行程。
+          输入出发地、目的地、人数、预算和偏好，TravelMate 会先核验城市，再把每日节奏、交通衔接、住宿建议和费用估算放进一份清晰行程。
         </p>
       </div>
       <div class="hero-route-card" aria-label="规划流程">
@@ -30,10 +30,27 @@
       <aside class="planner-sidebar">
         <section class="input-card">
           <div class="panel-head">
-            <span><el-icon><Cpu /></el-icon> 路线整理</span>
+            <span><el-icon><Cpu /></el-icon> AI 路线整理</span>
             <strong>先定旅行轮廓</strong>
           </div>
           <el-form :model="planForm" label-position="top" label-width="auto">
+            <el-form-item label="出发地">
+              <el-select
+                v-model="planForm.origin"
+                filterable
+                allow-create
+                default-first-option
+                clearable
+                placeholder="选择或输入真实城市"
+              >
+                <el-option
+                  v-for="city in commonOriginOptions"
+                  :key="city"
+                  :label="city"
+                  :value="city"
+                />
+              </el-select>
+            </el-form-item>
             <el-form-item label="目的地">
               <el-input
                 v-model="planForm.destination"
@@ -142,6 +159,10 @@
               <el-icon><MagicStick /></el-icon>
               {{ generating ? "正在生成..." : "生成行程" }}
             </el-button>
+            <p class="verification-note">
+              出发地和目的地会先经过城市核验；无法确认或不可作为城市前往时，将停止生成。
+              地点数据 © OpenStreetMap contributors，天气数据由 Open-Meteo 提供。
+            </p>
           </el-form>
         </section>
 
@@ -242,6 +263,9 @@
             </div>
             <p class="plan-summary">{{ currentPlan.summary }}</p>
             <div class="summary-tags">
+              <el-tag v-if="currentPlan.origin && currentPlan.destination" effect="plain">
+                {{ currentPlan.origin }} → {{ currentPlan.destination }}
+              </el-tag>
               <el-tag v-if="currentPlan.pace" type="primary" effect="plain">
                 节奏：{{ currentPlan.pace }}
               </el-tag>
@@ -440,6 +464,10 @@ const preferenceOptions = [
 
 const travelStyleOptions = ["轻松", "适中", "紧凑"];
 
+const commonOriginOptions = [
+  "北京", "上海", "广州", "深圳", "杭州", "南京", "成都", "重庆", "西安", "武汉",
+];
+
 const transportOptions = [
   "公共交通优先，必要时打车",
   "打车优先，减少换乘",
@@ -457,6 +485,7 @@ const accommodationOptions = [
 const destinationPresets = [
   {
     name: "云南大理",
+    origin: "上海",
     days: 4,
     people: 2,
     budget: "4200",
@@ -469,6 +498,7 @@ const destinationPresets = [
   },
   {
     name: "杭州",
+    origin: "南京",
     days: 3,
     people: 2,
     budget: "2600",
@@ -481,6 +511,7 @@ const destinationPresets = [
   },
   {
     name: "成都",
+    origin: "重庆",
     days: 5,
     people: 3,
     budget: "5200",
@@ -500,6 +531,7 @@ const sampleDays = [
 ];
 
 const planForm = ref({
+  origin: "",
   destination: "",
   days: 3,
   people: 2,
@@ -552,6 +584,7 @@ const hasPlanInsights = computed(
 );
 
 const applyDestinationPreset = (preset) => {
+  planForm.value.origin = preset.origin || planForm.value.origin;
   planForm.value.destination = preset.name;
   planForm.value.days = preset.days;
   planForm.value.people = preset.people;
@@ -570,8 +603,16 @@ const applyDestinationPreset = (preset) => {
 };
 
 const generatePlan = async () => {
+  if (!planForm.value.origin) {
+    ElMessage.warning("请选择或输入出发地");
+    return;
+  }
   if (!planForm.value.destination) {
     ElMessage.warning("请输入目的地");
+    return;
+  }
+  if (planForm.value.origin.trim() === planForm.value.destination.trim()) {
+    ElMessage.warning("出发地和目的地不能相同");
     return;
   }
   if (Number(planForm.value.budget) <= 0) {
@@ -582,6 +623,7 @@ const generatePlan = async () => {
   currentPlan.value = null;
   try {
     const res = await request.post("/api/ai/plan/generate", {
+      origin: planForm.value.origin,
       destination: planForm.value.destination,
       days: planForm.value.days,
       people: planForm.value.people,
@@ -594,6 +636,9 @@ const generatePlan = async () => {
       accommodationPreference: planForm.value.accommodationPreference,
       mustVisit: planForm.value.mustVisit,
       avoidPlaces: planForm.value.avoidPlaces,
+    }, {
+      timeout: 120000,
+      skipErrorMessage: true,
     });
     // 后端返回 planContent 为 JSON 字符串
     if (res && res.planContent) {
@@ -608,7 +653,7 @@ const generatePlan = async () => {
     await fetchHistoryPlans();
     window.dispatchEvent(new Event("notification-updated"));
   } catch (e) {
-    ElMessage.error("行程生成失败，请稍后重试");
+    ElMessage.error(e?.response?.data?.msg || e?.message || "行程生成失败，请稍后重试");
   } finally {
     generating.value = false;
   }
@@ -643,6 +688,9 @@ const exportPlan = () => {
   let text = "========================================\n";
   text += `  ${currentPlan.value.title || "行程计划"}\n`;
   text += `  ${currentPlan.value.summary || ""}\n`;
+  if (currentPlan.value.origin && currentPlan.value.destination) {
+    text += `  路线：${currentPlan.value.origin} → ${currentPlan.value.destination}\n`;
+  }
   text += `  总预估费用：¥${currentPlan.value.totalEstimatedCost || 0}\n`;
   text += "========================================\n\n";
   if (currentPlan.value.transportAdvice) {
@@ -727,6 +775,9 @@ const sendChat = async () => {
       sessionId: sessionId.value,
       clientDate,
       clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+    }, {
+      timeout: 90000,
+      skipErrorMessage: true,
     });
     const reply =
       res?.reply || res?.content || res || "收到您的问题，正在处理中...";
@@ -734,7 +785,7 @@ const sendChat = async () => {
   } catch (e) {
     chatMessages.value.push({
       role: "assistant",
-      content: "抱歉，暂时无法回答，请稍后再试。",
+      content: e?.response?.data?.msg || e?.message || "抱歉，暂时无法回答，请稍后再试。",
     });
   } finally {
     chatLoading.value = false;
@@ -921,6 +972,13 @@ onMounted(() => {
 .input-card :deep(.el-form-item__label) {
   color: var(--tm-ink-soft);
   font-weight: 700;
+}
+
+.verification-note {
+  margin: 10px 2px 0;
+  color: var(--tm-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .input-card :deep(.el-input__wrapper),
