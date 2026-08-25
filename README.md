@@ -321,7 +321,7 @@ cd ..
 - 真实联调 E2E：仅在 `main`、面向 `main` 的 PR 或手动运行中执行，复用经过测试的 JAR，并通过 `/actuator/health` 判断后端就绪；
 - 总质量门禁：根据改动类型要求所有应运行阶段成功，允许文档提交跳过无关的构建和 E2E。
 
-安全流水线位于 [`.github/workflows/security.yml`](.github/workflows/security.yml) 和 [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)，包含 Gitleaks、PR 依赖评审、定期 OWASP Maven 依赖扫描，以及 Java/JavaScript CodeQL `security-extended` 扫描。所有第三方 Actions 均固定到完整 commit SHA。
+安全流水线位于 [`.github/workflows/security.yml`](.github/workflows/security.yml) 和 [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)，包含 Gitleaks、PR 依赖评审、每次推送执行的 Node.js/Trivy Maven 依赖扫描，以及 Java/JavaScript CodeQL `security-extended` 扫描。CodeQL 结果会保留为 SARIF artifact，不依赖仓库启用 GitHub Code Scanning。所有第三方 Actions 均固定到完整 commit SHA。
 
 用例测试证据维护在 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json)，可在本地执行：
 
