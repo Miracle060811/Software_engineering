@@ -65,8 +65,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -137,6 +139,8 @@ public class AdminController {
     private NotificationCenterService notificationCenterService;
 
     private static final int STATUS_TRAFFIC_CANCELLED = 3;
+    private static final int STATUS_TRAFFIC_TICKETING = 1;
+    private static final int STATUS_TRAFFIC_TICKETED = 2;
     private static final int STATUS_TRAFFIC_REFUNDED = 4;
     private static final int STATUS_REFUND_REQUESTED = 5;
     private static final int STATUS_HOTEL_PAID = 1;
@@ -863,6 +867,67 @@ public class AdminController {
                 .orderByDesc(Destination::getId)));
     }
 
+    @PostMapping("/destinations/sync-home")
+    @Transactional(rollbackFor = Exception.class)
+    public Result<Map<String, Object>> syncHomeDestinations(@RequestBody List<Destination> homeDestinations) {
+        checkAdmin();
+        if (homeDestinations == null || homeDestinations.isEmpty()) {
+            return Result.error("首页城市资源不能为空");
+        }
+        if (homeDestinations.size() > 100) {
+            return Result.error("单次最多同步 100 个城市");
+        }
+
+        int inserted = 0;
+        int updated = 0;
+        Set<String> slugs = new HashSet<>();
+        LocalDateTime now = LocalDateTime.now();
+        for (int i = 0; i < homeDestinations.size(); i++) {
+            Destination destination = homeDestinations.get(i);
+            if (destination == null) {
+                throw new RuntimeException("第 " + (i + 1) + " 个城市资源不能为空");
+            }
+            destination.setId(null);
+            destination.setSlug(destination.getSlug() == null
+                    ? null
+                    : destination.getSlug().trim().toLowerCase(Locale.ROOT));
+            if (!slugs.add(destination.getSlug())) {
+                throw new RuntimeException("首页城市标识重复：" + destination.getSlug());
+            }
+            if (destination.getCountry() == null || destination.getCountry().isBlank()) {
+                destination.setCountry("中国");
+            }
+            if (destination.getSortOrder() == null) {
+                destination.setSortOrder((i + 1) * 10);
+            }
+            if (destination.getStatus() == null) {
+                destination.setStatus(1);
+            }
+            validateDestination(destination);
+
+            Destination existing = destinationMapper.selectOne(new LambdaQueryWrapper<Destination>()
+                    .eq(Destination::getSlug, destination.getSlug())
+                    .last("LIMIT 1"));
+            destination.setUpdateTime(now);
+            if (existing == null) {
+                destination.setCreateTime(now);
+                destinationMapper.insert(destination);
+                inserted++;
+            } else {
+                destination.setId(existing.getId());
+                destination.setCreateTime(existing.getCreateTime());
+                destinationMapper.updateById(destination);
+                updated++;
+            }
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("total", homeDestinations.size());
+        result.put("inserted", inserted);
+        result.put("updated", updated);
+        return Result.success(result);
+    }
+
     @PutMapping("/destinations/{id}")
     public Result<Void> updateDestination(@PathVariable Long id, @RequestBody Destination destination) {
         checkAdmin();
@@ -1105,6 +1170,35 @@ public class AdminController {
                     "/my-orders?tab=traffic");
         }
         return Result.success("退款审批已通过");
+    }
+
+    @PostMapping("/orders/{orderNo}/ticket/complete")
+    @Transactional(rollbackFor = Exception.class)
+    public Result<String> completeTicketing(@PathVariable String orderNo) {
+        checkAdmin();
+        TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper<TrafficOrder>()
+                .eq(TrafficOrder::getOrderNo, orderNo)
+                .last("LIMIT 1"));
+        if (order == null) {
+            return Result.error("订单不存在");
+        }
+        if (Objects.equals(order.getStatus(), STATUS_TRAFFIC_TICKETED)) {
+            return Result.success("订单已完成出票，无需重复处理");
+        }
+        if (!Objects.equals(order.getStatus(), STATUS_TRAFFIC_TICKETING)) {
+            return Result.error("只有出票中的交通订单可以完成出票");
+        }
+        if (trafficOrderMapper.markTicketed(orderNo) == 0) {
+            return Result.error("订单状态已变化，请刷新后重试");
+        }
+
+        notificationCenterService.createNotification(
+                order.getUserId(),
+                "traffic_order",
+                Objects.equals(order.getOrderType(), 0) ? "机票已出票" : "火车票已出票",
+                String.format("订单 %s 已完成出票，可在订单详情中查看。", orderNo),
+                "/my-orders?tab=traffic");
+        return Result.success("出票已完成");
     }
 
     @PostMapping("/orders/{orderNo}/refund/reject")

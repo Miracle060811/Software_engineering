@@ -2,7 +2,7 @@
   <div class="admin-page">
     <el-container>
       <el-aside width="220px" class="admin-aside">
-        <div class="admin-logo">成员 E 管理后台</div>
+        <div class="admin-logo">后台管理</div>
         <el-menu
           :default-active="activeMenu"
           class="admin-menu"
@@ -393,6 +393,13 @@
           <div class="toolbar">
             <h2 class="section-title">城市资源管理</h2>
             <div>
+              <el-button
+                type="primary"
+                plain
+                :loading="destinationSyncLoading"
+                @click="syncHomeDestinations()"
+                >同步首页城市</el-button
+              >
               <el-button @click="triggerImport('destinations')"
                 >导入 CSV</el-button
               >
@@ -548,6 +555,13 @@
             <el-table-column label="操作" width="220" fixed="right">
               <template #default="scope">
                 <el-button
+                  v-if="canCompleteTicketing(scope.row)"
+                  size="small"
+                  type="primary"
+                  @click="completeTicketing(scope.row)"
+                  >完成出票</el-button
+                >
+                <el-button
                   v-if="canReviewRefund(scope.row)"
                   size="small"
                   type="success"
@@ -562,7 +576,14 @@
                   @click="rejectRefund(scope.row.orderNo)"
                   >驳回</el-button
                 >
-                <span v-else class="muted-text">无人工操作</span>
+                <span
+                  v-if="
+                    !canCompleteTicketing(scope.row) &&
+                    !canReviewRefund(scope.row)
+                  "
+                  class="muted-text"
+                  >{{ orderOperationLabel(scope.row) }}</span
+                >
               </template>
             </el-table-column>
           </el-table>
@@ -1721,6 +1742,7 @@ import {
   UploadFilled,
 } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import { fallbackDestinations } from "@/utils/destinations";
 
 const activeMenu = ref("stats");
 const dashboardLoading = ref(false);
@@ -1762,6 +1784,7 @@ const hotelLoading = ref(false);
 const roomLoading = ref(false);
 const attractionLoading = ref(false);
 const destinationLoading = ref(false);
+const destinationSyncLoading = ref(false);
 const couponLoading = ref(false);
 const couponClaimsLoading = ref(false);
 const orderLoading = ref(false);
@@ -2393,10 +2416,48 @@ const fetchDestinations = async () => {
   try {
     const data = await request.get("/api/admin/destinations");
     destinations.value = Array.isArray(data) ? data : [];
+    if (!destinations.value.length) {
+      await syncHomeDestinations({ silent: true });
+    }
   } catch (error) {
     destinations.value = [];
   } finally {
     destinationLoading.value = false;
+  }
+};
+
+const serializeDestinationList = () =>
+  fallbackDestinations.map((destination, index) => ({
+    ...destination,
+    keywords: Array.isArray(destination.keywords)
+      ? destination.keywords.join("|")
+      : destination.keywords || "",
+    highlights: Array.isArray(destination.highlights)
+      ? destination.highlights.join("|")
+      : destination.highlights || "",
+    sortOrder: (index + 1) * 10,
+    status: 1,
+  }));
+
+const syncHomeDestinations = async ({ silent = false } = {}) => {
+  if (destinationSyncLoading.value) {
+    return;
+  }
+  destinationSyncLoading.value = true;
+  try {
+    const result = await request.post(
+      "/api/admin/destinations/sync-home",
+      serializeDestinationList(),
+    );
+    const data = await request.get("/api/admin/destinations");
+    destinations.value = Array.isArray(data) ? data : [];
+    if (!silent) {
+      ElMessage.success(
+        `首页城市同步完成：新增 ${result?.inserted || 0}，更新 ${result?.updated || 0}`,
+      );
+    }
+  } finally {
+    destinationSyncLoading.value = false;
   }
 };
 
@@ -3182,8 +3243,48 @@ const rejectRefund = async (orderNo) => {
   } catch (error) {}
 };
 
+const completeTicketing = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `确认订单 ${row.orderNo} 已完成出票吗？`,
+      "完成出票确认",
+      {
+        type: "warning",
+        confirmButtonText: "确认已出票",
+        cancelButtonText: "暂不处理",
+      },
+    );
+  } catch (error) {
+    return;
+  }
+  try {
+    await request.post(`/api/admin/orders/${row.orderNo}/ticket/complete`);
+    ElMessage.success("出票状态已更新");
+    await fetchOrders();
+  } catch (error) {}
+};
+
+const canCompleteTicketing = (row) => {
+  return row.type !== "酒店" && row.status === 1;
+};
+
 const canReviewRefund = (row) => {
   return row.status === 5;
+};
+
+const orderOperationLabel = (row) => {
+  if (row.type === "酒店") {
+    return (
+      ["等待用户支付", "等待入住", "入住进行中", "订单已完成", "退款/取消已完成"][
+        row.status
+      ] || "无需人工处理"
+    );
+  }
+  return (
+    ["等待用户支付", "等待完成出票", "出票已完成", "订单已取消", "退票已完成"][
+      row.status
+    ] || "无需人工处理"
+  );
 };
 
 const orderStatusLabel = (row) => {
