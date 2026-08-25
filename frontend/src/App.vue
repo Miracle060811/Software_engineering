@@ -603,7 +603,7 @@ const navLinks = [
     ],
   },
   { path: "/community", label: "社区", activePaths: ["/community", "/post"] },
-  { path: "/ai-plan", label: "路线规划" },
+  { path: "/ai-plan", label: "AI 路线规划" },
   { path: "/coupons", label: "优惠券" },
 ];
 
@@ -640,7 +640,7 @@ const breadcrumbRouteMap = {
     { label: "酒店详情" },
   ],
   AttractionList: [{ label: "首页", to: "/" }, { label: "景点门票" }],
-  AiPlan: [{ label: "首页", to: "/" }, { label: "路线规划" }],
+  AiPlan: [{ label: "首页", to: "/" }, { label: "AI 路线规划" }],
   Community: [{ label: "首页", to: "/" }, { label: "旅行社区" }],
   PostCreate: [
     { label: "首页", to: "/" },

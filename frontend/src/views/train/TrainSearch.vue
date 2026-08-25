@@ -334,6 +334,7 @@ const fetchTrains = async (options = {}) => {
   }
   try {
     const data = await request.get("/api/train/search", {
+      timeout: 45000,
       params: {
         ...searchForm.value,
         offset: append ? trains.value.length : 0,
@@ -393,8 +394,8 @@ const trainKey = (train) =>
   `${train.id || ""}-${train.trainNo}-${train.departureStation}-${train.arrivalStation}-${train.departureTime}`;
 
 const getTrainTypeColor = (type) => {
-  const map = { G: "danger", D: "warning", Z: "success", T: "info", K: "" };
-  return map[type?.[0]] || "";
+  const map = { G: "danger", D: "warning", C: "primary", Z: "success", T: "info", K: "info" };
+  return map[type?.[0]] || "info";
 };
 
 const normalizeSeatText = (value, seats) => {

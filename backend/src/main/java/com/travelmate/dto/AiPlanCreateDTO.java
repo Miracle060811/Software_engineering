@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 
 @Data
 public class AiPlanCreateDTO {
+    private String origin;
     private String destination;
     private int days;
     private BigDecimal budget;
