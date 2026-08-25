@@ -74,6 +74,10 @@ public class TrainStationResolver {
         return result;
     }
 
+    public boolean isCityInput(String input) {
+        return CITY_STATIONS.containsKey(normalize(input));
+    }
+
     private static void city(String city, String... stations) {
         CITY_STATIONS.put(city, List.of(stations));
     }

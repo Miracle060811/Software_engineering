@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.Set;
 
 @Service
 public class TrainLiveSyncServiceImpl implements TrainLiveSyncService {
@@ -36,6 +37,7 @@ public class TrainLiveSyncServiceImpl implements TrainLiveSyncService {
     private static final String SOURCE_12306_PAGE = "12306_PAGE";
     private static final String SOURCE_LOCAL_DEMO_CACHE = "LOCAL_DEMO_CACHE";
     private static final String SOURCE_LOCAL_DATABASE = "LOCAL_DATABASE";
+    private static final Set<String> CITY_ALIASES = Set.of("北京", "上海", "广州", "杭州", "成都", "重庆");
 
     private final TrainMapper trainMapper;
     private final TrainBrowserSyncService trainBrowserSyncService;
@@ -56,6 +58,14 @@ public class TrainLiveSyncServiceImpl implements TrainLiveSyncService {
         station("杭州东", "HGH");
         station("成都东", "ICW");
         station("重庆北", "CUW");
+
+        // 城市输入没有唯一站名时，使用主要客运站作为 12306 查询入口。
+        stationAlias("北京", "北京南", "VNP");
+        stationAlias("上海", "上海虹桥", "AOH");
+        stationAlias("广州", "广州南", "IZQ");
+        stationAlias("杭州", "杭州东", "HGH");
+        stationAlias("成都", "成都东", "ICW");
+        stationAlias("重庆", "重庆北", "CUW");
     }
 
     public TrainLiveSyncServiceImpl(TrainMapper trainMapper, TrainBrowserSyncService trainBrowserSyncService) {
@@ -81,6 +91,12 @@ public class TrainLiveSyncServiceImpl implements TrainLiveSyncService {
             return remember(true, false, false, "请输入出发站、到达站和日期后再尝试读取 12306 页面",
                     routeKey, date, SOURCE_LOCAL_DATABASE, 0);
         }
+        Station configuredDep = STATIONS.get(normalizedDep);
+        Station configuredArr = STATIONS.get(normalizedArr);
+        if (CITY_ALIASES.contains(normalizedDep) || CITY_ALIASES.contains(normalizedArr)) {
+            return remember(true, true, false, "城市已映射到主要车站；输入具体车站名可尝试 12306 实时读取",
+                    routeKey, date, SOURCE_LOCAL_DATABASE, 0);
+        }
 
         LocalDate trainDate;
         try {
@@ -103,8 +119,9 @@ public class TrainLiveSyncServiceImpl implements TrainLiveSyncService {
             return recent;
         }
 
-        Station dep = STATIONS.getOrDefault(normalizedDep, new Station(normalizedDep, ""));
-        Station arr = STATIONS.getOrDefault(normalizedArr, new Station(normalizedArr, ""));
+        // 未写入本地白名单的具体车站由 12306 页面中的 station_names 动态解析编码。
+        Station dep = configuredDep != null ? configuredDep : new Station(normalizedDep, "");
+        Station arr = configuredArr != null ? configuredArr : new Station(normalizedArr, "");
         try {
             List<TrainBrowserTicket> tickets = trainBrowserSyncService.readPublicLeftTickets(
                     dep.name, dep.code, arr.name, arr.code, trainDate);
@@ -325,6 +342,10 @@ public class TrainLiveSyncServiceImpl implements TrainLiveSyncService {
 
     private static void station(String name, String code) {
         STATIONS.put(name, new Station(name, code));
+    }
+
+    private static void stationAlias(String input, String stationName, String code) {
+        STATIONS.put(input, new Station(stationName, code));
     }
 
     private record Station(String name, String code) {

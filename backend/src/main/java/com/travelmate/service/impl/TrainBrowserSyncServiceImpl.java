@@ -57,7 +57,8 @@ public class TrainBrowserSyncServiceImpl implements TrainBrowserSyncService {
     @Value("${train.browser-sync.headless:true}")
     private boolean headless;
 
-    @Value("${train.browser-sync.timeout-ms:20000}")
+    // 外部 12306 页面不可用时必须尽快回退到本地车次数据，不能占满搜索接口超时时间。
+    @Value("${train.browser-sync.timeout-ms:6000}")
     private double timeoutMs;
 
     @Override

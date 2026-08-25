@@ -42,10 +42,33 @@ public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements
         int collectTarget = safeOffset + safeLimit;
 
         if (StringUtils.hasText(depStation) && StringUtils.hasText(arrStation) && StringUtils.hasText(depDate)) {
+            boolean cityInput = trainStationResolver.isCityInput(depStation)
+                    || trainStationResolver.isCityInput(arrStation);
+            // 本地已有数据时立即返回，避免 12306 页面异常拖慢正常搜索。
+            List<Train> localTrains = queryLocalTrains(depStation, arrStation, depDate);
+            if (!localTrains.isEmpty()) {
+                if (cityInput) {
+                    trainLiveSyncService.syncIfSupported(depStation, arrStation, depDate);
+                }
+                return pageList(localTrains, safeOffset, safeLimit);
+            }
+
+            // 当天没有库存时，优先使用本地路线模板换算日期，保证搜索接口不被外部页面阻塞。
+            List<Train> localDemoTrains = demoFallbackTrains(depStation, arrStation, depDate);
+            if (!localDemoTrains.isEmpty()) {
+                if (cityInput) {
+                    trainLiveSyncService.syncIfSupported(depStation, arrStation, depDate);
+                }
+                return pageList(localDemoTrains, safeOffset, safeLimit);
+            }
+
             Map<String, Train> liveMatches = new LinkedHashMap<>();
             for (TrainStationResolver.RouteCandidate route : trainStationResolver.routeCandidates(depStation, arrStation)) {
                 TrainLiveSyncStatus syncStatus = trainLiveSyncService.syncIfSupported(
                         route.depStation(), route.arrStation(), depDate);
+                if (cityInput) {
+                    break;
+                }
                 if (syncStatus.isSynced()) {
                     for (Train train : trainLiveSyncService.getCachedLiveTrains(
                             route.depStation(), route.arrStation(), depDate)) {
@@ -61,11 +84,18 @@ public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements
             }
         }
 
-        LambdaQueryWrapper<Train> wrapper = new LambdaQueryWrapper<>();
+        List<Train> trains = queryLocalTrains(depStation, arrStation, depDate);
+        if (trains.isEmpty() && StringUtils.hasText(depStation) && StringUtils.hasText(arrStation)
+                && StringUtils.hasText(depDate)) {
+            return pageList(demoFallbackTrains(depStation, arrStation, depDate), safeOffset, safeLimit);
+        }
+        return pageList(trains, safeOffset, safeLimit);
+    }
 
+    private List<Train> queryLocalTrains(String depStation, String arrStation, String depDate) {
+        LambdaQueryWrapper<Train> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Train::getStatus, 1);
 
-        // 只要有一等座或者二等座其中之一有票就可以展示
         if (StringUtils.hasText(depStation)) {
             List<String> depStations = trainStationResolver.stationsFor(depStation);
             wrapper.and(w -> w.in(Train::getDepartureStation, depStations)
@@ -82,13 +112,7 @@ public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements
             wrapper.likeRight(Train::getDepartureTime, depDate);
         }
 
-        wrapper.orderByAsc(Train::getDepartureTime);
-        List<Train> trains = list(wrapper);
-        if (trains.isEmpty() && StringUtils.hasText(depStation) && StringUtils.hasText(arrStation)
-                && StringUtils.hasText(depDate)) {
-            return pageList(demoFallbackTrains(depStation, arrStation, depDate), safeOffset, safeLimit);
-        }
-        return pageList(trains, safeOffset, safeLimit);
+        return list(wrapper.orderByAsc(Train::getDepartureTime));
     }
 
     private List<Train> demoFallbackTrains(String depStation, String arrStation, String depDate) {
