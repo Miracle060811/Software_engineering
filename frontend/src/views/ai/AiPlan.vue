@@ -168,7 +168,7 @@
 
         <section class="preset-panel">
           <div class="panel-head compact">
-            <span>推荐起点</span>
+            <span>推荐目的地</span>
             <strong>快速填充</strong>
           </div>
           <div class="preset-list">
@@ -200,6 +200,7 @@
             :key="plan.id"
             type="button"
             class="history-item"
+            :class="{ active: selectedPlanId === Number(plan.id) }"
             @click="viewHistoryPlan(plan)"
           >
             <div class="history-title">
@@ -429,7 +430,8 @@
 </template>
 
 <script setup>
-import { computed, ref, nextTick, onMounted } from "vue";
+import { computed, ref, nextTick, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import {
   Cpu,
@@ -439,6 +441,9 @@ import {
   Download,
 } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+
+const route = useRoute();
+const router = useRouter();
 
 const formatDate = (date) => {
   const year = date.getFullYear();
@@ -485,7 +490,6 @@ const accommodationOptions = [
 const destinationPresets = [
   {
     name: "云南大理",
-    origin: "上海",
     days: 4,
     people: 2,
     budget: "4200",
@@ -498,7 +502,6 @@ const destinationPresets = [
   },
   {
     name: "杭州",
-    origin: "南京",
     days: 3,
     people: 2,
     budget: "2600",
@@ -511,7 +514,6 @@ const destinationPresets = [
   },
   {
     name: "成都",
-    origin: "重庆",
     days: 5,
     people: 3,
     budget: "5200",
@@ -548,6 +550,7 @@ const planForm = ref({
 const generating = ref(false);
 const currentPlan = ref(null);
 const historyPlans = ref([]);
+const selectedPlanId = ref(null);
 
 const chatDrawerVisible = ref(false);
 const chatMessages = ref([
@@ -584,7 +587,6 @@ const hasPlanInsights = computed(
 );
 
 const applyDestinationPreset = (preset) => {
-  planForm.value.origin = preset.origin || planForm.value.origin;
   planForm.value.destination = preset.name;
   planForm.value.days = preset.days;
   planForm.value.people = preset.people;
@@ -748,11 +750,52 @@ const exportPlan = () => {
   ElMessage.success("行程已导出");
 };
 
-const viewHistoryPlan = (plan) => {
+const parsePlanId = (value) => {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  const planId = Number(rawValue);
+  return Number.isSafeInteger(planId) && planId > 0 ? planId : null;
+};
+
+const viewHistoryPlan = (plan, options = {}) => {
   try {
     currentPlan.value = plan.planContent ? JSON.parse(plan.planContent) : plan;
   } catch (e) {
     currentPlan.value = plan;
+  }
+  selectedPlanId.value = parsePlanId(plan.id);
+  if (options.syncRoute === false || !selectedPlanId.value) {
+    return;
+  }
+  if (parsePlanId(route.query.planId) === selectedPlanId.value) {
+    return;
+  }
+  router.replace({
+    path: "/ai-plan",
+    query: { ...route.query, planId: String(selectedPlanId.value) },
+  });
+};
+
+const openPlanById = async (value) => {
+  const planId = parsePlanId(value);
+  if (!planId) return;
+
+  const historyPlan = historyPlans.value.find(
+    (plan) => Number(plan.id) === planId,
+  );
+  if (historyPlan) {
+    viewHistoryPlan(historyPlan, { syncRoute: false });
+    return;
+  }
+
+  try {
+    const plan = await request.get(`/api/ai/plan/${planId}`, { silent: true });
+    if (plan) {
+      viewHistoryPlan(plan, { syncRoute: false });
+    }
+  } catch (e) {
+    currentPlan.value = null;
+    selectedPlanId.value = null;
+    ElMessage.error("对应的 AI 行程不存在或已无法访问");
   }
 };
 
@@ -797,9 +840,23 @@ const sendChat = async () => {
   }
 };
 
-onMounted(() => {
-  fetchHistoryPlans();
+onMounted(async () => {
+  await fetchHistoryPlans();
+  await openPlanById(route.query.planId);
 });
+
+watch(
+  () => route.query.planId,
+  async (planId, previousPlanId) => {
+    if (planId === previousPlanId) return;
+    if (!planId) {
+      currentPlan.value = null;
+      selectedPlanId.value = null;
+      return;
+    }
+    await openPlanById(planId);
+  },
+);
 </script>
 
 <style scoped>
@@ -1073,6 +1130,11 @@ onMounted(() => {
   border-color: var(--tm-olive);
   background: oklch(0.965 0.008 197);
   outline: none;
+}
+.history-item.active {
+  border-color: var(--tm-olive);
+  background: oklch(0.95 0.018 197);
+  box-shadow: inset 3px 0 0 var(--tm-olive);
 }
 .history-item {
   margin-top: 8px;

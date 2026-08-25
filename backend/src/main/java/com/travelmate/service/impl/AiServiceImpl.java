@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Comparator;
 import java.util.Set;
@@ -328,7 +329,7 @@ public class AiServiceImpl implements AiService {
                 "ai_plan",
                 "AI 行程已生成",
                 String.format("您的 %s %d 天行程已生成，可在行程列表中查看详情。", dto.getDestination(), dto.getDays()),
-                "/ai-plan");
+                buildAiPlanActionUrl(plan.getId()));
         return plan;
     }
 
@@ -1212,7 +1213,85 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public List<Notification> listNotifications(Long userId) {
-        return notificationCenterService.listNotifications(userId);
+        List<Notification> notifications = notificationCenterService.listNotifications(userId);
+        if (notifications != null && notifications.stream().anyMatch(this::needsAiPlanTarget)) {
+            enrichLegacyAiPlanActionUrls(notifications, listMyPlans(userId));
+        }
+        return notifications;
+    }
+
+    static String buildAiPlanActionUrl(Long planId) {
+        return planId == null ? "/ai-plan" : "/ai-plan?planId=" + planId;
+    }
+
+    void enrichLegacyAiPlanActionUrls(List<Notification> notifications, List<AiPlan> plans) {
+        if (notifications == null || notifications.isEmpty() || plans == null || plans.isEmpty()) {
+            return;
+        }
+
+        Set<Long> usedPlanIds = new HashSet<>();
+        for (Notification notification : notifications) {
+            if (!needsAiPlanTarget(notification)) {
+                continue;
+            }
+            AiPlan matchedPlan = findMatchingPlan(notification, plans, usedPlanIds, true);
+            if (matchedPlan == null) {
+                matchedPlan = findMatchingPlan(notification, plans, usedPlanIds, false);
+            }
+            if (matchedPlan != null) {
+                notification.setActionUrl(buildAiPlanActionUrl(matchedPlan.getId()));
+                usedPlanIds.add(matchedPlan.getId());
+            }
+        }
+    }
+
+    private boolean needsAiPlanTarget(Notification notification) {
+        if (notification == null || !"ai_plan".equals(notification.getType())) {
+            return false;
+        }
+        String actionUrl = notification.getActionUrl();
+        return actionUrl == null || actionUrl.isBlank() || "/ai-plan".equals(actionUrl);
+    }
+
+    private AiPlan findMatchingPlan(
+            Notification notification,
+            List<AiPlan> plans,
+            Set<Long> usedPlanIds,
+            boolean requireContentMatch) {
+        String content = notification.getContent() == null ? "" : notification.getContent();
+        LocalDateTime notificationTime = notification.getCreateTime();
+        AiPlan bestMatch = null;
+        long bestDistance = Long.MAX_VALUE;
+
+        for (AiPlan plan : plans) {
+            if (plan == null || plan.getId() == null || usedPlanIds.contains(plan.getId())) {
+                continue;
+            }
+            if (requireContentMatch && !notificationMatchesPlan(content, plan)) {
+                continue;
+            }
+            LocalDateTime planTime = plan.getCreateTime();
+            if (notificationTime != null && planTime != null
+                    && planTime.isAfter(notificationTime.plusSeconds(2))) {
+                continue;
+            }
+            long distance = notificationTime == null || planTime == null
+                    ? Long.MAX_VALUE / 2
+                    : Math.abs(Duration.between(planTime, notificationTime).toMillis());
+            if (bestMatch == null || distance < bestDistance) {
+                bestMatch = plan;
+                bestDistance = distance;
+            }
+        }
+        return bestMatch;
+    }
+
+    private boolean notificationMatchesPlan(String content, AiPlan plan) {
+        if (plan.getDestination() == null || plan.getDays() == null) {
+            return false;
+        }
+        return content.contains(plan.getDestination())
+                && content.contains(plan.getDays() + " 天");
     }
 
     @Override
