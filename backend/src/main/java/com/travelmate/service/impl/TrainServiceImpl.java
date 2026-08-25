@@ -23,6 +23,7 @@ import java.util.Map;
 public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements TrainService {
     private static final int DEFAULT_RESULT_LIMIT = 10;
     private static final int MAX_RESULT_LIMIT = 20;
+    private static final int MAX_LIVE_SYNC_ATTEMPTS = 12;
 
     @Autowired
     private TrainLiveSyncService trainLiveSyncService;
@@ -63,12 +64,11 @@ public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements
             }
 
             Map<String, Train> liveMatches = new LinkedHashMap<>();
+            int syncAttempts = 0;
             for (TrainStationResolver.RouteCandidate route : trainStationResolver.routeCandidates(depStation, arrStation)) {
                 TrainLiveSyncStatus syncStatus = trainLiveSyncService.syncIfSupported(
                         route.depStation(), route.arrStation(), depDate);
-                if (cityInput) {
-                    break;
-                }
+                syncAttempts++;
                 if (syncStatus.isSynced()) {
                     for (Train train : trainLiveSyncService.getCachedLiveTrains(
                             route.depStation(), route.arrStation(), depDate)) {
@@ -77,6 +77,10 @@ public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements
                     if (liveMatches.size() >= collectTarget) {
                         return pageLiveResults(liveMatches, safeOffset, safeLimit);
                     }
+                }
+                if (syncAttempts >= MAX_LIVE_SYNC_ATTEMPTS
+                        || (!liveMatches.isEmpty() && syncAttempts >= 4)) {
+                    break;
                 }
             }
             if (!liveMatches.isEmpty()) {

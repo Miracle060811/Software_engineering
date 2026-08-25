@@ -70,7 +70,12 @@ request.interceptors.response.use(
 
     if (!error.response) {
       if (shouldNotify(error.config)) {
-        ElMessage.error("无法连接后端服务，请确认前后端都已启动");
+        const timedOut = error.code === "ECONNABORTED" || /timeout/i.test(error.message || "");
+        ElMessage.error(
+          timedOut
+            ? "查询超时，12306 当前响应较慢，请稍后重试"
+            : "无法连接后端服务，请确认前后端都已启动",
+        );
       }
       return Promise.reject(error);
     }

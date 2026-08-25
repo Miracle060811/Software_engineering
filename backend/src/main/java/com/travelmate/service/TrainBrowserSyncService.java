@@ -12,4 +12,6 @@ public interface TrainBrowserSyncService {
             String arrStation,
             String arrCode,
             LocalDate trainDate) throws Exception;
+
+    List<String> resolveStationCandidates(String input);
 }

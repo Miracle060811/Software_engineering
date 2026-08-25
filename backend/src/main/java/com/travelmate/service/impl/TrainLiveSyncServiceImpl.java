@@ -32,6 +32,7 @@ import java.util.Set;
 public class TrainLiveSyncServiceImpl implements TrainLiveSyncService {
     private static final Logger log = LoggerFactory.getLogger(TrainLiveSyncServiceImpl.class);
     private static final int MAX_SYNC_DAYS = 15;
+    private static final int MAX_SYNC_TRAINS_PER_ROUTE = 30;
     private static final Duration ATTEMPT_CACHE_TTL = Duration.ofMinutes(8);
 
     private static final String SOURCE_12306_PAGE = "12306_PAGE";
@@ -132,6 +133,7 @@ public class TrainLiveSyncServiceImpl implements TrainLiveSyncService {
             }
 
             List<Train> trains = tickets.stream()
+                    .limit(MAX_SYNC_TRAINS_PER_ROUTE)
                     .map(ticket -> toTrain(ticket, normalizedDep, normalizedArr, trainDate))
                     .filter(train -> train.getDepartureTime() != null)
                     .toList();

@@ -1,5 +1,6 @@
 package com.travelmate.service.impl;
 
+import com.travelmate.service.TrainBrowserSyncService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -11,11 +12,13 @@ import java.util.Map;
 
 @Component
 public class TrainStationResolver {
-    private static final int MAX_ROUTE_CANDIDATES = 60;
+    private static final int MAX_ROUTE_CANDIDATES = 20;
     private static final Map<String, List<String>> CITY_STATIONS = new LinkedHashMap<>();
 
+    private final TrainBrowserSyncService trainBrowserSyncService;
+
     static {
-        city("北京", "北京西", "北京南", "北京", "北京丰台", "北京朝阳", "清河", "北京北");
+        city("北京", "北京南", "北京西", "北京", "北京丰台", "北京朝阳", "清河", "北京北");
         city("上海", "上海虹桥", "上海", "上海南", "上海西");
         city("广州", "广州南", "广州", "广州东", "广州白云", "广州北");
         city("深圳", "深圳北", "深圳", "福田", "深圳东", "深圳坪山");
@@ -36,6 +39,26 @@ public class TrainStationResolver {
         city("青岛", "青岛北", "青岛", "青岛西");
         city("天津", "天津西", "天津", "天津南");
         city("昆明", "昆明南", "昆明");
+        city("合肥", "合肥南", "合肥");
+        city("石家庄", "石家庄", "石家庄东", "石家庄北");
+        city("太原", "太原南", "太原");
+        city("沈阳", "沈阳北", "沈阳南", "沈阳");
+        city("长春", "长春西", "长春", "长春南");
+        city("哈尔滨", "哈尔滨西", "哈尔滨", "哈尔滨北");
+        city("呼和浩特", "呼和浩特东", "呼和浩特");
+        city("兰州", "兰州西", "兰州");
+        city("贵阳", "贵阳北", "贵阳东", "贵阳");
+        city("南宁", "南宁东", "南宁");
+        city("海口", "海口东", "海口");
+        city("宁波", "宁波");
+        city("温州", "温州南", "温州北", "温州");
+        city("徐州", "徐州东", "徐州");
+        city("无锡", "无锡东", "无锡", "无锡新区");
+        city("常州", "常州北", "常州");
+    }
+
+    public TrainStationResolver(TrainBrowserSyncService trainBrowserSyncService) {
+        this.trainBrowserSyncService = trainBrowserSyncService;
     }
 
     public List<RouteCandidate> routeCandidates(String depInput, String arrInput) {
@@ -61,15 +84,29 @@ public class TrainStationResolver {
         if (!StringUtils.hasText(normalized)) {
             return List.of();
         }
+
+        List<String> official = trainBrowserSyncService.resolveStationCandidates(normalized);
         List<String> mapped = CITY_STATIONS.get(normalized);
+        if (mapped == null && official.size() <= 1) {
+            return official.isEmpty() ? List.of(normalized) : official;
+        }
+
         List<String> result = new ArrayList<>();
-        result.add(normalized);
         if (mapped != null) {
+            boolean catalogExpanded = official.size() > 1;
             for (String station : mapped) {
-                if (!result.contains(station)) {
+                if ((!catalogExpanded || official.contains(station)) && !result.contains(station)) {
                     result.add(station);
                 }
             }
+        }
+        for (String station : official) {
+            if (!result.contains(station)) {
+                result.add(station);
+            }
+        }
+        if (result.isEmpty()) {
+            result.add(normalized);
         }
         return result;
     }
