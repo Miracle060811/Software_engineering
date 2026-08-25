@@ -4,23 +4,20 @@ backend/application-local.yml
 
 # 构建产物
 target/
-backend/target/
 frontend/dist/
 
 # 前端依赖与缓存
 node_modules/
-frontend/node_modules/
 .vite/
-frontend/node_modules/.vite/
-frontend/vite-dev*.log
-frontend-vite-dev*.log
-backend-dev*.log
-frontend/playwright-report/
-frontend/test-results/
+
+# 测试报告与覆盖率
+playwright-report/
+test-results/
+coverage/
+.nyc_output/
 
 # 本地上传文件
 uploads/
-backend/uploads/
 
 # 本地文档、截图与临时交付包
 /docs/前五天四人小组任务安排.md
@@ -28,10 +25,39 @@ backend/uploads/
 /前端截图(1)/
 /管理员界面/
 /travelmate_editorial_low_ai_v82_package.zip
+outputs/
+pdf_extracted/
 
-# IDE / OS
+# 本地 AI 工具配置与分析缓存
+.claude/
+.understand-anything/
+*understand-anything*.json
+
+# Java / Maven
+*.class
+hs_err_pid*.log
+
+# Node.js / 前端工具缓存
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.cache/
+.parcel-cache/
+.eslintcache
+
+# IDE / 操作系统
 .idea/
 .vscode/
 *.iml
 .DS_Store
 Thumbs.db
+
+# 通用日志与临时文件
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~

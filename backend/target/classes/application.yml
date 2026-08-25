@@ -31,6 +31,14 @@ mybatis-plus:
     map-underscore-to-camel-case: true
 
 ai:
+  place-verification:
+    enabled: ${AI_PLACE_VERIFICATION_ENABLED:true}
+    base-url: ${AI_PLACE_VERIFICATION_BASE_URL:https://nominatim.openstreetmap.org/search}
+    cache-hours: ${AI_PLACE_VERIFICATION_CACHE_HOURS:168}
+    user-agent: "${AI_PLACE_VERIFICATION_USER_AGENT:TravelMate/1.0 (https://github.com/Yangyouthovo/Software_engineering)}"
+  weather:
+    enabled: ${AI_WEATHER_ENABLED:true}
+    base-url: ${AI_WEATHER_BASE_URL:https://api.open-meteo.com/v1/forecast}
   deepseek:
     api-key: ${DEEPSEEK_API_KEY:}
     base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}

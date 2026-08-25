@@ -9,6 +9,80 @@
 - Redis 6.x+
 - Node.js 18+
 
+### 统一启动流程（Windows）
+
+以下命令都必须在项目根目录执行，即当前目录中能看到 `backend`、`frontend`、`start.bat` 和 `setup.ps1`。
+
+#### 第一次启动
+
+1. 复制环境变量模板：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+2. 编辑根目录 `.env`，至少填写本机 MySQL root 密码：
+
+```dotenv
+DB_PASSWORD="你的MySQL root密码"
+DEEPSEEK_API_KEY="你的DeepSeek密钥"
+```
+
+`DEEPSEEK_API_KEY` 是可选项；未配置时，AI 行程和客服功能会自动降级为本地模板。
+
+3. 确认 MySQL 服务已启动，然后初始化数据库：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -InitDb
+```
+
+数据库只需要在首次使用项目时初始化。不要每天重复执行，也不要随意添加 `-ResetDb`。
+
+4. 一键启动前后端：
+
+```powershell
+.\start.bat
+```
+
+推荐统一使用 `start.bat`，它会绕过本机 PowerShell 脚本执行策略限制，并调用 `start.ps1` 完成实际启动。启动脚本会读取 `.env`、检查并尝试启动 Redis、启动后端，等待后端可访问后再启动前端；如果 `frontend/node_modules` 不存在，还会自动执行 `npm install`。
+
+启动完成后访问：
+
+- 前端页面：<http://localhost:3000>
+- 后端服务：<http://localhost:8080>
+
+#### 日常启动
+
+数据库已经初始化后，每天只需要确认 MySQL 正在运行，然后在项目根目录执行：
+
+```powershell
+.\start.bat
+```
+
+脚本会分别打开 `TravelMate Backend` 和 `TravelMate Frontend` 两个终端窗口。需要停止项目时，在这两个窗口中分别按 `Ctrl + C`。
+
+#### 拉取队友代码后
+
+先停止旧的前后端进程。如果本次更新修改了 `frontend/package.json` 或 `frontend/package-lock.json`，先同步前端依赖：
+
+```powershell
+Set-Location frontend
+npm install
+Set-Location ..
+```
+
+然后重新启动整个项目：
+
+```powershell
+.\start.bat
+```
+
+如果更新包含数据库结构或种子数据变更，请先查看对应 SQL 说明。`-ResetDb` 会删除并重建本地 `travelmate` 数据库，仅在本地数据无需保留并且确实需要完整重建时使用：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -InitDb -ResetDb
+```
+
 ### 数据库初始化
 
 不要用 PowerShell 的 `Get-Content | mysql` 管道导入，中文种子数据会被写成 `?`。请直接让 `mysql` 客户端按 `utf8mb4` 读取脚本：
