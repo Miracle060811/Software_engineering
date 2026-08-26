@@ -1,0 +1,18 @@
+sequenceDiagram
+    title SYS-UC05 搜索酒店并完成订房
+    actor U as 用户
+    participant S as TravelMate系统
+    U->>S: 提交城市和入住退房日期
+    S-->>U: 返回酒店、房型、价格和库存
+    U->>S: 选择房型、房间数、入住人和优惠
+    S->>S: 校验日期、资源、优惠和库存
+    alt 校验成功
+        S->>S: 预减并原子扣减库存
+        S->>S: 创建待支付酒店订单
+        S-->>U: 返回订单号
+    else Redis不可用
+        S->>S: 降级到数据库库存校验
+        S-->>U: 返回建单结果
+    else 日期非法、下架、库存不足或重复提交
+        S-->>U: 不建单并返回失败原因
+    end

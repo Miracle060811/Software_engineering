@@ -227,7 +227,7 @@ Software_engineering/
 ├── docs/
 │   ├── sql/init.sql                    # 数据库结构与演示数据
 │   └── ci/                             # 用例测试矩阵与质量策略
-├── document/                           # 详细设计与业务用例文档
+├── document/                           # 需求、用例、系统级/对象级模型与详细设计
 ├── scripts/                            # 测试、追溯与图片检查脚本
 ├── 05_management/pipeline-records/     # CI/CD 运行证据
 ├── .github/workflows/                  # CI、安全与 CodeQL
@@ -238,7 +238,7 @@ Software_engineering/
 
 ## 相关文档
 
-- [软件需求规格说明书](5组-软件需求规格说明书.md)
+- [软件需求规格说明书](document/5组-软件需求规格说明.md)
 - [软件详细设计说明](document/5组-软件详细设计说明.md)
 - [业务场景清单与用例说明](document/业务场景清单与用例说明.md)
 - [版本日志](CHANGELOG.md)

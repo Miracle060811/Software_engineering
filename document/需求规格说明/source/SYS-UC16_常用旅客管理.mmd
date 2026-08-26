@@ -1,0 +1,17 @@
+sequenceDiagram
+    title SYS-UC16 常用旅客管理与使用
+    actor U as 用户
+    participant S as TravelMate系统
+    U->>S: 查询本人常用旅客
+    S-->>U: 返回旅客列表
+    U->>S: 新增旅客信息
+    S->>S: 校验证件格式、重复和用户归属
+    alt 校验通过
+        S-->>U: 保存并返回旅客
+        U->>S: 在航班/火车预订中选择旅客
+        S-->>U: 返回有效选择结果
+    else 重复、格式非法或归属不符
+        S-->>U: 拒绝请求
+    end
+    U->>S: 删除本人旅客
+    S-->>U: 返回删除结果

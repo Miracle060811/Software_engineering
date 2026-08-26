@@ -1,0 +1,19 @@
+sequenceDiagram
+    title SYS-UC06 酒店订单支付、取消、退款与库存回补
+    actor U as 用户
+    actor A as 管理员/调度器
+    participant S as TravelMate系统
+    U->>S: 查询酒店订单并选择支付、取消或退款
+    S->>S: 校验归属、状态和幂等条件
+    alt 支付成功
+        S-->>U: 返回已支付状态和凭证
+    else 用户取消或订单超时
+        S->>S: 关闭订单并回补房型库存
+        S-->>U: 返回关闭结果
+    else 退款需要审核
+        A->>S: 批准或拒绝
+        S->>S: 成功时回补库存
+        S-->>U: 返回退款终态
+    else 重复、越权或非法状态
+        S-->>U: 拒绝且不重复回补
+    end

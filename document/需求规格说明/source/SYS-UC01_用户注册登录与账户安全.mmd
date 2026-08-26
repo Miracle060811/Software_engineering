@@ -1,0 +1,14 @@
+sequenceDiagram
+    title SYS-UC01 用户注册、登录与账户安全
+    actor V as 游客/用户
+    participant S as TravelMate系统
+    V->>S: 提交注册或登录信息
+    S->>S: 校验格式、唯一性、密码和账号状态
+    alt 校验成功
+        S-->>V: 返回注册结果或JWT
+        V->>S: 携带JWT访问本人功能
+        S-->>V: 返回本人信息或改密/注销结果
+    else 用户名重复、密码错误、账号禁用或Token失效
+        S-->>V: 拒绝请求并返回明确错误
+    end
+    Note over V,S: 密码只保存摘要；越权请求不改变账户数据

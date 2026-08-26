@@ -1,0 +1,14 @@
+sequenceDiagram
+    title SYS-UC07 景点浏览与购票
+    actor U as 游客/用户
+    participant S as TravelMate系统
+    U->>S: 查询景点并查看详情
+    S-->>U: 返回景点、票种、价格和可售状态
+    U->>S: 提交日期、成人/儿童票和游客信息
+    S->>S: 校验登录、票量、价格和输入
+    alt 校验通过
+        S->>S: 创建景点订单并生成凭证
+        S-->>U: 返回订单和金额
+    else 下架、票量不足、未登录或重复提交
+        S-->>U: 不创建订单并返回原因
+    end

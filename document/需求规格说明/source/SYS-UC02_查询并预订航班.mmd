@@ -1,0 +1,14 @@
+sequenceDiagram
+    title SYS-UC02 查询并预订航班
+    actor U as 用户
+    participant S as TravelMate系统
+    U->>S: 提交出发地、目的地和日期
+    S-->>U: 返回航班列表和价格信息
+    U->>S: 选择航班、舱位、旅客和优惠券
+    S->>S: 校验身份、旅客归属、优惠和库存
+    alt 校验通过且库存充足
+        S->>S: 原子扣减座位并创建待支付订单
+        S-->>U: 返回订单号和支付入口
+    else 无结果、库存不足、优惠无效或重复提交
+        S-->>U: 不创建订单并返回失败原因
+    end

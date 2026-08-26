@@ -1,0 +1,15 @@
+sequenceDiagram
+    title SYS-UC18 管理后台资源、订单与用户管理
+    actor A as 管理员
+    participant S as TravelMate系统
+    A->>S: 进入后台并提交管理操作
+    S->>S: 校验ADMIN角色
+    alt 权限通过
+        A->>S: 维护资源或批量导入
+        S-->>A: 返回保存/错误摘要
+        A->>S: 启停用户或处理订单退款/出票
+        S->>S: 保存业务结果和审计日志
+        S-->>A: 返回最新状态
+    else 普通用户、非法数据、重复审核或资源被引用
+        S-->>A: 拒绝操作且保持数据一致
+    end

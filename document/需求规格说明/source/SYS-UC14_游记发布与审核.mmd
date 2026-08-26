@@ -1,0 +1,16 @@
+sequenceDiagram
+    title SYS-UC14 游记发布、编辑、删除与审核
+    actor U as 用户
+    actor A as 管理员
+    participant S as TravelMate系统
+    U->>S: 上传图片并提交游记
+    S->>S: 校验字段和敏感词
+    alt 内容可提交
+        S->>S: 保存为待审核
+        A->>S: 批准或驳回
+        S-->>U: 返回审核结果
+        U->>S: 编辑或删除本人游记
+        S-->>U: 返回处理结果
+    else 上传失败、敏感词、越权或重复审核
+        S-->>U: 拒绝或保持既有终态
+    end

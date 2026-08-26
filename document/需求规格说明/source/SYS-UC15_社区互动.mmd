@@ -1,0 +1,15 @@
+sequenceDiagram
+    title SYS-UC15 社区点赞、收藏与评论
+    actor U as 用户
+    participant S as TravelMate系统
+    U->>S: 查看游记详情和互动状态
+    S-->>U: 返回点赞、收藏和评论数据
+    U->>S: 切换点赞或收藏
+    S->>S: 幂等更新唯一关系和计数
+    U->>S: 添加一级评论或回复
+    alt 游记和父评论关系合法
+        S->>S: 保存树状评论
+        S-->>U: 返回最新互动结果
+    else 未登录、越权、目标不存在或父评论非法
+        S-->>U: 拒绝且不改变数据
+    end

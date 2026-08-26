@@ -1,0 +1,20 @@
+sequenceDiagram
+    title SYS-UC04 交通订单支付、取消、退款与凭证查看
+    actor U as 用户
+    actor A as 管理员
+    participant S as TravelMate系统
+    U->>S: 查询本人交通订单并选择操作
+    S->>S: 校验订单归属和当前状态
+    alt 支付
+        S->>S: 更新为已支付
+        S-->>U: 返回支付结果和凭证
+    else 取消
+        S->>S: 关闭订单并回补库存
+        S-->>U: 返回取消结果
+    else 申请退款
+        S->>S: 记录退款申请
+        A->>S: 批准或拒绝退款
+        S-->>U: 返回退款终态
+    else 越权、重复或非法状态
+        S-->>U: 拒绝且不重复改变金额/库存
+    end

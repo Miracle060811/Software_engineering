@@ -1,0 +1,17 @@
+sequenceDiagram
+    title SYS-UC10 优惠券领取与订单核销
+    actor U as 用户
+    actor A as 管理员
+    participant S as TravelMate系统
+    U->>S: 查询并领取优惠券
+    S->>S: 校验库存、有效期和重复领取
+    alt 领取成功
+        S-->>U: 返回用户券
+        U->>S: 预订时选择用户券
+        S->>S: 校验业务类型、门槛和状态
+        S-->>U: 返回优惠金额和订单结果
+    else 库存不足、过期、重复领取或条件不符
+        S-->>U: 拒绝且不减少库存
+    end
+    A->>S: 维护优惠券和查看领取记录
+    Note over U,S: 订单核销仍需真实测试证明

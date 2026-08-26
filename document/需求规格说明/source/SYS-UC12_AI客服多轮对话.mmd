@@ -1,0 +1,18 @@
+sequenceDiagram
+    title SYS-UC12 AI客服多轮对话
+    actor U as 用户
+    participant S as TravelMate系统
+    participant E as 外部AI服务
+    U->>S: 发送第一轮旅行问题
+    S->>E: 携带会话上下文请求回答
+    E-->>S: 返回回答
+    S->>S: 保存用户消息和回答
+    S-->>U: 展示第一轮回答
+    U->>S: 基于上文继续追问
+    S->>E: 携带历史上下文请求回答
+    alt AI正常返回
+        E-->>S: 返回第二轮回答
+        S-->>U: 保存并展示回答
+    else AI超时、失败或空响应
+        S-->>U: 返回可解释提示且不编造实时数据
+    end

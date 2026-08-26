@@ -1,0 +1,17 @@
+sequenceDiagram
+    title SYS-UC13 通知中心与站内私信
+    actor U as 用户
+    actor R as 接收用户
+    participant S as TravelMate系统
+    S->>S: 业务事件写入通知
+    U->>S: 查询通知、未读数并标记已读/删除
+    S-->>U: 返回本人通知状态
+    U->>S: 查询联系人并发送私信
+    S->>S: 校验接收者和会话权限
+    alt 校验成功
+        S-->>R: 保存可查询消息并更新未读数
+        S-->>U: 返回发送成功
+    else 空消息、接收者不存在或越权
+        S-->>U: 拒绝请求
+    end
+    Note over U,S: 通知写入失败不得回滚核心交易

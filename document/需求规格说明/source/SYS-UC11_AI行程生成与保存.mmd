@@ -1,0 +1,16 @@
+sequenceDiagram
+    title SYS-UC11 生成并保存AI行程
+    actor U as 用户
+    participant S as TravelMate系统
+    participant E as 外部AI服务
+    U->>S: 提交目的地、日期、预算、人数和偏好
+    S->>S: 校验参数并构造请求
+    S->>E: 请求结构化行程
+    alt AI正常返回合法JSON
+        E-->>S: 返回结构化结果
+        S->>S: 匹配站内资源并保存计划
+        S-->>U: 返回可渲染分日行程
+    else Key缺失、超时或JSON非法
+        S->>S: 使用本地模板并记录降级
+        S-->>U: 返回符合契约的降级结果
+    end

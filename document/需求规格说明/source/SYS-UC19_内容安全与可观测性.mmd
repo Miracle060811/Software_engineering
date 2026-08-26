@@ -1,0 +1,18 @@
+sequenceDiagram
+    title SYS-UC19 内容安全、举报处理与可观测性
+    actor A as 管理员
+    participant S as TravelMate系统
+    A->>S: 进入审核、举报、敏感词或监控页面
+    S->>S: 校验ADMIN权限
+    alt 内容或举报处理
+        A->>S: 批准、驳回、解决或删除违规内容
+        S->>S: 幂等保存终态和审计信息
+        S-->>A: 返回处理结果
+    else 敏感词维护
+        A->>S: 新增、修改或删除敏感词
+        S-->>A: 返回词库结果；失败时保留旧规则
+    else 日志和指标查询
+        A->>S: 查询仪表盘、日志和业务指标
+        S-->>A: 返回数据或降级提示
+    end
+    Note over A,S: 监控故障不得阻断内容审核

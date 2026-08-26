@@ -1,0 +1,17 @@
+sequenceDiagram
+    title SYS-UC09 提交评价、回复评价与举报处理
+    actor U as 用户
+    actor A as 管理员/运营人员
+    participant S as TravelMate系统
+    U->>S: 提交评分、文字或图片评价
+    S->>S: 校验资格、评分和内容
+    alt 评价有效
+        S->>S: 保存并展示评价
+        A->>S: 回复评价
+        U->>S: 举报不当评价
+        S->>S: 生成举报工单
+        A->>S: 解决、驳回或删除违规评价
+        S-->>U: 返回处理终态
+    else 重复评价、非法评分、越权或重复举报
+        S-->>U: 拒绝或保持既有终态
+    end

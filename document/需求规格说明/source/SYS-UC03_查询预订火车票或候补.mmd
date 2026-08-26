@@ -1,0 +1,23 @@
+sequenceDiagram
+    title SYS-UC03 查询并预订火车票或提交候补
+    actor U as 用户
+    participant S as TravelMate系统
+    participant E as 公共余票数据源
+    U->>S: 提交车站和日期
+    S->>E: 尝试同步实时余票
+    alt 实时数据可用
+        E-->>S: 返回车次和余票
+    else 同步失败
+        S->>S: 使用本地数据并标明同步状态
+    end
+    S-->>U: 返回车次列表
+    U->>S: 选择席别、旅客和购票/候补
+    alt 有票且校验通过
+        S->>S: 扣减库存并创建订单
+        S-->>U: 返回订单号
+    else 无票且用户选择候补
+        S->>S: 保存候补记录
+        S-->>U: 返回候补结果
+    else 参数、归属或重复校验失败
+        S-->>U: 拒绝请求
+    end
