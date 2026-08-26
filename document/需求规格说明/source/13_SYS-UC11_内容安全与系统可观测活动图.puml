@@ -1,0 +1,44 @@
+@startuml
+start
+if (权限校验通过?) then (是)
+else (否)
+  :返回 403;
+  stop
+endif
+if (选择任务?) then (内容审核)
+  :查看待审内容;
+  if (是否已经处理?) then (是)
+    :返回当前终态;
+  else (否)
+    :保存通过、驳回或下架结果和操作人;
+    :写入审计日志;
+  endif
+elseif (举报处理)
+  :查看举报工单;
+  if (工单已终结?) then (是)
+    :返回当前终态;
+  else (否)
+    :保存驳回或确认违规结果;
+    :写入审计日志;
+  endif
+elseif (敏感词维护)
+  :新增、修改或删除敏感词;
+  if (新词库保存成功?) then (是)
+    :新规则立即生效;
+    :写入审计日志;
+  else (否)
+    :保留旧规则并报告失败;
+  endif
+else (日志指标查询)
+  :查询日志、QPS 和业务指标;
+  if (统计成功?) then (是)
+    :展示监控结果;
+  else (否)
+    :提示监控暂不可用;
+    note right
+      统计失败不影响内容审核
+    end note
+  endif
+endif
+stop
+@enduml

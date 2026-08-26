@@ -1,0 +1,46 @@
+@startuml
+|用户|
+start
+:发起评价;
+|TravelMate|
+if (订单已履约且未评价?) then (是)
+  if (评分和内容合法?) then (是)
+    :保存并展示评价;
+  else (否)
+    :拒绝非法评分或内容;
+    stop
+  endif
+else (否)
+  :拒绝重复或无资格评价;
+  stop
+endif
+|管理员/商家|
+if (是否回复?) then (是)
+  if (具有回复权限?) then (是)
+    |TravelMate|
+    :保存回复;
+  else (否)
+    :拒绝越权回复;
+    stop
+  endif
+endif
+|用户|
+if (是否举报评价或回复?) then (是)
+  |TravelMate|
+  if (是否重复举报?) then (是)
+    :返回已有工单;
+    stop
+  else (否)
+    :生成待处理举报工单;
+  endif
+  |管理员/商家|
+  if (举报处理结果?) then (驳回举报)
+    |TravelMate|
+    :工单终态设为已驳回;
+  else (确认违规)
+    |TravelMate|
+    :下架内容并关闭工单;
+  endif
+endif
+stop
+@enduml

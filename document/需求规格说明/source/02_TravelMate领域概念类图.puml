@@ -1,0 +1,71 @@
+@startuml
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+class User {
+  id
+  username
+  role
+  status
+}
+class Passenger
+class Flight
+class Train
+class TrafficOrder {
+  orderNo
+  status
+  totalAmount
+}
+class Hotel
+class RoomType
+class HotelOrder {
+  orderNo
+  status
+}
+class Attraction
+class TourProduct
+class LocalOrder
+class Coupon
+class UserCoupon {
+  status
+  usedTime
+}
+class Review
+class ReviewReport
+class AiPlan
+class AiChatSession
+class Notification
+class PrivateMessage
+class Post {
+  reviewStatus
+}
+class Comment
+class SocialRelation
+class AdminAudit
+class SysLog
+
+User "1" -- "0..*" Passenger : 拥有
+User "1" -- "0..*" TrafficOrder : 提交
+User "1" -- "0..*" HotelOrder : 提交
+User "1" -- "0..*" LocalOrder : 提交
+TrafficOrder "0..*" --> "0..1" Flight : 预订
+TrafficOrder "0..*" --> "0..1" Train : 预订
+Hotel "1" *-- "1..*" RoomType : 包含
+HotelOrder "0..*" --> "1" RoomType : 预订
+LocalOrder "0..*" --> "0..1" Attraction : 预订
+LocalOrder "0..*" --> "0..1" TourProduct : 预订
+User "1" -- "0..*" UserCoupon : 领取
+Coupon "1" -- "0..*" UserCoupon : 发放
+User "1" -- "0..*" Review : 编写
+Review "1" -- "0..*" ReviewReport : 被举报
+User "1" -- "0..*" AiPlan : 保存
+User "1" -- "0..*" AiChatSession : 拥有
+User "1" -- "0..*" Notification : 接收
+User "1" -- "0..*" PrivateMessage : 收发
+User "1" -- "0..*" Post : 发布
+Post "1" *-- "0..*" Comment : 包含
+User "1" -- "0..*" SocialRelation : 互动
+AdminAudit "0..*" --> "1" User : 操作人
+AdminAudit "1" -- "0..*" SysLog : 记录
+@enduml

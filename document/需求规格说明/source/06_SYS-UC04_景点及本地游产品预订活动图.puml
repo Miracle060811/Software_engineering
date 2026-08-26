@@ -1,0 +1,35 @@
+@startuml
+start
+if (选择产品类型?) then (景点门票)
+  :选择票种、票数和游客;
+else (一日游/周边游)
+  :选择日期、人数和联系人;
+endif
+if (已登录?) then (是)
+else (否)
+  :提示登录后预订;
+  stop
+endif
+if (产品上架且日期可售?) then (是)
+else (否)
+  :返回不可售原因;
+  stop
+endif
+if (人数、游客/联系人和优惠有效?) then (是)
+else (否)
+  :返回校验失败原因;
+  stop
+endif
+if (库存或票量充足?) then (是)
+else (否)
+  :返回库存不足;
+  stop
+endif
+if (是否重复提交?) then (是)
+  :返回原订单或防重提示;
+else (否)
+  :扣减库存并创建订单;
+  :返回订单号和预订凭证;
+endif
+stop
+@enduml
