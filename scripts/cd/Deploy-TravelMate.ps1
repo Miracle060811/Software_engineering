@@ -12,7 +12,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$stateDirectory = Join-Path $env:LOCALAPPDATA "TravelMateCD"
+$stateDirectory = Join-Path $env:USERPROFILE "TravelMateCD"
 $logPath = Join-Path $stateDirectory "deploy.log"
 [IO.Directory]::CreateDirectory($stateDirectory) | Out-Null
 
@@ -26,7 +26,7 @@ function Write-DeployLog {
 function Invoke-Checked {
     param(
         [string]$Command,
-        [Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments
+        [string[]]$Arguments
     )
 
     $output = & $Command @Arguments 2>&1
@@ -68,8 +68,8 @@ function Get-LocalImageIdentity {
         [string]$Repository
     )
 
-    Invoke-Checked docker pull $Image | Out-Null
-    $inspect = (Invoke-Checked docker image inspect $Image) -join [Environment]::NewLine
+    Invoke-Checked -Command docker -Arguments @("pull", $Image) | Out-Null
+    $inspect = (Invoke-Checked -Command docker -Arguments @("image", "inspect", $Image)) -join [Environment]::NewLine
     $imageInfo = @($inspect | ConvertFrom-Json)[0]
     $revision = [string]$imageInfo.Config.Labels."org.opencontainers.image.revision"
     $digest = @($imageInfo.RepoDigests | Where-Object { $_ -like "$Repository@sha256:*" }) | Select-Object -First 1
@@ -84,14 +84,14 @@ function Get-LocalImageIdentity {
 
 function Get-DeploymentImage {
     param([string]$Deployment, [string]$Container)
-    $raw = (Invoke-Checked kubectl get deployment $Deployment -n $Namespace -o json) -join [Environment]::NewLine
+    $raw = (Invoke-Checked -Command kubectl -Arguments @("get", "deployment", $Deployment, "-n", $Namespace, "-o", "json")) -join [Environment]::NewLine
     $deploymentObject = $raw | ConvertFrom-Json
     return [string](@($deploymentObject.spec.template.spec.containers | Where-Object name -eq $Container)[0].image)
 }
 
 function Wait-Rollout {
     param([string]$Deployment)
-    Invoke-Checked kubectl rollout status "deployment/$Deployment" -n $Namespace "--timeout=${RolloutTimeoutSeconds}s" | Out-Null
+    Invoke-Checked -Command kubectl -Arguments @("rollout", "status", "deployment/$Deployment", "-n", $Namespace, "--timeout=${RolloutTimeoutSeconds}s") | Out-Null
 }
 
 $mutex = [Threading.Mutex]::new($false, "Local\TravelMateCD")
@@ -100,16 +100,16 @@ try {
     $lockAcquired = $mutex.WaitOne(0)
     if (-not $lockAcquired) {
         Write-DeployLog "Another deployment check is already running; skipping this cycle."
-        exit 0
+        return
     }
 
     Wait-DockerDesktop
-    $contexts = @((Invoke-Checked kubectl config get-contexts -o name))
+    $contexts = @((Invoke-Checked -Command kubectl -Arguments @("config", "get-contexts", "-o", "name")))
     if ($contexts -notcontains $KubeContext) {
         throw "Kubernetes context '$KubeContext' is not available"
     }
-    Invoke-Checked kubectl config use-context $KubeContext | Out-Null
-    Invoke-Checked kubectl get nodes --request-timeout=15s | Out-Null
+    Invoke-Checked -Command kubectl -Arguments @("config", "use-context", $KubeContext) | Out-Null
+    Invoke-Checked -Command kubectl -Arguments @("get", "nodes", "--request-timeout=15s") | Out-Null
     & (Join-Path $PSScriptRoot "Ensure-KindProxy.ps1") | ForEach-Object { Write-DeployLog $_ }
     if ($LASTEXITCODE -ne 0) {
         throw "Unable to prepare Kind node networking"
@@ -134,7 +134,7 @@ try {
     }
     if ($currentCommit -eq $backend.Revision) {
         Write-DeployLog "Commit $currentCommit is already deployed."
-        exit 0
+        return
     }
 
     $previousBackend = Get-DeploymentImage -Deployment travelmate-backend -Container backend
@@ -142,16 +142,20 @@ try {
     Write-DeployLog "Deploying commit $($backend.Revision); backend=$($backend.Digest), frontend=$($frontend.Digest)."
 
     try {
-        Invoke-Checked kubectl set image deployment/travelmate-backend "backend=$($backend.Digest)" -n $Namespace | Out-Null
-        Invoke-Checked kubectl set image deployment/travelmate-frontend "frontend=$($frontend.Digest)" -n $Namespace | Out-Null
-        Invoke-Checked kubectl annotate deployment/travelmate-backend `
-            "travelmate.io/commit=$($backend.Revision)" `
-            "travelmate.io/image-digest=$($backend.Digest.Split('@')[1])" `
-            --overwrite -n $Namespace | Out-Null
-        Invoke-Checked kubectl annotate deployment/travelmate-frontend `
-            "travelmate.io/commit=$($frontend.Revision)" `
-            "travelmate.io/image-digest=$($frontend.Digest.Split('@')[1])" `
-            --overwrite -n $Namespace | Out-Null
+        Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-backend", "backend=$($backend.Digest)", "-n", $Namespace) | Out-Null
+        Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-frontend", "frontend=$($frontend.Digest)", "-n", $Namespace) | Out-Null
+        Invoke-Checked -Command kubectl -Arguments @(
+            "annotate", "deployment/travelmate-backend",
+            "travelmate.io/commit=$($backend.Revision)",
+            "travelmate.io/image-digest=$($backend.Digest.Split('@')[1])",
+            "--overwrite", "-n", $Namespace
+        ) | Out-Null
+        Invoke-Checked -Command kubectl -Arguments @(
+            "annotate", "deployment/travelmate-frontend",
+            "travelmate.io/commit=$($frontend.Revision)",
+            "travelmate.io/image-digest=$($frontend.Digest.Split('@')[1])",
+            "--overwrite", "-n", $Namespace
+        ) | Out-Null
 
         Wait-Rollout -Deployment travelmate-backend
         Wait-Rollout -Deployment travelmate-frontend
@@ -162,10 +166,10 @@ try {
     }
     catch {
         Write-DeployLog "Rollout failed; restoring previous images. Reason: $($_.Exception.Message)"
-        Invoke-Checked kubectl set image deployment/travelmate-backend "backend=$previousBackend" -n $Namespace | Out-Null
-        Invoke-Checked kubectl set image deployment/travelmate-frontend "frontend=$previousFrontend" -n $Namespace | Out-Null
-        Invoke-Checked kubectl annotate deployment/travelmate-backend "travelmate.io/commit=$currentCommit" --overwrite -n $Namespace | Out-Null
-        Invoke-Checked kubectl annotate deployment/travelmate-frontend "travelmate.io/commit=$currentCommit" --overwrite -n $Namespace | Out-Null
+        Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-backend", "backend=$previousBackend", "-n", $Namespace) | Out-Null
+        Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-frontend", "frontend=$previousFrontend", "-n", $Namespace) | Out-Null
+        Invoke-Checked -Command kubectl -Arguments @("annotate", "deployment/travelmate-backend", "travelmate.io/commit=$currentCommit", "--overwrite", "-n", $Namespace) | Out-Null
+        Invoke-Checked -Command kubectl -Arguments @("annotate", "deployment/travelmate-frontend", "travelmate.io/commit=$currentCommit", "--overwrite", "-n", $Namespace) | Out-Null
         Wait-Rollout -Deployment travelmate-backend
         Wait-Rollout -Deployment travelmate-frontend
         throw

@@ -24,16 +24,19 @@ foreach ($file in $supportFiles) {
     }
 }
 
-$installDirectory = Join-Path $env:LOCALAPPDATA "TravelMateCD"
+$installDirectory = Join-Path $env:USERPROFILE "TravelMateCD"
 [IO.Directory]::CreateDirectory($installDirectory) | Out-Null
 $installedScript = Join-Path $installDirectory "Deploy-TravelMate.ps1"
 foreach ($file in $supportFiles) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination (Join-Path $installDirectory $file) -Force
 }
 
-$pwsh = (Get-Command pwsh.exe -ErrorAction Stop).Source
+$powershell = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
+if (-not (Test-Path -LiteralPath $powershell -PathType Leaf)) {
+    throw "Windows PowerShell is not available at the expected path: $powershell"
+}
 $arguments = "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$installedScript`""
-$action = New-ScheduledTaskAction -Execute $pwsh -Argument $arguments
+$action = New-ScheduledTaskAction -Execute $powershell -Argument $arguments
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $repeatTrigger = New-ScheduledTaskTrigger `
     -Once `

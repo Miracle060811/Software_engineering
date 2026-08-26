@@ -43,6 +43,8 @@ spec:
         app.kubernetes.io/part-of: travelmate
     spec:
       terminationGracePeriodSeconds: 20
+      imagePullSecrets:
+        - name: travelmate-ghcr
       containers:
         - name: frontend
           image: ghcr.io/miracle060811/travelmate-frontend:deploy
