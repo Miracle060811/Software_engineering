@@ -206,11 +206,12 @@ npm run check:traceability
 演示机使用 Docker Desktop Kubernetes，资源清单位于 [`deploy/k8s`](deploy/k8s)，本机部署脚本说明位于 [`scripts/cd/README.md`](scripts/cd/README.md)。首次启用：
 
 ```powershell
+.\scripts\cd\Configure-TravelMateGhcrCredential.ps1
 .\scripts\cd\Initialize-TravelMateKubernetes.ps1
 .\scripts\cd\Install-TravelMateDeploymentTask.ps1
 ```
 
-初始化脚本会在本机生成并复用 Kubernetes Secret，不打印密钥；计划任务每五分钟检查 GHCR `deploy` 通道，发现新 commit 后执行滚动更新、健康检查，失败则恢复更新前镜像。应用入口为 <http://localhost:30080>，部署日志位于 `%LOCALAPPDATA%\TravelMateCD\deploy.log`。
+GHCR 包可保持私有：凭据脚本通过安全提示读取仅含 `read:packages` 的 classic PAT，验证镜像后配置 Docker 与 Kubernetes 拉取凭据，不把 Token 写入命令行、仓库或日志。初始化脚本会在本机生成并复用应用 Secret；计划任务每五分钟检查 GHCR `deploy` 通道，发现新 commit 后执行滚动更新、健康检查，失败则恢复更新前镜像。应用入口为 <http://localhost:30080>，部署日志位于 `%USERPROFILE%\TravelMateCD\deploy.log`。
 
 图片或种子数据有改动时，额外运行：
 
