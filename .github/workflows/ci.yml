@@ -50,7 +50,7 @@ jobs:
 
           files="$(git diff --name-only "$base" "$GITHUB_SHA")"
           printf '%s\n' "$files"
-          if printf '%s\n' "$files" | grep -Eq '^(backend/|frontend/|docs/sql/|scripts/|package(-lock)?\.json$|\.github/workflows/)'; then
+          if printf '%s\n' "$files" | grep -Eq '^(backend/|frontend/|deploy/|docs/sql/|scripts/|package(-lock)?\.json$|\.github/workflows/)'; then
             echo "code=true" >> "$GITHUB_OUTPUT"
           else
             echo "code=false" >> "$GITHUB_OUTPUT"
@@ -126,6 +126,7 @@ jobs:
 
     env:
       SPRING_DATASOURCE_PASSWORD: travelmate-ci
+      JWT_SECRET: YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=
       DEEPSEEK_API_KEY: ""
 
     steps:
@@ -283,6 +284,7 @@ jobs:
     env:
       CI: "true"
       SPRING_DATASOURCE_PASSWORD: travelmate-ci
+      JWT_SECRET: YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=
       DEEPSEEK_API_KEY: ""
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
 
