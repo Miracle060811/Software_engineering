@@ -3,6 +3,7 @@ package com.travelmate.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.travelmate.dto.TrainBrowserTicket;
 import com.travelmate.dto.TrainLiveSyncStatus;
+import com.travelmate.common.LogSanitizer;
 import com.travelmate.entity.Train;
 import com.travelmate.mapper.TrainMapper;
 import com.travelmate.service.TrainBrowserSyncService;
@@ -146,7 +147,10 @@ public class TrainLiveSyncServiceImpl implements TrainLiveSyncService {
                     "12306 页面实时读取成功，已写入/更新本地车次表",
                     routeKey, date, SOURCE_12306_PAGE, trains.size());
         } catch (Exception ex) {
-            log.warn("12306 browser sync failed for {} {}: {}", routeKey, date, ex.getMessage());
+            log.warn("12306 browser sync failed for {} {}: {}",
+                    LogSanitizer.singleLine(routeKey),
+                    LogSanitizer.singleLine(date),
+                    LogSanitizer.singleLine(ex.getMessage()));
             return remember(attemptKey, true, true, false,
                     "12306 页面读取失败：" + friendlyError(ex) + "；展示本地演示缓存",
                     routeKey, date, SOURCE_LOCAL_DEMO_CACHE, 0);

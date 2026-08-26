@@ -37,6 +37,7 @@
             ref="uploadRef"
             :action="uploadUrl"
             :headers="uploadHeaders"
+            :with-credentials="true"
             list-type="picture-card"
             :on-success="handleUploadSuccess"
             :on-remove="handleUploadRemove"
@@ -89,6 +90,7 @@ import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Edit, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import { buildUploadHeaders } from "@/utils/csrf";
 import PageHeader from "@/components/PageHeader.vue";
 import { optimizeImageForUpload } from "@/utils/imageUpload";
 
@@ -120,10 +122,7 @@ const uploadUrl = import.meta.env.VITE_API_BASE_URL
   ? import.meta.env.VITE_API_BASE_URL + "/api/file/upload"
   : "/api/file/upload";
 
-const uploadHeaders = computed(() => {
-  const token = localStorage.getItem("token");
-  return token ? { Authorization: "Bearer " + token } : {};
-});
+const uploadHeaders = computed(buildUploadHeaders);
 
 const beforeUpload = async (file) => {
   try {

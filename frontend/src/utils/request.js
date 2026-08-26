@@ -1,5 +1,6 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
+import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "@/utils/csrf";
 
 const AUTH_REDIRECT_FLAG = "travelmate-auth-redirecting";
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL?.trim() || "/";
@@ -28,6 +29,10 @@ const shouldNotify = (config) => !config?.silent && !config?.skipErrorMessage;
 const request = axios.create({
   baseURL: apiBaseURL,
   timeout: 30000,
+  withCredentials: true,
+  withXSRFToken: true,
+  xsrfCookieName: CSRF_COOKIE_NAME,
+  xsrfHeaderName: CSRF_HEADER_NAME,
 });
 
 request.interceptors.request.use((config) => {

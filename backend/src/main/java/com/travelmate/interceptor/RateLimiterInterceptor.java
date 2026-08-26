@@ -2,6 +2,7 @@ package com.travelmate.interceptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.travelmate.annotation.RateLimiter;
+import com.travelmate.common.LogSanitizer;
 import com.travelmate.common.RedisKeyConstants;
 import com.travelmate.common.Result;
 import com.travelmate.common.UserContext;
@@ -54,7 +55,7 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
                 redisTemplate.expire(key, annotation.timeWindowSeconds(), TimeUnit.SECONDS);
             }
         } catch (RedisConnectionFailureException e) {
-            log.warn("Redis unavailable, skipping rate limit for {}", uri);
+            log.warn("Redis unavailable, skipping rate limit for {}", LogSanitizer.singleLine(uri));
             return true;
         }
 

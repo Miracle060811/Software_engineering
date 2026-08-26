@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travelmate.backend.entity.User;
 import com.travelmate.backend.mapper.UserMapper;
+import com.travelmate.common.PaginationSupport;
 import com.travelmate.common.Result;
 import com.travelmate.entity.Attraction;
 import com.travelmate.entity.Comment;
@@ -1101,13 +1102,14 @@ public class AdminController {
 
         allOrders.sort(Comparator.comparing(o -> String.valueOf(o.get("createTime")), Comparator.reverseOrder()));
         int total = allOrders.size();
-        int start = Math.max(0, (page - 1) * size);
-        int end = Math.min(start + size, total);
+        PaginationSupport.Window pagination = PaginationSupport.window(page, size, 200, total);
         Map<String, Object> result = new HashMap<>();
-        result.put("records", start < total ? allOrders.subList(start, end) : List.of());
+        result.put("records", pagination.start() < total
+                ? allOrders.subList(pagination.start(), pagination.end())
+                : List.of());
         result.put("total", total);
-        result.put("page", page);
-        result.put("size", size);
+        result.put("page", pagination.page());
+        result.put("size", pagination.size());
         return Result.success(result);
     }
 

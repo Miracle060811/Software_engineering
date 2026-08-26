@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @Configuration
@@ -18,7 +20,17 @@ public class SecurityConfig {
 
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-                http.csrf(csrf -> csrf.disable())
+                CsrfTokenRequestAttributeHandler csrfRequestHandler = new CsrfTokenRequestAttributeHandler();
+                csrfRequestHandler.setCsrfRequestAttributeName(null);
+
+                http.csrf(csrf -> csrf
+                                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                                .csrfTokenRequestHandler(csrfRequestHandler)
+                                .ignoringRequestMatchers(
+                                                "/user/register",
+                                                "/user/login",
+                                                "/user/admin-register",
+                                                "/user/reset-password"))
                                 .cors(Customizer.withDefaults())
                                 .formLogin(form -> form.disable())
                                 .httpBasic(basic -> basic.disable())

@@ -83,6 +83,7 @@
             <el-upload
               :action="uploadUrl"
               :headers="uploadHeaders"
+              :with-credentials="true"
               list-type="picture-card"
               :on-success="onUploadSuccess"
               :on-remove="onUploadRemove"
@@ -208,6 +209,7 @@ import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { StarFilled, LocationFilled, Plus } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import { buildUploadHeaders } from "@/utils/csrf";
 import SafeImage from "@/components/SafeImage.vue";
 import { FALLBACK_IMAGE, parseImageList } from "@/utils/image";
 import { optimizeImageForUpload } from "@/utils/imageUpload";
@@ -245,9 +247,7 @@ const resolveHotelCover = (hotelItem) => {
 };
 
 const uploadUrl = "/api/file/upload";
-const uploadHeaders = computed(() => ({
-  Authorization: `Bearer ${localStorage.getItem("token")}`,
-}));
+const uploadHeaders = computed(buildUploadHeaders);
 
 const bookForm = ref({
   checkIn: "",

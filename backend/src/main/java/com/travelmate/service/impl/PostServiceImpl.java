@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.travelmate.backend.entity.User;
 import com.travelmate.backend.mapper.UserMapper;
+import com.travelmate.common.PaginationSupport;
 import com.travelmate.entity.Follow;
 import com.travelmate.entity.Post;
 import com.travelmate.mapper.FollowMapper;
@@ -18,6 +19,8 @@ import java.util.*;
 @Service
 public class PostServiceImpl implements PostService {
 
+    private static final int MAX_PAGE_SIZE = 100;
+
     @Autowired
     private PostMapper postMapper;
 
@@ -29,9 +32,10 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<Map<String, Object>> listPosts(int page, int size, String keyword) {
-        int offset = (page - 1) * size;
+        PaginationSupport.Page pagination = PaginationSupport.normalize(page, size, MAX_PAGE_SIZE);
         // 只返回已发布且公开的帖子
-        return postMapper.selectPostsWithUser(offset, size, normalizeKeyword(keyword));
+        return postMapper.selectPostsWithUser(
+                pagination.offset(), pagination.size(), normalizeKeyword(keyword));
     }
 
     @Override
@@ -177,8 +181,9 @@ public class PostServiceImpl implements PostService {
 
         List<Long> followeeIds = follows.stream().map(Follow::getFolloweeId).toList();
 
-        int offset = (page - 1) * size;
-        return postMapper.selectPostsByUserIds(followeeIds, offset, size, normalizeKeyword(keyword));
+        PaginationSupport.Page pagination = PaginationSupport.normalize(page, size, MAX_PAGE_SIZE);
+        return postMapper.selectPostsByUserIds(
+                followeeIds, pagination.offset(), pagination.size(), normalizeKeyword(keyword));
     }
 
     private String normalizeKeyword(String keyword) {

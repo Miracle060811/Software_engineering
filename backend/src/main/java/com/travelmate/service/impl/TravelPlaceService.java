@@ -3,6 +3,7 @@ package com.travelmate.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.travelmate.common.LogSanitizer;
 import com.travelmate.entity.Destination;
 import com.travelmate.mapper.DestinationMapper;
 import org.slf4j.Logger;
@@ -104,7 +105,8 @@ public class TravelPlaceService {
         } catch (TravelPlaceException ex) {
             throw ex;
         } catch (Exception ex) {
-            log.warn("联网核验城市失败 [{}]: {}", input, ex.getMessage());
+            log.warn("联网核验城市失败 [{}]: {}",
+                    LogSanitizer.singleLine(input), LogSanitizer.singleLine(ex.getMessage()));
             if (local != null) {
                 return local;
             }

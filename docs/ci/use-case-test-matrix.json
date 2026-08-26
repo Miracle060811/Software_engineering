@@ -2,7 +2,7 @@
   "UC01": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java", "backend/src/test/java/com/travelmate/SecurityConfigTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
   "UC02": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
   "UC03": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java", "backend/src/test/java/com/travelmate/service/impl/TrainLiveQuerySupportTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
-  "UC04": { "status": "planned", "tests": [] },
+  "UC04": { "status": "partial", "tests": ["frontend/tests/e2e-real/travelmate-real.spec.js"] },
   "UC05": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java", "backend/src/test/java/com/travelmate/ResultAndStockBoundaryTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
   "UC06": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/ResultAndStockBoundaryTests.java"] },
   "UC07": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },

@@ -11,8 +11,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = TravelMateApplication.class)
@@ -69,7 +70,8 @@ class SecurityConfigTests {
     @Test
     void healthEndpointIsPublicAndReportsServiceStatus() throws Exception {
         mockMvc.perform(get("/actuator/health"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists("XSRF-TOKEN"));
     }
 
     @Test
@@ -93,6 +95,7 @@ class SecurityConfigTests {
                 .header("Origin", "http://82.156.91.79:42356")
                 .header("Access-Control-Request-Method", "POST"))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Access-Control-Allow-Origin", "http://82.156.91.79:42356"));
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://82.156.91.79:42356"))
+                .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
     }
 }

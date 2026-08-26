@@ -138,6 +138,7 @@
             drag
             :action="uploadUrl"
             :headers="uploadHeaders"
+            :with-credentials="true"
             :show-file-list="false"
             :on-success="handleAvatarUploadSuccess"
             :before-upload="beforeAvatarUpload"
@@ -219,6 +220,7 @@ import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Message, StarFilled, UploadFilled } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import { buildUploadHeaders } from "@/utils/csrf";
 import { useUserStore } from "@/stores/user";
 import SafeImage from "@/components/SafeImage.vue";
 import { parseImageList } from "@/utils/image";
@@ -251,10 +253,7 @@ const uploadUrl = import.meta.env.VITE_API_BASE_URL
   ? import.meta.env.VITE_API_BASE_URL + "/api/file/upload"
   : "/api/file/upload";
 
-const uploadHeaders = computed(() => {
-  const token = localStorage.getItem("token");
-  return token ? { Authorization: "Bearer " + token } : {};
-});
+const uploadHeaders = computed(buildUploadHeaders);
 
 const isSelf = computed(() => {
   return userStore.userInfo?.username === route.params.username;
