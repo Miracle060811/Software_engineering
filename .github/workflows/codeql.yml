@@ -4,15 +4,9 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - "**/*.md"
-      - "document/**"
   pull_request:
     branches:
       - main
-    paths-ignore:
-      - "**/*.md"
-      - "document/**"
   schedule:
     - cron: "23 18 * * 1"
   workflow_dispatch:
@@ -106,3 +100,19 @@ jobs:
           path: ${{ runner.temp }}/codeql-results/
           if-no-files-found: error
           retention-days: 30
+
+  codeql-gate:
+    name: CodeQL quality gate
+    if: always()
+    needs:
+      - analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+
+    steps:
+      - name: Require every CodeQL language analysis to pass
+        shell: bash
+        run: |
+          echo "analyze=${{ needs.analyze.result }}"
+          [[ "${{ needs.analyze.result }}" == "success" ]]
