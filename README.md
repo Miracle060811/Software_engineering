@@ -20,7 +20,7 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 | 层次 | 技术 |
 | --- | --- |
 | 前端 | Vue 3、Vite 8、JavaScript、Element Plus、Pinia、Vue Router、Axios、ECharts |
-| 后端 | Java 21、Spring Boot 3.5.13、Spring Security、MyBatis-Plus 3.5.7、Maven Wrapper |
+| 后端 | Java 21、Spring Boot 3.5.15、Spring Security、MyBatis-Plus 3.5.7、Maven Wrapper |
 | 数据 | MySQL 8.0、Redis 6/7（缓存、限流与库存辅助） |
 | 认证 | JWT（jjwt 0.11.5）+ BCrypt + 基于角色的访问控制 |
 | 外部能力 | DeepSeek API、12306 公开余票接口、OpenStreetMap Nominatim、Open-Meteo |
@@ -47,16 +47,18 @@ MySQL 是必需依赖。Redis 未运行时后端仍可启动，但限流、缓�
 Copy-Item .env.example .env
 ```
 
-编辑 `.env`，至少正确填写 MySQL 密码：
+编辑 `.env`，至少正确填写 MySQL 密码与随机 JWT 密钥：
 
 ```dotenv
 DB_PASSWORD="你的 MySQL root 密码"
+JWT_SECRET="至少 32 个随机字节的 Base64 文本"
 DEEPSEEK_API_KEY=""
 ADMIN_REGISTER_SECRET="请替换为本地强随机值"
 ```
 
 - `DEEPSEEK_API_KEY` 可留空；行程规划和客服会使用本地降级结果。需要真实 AI 响应时再填入有效密钥。
-- `ADMIN_REGISTER_SECRET` 仅用于创建管理员账号，应替换模板值且不得提交。
+- `JWT_SECRET` 在不同实例间必须保持一致，否则登录令牌会随机失效；模板包含 PowerShell 生成命令。
+- `ADMIN_REGISTER_SECRET` 仅用于创建管理员账号；留空会关闭管理员注册入口。
 - `.env` 已被 Git 忽略，不要把密码、Token 或 API Key 写进源码、README 或提交记录。
 
 DeepSeek 的网关、模型和推理选项可继续使用 [`.env.example`](.env.example) 中的默认配置。
@@ -197,6 +199,19 @@ npm run check:traceability
 
 安全流水线位于 [`.github/workflows/security.yml`](.github/workflows/security.yml) 与 [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)，覆盖密钥、依赖漏洞和 Java/JavaScript 静态安全分析。流水线证据记录规则见 [`05_management/pipeline-records/README.md`](05_management/pipeline-records/README.md)。
 
+## 持续部署
+
+合并到 `main` 的代码在同一 commit 的五项质量门禁全部成功后，由 [`.github/workflows/publish-images.yml`](.github/workflows/publish-images.yml) 使用 CI 已测试的 JAR 与前端 `dist` 构建镜像。镜像先发布为不可变的 `sha-<完整 commit>`，通过 Trivy 高危/严重漏洞扫描后，才同时推进 `main` 与 `deploy` 通道。前后端镜像都带有 OCI commit 标签，部署机只接受标签一致的镜像对，并最终把 Kubernetes Deployment 固定到仓库 digest。
+
+演示机使用 Docker Desktop Kubernetes，资源清单位于 [`deploy/k8s`](deploy/k8s)，本机部署脚本说明位于 [`scripts/cd/README.md`](scripts/cd/README.md)。首次启用：
+
+```powershell
+.\scripts\cd\Initialize-TravelMateKubernetes.ps1
+.\scripts\cd\Install-TravelMateDeploymentTask.ps1
+```
+
+初始化脚本会在本机生成并复用 Kubernetes Secret，不打印密钥；计划任务每五分钟检查 GHCR `deploy` 通道，发现新 commit 后执行滚动更新、健康检查，失败则恢复更新前镜像。应用入口为 <http://localhost:30080>，部署日志位于 `%LOCALAPPDATA%\TravelMateCD\deploy.log`。
+
 图片或种子数据有改动时，额外运行：
 
 ```powershell
@@ -205,7 +220,7 @@ npm run check:images
 
 ## 已知边界
 
-- 当前是模块化单体，不是微服务架构，也没有生产级容器编排与发布流程。
+- 当前是模块化单体；现有 Kubernetes/CD 面向单机 Docker Desktop 演示环境，不等同于生产级多节点容灾、备份和可观测平台。
 - Redis 不可用时支持降级，但缓存、限流和高并发库存场景不能按完整状态验收。
 - 管理后台的 QPS、延迟和告警来自本地 `sys_log` 的轻量统计，尚未接入真实 APM 或分布式追踪。
 - 用例追溯矩阵目前仍包含 `partial` 与 `planned` 项；新增功能应同步补测试并收紧质量策略。
