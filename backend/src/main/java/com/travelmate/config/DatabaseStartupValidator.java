@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 @Component
+@ConditionalOnProperty(
+        name = "app.database.startup-validation.enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 public class DatabaseStartupValidator implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseStartupValidator.class);
