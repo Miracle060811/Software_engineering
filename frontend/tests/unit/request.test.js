@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 describe("request.js", () => {
-  let request;
+  let _request;
   let mockAxiosCreate;
   let mockInterceptorsRequest;
   let mockInterceptorsResponse;
@@ -37,7 +37,7 @@ describe("request.js", () => {
       ElMessage: { error: vi.fn() },
     }));
 
-    request = (await import("@/utils/request")).default;
+    _request = (await import("@/utils/request")).default;
   });
 
   describe("axios instance creation", () => {
