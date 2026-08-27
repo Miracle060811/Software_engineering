@@ -6,6 +6,7 @@ param(
     [string]$FrontendRepository = "ghcr.io/miracle060811/travelmate-frontend",
     [string]$Channel = "deploy",
     [int]$DockerStartupTimeoutSeconds = 240,
+    [int]$KubernetesStartupTimeoutSeconds = 300,
     [int]$RolloutTimeoutSeconds = 360
 )
 
@@ -15,6 +16,7 @@ $ErrorActionPreference = "Stop"
 $stateDirectory = Join-Path $env:USERPROFILE "TravelMateCD"
 $logPath = Join-Path $stateDirectory "deploy.log"
 [IO.Directory]::CreateDirectory($stateDirectory) | Out-Null
+$dockerDesktopStartedByScript = $false
 
 function Write-DeployLog {
     param([string]$Message)
@@ -36,9 +38,58 @@ function Invoke-Checked {
     return $output
 }
 
+function Test-NativeCommand {
+    param(
+        [string]$Command,
+        [string[]]$Arguments
+    )
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        & $Command @Arguments 2>$null | Out-Null
+        return ($LASTEXITCODE -eq 0)
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+}
+
+function Repair-StaleDockerRuntimeSockets {
+    $dockerProcesses = @(
+        Get-Process -Name "Docker Desktop", "com.docker.backend" -ErrorAction SilentlyContinue
+    )
+    if ($dockerProcesses.Count -gt 0) {
+        return
+    }
+
+    $runtimeDirectories = @(
+        (Join-Path $env:LOCALAPPDATA "Docker\run"),
+        (Join-Path $env:LOCALAPPDATA "docker-secrets-engine")
+    )
+    foreach ($runtimeDirectory in $runtimeDirectories) {
+        if (-not (Test-Path -LiteralPath $runtimeDirectory -PathType Container)) {
+            continue
+        }
+
+        $socketEntries = @(
+            Get-ChildItem -LiteralPath $runtimeDirectory -Force -ErrorAction SilentlyContinue |
+                Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }
+        )
+        if ($socketEntries.Count -eq 0) {
+            continue
+        }
+
+        $suffix = Get-Date -Format "yyyyMMdd-HHmmssfff"
+        $backupDirectory = "$runtimeDirectory.stale-manual-$suffix"
+        Move-Item -LiteralPath $runtimeDirectory -Destination $backupDirectory
+        [IO.Directory]::CreateDirectory($runtimeDirectory) | Out-Null
+        Write-DeployLog "Moved stale Docker runtime sockets to '$backupDirectory'."
+    }
+}
+
 function Wait-DockerDesktop {
-    & docker info --format "{{.ServerVersion}}" 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) {
+    if (Test-NativeCommand -Command docker -Arguments @("info", "--format", "{{.ServerVersion}}")) {
         return
     }
 
@@ -47,19 +98,65 @@ function Wait-DockerDesktop {
         throw "Docker Desktop is not installed at the expected path"
     }
 
-    Write-DeployLog "Docker Engine is unavailable; starting Docker Desktop."
-    Start-Process -FilePath $dockerDesktop -WindowStyle Hidden
+    $dockerProcesses = @(
+        Get-Process -Name "Docker Desktop", "com.docker.backend" -ErrorAction SilentlyContinue
+    )
+    if ($dockerProcesses.Count -eq 0) {
+        Repair-StaleDockerRuntimeSockets
+        Write-DeployLog "Docker Engine is unavailable; starting Docker Desktop."
+        Start-Process -FilePath $dockerDesktop -WindowStyle Hidden
+        $script:dockerDesktopStartedByScript = $true
+    }
+    else {
+        Write-DeployLog "Docker Desktop is starting; waiting for the Engine."
+    }
     $deadline = (Get-Date).AddSeconds($DockerStartupTimeoutSeconds)
     do {
         Start-Sleep -Seconds 5
-        & docker info --format "{{.ServerVersion}}" 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) {
+        if (Test-NativeCommand -Command docker -Arguments @("info", "--format", "{{.ServerVersion}}")) {
             Write-DeployLog "Docker Engine is ready."
             return
         }
     } while ((Get-Date) -lt $deadline)
 
     throw "Docker Engine did not become ready within $DockerStartupTimeoutSeconds seconds"
+}
+
+function Wait-KindNode {
+    $deadline = (Get-Date).AddSeconds($KubernetesStartupTimeoutSeconds)
+    do {
+        if (Test-NativeCommand -Command docker -Arguments @("inspect", "desktop-control-plane")) {
+            return
+        }
+        Start-Sleep -Seconds 5
+    } while ((Get-Date) -lt $deadline)
+
+    throw "Docker Desktop Kubernetes node did not appear within $KubernetesStartupTimeoutSeconds seconds"
+}
+
+function Wait-KubernetesApi {
+    $deadline = (Get-Date).AddSeconds($KubernetesStartupTimeoutSeconds)
+    do {
+        if (Test-NativeCommand -Command kubectl -Arguments @("get", "nodes", "--request-timeout=5s")) {
+            if ($script:dockerDesktopStartedByScript) {
+                Write-DeployLog "Kubernetes API is responding; allowing controllers to reconcile after the cold start."
+                Start-Sleep -Seconds 30
+            }
+            Invoke-Checked -Command kubectl -Arguments @(
+                "wait", "--for=condition=Ready", "node", "--all",
+                "--timeout=${KubernetesStartupTimeoutSeconds}s"
+            ) | Out-Null
+            Invoke-Checked -Command kubectl -Arguments @(
+                "wait", "--for=condition=Ready", "pod", "-l", "k8s-app=kube-dns",
+                "-n", "kube-system", "--timeout=${KubernetesStartupTimeoutSeconds}s"
+            ) | Out-Null
+            Write-DeployLog "Kubernetes API is ready."
+            return
+        }
+        Start-Sleep -Seconds 5
+    } while ((Get-Date) -lt $deadline)
+
+    throw "Kubernetes API did not become ready within $KubernetesStartupTimeoutSeconds seconds"
 }
 
 function Get-LocalImageIdentity {
@@ -94,6 +191,56 @@ function Wait-Rollout {
     Invoke-Checked -Command kubectl -Arguments @("rollout", "status", "deployment/$Deployment", "-n", $Namespace, "--timeout=${RolloutTimeoutSeconds}s") | Out-Null
 }
 
+function Wait-TravelMateDependencies {
+    Invoke-Checked -Command kubectl -Arguments @(
+        "rollout", "status", "statefulset/travelmate-mysql", "-n", $Namespace,
+        "--timeout=${RolloutTimeoutSeconds}s"
+    ) | Out-Null
+    Wait-Rollout -Deployment travelmate-redis
+}
+
+function Ensure-DeploymentReady {
+    param([string]$Deployment)
+
+    $raw = (Invoke-Checked -Command kubectl -Arguments @(
+        "get", "deployment", $Deployment, "-n", $Namespace, "-o", "json"
+    )) -join [Environment]::NewLine
+    $deploymentObject = $raw | ConvertFrom-Json
+    $desiredReplicas = [int]$deploymentObject.spec.replicas
+    $availableReplicasProperty = $deploymentObject.status.PSObject.Properties["availableReplicas"]
+    $availableReplicas = if ($null -eq $availableReplicasProperty) {
+        0
+    }
+    else {
+        [int]$availableReplicasProperty.Value
+    }
+
+    if ($availableReplicas -lt $desiredReplicas) {
+        Write-DeployLog "Deployment $Deployment is not ready ($availableReplicas/$desiredReplicas); restarting its Pods."
+        Invoke-Checked -Command kubectl -Arguments @(
+            "rollout", "restart", "deployment/$Deployment", "-n", $Namespace
+        ) | Out-Null
+    }
+    Wait-Rollout -Deployment $Deployment
+}
+
+function Assert-FrontendHealth {
+    $deadline = (Get-Date).AddSeconds(90)
+    do {
+        try {
+            $health = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:30080/healthz" -TimeoutSec 10
+            if ($health.StatusCode -eq 200) {
+                return
+            }
+        }
+        catch {
+            # The Docker Desktop load balancer can lag behind ready Pods briefly.
+        }
+        Start-Sleep -Seconds 3
+    } while ((Get-Date) -lt $deadline)
+    throw "Frontend health endpoint did not return HTTP 200 within 90 seconds"
+}
+
 $mutex = [Threading.Mutex]::new($false, "Local\TravelMateCD")
 $lockAcquired = $false
 try {
@@ -109,11 +256,12 @@ try {
         throw "Kubernetes context '$KubeContext' is not available"
     }
     Invoke-Checked -Command kubectl -Arguments @("config", "use-context", $KubeContext) | Out-Null
-    Invoke-Checked -Command kubectl -Arguments @("get", "nodes", "--request-timeout=15s") | Out-Null
+    Wait-KindNode
     & (Join-Path $PSScriptRoot "Ensure-KindProxy.ps1") | ForEach-Object { Write-DeployLog $_ }
     if ($LASTEXITCODE -ne 0) {
         throw "Unable to prepare Kind node networking"
     }
+    Wait-KubernetesApi
 
     $backendTag = "${BackendRepository}:${Channel}"
     $frontendTag = "${FrontendRepository}:${Channel}"
@@ -133,7 +281,11 @@ try {
         throw "TravelMate Deployments are not initialized"
     }
     if ($currentCommit -eq $backend.Revision) {
-        Write-DeployLog "Commit $currentCommit is already deployed."
+        Wait-TravelMateDependencies
+        Ensure-DeploymentReady -Deployment travelmate-backend
+        Ensure-DeploymentReady -Deployment travelmate-frontend
+        Assert-FrontendHealth
+        Write-DeployLog "Commit $currentCommit is already deployed and healthy."
         return
     }
 
@@ -159,10 +311,7 @@ try {
 
         Wait-Rollout -Deployment travelmate-backend
         Wait-Rollout -Deployment travelmate-frontend
-        $health = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:30080/healthz" -TimeoutSec 15
-        if ($health.StatusCode -ne 200) {
-            throw "Frontend health endpoint returned HTTP $($health.StatusCode)"
-        }
+        Assert-FrontendHealth
     }
     catch {
         Write-DeployLog "Rollout failed; restoring previous images. Reason: $($_.Exception.Message)"
