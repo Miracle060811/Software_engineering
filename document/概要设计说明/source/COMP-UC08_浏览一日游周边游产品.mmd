@@ -1,0 +1,28 @@
+sequenceDiagram
+    title COMP-UC08 浏览一日游周边游产品——组件级顺序图
+    actor User as 用户/调用方
+    participant Page as AttractionList.vue
+    participant API as Axios / Vue Router
+    participant Controller as TourProductController
+    participant Service as TourProductServiceImpl
+    participant Dependency as TourProductMapper
+    participant Data as MySQL: tm_tour_product
+    User->>Page: 发起“浏览一日游周边游产品”操作
+    Page->>API: GET /api/tour/list?type=
+    API->>Controller: HTTP/JSON + JWT（需要时）
+    Controller->>Service: 参数、身份与业务请求
+    Service->>Dependency: 执行业务规则/持久化或外部调用
+    Dependency->>Data: 查询或条件写入
+    alt 成功
+      Data-->>Dependency: 返回数据或影响行数
+      Dependency-->>Service: 返回业务结果
+      Service-->>Controller: 成功结果
+      Controller-->>API: Result.success(...)
+      API-->>Page: 更新页面状态
+      Page-->>User: 展示可验证结果
+    else 关键失败
+      Note over Service,Data: 查询失败返回错误；当前仅覆盖浏览而不含购买闭环
+      Service-->>Controller: 抛出/返回业务失败
+      Controller-->>API: Result.error(...)
+      API-->>Page: 展示错误且不伪造成功状态
+    end

@@ -1,0 +1,28 @@
+sequenceDiagram
+    title COMP-UC15 社区点赞收藏与评论——组件级顺序图
+    actor User as 用户/调用方
+    participant Page as PostDetail.vue / MyCollections.vue
+    participant API as Axios / Vue Router
+    participant Controller as LikeController + CommentController
+    participant Service as LikeServiceImpl + CommentServiceImpl
+    participant Dependency as LikeMapper + CommentMapper
+    participant Data as MySQL: tm_like、tm_comment
+    User->>Page: 发起“社区点赞收藏与评论”操作
+    Page->>API: POST /api/like/toggle、/api/comment/add；DELETE /api/comment/{id}
+    API->>Controller: HTTP/JSON + JWT（需要时）
+    Controller->>Service: 参数、身份与业务请求
+    Service->>Dependency: 执行业务规则/持久化或外部调用
+    Dependency->>Data: 查询或条件写入
+    alt 成功
+      Data-->>Dependency: 返回数据或影响行数
+      Dependency-->>Service: 返回业务结果
+      Service-->>Controller: 成功结果
+      Controller-->>API: Result.success(...)
+      API-->>Page: 更新页面状态
+      Page-->>User: 展示可验证结果
+    else 关键失败
+      Note over Service,Data: 重复互动保持幂等；越权删除或父评论不匹配时拒绝
+      Service-->>Controller: 抛出/返回业务失败
+      Controller-->>API: Result.error(...)
+      API-->>Page: 展示错误且不伪造成功状态
+    end
