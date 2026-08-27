@@ -29,10 +29,41 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install Gitleaks 8.30.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/gitleaks.tar.gz"
+          curl --fail --location --silent --show-error \
+            --output "$archive" \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $archive" \
+            | sha256sum --check --strict
+          tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP" gitleaks
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
       - name: Scan committed content for secrets
-        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          if [[ "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            scan_base="$BASE_SHA"
+            if [[ ! "$scan_base" =~ ^[0-9a-f]{40}$ || "$scan_base" =~ ^0{40}$ ]]; then
+              scan_base="$(git merge-base "origin/$DEFAULT_BRANCH" "$HEAD_SHA" 2>/dev/null || true)"
+            fi
+
+            if [[ "$scan_base" =~ ^[0-9a-f]{40}$ && "$scan_base" != "$HEAD_SHA" ]]; then
+              gitleaks git --redact --exit-code 1 --log-opts="$scan_base..$HEAD_SHA" .
+            else
+              gitleaks git --redact --exit-code 1 --log-opts="$HEAD_SHA" .
+            fi
+          else
+            gitleaks dir --redact --exit-code 1 .
+          fi
 
   node-dependency-audit:
     name: Node.js dependency audit

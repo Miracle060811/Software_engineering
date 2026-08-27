@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: travelmate
+  labels:
+    app.kubernetes.io/name: travelmate
+    app.kubernetes.io/part-of: travelmate

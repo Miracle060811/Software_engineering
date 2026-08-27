@@ -6,6 +6,7 @@ import com.travelmate.backend.service.UserService;
 import com.travelmate.common.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin
@@ -19,7 +20,7 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @Value("${ADMIN_REGISTER_SECRET:5201314}")
+    @Value("${app.security.admin-register-secret:}")
     private String adminRegisterSecret;
 
     @PostMapping("/register")
@@ -35,6 +36,9 @@ public class UserController {
             @RequestParam String username,
             @RequestParam String password,
             @RequestParam String secret) {
+        if (!StringUtils.hasText(adminRegisterSecret)) {
+            return Result.error("管理员注册未启用");
+        }
         if (!adminRegisterSecret.equals(secret)) {
             return Result.error("管理员注册密钥错误");
         }

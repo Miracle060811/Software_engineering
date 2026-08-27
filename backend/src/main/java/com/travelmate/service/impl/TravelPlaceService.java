@@ -78,7 +78,7 @@ public class TravelPlaceService {
     @Value("${ai.place-verification.cache-hours:168}")
     private long cacheHours;
 
-    @Value("${ai.place-verification.user-agent:TravelMate/1.0 (https://github.com/Yangyouthovo/Software_engineering)}")
+    @Value("${ai.place-verification.user-agent:TravelMate/1.0 (https://github.com/Miracle060811/Software_engineering)}")
     private String userAgent;
 
     public VerifiedPlace verifyCity(String rawInput, String fieldLabel) {

@@ -16,7 +16,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(classes = TravelMateApplication.class)
+@SpringBootTest(
+        classes = TravelMateApplication.class,
+        properties = "JWT_SECRET=YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=")
 @AutoConfigureMockMvc
 class SecurityConfigTests {
 
@@ -72,6 +74,12 @@ class SecurityConfigTests {
         mockMvc.perform(get("/actuator/health"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().exists("XSRF-TOKEN"));
+
+        mockMvc.perform(get("/actuator/health/liveness"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/actuator/health/readiness"))
+                .andExpect(status().isOk());
     }
 
     @Test

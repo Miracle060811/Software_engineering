@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
 
 management:
   endpoints:
@@ -9,24 +10,39 @@ management:
   endpoint:
     health:
       show-details: never
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState,ping
+        readiness:
+          include: readinessState,db,redis
 
 app:
+  upload-dir: ${UPLOAD_DIR:uploads}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000,http://82.156.91.79:42356}
+  security:
+    jwt-secret: ${JWT_SECRET:}
+    admin-register-secret: ${ADMIN_REGISTER_SECRET:}
 
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   config:
     import: optional:file:./application-local.yml
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/travelmate?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Shanghai
-    username: root
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:travelmate}?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:root}}
     password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:}}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-init-sql: SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci
-  redis:
-    host: 127.0.0.1
-    port: 6379
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:${REDIS_HOST:127.0.0.1}}
+      port: ${SPRING_DATA_REDIS_PORT:${REDIS_PORT:6379}}
+      password: ${SPRING_DATA_REDIS_PASSWORD:${REDIS_PASSWORD:}}
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
@@ -36,7 +52,7 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
   configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: ${MYBATIS_LOG_IMPL:org.apache.ibatis.logging.stdout.StdOutImpl}
     map-underscore-to-camel-case: true
 
 ai:
@@ -44,7 +60,7 @@ ai:
     enabled: ${AI_PLACE_VERIFICATION_ENABLED:true}
     base-url: ${AI_PLACE_VERIFICATION_BASE_URL:https://nominatim.openstreetmap.org/search}
     cache-hours: ${AI_PLACE_VERIFICATION_CACHE_HOURS:168}
-    user-agent: "${AI_PLACE_VERIFICATION_USER_AGENT:TravelMate/1.0 (https://github.com/Yangyouthovo/Software_engineering)}"
+    user-agent: "${AI_PLACE_VERIFICATION_USER_AGENT:TravelMate/1.0 (https://github.com/Miracle060811/Software_engineering)}"
   weather:
     enabled: ${AI_WEATHER_ENABLED:true}
     base-url: ${AI_WEATHER_BASE_URL:https://api.open-meteo.com/v1/forecast}
