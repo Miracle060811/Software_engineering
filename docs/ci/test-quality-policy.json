@@ -1,10 +1,11 @@
 {
   "maximumPlanned": 0,
-  "minimumEvidenceScore": 19,
+  "minimumEvidenceScore": 27,
   "scoring": {
     "covered": 2,
     "partial": 1,
     "planned": 0
   },
-  "rationale": "19 个业务场景均已有自动化证据，UC09/13/15/16/17 已补齐后端单元/集成测试与真实后端 E2E 证据并升级为 covered；当前基线为 5 个 covered、14 个 partial、0 个 planned；CI 禁止业务场景重新退回无自动化证据状态。"
+  "coveredRequiresBothLayers": true,
+  "rationale": "当前基线为 8 个 covered、11 个 partial、0 个 planned，证据分 27。covered 必须同时具备后端 UNIT/INT 测试与真实 E2E 测试证据，防止仅添加空文件绕过检查。门槛提升至 27 防止已覆盖用例退化。"
 }
