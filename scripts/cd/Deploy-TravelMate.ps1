@@ -179,11 +179,85 @@ function Get-LocalImageIdentity {
     }
 }
 
-function Get-DeploymentImage {
+function Get-DeploymentState {
     param([string]$Deployment, [string]$Container)
     $raw = (Invoke-Checked -Command kubectl -Arguments @("get", "deployment", $Deployment, "-n", $Namespace, "-o", "json")) -join [Environment]::NewLine
     $deploymentObject = $raw | ConvertFrom-Json
-    return [string](@($deploymentObject.spec.template.spec.containers | Where-Object name -eq $Container)[0].image)
+    $containerObject = @($deploymentObject.spec.template.spec.containers | Where-Object name -eq $Container)[0]
+    if ($null -eq $containerObject) {
+        throw "Container '$Container' was not found in Deployment '$Deployment'"
+    }
+
+    $annotationsProperty = $deploymentObject.metadata.PSObject.Properties["annotations"]
+    $annotations = if ($null -eq $annotationsProperty) {
+        $null
+    }
+    else {
+        $annotationsProperty.Value
+    }
+    $commitProperty = if ($null -eq $annotations) {
+        $null
+    }
+    else {
+        $annotations.PSObject.Properties["travelmate.io/commit"]
+    }
+    $digestProperty = if ($null -eq $annotations) {
+        $null
+    }
+    else {
+        $annotations.PSObject.Properties["travelmate.io/image-digest"]
+    }
+
+    return [pscustomobject]@{
+        Deployment = $Deployment
+        Container = $Container
+        Image = [string]$containerObject.image
+        Commit = [pscustomobject]@{
+            Exists = ($null -ne $commitProperty)
+            Value = if ($null -eq $commitProperty) { $null } else { [string]$commitProperty.Value }
+        }
+        Digest = [pscustomobject]@{
+            Exists = ($null -ne $digestProperty)
+            Value = if ($null -eq $digestProperty) { $null } else { [string]$digestProperty.Value }
+        }
+    }
+}
+
+function Restore-DeploymentAnnotation {
+    param(
+        [string]$Deployment,
+        [string]$Name,
+        [pscustomobject]$State
+    )
+
+    $annotationArgument = if ($State.Exists) {
+        "$Name=$($State.Value)"
+    }
+    else {
+        "$Name-"
+    }
+    Invoke-Checked -Command kubectl -Arguments @(
+        "annotate", "deployment/$Deployment", $annotationArgument,
+        "--overwrite", "-n", $Namespace
+    ) | Out-Null
+}
+
+function Invoke-RollbackStep {
+    param(
+        [string]$Description,
+        [scriptblock]$Action,
+        [System.Collections.Generic.List[string]]$Failures
+    )
+
+    try {
+        & $Action
+        Write-DeployLog "Rollback step succeeded: $Description."
+    }
+    catch {
+        $failure = "$Description`: $($_.Exception.Message)"
+        $Failures.Add($failure)
+        Write-DeployLog "Rollback step failed: $failure"
+    }
 }
 
 function Wait-Rollout {
@@ -289,8 +363,8 @@ try {
         return
     }
 
-    $previousBackend = Get-DeploymentImage -Deployment travelmate-backend -Container backend
-    $previousFrontend = Get-DeploymentImage -Deployment travelmate-frontend -Container frontend
+    $previousBackend = Get-DeploymentState -Deployment travelmate-backend -Container backend
+    $previousFrontend = Get-DeploymentState -Deployment travelmate-frontend -Container frontend
     Write-DeployLog "Deploying commit $($backend.Revision); backend=$($backend.Digest), frontend=$($frontend.Digest)."
 
     try {
@@ -314,14 +388,39 @@ try {
         Assert-FrontendHealth
     }
     catch {
-        Write-DeployLog "Rollout failed; restoring previous images. Reason: $($_.Exception.Message)"
-        Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-backend", "backend=$previousBackend", "-n", $Namespace) | Out-Null
-        Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-frontend", "frontend=$previousFrontend", "-n", $Namespace) | Out-Null
-        Invoke-Checked -Command kubectl -Arguments @("annotate", "deployment/travelmate-backend", "travelmate.io/commit=$currentCommit", "--overwrite", "-n", $Namespace) | Out-Null
-        Invoke-Checked -Command kubectl -Arguments @("annotate", "deployment/travelmate-frontend", "travelmate.io/commit=$currentCommit", "--overwrite", "-n", $Namespace) | Out-Null
-        Wait-Rollout -Deployment travelmate-backend
-        Wait-Rollout -Deployment travelmate-frontend
-        throw
+        $rolloutFailure = $_.Exception.Message
+        Write-DeployLog "Rollout failed; restoring previous images and annotations. Reason: $rolloutFailure"
+        $rollbackFailures = [System.Collections.Generic.List[string]]::new()
+
+        Invoke-RollbackStep -Description "restore travelmate-backend image" -Failures $rollbackFailures -Action {
+            Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-backend", "backend=$($previousBackend.Image)", "-n", $Namespace) | Out-Null
+        }
+        Invoke-RollbackStep -Description "restore travelmate-frontend image" -Failures $rollbackFailures -Action {
+            Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-frontend", "frontend=$($previousFrontend.Image)", "-n", $Namespace) | Out-Null
+        }
+        Invoke-RollbackStep -Description "restore travelmate-backend commit annotation" -Failures $rollbackFailures -Action {
+            Restore-DeploymentAnnotation -Deployment travelmate-backend -Name "travelmate.io/commit" -State $previousBackend.Commit
+        }
+        Invoke-RollbackStep -Description "restore travelmate-backend digest annotation" -Failures $rollbackFailures -Action {
+            Restore-DeploymentAnnotation -Deployment travelmate-backend -Name "travelmate.io/image-digest" -State $previousBackend.Digest
+        }
+        Invoke-RollbackStep -Description "restore travelmate-frontend commit annotation" -Failures $rollbackFailures -Action {
+            Restore-DeploymentAnnotation -Deployment travelmate-frontend -Name "travelmate.io/commit" -State $previousFrontend.Commit
+        }
+        Invoke-RollbackStep -Description "restore travelmate-frontend digest annotation" -Failures $rollbackFailures -Action {
+            Restore-DeploymentAnnotation -Deployment travelmate-frontend -Name "travelmate.io/image-digest" -State $previousFrontend.Digest
+        }
+        Invoke-RollbackStep -Description "wait for travelmate-backend rollback" -Failures $rollbackFailures -Action {
+            Wait-Rollout -Deployment travelmate-backend
+        }
+        Invoke-RollbackStep -Description "wait for travelmate-frontend rollback" -Failures $rollbackFailures -Action {
+            Wait-Rollout -Deployment travelmate-frontend
+        }
+
+        if ($rollbackFailures.Count -gt 0) {
+            throw "Deployment rollout failed: $rolloutFailure Rollback also encountered: $($rollbackFailures -join ' | ')"
+        }
+        throw "Deployment rollout failed; previous images and annotations were restored. Original failure: $rolloutFailure"
     }
 
     Write-DeployLog "Commit $($backend.Revision) deployed successfully."
