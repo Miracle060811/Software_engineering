@@ -90,10 +90,10 @@ test("representative use-case APIs return real database-backed contracts", async
   }
 });
 
-test("UC04 creates and cancels a flight order against real services", async ({ request }) => {
+test("UC04 and UC10 create, pay/refund and cancel flight orders with a real coupon", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);
-  let orderNo;
+  let pendingOrderNo;
 
   try {
     const passengerResponse = await request.post("/api/passenger/add", {
@@ -116,30 +116,101 @@ test("UC04 creates and cancels a flight order against real services", async ({ r
     const flightsBody = await flightsResponse.json();
     expect(flightsBody.code).toBe(200);
     expect(flightsBody.data.length).toBeGreaterThan(0);
+    const flight = flightsBody.data[0];
+
+    const couponsResponse = await request.get("/api/coupon/list", { headers });
+    const couponsBody = await couponsResponse.json();
+    expect(couponsBody.code).toBe(200);
+    const coupon = couponsBody.data.find((item) =>
+      (item.category === "all" || item.category === "flight") &&
+      Number(item.minAmount) <= Number(flight.economyPrice));
+    expect(coupon).toBeTruthy();
+
+    const claimResponse = await request.post(`/api/coupon/claim/${coupon.id}`, { headers });
+    expect((await claimResponse.json()).code).toBe(200);
+
+    const duplicateClaimResponse = await request.post(`/api/coupon/claim/${coupon.id}`, { headers });
+    const duplicateClaimBody = await duplicateClaimResponse.json();
+    expect(duplicateClaimBody.code).toBe(500);
+    expect(duplicateClaimBody.msg).toContain("已领取过");
+
+    const myCouponsResponse = await request.get("/api/coupon/my", { headers });
+    const myCouponsBody = await myCouponsResponse.json();
+    expect(myCouponsBody.code).toBe(200);
+    const userCoupon = myCouponsBody.data.find((item) => item.couponId === coupon.id);
+    expect(userCoupon).toBeTruthy();
+    expect(userCoupon.status).toBe(0);
 
     const createResponse = await request.post("/api/order/flight/create", {
       headers,
       data: {
-        flightId: flightsBody.data[0].id,
+        flightId: flight.id,
         passengerId: passengersBody.data[0].id,
         seatType: "Economy",
         ticketCount: 1,
-        userCouponId: null,
+        userCouponId: userCoupon.id,
       },
     });
     const createBody = await createResponse.json();
     expect(createResponse.ok()).toBeTruthy();
     expect(createBody.code).toBe(200);
     expect(createBody.data).toMatch(/^T/);
-    orderNo = createBody.data;
+    const refundOrderNo = createBody.data;
 
     const ordersResponse = await request.get("/api/order/list", { headers });
     const ordersBody = await ordersResponse.json();
     expect(ordersBody.code).toBe(200);
-    expect(ordersBody.data.some((order) => order.orderNo === orderNo)).toBeTruthy();
+    const discountedOrder = ordersBody.data.find((order) => order.orderNo === refundOrderNo);
+    expect(discountedOrder).toBeTruthy();
+    const expectedAmount = coupon.discountType === 1
+      ? Number(flight.economyPrice) * Number(coupon.discountValue)
+      : Number(flight.economyPrice) - Number(coupon.discountValue);
+    expect(Number(discountedOrder.amount)).toBeCloseTo(Math.max(0, expectedAmount), 2);
+
+    const couponsAfterUseResponse = await request.get("/api/coupon/my", { headers });
+    const couponsAfterUseBody = await couponsAfterUseResponse.json();
+    const usedCoupon = couponsAfterUseBody.data.find((item) => item.id === userCoupon.id);
+    expect(usedCoupon.status).toBe(1);
+    expect(usedCoupon.usedTime).toBeTruthy();
+
+    const payResponse = await request.post(`/api/order/${refundOrderNo}/pay`, { headers });
+    expect((await payResponse.json()).code).toBe(200);
+
+    const repeatedPayResponse = await request.post(`/api/order/${refundOrderNo}/pay`, { headers });
+    const repeatedPayBody = await repeatedPayResponse.json();
+    expect(repeatedPayBody.code).toBe(500);
+    expect(repeatedPayBody.msg).toContain("无法再次支付");
+
+    const refundResponse = await request.post(`/api/order/${refundOrderNo}/refund`, { headers });
+    expect((await refundResponse.json()).code).toBe(200);
+
+    const receiptResponse = await request.get(`/api/order/${refundOrderNo}/receipt`, { headers });
+    const receiptBody = await receiptResponse.json();
+    expect(receiptBody.code).toBe(200);
+    expect(receiptBody.data.status).toBe(5);
+
+    const pendingCreateResponse = await request.post("/api/order/flight/create", {
+      headers,
+      data: {
+        flightId: flight.id,
+        passengerId: passengersBody.data[0].id,
+        seatType: "Economy",
+        ticketCount: 1,
+        userCouponId: null,
+      },
+    });
+    const pendingCreateBody = await pendingCreateResponse.json();
+    expect(pendingCreateBody.code).toBe(200);
+    pendingOrderNo = pendingCreateBody.data;
+
+    const cancelResponse = await request.post(`/api/order/${pendingOrderNo}/cancel`, { headers });
+    expect((await cancelResponse.json()).code).toBe(200);
+    const cancelledReceiptResponse = await request.get(`/api/order/${pendingOrderNo}/receipt`, { headers });
+    expect((await cancelledReceiptResponse.json()).data.status).toBe(3);
+    pendingOrderNo = undefined;
   } finally {
-    if (orderNo) {
-      const cancelResponse = await request.post(`/api/order/${orderNo}/cancel`, { headers });
+    if (pendingOrderNo) {
+      const cancelResponse = await request.post(`/api/order/${pendingOrderNo}/cancel`, { headers });
       expect(cancelResponse.ok()).toBeTruthy();
       expect((await cancelResponse.json()).code).toBe(200);
     }
