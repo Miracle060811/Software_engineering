@@ -141,6 +141,12 @@ public class CommentServiceImpl implements CommentService {
         if (post == null) {
             throw new RuntimeException("游记不存在");
         }
+        if (parentId != null && parentId != 0) {
+            Comment parent = commentMapper.selectById(parentId);
+            if (parent == null || !Objects.equals(parent.getPostId(), postId)) {
+                throw new RuntimeException("父评论不存在或不属于当前游记");
+            }
+        }
 
         Comment comment = new Comment();
         comment.setPostId(postId);
@@ -182,10 +188,9 @@ public class CommentServiceImpl implements CommentService {
         LambdaQueryWrapper<Comment> countWrapper = new LambdaQueryWrapper<>();
         countWrapper.eq(Comment::getPostId, postId);
         long count = commentMapper.selectCount(countWrapper);
-        Post post = postMapper.selectById(postId);
-        if (post != null) {
-            post.setCommentCount((int) count);
-            postMapper.updateById(post);
-        }
+        Post post = new Post();
+        post.setId(postId);
+        post.setCommentCount((int) count);
+        postMapper.updateById(post);
     }
 }

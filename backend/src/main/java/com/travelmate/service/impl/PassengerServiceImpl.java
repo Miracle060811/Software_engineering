@@ -23,8 +23,34 @@ public class PassengerServiceImpl extends ServiceImpl<PassengerMapper, Passenger
 
     @Override
     public boolean addPassenger(Passenger passenger) {
+        if (passenger == null || passenger.getUserId() == null) {
+            throw new RuntimeException("用户信息无效");
+        }
+        String name = passenger.getName() == null ? "" : passenger.getName().trim();
+        String idCard = passenger.getIdCard() == null ? "" : passenger.getIdCard().trim().toUpperCase();
+        String phone = passenger.getPhone() == null ? "" : passenger.getPhone().trim();
+        if (name.isEmpty() || name.length() > 50) {
+            throw new RuntimeException("旅客姓名格式无效");
+        }
+        if (!idCard.matches("(?:\\d{17}[0-9X]|[A-Z][A-Z0-9]{5,19})")) {
+            throw new RuntimeException("证件号格式无效");
+        }
+        if (!phone.matches("1\\d{10}")) {
+            throw new RuntimeException("手机号格式无效");
+        }
+        if (passenger.getType() != null && passenger.getType() != 0 && passenger.getType() != 1) {
+            throw new RuntimeException("旅客类型无效");
+        }
+        if (count(new LambdaQueryWrapper<Passenger>()
+                .eq(Passenger::getUserId, passenger.getUserId())
+                .eq(Passenger::getIdCard, idCard)) > 0) {
+            throw new RuntimeException("该证件旅客已存在");
+        }
+        passenger.setName(name);
+        passenger.setIdCard(idCard);
+        passenger.setPhone(phone);
+        passenger.setType(passenger.getType() == null ? 0 : passenger.getType());
         passenger.setCreateTime(LocalDateTime.now());
-        // 证件信息脱敏或者校验可以在这里做
         return save(passenger);
     }
 

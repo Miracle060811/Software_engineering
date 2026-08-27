@@ -82,7 +82,9 @@ public class SecurityConfig {
                                                                 "/api/hotel/search",
                                                                 "/api/attraction/search",
                                                                 "/api/review/list",
-                                                                "/api/coupon/list")
+                                                                "/api/coupon/list",
+                                                                "/api/user/profile/**",
+                                                                "/api/comment/list")
                                                 .permitAll()
                                                 .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET,
                                                                 "^/api/hotel/\\d+$"))
