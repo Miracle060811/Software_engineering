@@ -13,6 +13,7 @@ import com.travelmate.service.NotificationCenterService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,6 +24,10 @@ import java.util.List;
 
 @Component
 @EnableScheduling
+@ConditionalOnProperty(
+        name = "app.scheduling.enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 public class OrderTimeoutScheduler {
 
     private static final int TIMEOUT_MINUTES = 15;
