@@ -10,6 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
@@ -32,6 +33,14 @@ class SecurityConfigTests {
         mockMvc.perform(post("/api/post/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unauthenticatedFileUploadIsRejectedBySecurityLayer() throws Exception {
+        mockMvc.perform(multipart("/api/file/upload")
+                .file("file", "image".getBytes())
+                .param("name", "photo.jpg"))
                 .andExpect(status().isForbidden());
     }
 

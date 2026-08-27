@@ -367,3 +367,61 @@ test("UC17 follows a user and exposes only public profile data", async ({ reques
     await deleteAccount(request, activeFollower);
   }
 });
+
+test("UC14 creates, edits and deletes a post against the real backend", async ({ request }) => {
+  const session = await registerAndLogin(request);
+  const headers = authenticatedHeaders(session);
+  let postId;
+
+  try {
+    const marker = `UC14-${randomUUID()}`;
+    const createResponse = await request.post("/api/post/create", {
+      headers,
+      data: {
+        title: `  ${marker}  `,
+        content: "原始内容",
+        destination: "丽江",
+        tags: "自由行",
+        visibility: "0",
+      },
+    });
+    const createBody = await createResponse.json();
+    expect(createResponse.ok()).toBeTruthy();
+    expect(createBody.code).toBe(200);
+    expect(createBody.data.title).toBe(marker);
+    expect(createBody.data.status).toBe(0);
+    postId = createBody.data.id;
+
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    const myPostsResponse = await request.get("/api/post/my", { headers });
+    const myPostsBody = await myPostsResponse.json();
+    expect(myPostsBody.code).toBe(200);
+    expect(myPostsBody.data.some((post) => post.id === postId)).toBeTruthy();
+
+    const updateResponse = await request.put(`/api/post/${postId}`, {
+      headers,
+      data: {
+        title: "更新后的标题",
+        content: "更新后的内容",
+        destination: "大理",
+        tags: "自驾",
+        visibility: "1",
+      },
+    });
+    const updateBody = await updateResponse.json();
+    expect(updateResponse.ok()).toBeTruthy();
+    expect(updateBody.code).toBe(200);
+    expect(updateBody.data.title).toBe("更新后的标题");
+    expect(updateBody.data.visibility).toBe(1);
+
+    const deleteResponse = await request.delete(`/api/post/${postId}`, { headers });
+    expect((await deleteResponse.json()).code).toBe(200);
+    postId = undefined;
+  } finally {
+    if (postId) {
+      await request.delete(`/api/post/${postId}`, { headers });
+    }
+    await deleteAccount(request, session);
+  }
+});

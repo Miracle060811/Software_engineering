@@ -12,7 +12,7 @@
   "UC11": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/service/impl/AiPlanValidationTests.java", "backend/src/test/java/com/travelmate/service/impl/TravelPlaceServiceTests.java", "backend/src/test/java/com/travelmate/service/impl/TravelWeatherServiceTests.java"] },
   "UC12": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/PublicApiSmokeTests.java"] },
   "UC13": { "status": "covered", "tests": ["backend/src/test/java/com/travelmate/UseCase13MessagingWorkflowTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
-  "UC14": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/SecurityConfigTests.java", "backend/src/test/java/com/travelmate/FileControllerTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
+  "UC14": { "status": "covered", "tests": ["backend/src/test/java/com/travelmate/SecurityConfigTests.java", "backend/src/test/java/com/travelmate/FileControllerTests.java", "backend/src/test/java/com/travelmate/UseCase14PostWorkflowTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
   "UC15": { "status": "covered", "tests": ["backend/src/test/java/com/travelmate/UseCase15CommunityInteractionTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
   "UC16": { "status": "covered", "tests": ["backend/src/test/java/com/travelmate/UseCase16PassengerWorkflowTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
   "UC17": { "status": "covered", "tests": ["backend/src/test/java/com/travelmate/UseCase17FollowWorkflowTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
