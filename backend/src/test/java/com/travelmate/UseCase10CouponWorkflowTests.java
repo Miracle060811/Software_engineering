@@ -119,6 +119,67 @@ class UseCase10CouponWorkflowTests {
     }
 
     @Test
+    void unitTc110RejectsAmountBelowMinimumAndKeepsCouponUnused() {
+        UserCoupon userCoupon = userCoupon(21L, 7L, 11L, 0);
+        Coupon coupon = coupon(11L, "flight", 0, "30.00", "500.00");
+        when(userCouponMapper.selectById(21L)).thenReturn(userCoupon);
+        when(couponMapper.selectById(11L)).thenReturn(coupon);
+
+        assertThatThrownBy(() -> service.useCoupon(7L, 21L, new BigDecimal("499.99"), "flight"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("订单金额未达到优惠券使用门槛");
+        verify(userCouponMapper, never()).markUsed(any(), any(), any(LocalDateTime.class));
+    }
+
+    @Test
+    void unitTc110AcceptsAmountExactlyAtMinimumBoundary() {
+        UserCoupon userCoupon = userCoupon(21L, 7L, 11L, 0);
+        Coupon coupon = coupon(11L, "flight", 0, "30.00", "500.00");
+        when(userCouponMapper.selectById(21L)).thenReturn(userCoupon);
+        when(couponMapper.selectById(11L)).thenReturn(coupon);
+        when(userCouponMapper.markUsed(any(), any(), any(LocalDateTime.class))).thenReturn(1);
+
+        assertThat(service.useCoupon(7L, 21L, new BigDecimal("500.00"), "flight"))
+                .isEqualByComparingTo("470.00");
+    }
+
+    @Test
+    void unitTc110RejectsAlreadyUsedCouponWithoutLoadingCouponRule() {
+        when(userCouponMapper.selectById(21L)).thenReturn(userCoupon(21L, 7L, 11L, 1));
+
+        assertThatThrownBy(() -> service.useCoupon(7L, 21L, new BigDecimal("680.00"), "flight"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("优惠券已使用或已失效");
+        verify(couponMapper, never()).selectById(any());
+        verify(userCouponMapper, never()).markUsed(any(), any(), any(LocalDateTime.class));
+    }
+
+    @Test
+    void unitTc110RejectsUseWhenAtomicStatusUpdateLosesRace() {
+        UserCoupon userCoupon = userCoupon(21L, 7L, 11L, 0);
+        Coupon coupon = coupon(11L, "flight", 0, "30.00", "500.00");
+        when(userCouponMapper.selectById(21L)).thenReturn(userCoupon);
+        when(couponMapper.selectById(11L)).thenReturn(coupon);
+        when(userCouponMapper.markUsed(any(), any(), any(LocalDateTime.class))).thenReturn(0);
+
+        assertThatThrownBy(() -> service.useCoupon(7L, 21L, new BigDecimal("680.00"), "flight"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("优惠券状态已变化，请刷新后重试");
+    }
+
+    @Test
+    void unitTc110FixedDiscountNeverProducesNegativePayableAmount() {
+        UserCoupon userCoupon = userCoupon(21L, 7L, 11L, 0);
+        Coupon coupon = coupon(11L, "all", 0, "80.00", "0.00");
+        when(userCouponMapper.selectById(21L)).thenReturn(userCoupon);
+        when(couponMapper.selectById(11L)).thenReturn(coupon);
+        when(userCouponMapper.markUsed(any(), any(), any(LocalDateTime.class))).thenReturn(1);
+
+        assertThat(service.useCoupon(7L, 21L, new BigDecimal("50.00"), "hotel"))
+                .isEqualByComparingTo("0.00");
+    }
+
+    @Test
     void unitTc110MarksExpiredCouponBeforeRejectingIt() {
         UserCoupon userCoupon = userCoupon(21L, 7L, 11L, 0);
         Coupon coupon = coupon(11L, "flight", 0, "30.00", "0.00");

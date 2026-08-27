@@ -2,6 +2,8 @@ package com.travelmate;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.travelmate.backend.entity.User;
 import com.travelmate.backend.mapper.UserMapper;
 import com.travelmate.common.Result;
@@ -13,7 +15,9 @@ import com.travelmate.service.NotificationCenterService;
 import com.travelmate.service.impl.PostServiceImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -36,6 +40,14 @@ class UseCase14PostWorkflowTests {
     private PostServiceImpl postService;
     private PostMapper postMapper;
     private UserMapper userMapper;
+    private NotificationCenterService notificationCenterService;
+
+    @BeforeAll
+    static void initializePostTableMetadata() {
+        TableInfoHelper.initTableInfo(
+                new MapperBuilderAssistant(new MybatisConfiguration(), "use-case-14-test"),
+                Post.class);
+    }
 
     @BeforeEach
     void setUp() {
@@ -154,6 +166,9 @@ class UseCase14PostWorkflowTests {
 
         assertThat(result.getCode()).isEqualTo(200);
         verify(postMapper).update(isNull(Post.class), any(LambdaUpdateWrapper.class));
+        verify(notificationCenterService).createNotification(
+                7L, "post_audit", "游记审核通过",
+                "《云南七日游》已通过人工审核并发布。", "/post/10");
     }
 
     @Test
@@ -164,6 +179,9 @@ class UseCase14PostWorkflowTests {
 
         assertThat(result.getCode()).isEqualTo(200);
         verify(postMapper).update(isNull(Post.class), any(LambdaUpdateWrapper.class));
+        verify(notificationCenterService).createNotification(
+                7L, "post_audit", "游记审核未通过",
+                "《云南七日游》未通过人工审核，原因：图片违规", "/post/10");
     }
 
     @Test
@@ -174,6 +192,9 @@ class UseCase14PostWorkflowTests {
 
         assertThat(result.getCode()).isEqualTo(200);
         verify(postMapper).update(isNull(Post.class), any(LambdaUpdateWrapper.class));
+        verify(notificationCenterService).createNotification(
+                7L, "post_audit", "游记审核未通过",
+                "《云南七日游》未通过人工审核，原因：内容不符合社区规范", "/post/10");
     }
 
     private Post post() {
@@ -198,7 +219,7 @@ class UseCase14PostWorkflowTests {
         AdminController controller = new AdminController();
         UserMapper userMapper = mock(UserMapper.class);
         postMapper = mock(PostMapper.class);
-        NotificationCenterService notificationCenterService = mock(NotificationCenterService.class);
+        notificationCenterService = mock(NotificationCenterService.class);
 
         User admin = new User();
         admin.setId(9L);

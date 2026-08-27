@@ -69,6 +69,18 @@ class UseCase04TrafficOrderWorkflowTests {
     }
 
     @Test
+    void unitTc104RejectsPaymentWhenOrderStateChangesConcurrentlyWithoutNotification() {
+        TrafficOrder order = order(0, 0, "Economy", 1);
+        when(orderMapper.selectOne(any(Wrapper.class), eq(true))).thenReturn(order);
+        when(orderMapper.markPaid(7L, order.getOrderNo())).thenReturn(0);
+
+        assertThatThrownBy(() -> service.payOrder(7L, order.getOrderNo()))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("订单状态已变化，请刷新后重试");
+        verify(notificationCenterService, never()).createNotification(any(), any(), any(), any(), any());
+    }
+
+    @Test
     void unitTc104CancelsPendingFlightOrderAndReturnsExactInventory() {
         TrafficOrder order = order(0, 0, "Economy", 2);
         when(orderMapper.selectOne(any(Wrapper.class), eq(true))).thenReturn(order);
@@ -91,6 +103,33 @@ class UseCase04TrafficOrderWorkflowTests {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("非待支付订单");
         verify(orderMapper, never()).markCancelledFromPending(7L, order.getOrderNo());
+        verify(flightMapper, never()).returnSeat(any(), any());
+    }
+
+    @Test
+    void unitTc104RejectsCancellationWhenOrderStateChangesWithoutReturningInventory() {
+        TrafficOrder order = order(0, 0, "Economy", 2);
+        when(orderMapper.selectOne(any(Wrapper.class), eq(true))).thenReturn(order);
+        when(orderMapper.markCancelledFromPending(7L, order.getOrderNo())).thenReturn(0);
+
+        assertThatThrownBy(() -> service.cancelOrder(7L, order.getOrderNo()))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("订单状态已变化，请刷新后重试");
+        verify(flightMapper, never()).returnSeat(any(), any());
+        verify(trainMapper, never()).returnFirstClassSeat(any(), any());
+        verify(trainMapper, never()).returnSecondClassSeat(any(), any());
+    }
+
+    @Test
+    void unitTc104CancelsFirstClassTrainOrderAndReturnsExactInventory() {
+        TrafficOrder order = order(0, 1, "FirstClass", 3);
+        when(orderMapper.selectOne(any(Wrapper.class), eq(true))).thenReturn(order);
+        when(orderMapper.markCancelledFromPending(7L, order.getOrderNo())).thenReturn(1);
+
+        assertThat(service.cancelOrder(7L, order.getOrderNo())).isTrue();
+
+        verify(trainMapper).returnFirstClassSeat(99L, 3);
+        verify(trainMapper, never()).returnSecondClassSeat(any(), any());
         verify(flightMapper, never()).returnSeat(any(), any());
     }
 
@@ -119,6 +158,18 @@ class UseCase04TrafficOrderWorkflowTests {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("只有出票中或已出票订单");
         verify(orderMapper, never()).markRefundRequested(7L, order.getOrderNo());
+    }
+
+    @Test
+    void unitTc104RejectsRefundWhenOrderStateChangesConcurrentlyWithoutNotification() {
+        TrafficOrder order = order(2, 1, "SecondClass", 1);
+        when(orderMapper.selectOne(any(Wrapper.class), eq(true))).thenReturn(order);
+        when(orderMapper.markRefundRequested(7L, order.getOrderNo())).thenReturn(0);
+
+        assertThatThrownBy(() -> service.requestRefund(7L, order.getOrderNo()))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("订单状态已变化，请刷新后重试");
+        verify(notificationCenterService, never()).createNotification(any(), any(), any(), any(), any());
     }
 
     private TrafficOrder order(int status, int orderType, String seatType, int ticketCount) {
