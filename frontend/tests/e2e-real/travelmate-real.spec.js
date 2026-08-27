@@ -16,7 +16,7 @@ async function login(request, username, password) {
 
 async function registerAndLogin(request) {
   const username = `ci${Date.now()}${randomUUID().replaceAll("-", "").slice(0, 12)}`;
-  const password = "Travel123456";
+  const password = `pw${randomUUID().replaceAll("-", "").slice(0, 16)}`;
   const registerResponse = await request.post("/user/register", {
     form: { username, password },
   });

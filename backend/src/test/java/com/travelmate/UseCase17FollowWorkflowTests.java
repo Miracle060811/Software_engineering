@@ -58,7 +58,7 @@ class UseCase17FollowWorkflowTests {
         PostMapper postMapper = mock(PostMapper.class);
         FollowMapper followMapper = mock(FollowMapper.class);
         User user = activeUser(2L, "traveler");
-        user.setPassword("secret-hash");
+        user.setPassword("test-password-not-real");
         user.setEmail("private@example.com");
         when(userMapper.selectOne(any(Wrapper.class))).thenReturn(user);
         when(postMapper.selectCount(any(Wrapper.class))).thenReturn(3L);
