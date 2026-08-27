@@ -14,7 +14,7 @@ describe("request.js", () => {
     sessionStorage.clear();
 
     delete window.location;
-    window.location = { replace: vi.fn(), pathname: "/app" };
+    window.location = { replace: vi.fn(), pathname: "/login" };
 
     mockInterceptorsRequest = { use: vi.fn() };
     mockInterceptorsResponse = { use: vi.fn() };
@@ -118,53 +118,35 @@ describe("request.js", () => {
       errorInterceptor = mockInterceptorsResponse.use.mock.calls[0][1];
     });
 
-    it("handles 401 status by clearing auth and redirecting", () => {
+    it("handles 401 status by clearing auth and redirecting", async () => {
       const error = { response: { status: 401 } };
-      try {
-        errorInterceptor(error);
-      } catch (e) {
-        // expected
-      }
-
+      await expect(errorInterceptor(error)).rejects.toBeDefined();
       expect(localStorage.getItem("token")).toBeNull();
     });
 
-    it("handles 403 status similarly to 401", () => {
+    it("handles 403 status similarly to 401", async () => {
       const error = { response: { status: 403 } };
-      try {
-        errorInterceptor(error);
-      } catch (e) {
-        // expected
-      }
-
+      await expect(errorInterceptor(error)).rejects.toBeDefined();
       expect(localStorage.getItem("token")).toBeNull();
     });
 
-    it("handles network timeout gracefully", () => {
+    it("handles network timeout gracefully", async () => {
       const error = {
         code: "ECONNABORTED",
         message: "timeout of 30000ms exceeded",
         config: { url: "/api/flight/search" },
       };
 
-      try {
-        errorInterceptor(error);
-      } catch (e) {
-        // expected
-      }
+      await expect(errorInterceptor(error)).rejects.toBeDefined();
     });
 
-    it("handles no response (network error)", () => {
+    it("handles no response (network error)", async () => {
       const error = {
         message: "Network Error",
         config: {},
       };
 
-      try {
-        errorInterceptor(error);
-      } catch (e) {
-        // expected
-      }
+      await expect(errorInterceptor(error)).rejects.toBeDefined();
     });
   });
 });

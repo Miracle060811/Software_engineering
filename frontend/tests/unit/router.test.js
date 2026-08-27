@@ -1,14 +1,38 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+const stub = { template: "<div></div>" };
+
+vi.mock("@/views/Login.vue", () => ({ default: stub }));
+vi.mock("@/views/Home.vue", () => ({ default: stub }));
+vi.mock("@/views/NotFound.vue", () => ({ default: stub }));
+vi.mock("@/views/destination/DestinationList.vue", () => ({ default: stub }));
+vi.mock("@/views/destination/DestinationDetail.vue", () => ({ default: stub }));
+vi.mock("@/views/info/InfoPage.vue", () => ({ default: stub }));
+vi.mock("@/views/flight/FlightSearch.vue", () => ({ default: stub }));
+vi.mock("@/views/train/TrainSearch.vue", () => ({ default: stub }));
+vi.mock("@/views/hotel/HotelSearch.vue", () => ({ default: stub }));
+vi.mock("@/views/hotel/HotelDetail.vue", () => ({ default: stub }));
+vi.mock("@/views/hotel/AttractionList.vue", () => ({ default: stub }));
+vi.mock("@/views/ai/AiPlan.vue", () => ({ default: stub }));
+vi.mock("@/views/community/Community.vue", () => ({ default: stub }));
+vi.mock("@/views/community/PostCreate.vue", () => ({ default: stub }));
+vi.mock("@/views/community/PostDetail.vue", () => ({ default: stub }));
+vi.mock("@/views/order/MyOrders.vue", () => ({ default: stub }));
+vi.mock("@/views/order/CouponCenter.vue", () => ({ default: stub }));
+vi.mock("@/views/user/NotificationCenter.vue", () => ({ default: stub }));
+vi.mock("@/views/user/PrivateMessages.vue", () => ({ default: stub }));
+vi.mock("@/views/user/MyCollections.vue", () => ({ default: stub }));
+vi.mock("@/views/user/UserProfile.vue", () => ({ default: stub }));
+vi.mock("@/views/admin/AdminDashboard.vue", () => ({ default: stub }));
+
+import router from "@/router/index";
+
 describe("router/index.js", () => {
-  let router;
-
   beforeEach(async () => {
-    vi.resetModules();
-    vi.clearAllMocks();
     localStorage.clear();
-
-    router = (await import("@/router/index")).default;
+    sessionStorage.clear();
+    await router.replace("/");
+    await router.isReady();
   });
 
   describe("route definitions", () => {
