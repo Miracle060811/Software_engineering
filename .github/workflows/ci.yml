@@ -151,7 +151,19 @@ jobs:
         working-directory: backend
         run: |
           chmod +x mvnw
-          ./mvnw --batch-mode --no-transfer-progress verify
+          ./mvnw --batch-mode --no-transfer-progress verify -DskipITs
+
+      - name: Run MySQL integration tests
+        working-directory: backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/travelmate?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: travelmate-ci
+          SPRING_DATA_REDIS_HOST: 127.0.0.1
+          SPRING_DATA_REDIS_PORT: "6379"
+        run: |
+          chmod +x mvnw
+          ./mvnw --batch-mode --no-transfer-progress failsafe:integration-test failsafe:verify -Dspring.profiles.active=mysql-test
 
       - name: Upload backend test reports
         if: always()
