@@ -3,7 +3,9 @@ package com.travelmate.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.travelmate.entity.Like;
+import com.travelmate.entity.Comment;
 import com.travelmate.entity.Post;
+import com.travelmate.mapper.CommentMapper;
 import com.travelmate.mapper.LikeMapper;
 import com.travelmate.mapper.PostMapper;
 import com.travelmate.service.LikeService;
@@ -22,6 +24,9 @@ public class LikeServiceImpl implements LikeService {
     @Autowired
     private PostMapper postMapper;
 
+    @Autowired
+    private CommentMapper commentMapper;
+
     @Override
     @Transactional
     public Map<String, Object> toggleLike(Long userId, Map<String, Object> body) {
@@ -29,6 +34,12 @@ public class LikeServiceImpl implements LikeService {
         Integer targetType = parseTargetType(body.get("targetType"));
         if (targetType != 0 && targetType != 1 && targetType != 2) {
             throw new RuntimeException("不支持的操作类型");
+        }
+        if ((targetType == 0 || targetType == 2) && postMapper.selectById(targetId) == null) {
+            throw new RuntimeException("游记不存在");
+        }
+        if (targetType == 1 && commentMapper.selectById(targetId) == null) {
+            throw new RuntimeException("评论不存在");
         }
 
         LambdaQueryWrapper<Like> wrapper = new LambdaQueryWrapper<>();

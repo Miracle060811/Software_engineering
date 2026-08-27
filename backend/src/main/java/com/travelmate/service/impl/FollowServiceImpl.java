@@ -29,7 +29,9 @@ public class FollowServiceImpl implements FollowService {
         if (followerId.equals(followeeId)) {
             throw new RuntimeException("不能关注自己");
         }
-        if (userMapper.selectById(followeeId) == null) {
+        User target = userMapper.selectById(followeeId);
+        if (target == null || Integer.valueOf(0).equals(target.getStatus())
+                || Integer.valueOf(1).equals(target.getDeleted())) {
             throw new RuntimeException("被关注用户不存在");
         }
 

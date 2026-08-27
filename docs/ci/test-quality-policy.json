@@ -1,10 +1,10 @@
 {
-  "maximumPlanned": 5,
-  "minimumEvidenceScore": 14,
+  "maximumPlanned": 0,
+  "minimumEvidenceScore": 19,
   "scoring": {
     "covered": 2,
     "partial": 1,
     "planned": 0
   },
-  "rationale": "以当前 14 个 partial、5 个 planned 为显式基线；CI 禁止测试债务回退，后续补测时只允许提高分数并降低 planned 上限。"
+  "rationale": "19 个业务场景均已有自动化证据，当前基线为 19 个 partial、0 个 planned；CI 禁止业务场景重新退回无自动化证据状态。"
 }
