@@ -5,6 +5,12 @@ const root = process.cwd();
 const expectedIds = Array.from({ length: 19 }, (_, index) => `UC${String(index + 1).padStart(2, "0")}`);
 const listPath = path.join(root, "document", "业务场景清单与用例说明.md");
 const designPath = path.join(root, "document", "5组-软件详细设计说明.md");
+const requirementsPath = path.join(root, "document", "5组-软件需求规格说明.md");
+const overviewPath = path.join(root, "document", "软件概要设计说明书.md");
+const sysDiagramPath = path.join(root, "document", "需求规格说明");
+const sysSourcePath = path.join(sysDiagramPath, "source");
+const compDiagramPath = path.join(root, "document", "概要设计说明");
+const compSourcePath = path.join(compDiagramPath, "source");
 const diagramPath = path.join(root, "document", "详细设计说明");
 const diagramSourcePath = path.join(diagramPath, "source");
 const matrixPath = path.join(root, "docs", "ci", "use-case-test-matrix.json");
@@ -12,7 +18,7 @@ const policyPath = path.join(root, "docs", "ci", "test-quality-policy.json");
 const reportPath = path.resolve(root, process.env.TRACEABILITY_REPORT || "04_tests/reports/ci/use-case-traceability.md");
 const errors = [];
 
-for (const requiredPath of [listPath, designPath, diagramPath, diagramSourcePath, matrixPath, policyPath]) {
+for (const requiredPath of [listPath, requirementsPath, overviewPath, designPath, sysDiagramPath, sysSourcePath, compDiagramPath, compSourcePath, diagramPath, diagramSourcePath, matrixPath, policyPath]) {
   if (!fs.existsSync(requiredPath)) errors.push(`缺少文件或目录：${path.relative(root, requiredPath)}`);
 }
 
@@ -22,11 +28,17 @@ if (errors.length) {
 }
 
 const listText = fs.readFileSync(listPath, "utf8");
+const requirementsText = fs.readFileSync(requirementsPath, "utf8");
+const overviewText = fs.readFileSync(overviewPath, "utf8");
 const designText = fs.readFileSync(designPath, "utf8");
 const matrix = JSON.parse(fs.readFileSync(matrixPath, "utf8"));
 const policy = JSON.parse(fs.readFileSync(policyPath, "utf8"));
 const diagrams = fs.readdirSync(diagramPath);
 const sources = fs.readdirSync(diagramSourcePath);
+const sysDiagrams = fs.readdirSync(sysDiagramPath);
+const sysSources = fs.readdirSync(sysSourcePath);
+const compDiagrams = fs.readdirSync(compDiagramPath);
+const compSources = fs.readdirSync(compSourcePath);
 const allowedStatuses = new Set(["covered", "partial", "planned"]);
 const rows = [];
 
@@ -34,11 +46,21 @@ for (const id of expectedIds) {
   const entry = matrix[id];
   const hasList = listText.includes(`| ${id} |`);
   const hasDesign = designText.includes(id);
+  const hasSysDiagram = sysDiagrams.some((name) => name.startsWith(`SYS-${id}_`) && name.endsWith(".png"));
+  const hasSysSource = sysSources.some((name) => name.startsWith(`SYS-${id}_`) && name.endsWith(".mmd"));
+  const hasCompDiagram = compDiagrams.some((name) => name.startsWith(`COMP-${id}_`) && name.endsWith(".png"));
+  const hasCompSource = compSources.some((name) => name.startsWith(`COMP-${id}_`) && name.endsWith(".mmd"));
   const hasDiagram = diagrams.some((name) => name.includes(`${id}_`) && name.endsWith(".png"));
   const hasSource = sources.some((name) => name.includes(`${id}_`) && name.endsWith(".mmd"));
 
   if (!hasList) errors.push(`${id} 未出现在业务场景清单中`);
   if (!hasDesign) errors.push(`${id} 未出现在详细设计说明中`);
+  if (!requirementsText.includes(`SYS-${id}`)) errors.push(`SYS-${id} 未在需求规格说明中引用`);
+  if (!overviewText.includes(`COMP-${id}`)) errors.push(`COMP-${id} 未在概要设计说明中引用`);
+  if (!hasSysDiagram) errors.push(`SYS-${id} 缺少系统级 PNG`);
+  if (!hasSysSource) errors.push(`SYS-${id} 缺少系统级 Mermaid 源文件`);
+  if (!hasCompDiagram) errors.push(`COMP-${id} 缺少组件级 PNG`);
+  if (!hasCompSource) errors.push(`COMP-${id} 缺少组件级 Mermaid 源文件`);
   if (!hasDiagram) errors.push(`${id} 缺少对象级顺序图 PNG`);
   if (!hasSource) errors.push(`${id} 缺少对象级顺序图 Mermaid 源文件`);
   if (!entry) {
@@ -54,7 +76,7 @@ for (const id of expectedIds) {
   const missingTests = (entry.tests || []).filter((testPath) => !fs.existsSync(path.join(root, testPath)));
   for (const testPath of missingTests) errors.push(`${id} 引用了不存在的测试：${testPath}`);
 
-  rows.push({ id, status: entry.status, tests: entry.tests || [], hasList, hasDesign, hasDiagram, hasSource });
+  rows.push({ id, status: entry.status, tests: entry.tests || [], hasList, hasDesign, hasSysDiagram, hasSysSource, hasCompDiagram, hasCompSource, hasDiagram, hasSource });
 }
 
 for (const id of Object.keys(matrix)) {
@@ -88,9 +110,9 @@ const report = [
   `- 尚待测试上限：${policy.maximumPlanned}`,
   `- 结构错误：${errors.length}`,
   "",
-  "| 用例 | 测试状态 | 测试证据数 | 清单 | 详细设计 | PNG | Mermaid 源文件 |",
+  "| 用例 | 测试状态 | 证据数 | SYS PNG/源 | COMP PNG/源 | OBJ PNG/源 | 清单/详细设计 |",
   "| --- | --- | ---: | --- | --- | --- | --- |",
-  ...rows.map((row) => `| ${row.id} | ${row.status} | ${row.tests.length} | ${row.hasList ? "是" : "否"} | ${row.hasDesign ? "是" : "否"} | ${row.hasDiagram ? "是" : "否"} | ${row.hasSource ? "是" : "否"} |`),
+  ...rows.map((row) => `| ${row.id} | ${row.status} | ${row.tests.length} | ${row.hasSysDiagram && row.hasSysSource ? "是" : "否"} | ${row.hasCompDiagram && row.hasCompSource ? "是" : "否"} | ${row.hasDiagram && row.hasSource ? "是" : "否"} | ${row.hasList && row.hasDesign ? "是" : "否"} |`),
   "",
   "## 当前缺口",
   "",

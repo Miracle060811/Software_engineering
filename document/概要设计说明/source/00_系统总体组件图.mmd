@@ -1,0 +1,31 @@
+flowchart LR
+    subgraph Browser[浏览器表现层]
+      Vue[Vue 3 页面组件]
+      Router[Vue Router]
+      Axios[Axios request.js]
+      Vue --> Router --> Axios
+    end
+    subgraph Monolith[Spring Boot 模块化单体（当前实现）]
+      Security[JwtFilter / SecurityConfig]
+      Controller[Controller 接口层]
+      Service[Service / ServiceImpl 业务层]
+      Mapper[MyBatis-Plus Mapper]
+      Scheduler[OrderTimeoutScheduler 等定时任务]
+      Log[SysLogAspect / SysLogMapper]
+      Security --> Controller --> Service --> Mapper
+      Scheduler --> Service
+      Controller -.写操作审计.-> Log
+    end
+    Axios -->|HTTP/JSON| Security
+    Mapper --> MySQL[(MySQL 8)]
+    Service --> Redis[(Redis 缓存/限流/库存预减)]
+    Service --> DeepSeek[DeepSeek OpenAI兼容 API]
+    DeepSeek -.失败降级.-> Template[本地模板]
+    Log --> MySQL
+    subgraph Target[目标设计（尚未部署）]
+      Gateway[API Gateway]
+      Microservices[按业务域拆分的微服务]
+      Containers[Docker / Kubernetes / CD]
+      Gateway --> Microservices --> Containers
+    end
+    Monolith -.后续演进.-> Target

@@ -1,0 +1,28 @@
+sequenceDiagram
+    title COMP-UC14 游记发布编辑删除与审核——组件级顺序图
+    actor User as 用户/调用方
+    participant Page as Community.vue / PostCreate.vue / AdminDashboard.vue
+    participant API as Axios / Vue Router
+    participant Controller as PostController + AdminController
+    participant Service as PostServiceImpl + SensitiveWordServiceImpl
+    participant Dependency as PostMapper + SysSensitiveWordMapper
+    participant Data as MySQL: tm_post、sys_sensitive_word
+    User->>Page: 发起“游记发布编辑删除与审核”操作
+    Page->>API: POST /api/post/create；PUT/DELETE /api/post/{id}；后台审核接口
+    API->>Controller: HTTP/JSON + JWT（需要时）
+    Controller->>Service: 参数、身份与业务请求
+    Service->>Dependency: 执行业务规则/持久化或外部调用
+    Dependency->>Data: 查询或条件写入
+    alt 成功
+      Data-->>Dependency: 返回数据或影响行数
+      Dependency-->>Service: 返回业务结果
+      Service-->>Controller: 成功结果
+      Controller-->>API: Result.success(...)
+      API-->>Page: 更新页面状态
+      Page-->>User: 展示可验证结果
+    else 关键失败
+      Note over Service,Data: 敏感词、越权编辑或非法审核状态时拒绝
+      Service-->>Controller: 抛出/返回业务失败
+      Controller-->>API: Result.error(...)
+      API-->>Page: 展示错误且不伪造成功状态
+    end
