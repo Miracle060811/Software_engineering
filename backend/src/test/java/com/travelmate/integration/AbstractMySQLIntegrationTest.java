@@ -84,13 +84,10 @@ public abstract class AbstractMySQLIntegrationTest {
     }
 
     protected String registerAndGetToken(String username, String password) throws Exception {
-        String registerBody = String.format(
-                "{\"username\":\"%s\",\"password\":\"%s\",\"nickname\":\"%s\"}",
-                username, password, username);
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
                 .post("/user/register")
-                .contentType("application/json")
-                .content(registerBody));
+                .param("username", username)
+                .param("password", password));
         return generateToken(username);
     }
 }

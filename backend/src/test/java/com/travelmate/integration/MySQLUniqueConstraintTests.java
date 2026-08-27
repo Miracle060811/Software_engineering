@@ -12,15 +12,13 @@ class MySQLUniqueConstraintTests extends AbstractMySQLIntegrationTest {
     void duplicateUsernameRegistrationIsRejectedAtDatabaseLevel() throws Exception {
         String token = registerAndGetToken("uniqueuser1", "pass123");
 
-        String duplicateBody = "{\"username\":\"uniqueuser1\",\"password\":\"pass456\",\"nickname\":\"dup\"}";
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+        String response = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
                         .post("/user/register")
-                        .contentType("application/json")
-                        .content(duplicateBody))
-                .andExpect(result -> {
-                    int status = result.getResponse().getStatus();
-                    assertThat(status).isIn(400, 409, 500);
-                });
+                        .param("username", "uniqueuser1")
+                        .param("password", "pass456"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(response).contains("用户名已存在");
     }
 
     @Test

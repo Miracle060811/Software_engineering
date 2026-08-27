@@ -57,10 +57,10 @@ class MySQLUserDataIsolationTests extends AbstractMySQLIntegrationTest {
 
     @Test
     void couponClaimsAreScopedToOwningUser() {
-        jdbcTemplate.update("INSERT INTO tm_coupon (id, name, type, discount, min_amount, total_count, remaining_count, status, start_time, end_time) VALUES (1, 'Test Coupon', 1, 50.00, 100.00, 100, 100, 1, '2026-01-01 00:00:00', '2026-12-31 23:59:59')");
+        jdbcTemplate.update("INSERT INTO tm_coupon (id, name, discount_type, discount_value, min_amount, stock, status, expire_date) VALUES (1, 'Test Coupon', 0, 50.00, 100.00, 100, 0, '2026-12-31 23:59:59')");
 
-        jdbcTemplate.update("INSERT INTO tm_user_coupon (id, user_id, coupon_id, status, claim_time) VALUES (1, 1, 1, 0, NOW())");
-        jdbcTemplate.update("INSERT INTO tm_user_coupon (id, user_id, coupon_id, status, claim_time) VALUES (2, 2, 1, 0, NOW())");
+        jdbcTemplate.update("INSERT INTO tm_user_coupon (id, user_id, coupon_id, status, received_time) VALUES (1, 1, 1, 0, NOW())");
+        jdbcTemplate.update("INSERT INTO tm_user_coupon (id, user_id, coupon_id, status, received_time) VALUES (2, 2, 1, 0, NOW())");
 
         Integer userACoupons = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM tm_user_coupon WHERE user_id = 1", Integer.class);
         Integer userBCoupons = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM tm_user_coupon WHERE user_id = 2", Integer.class);
