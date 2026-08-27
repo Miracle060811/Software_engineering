@@ -13,6 +13,10 @@ LABEL org.opencontainers.image.title="TravelMate frontend" \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.version="${IMAGE_VERSION}"
 
+RUN apk add --no-cache --upgrade \
+      "libcrypto3>=3.5.8-r0" \
+      "libssl3>=3.5.8-r0"
+
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY --chown=101:101 dist/ /usr/share/nginx/html/
 
