@@ -1,34 +1,29 @@
-# TravelMate 软件工程基础实践中期检查汇报材料
+# TravelMate 软件工程基础实践中期报告
 
 > 课程：《软件工程基础实践》（2026 夏季学期）
 > 项目：TravelMate 智慧旅行平台
 > 小组：第 5 组
-> 中期检查日期：2026 年 8 月 29 日
-> 文档基线：`main` commit `85b7e7c3ad5c7f1fb1df59d0abcbffb48ef59b9f`
+> 报告日期：2026 年 8 月 29 日
+> 功能验收基线：`main` commit `85b7e7c3ad5c7f1fb1df59d0abcbffb48ef59b9f`
 
-## 1. 编制依据与检查范围
+## 1. 项目概况
 
-本材料依据课程任务书《软件工程基础实践-2026夏》和助教通知编制，用于中期检查现场展示，并作为后续导出 PDF 的可编辑源文件。
+TravelMate 是面向综合旅行服务场景的智慧旅行平台，覆盖用户与旅客管理、交通预订、酒店与景点、优惠权益、AI 行程、通知消息、社区互动和运营管理等业务。项目当前已完成原系统基线固化、19 个业务场景验证、需求与设计模型、容器化运行、CI/CD 交付闭环以及微服务目标架构设计。
 
-课程任务书第 5 页明确要求 8 月 29 日中期检查看到：
+本阶段工作范围包括：
 
-1. 原系统能够启动，确认后的业务场景清单中所有用例都能运行，并已打 Git 标签；
-2. 所有业务场景的需求、系统级图、组件级图、对象级图和追溯表已经完成；
-3. 前端、后端、数据库容器能够启动，CI 能够自动完成构建和测试；
-4. 微服务划分图、服务接口清单和数据表归属方案已经完成。
+1. 固化可运行的原系统版本，并建立 Git 标签；
+2. 完成 UC01-UC19 的需求、系统级模型、组件级模型、对象级模型和追溯关系；
+3. 完成前端、后端、MySQL、Redis 的容器化及自动构建测试；
+4. 建立 Docker 镜像构建、安全扫描、镜像发布、Kubernetes 部署和健康检查闭环；
+5. 完成微服务划分、服务接口和数据表归属设计。
 
-助教补充要求：8 月 29 日下午进行中期检查，上午继续完善，并将中期检查内容整理为一个 PDF。本 Markdown 即 PDF 内容源文件。
+## 2. 阶段成果摘要
 
-![课程任务书中的中期检查要求](./依据/课程中期检查要求截图.png)
-
-![助教关于中期检查材料的通知](./依据/助教中期检查通知截图.png)
-
-## 2. 中期检查结论
-
-| 检查项 | 当前结论 | 核心证据 |
+| 成果项 | 完成状态 | 核心证据 |
 | :--- | :---: | :--- |
-| 原系统启动与 Git 标签 | 已完成 | `monolith-start` 标签；前后端健康检查；Kubernetes Pod 现场状态 |
-| UC01-UC19 全部业务场景 | 已完成自动化验收，现场可抽查 | 《业务场景清单与用例说明》；161 个后端测试、24 个前端测试、真实后端 E2E |
+| 原系统启动与 Git 标签 | 已完成 | `monolith-start` 标签；前后端健康检查；Kubernetes Pod 运行状态 |
+| UC01-UC19 全部业务场景 | 已完成自动化验收 | 《业务场景清单与用例说明》；161 个后端测试、24 个前端测试、真实后端 E2E |
 | 需求与三层模型 | 已完成 | 19 份系统级模型、19 份组件级模型、19 份对象级模型及源文件 |
 | 需求-设计-代码-测试追溯 | 已完成 | 《需求设计代码测试追溯表》；19 个 `covered`，0 个 `partial`，0 个 `planned` |
 | 容器化 | 已完成 | 前端、后端 Dockerfile；MySQL、Redis 容器；Docker Desktop Kubernetes |
@@ -37,7 +32,7 @@
 | 服务接口清单 | 已完成 | 对外 REST API、内部接口和领域事件清单 |
 | 数据表归属方案 | 已完成 | 一表一主、禁止跨服务直接联表的归属表 |
 
-中期结论：课程要求的四类中期材料均已形成，并具备代码、配置、测试、流水线和现场运行证据。第二阶段的完整微服务迁移、微服务 Kubernetes 自动部署、HPA、故障实验和性能对比不属于本次中期完成声明，后续按任务书继续实施。
+阶段结论：本阶段各项成果均已形成，并具备代码、配置、测试、流水线和运行证据。完整微服务迁移、微服务 Kubernetes 自动部署、HPA、故障实验和性能对比将在下一阶段继续实施。
 
 ## 3. 原系统启动、版本基线与业务场景
 
@@ -54,7 +49,7 @@
 | 前端健康检查 | `http://127.0.0.1:30080/healthz` |
 | 后端就绪检查 | `/actuator/health/readiness` |
 
-当前部署现场结果：
+当前部署验证结果：
 
 - `travelmate-backend`：2/2 Ready；
 - `travelmate-frontend`：2/2 Ready；
@@ -98,13 +93,13 @@
 | 真实后端 E2E | 真实 MySQL/Redis 环境执行通过 | Actions job `Real backend E2E`、artifact `real-backend-e2e-evidence` |
 | 用例追溯门禁 | 19 covered，0 partial，0 planned | `docs/ci/use-case-test-matrix.json`、`use-case-traceability-report` |
 
-最终汇报建议重点演示 UC02、UC06、UC14，分别覆盖交通预订、库存/退款状态机和社区内容审核；其他用例保留自动化证据并接受随机抽查。
+代表性验证场景为 UC02、UC06、UC14，分别覆盖交通预订、库存与退款状态机、社区内容审核；其余用例均保留对应自动化验证证据。
 
 ## 4. 需求、设计图和追溯表
 
 ### 4.1 文档完成情况
 
-| 课程要求 | 完成情况 | 主要交付路径 |
+| 成果类别 | 完成情况 | 主要交付路径 |
 | :--- | :---: | :--- |
 | 需求说明、用例图、概念类图 | 已完成 | `document/5组-软件需求规格说明.md`、`document/需求规格说明/` |
 | 每个用例的系统级图 | 19/19 | `document/需求规格说明/REQ-FIG-03` 至 `REQ-FIG-21`，并保留 Mermaid 源文件 |
@@ -174,9 +169,9 @@ REQ → UC → SYS → COMP → OBJ → 代码模块 → UNIT/INT/E2E → 测试
 
 ![GHCR 前后端镜像包](../../05_management/CI-CD验收截图/06-GHCR前后端镜像包.png)
 
-![Kubernetes Deployment 和 Pod 现场状态](../../05_management/CI-CD验收截图/07-Kubernetes工作负载与Pod状态.png)
+![Kubernetes Deployment 和 Pod 运行状态](../../05_management/CI-CD验收截图/07-Kubernetes工作负载与Pod状态.png)
 
-![前后端健康检查现场结果](../../05_management/CI-CD验收截图/08-前后端健康检查.png)
+![前后端健康检查结果](../../05_management/CI-CD验收截图/08-前后端健康检查.png)
 
 ## 6. 微服务划分、接口和数据归属
 
@@ -230,18 +225,18 @@ REQ → UC → SYS → COMP → OBJ → 代码模块 → UNIT/INT/E2E → 测试
 
 完整逐表归属、访问方式和特殊说明见《TravelMate 微服务改造中期验收基线》第 4 节。
 
-## 7. 中期检查现场演示顺序
+## 7. 系统验证方法
 
-### 7.1 展示版本与材料
+### 7.1 版本基线验证
 
 ```powershell
 git tag --list
 git log --oneline --decorate -5
 ```
 
-说明 `monolith-start` 是改造前原系统基线，随后展示业务场景清单、三层模型目录和追溯表。
+`monolith-start` 为改造前原系统基线，`microservices-phase1` 为第一阶段微服务实现基线。
 
-### 7.2 展示原系统运行状态
+### 7.2 系统运行状态验证
 
 ```powershell
 kubectl --context docker-desktop -n travelmate get deployments
@@ -250,7 +245,7 @@ kubectl --context docker-desktop -n travelmate get pods
 
 预期：前后端 Deployment 均为 2/2；MySQL、Redis 和前后端 Pod 全部 Ready/Running。
 
-### 7.3 展示健康检查
+### 7.3 健康状态验证
 
 ```powershell
 Invoke-WebRequest -UseBasicParsing http://127.0.0.1:30080/healthz |
@@ -262,9 +257,9 @@ kubectl --context docker-desktop get --raw `
 
 预期：前端 `200 / ok`，后端 `{"status":"UP"}`。
 
-### 7.4 展示 CI/CD
+### 7.4 CI/CD 验证
 
-打开成功的 [TravelMate CI/CD #33154114496](https://github.com/Miracle060811/Software_engineering/actions/runs/33154114496)，依次展示：
+成功流水线 [TravelMate CI/CD #33154114496](https://github.com/Miracle060811/Software_engineering/actions/runs/33154114496) 包含以下关键阶段：
 
 1. Backend/Frontend/Microservices tests；
 2. Real backend E2E；
@@ -274,9 +269,9 @@ kubectl --context docker-desktop get --raw `
 6. Verify deployed digests and health；
 7. CI/CD delivery gate。
 
-### 7.5 展示微服务设计
+### 7.5 微服务设计验证
 
-先展示服务划分图，再从接口清单抽查 TRAFFIC、IDENTITY、LOCAL 的边界，最后用 `tm_passenger` 或 `tm_user_coupon` 说明“其他服务通过内部接口访问，不跨服务直接查表”。
+服务边界可通过 TRAFFIC、IDENTITY、LOCAL 的接口映射进行核对；`tm_passenger`、`tm_user_coupon` 等表用于验证“一表一主、跨服务通过接口或事件访问”的数据所有权原则。
 
 ## 8. 证据索引
 
@@ -296,7 +291,7 @@ kubectl --context docker-desktop get --raw `
 | 部署与回滚脚本 | `scripts/cd/` |
 | 成功流水线 | <https://github.com/Miracle060811/Software_engineering/actions/runs/33154114496> |
 | CI/CD 修复 PR | <https://github.com/Miracle060811/Software_engineering/pull/216> |
-| 流水线与现场截图 | `05_management/CI-CD验收截图/` |
+| 流水线与运行截图 | `05_management/CI-CD验收截图/` |
 
 Actions 中保留的关键原始 artifact：
 
@@ -307,20 +302,18 @@ Actions 中保留的关键原始 artifact：
 - `deployment-release-85b7e7c3...`；
 - `kubernetes-deployment-85b7e7c3...`。
 
-## 9. 当前边界、风险与第二阶段安排
+## 9. 当前边界、风险与后续计划
 
-1. 当前原系统 CI/CD 已闭环，但自托管 Runner 和 Docker Desktop 必须在线，才能执行本机 Kubernetes 部署；现场检查前应提前确认 Runner 为 Online、Docker/Kubernetes Ready。
-2. 19 个用例已经有自动化验收证据，现场仍要准备登录、预订、退款、社区审核等代表性链路，接受随机抽查。
+1. 当前原系统 CI/CD 已闭环，但自托管 Runner 和 Docker Desktop 必须在线，才能执行本机 Kubernetes 部署；执行部署前需要确认 Runner 为 Online、Docker/Kubernetes Ready。
+2. 19 个用例已经具备自动化验收证据，登录、预订、退款和社区审核等代表性链路同时保留可重复执行的端到端验证方式。
 3. 中期已经完成 6 服务设计冻结，第一批 4 个服务落地；不能将未完成的 COMMUNITY、OPS 完整迁移和全量业务切流描述为已完成。
 4. 第二阶段继续完成微服务独立部署、全场景回归、HPA 扩缩容、故障处理和单体/微服务性能对比。
-5. 现场不能只展示截图；应同时准备仓库文件、Actions 日志、Kubernetes 状态和可重复执行命令。
+5. 验收证据由仓库文件、Actions 日志、Kubernetes 实时状态和可重复执行命令共同组成，截图仅作为运行时状态留档。
 
 ## 10. AI 工具使用说明
 
 项目过程中使用生成式 AI 辅助讨论方案、检查配置、生成部分测试和整理文档。所有产出均由组员结合仓库代码、测试结果、Git 提交、Actions 日志和本地 Kubernetes 运行结果进行人工核对；未将 AI 输出直接视为验收结论。仓库使用 Secret、环境变量和本机凭据管理敏感信息，不提交 Token、密码或云平台密钥。
 
-## 11. 中期验收结论
+## 11. 阶段结论
 
-TravelMate 已完成课程任务书规定的中期四项检查内容：原系统与 19 个业务场景具备运行和自动化验收证据；需求、系统级/组件级/对象级模型和追溯表齐全；前端、后端、MySQL、Redis 已容器化，原系统 CI/CD 已真实完成构建、测试、镜像、Kubernetes 部署和健康检查；微服务划分图、接口清单和数据表归属方案已经冻结并有第一批实现。
-
-本材料与仓库路径、commit、流水线和现场截图对应，可作为 8 月 29 日中期检查 PDF 的内容源文件。
+TravelMate 已完成本阶段既定目标：原系统与 19 个业务场景具备运行和自动化验收证据；需求、系统级/组件级/对象级模型和追溯表齐全；前端、后端、MySQL、Redis 已容器化；CI/CD 已完成构建、测试、镜像、安全扫描、Kubernetes 部署和健康检查闭环；微服务划分、接口清单和数据表归属方案已经冻结，并完成第一批微服务实现。
