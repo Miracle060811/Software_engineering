@@ -21,6 +21,7 @@ coverage/
 .nyc_output/
 blob-report/
 /04_tests/reports/ci/
+/04_tests/stress/results/*.json
 /frontend/playwright-report-real/
 /frontend/test-results-real/
 
