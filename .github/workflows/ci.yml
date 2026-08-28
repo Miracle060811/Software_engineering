@@ -180,6 +180,21 @@ jobs:
           chmod +x mvnw
           ./mvnw --batch-mode --no-transfer-progress failsafe:integration-test failsafe:verify -Dspring.profiles.active=mysql-test
 
+      - name: Start packaged backend against empty MySQL
+        shell: bash
+        run: |
+          java -jar backend/target/*.jar > backend-flyway-ci.log 2>&1 &
+          echo $! > backend-flyway-ci.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent "http://127.0.0.1:8080/actuator/health" > /dev/null; then
+              echo "Backend is ready after applying Flyway migrations"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat backend-flyway-ci.log
+          exit 1
+
       - name: Verify Flyway initialized the empty database
         shell: bash
         run: |
@@ -188,6 +203,23 @@ jobs:
           echo "Successful Flyway migrations: $applied; latest version: $latest"
           [[ "$applied" -ge 2 ]]
           [[ "$latest" == "2" ]]
+
+      - name: Stop Flyway verification backend
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f backend-flyway-ci.pid ]]; then
+            kill "$(cat backend-flyway-ci.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload Flyway startup log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backend-flyway-startup-log
+          path: backend-flyway-ci.log
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Upload backend test reports
         if: always()
