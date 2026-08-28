@@ -25,6 +25,98 @@ function Invoke-Kubectl {
     return $output
 }
 
+function Test-GhcrPullAccess {
+    param(
+        [string]$Repository,
+        [string]$Username,
+        [string]$PlainToken
+    )
+
+    $basicAuthorization = [Convert]::ToBase64String(
+        [Text.Encoding]::ASCII.GetBytes("${Username}:$PlainToken")
+    )
+    try {
+        $response = Invoke-WebRequest `
+            -UseBasicParsing `
+            -Uri "https://ghcr.io/token?service=ghcr.io&scope=repository:${Repository}:pull" `
+            -Headers @{ Authorization = "Basic $basicAuthorization" }
+        $registryToken = ($response.Content | ConvertFrom-Json).token
+        if ($response.StatusCode -ne 200 -or [string]::IsNullOrWhiteSpace($registryToken)) {
+            throw "GHCR did not issue a pull token for '$Repository'"
+        }
+    }
+    finally {
+        $basicAuthorization = $null
+        $registryToken = $null
+        $response = $null
+    }
+}
+
+function Save-DockerCredential {
+    param(
+        [string]$Registry,
+        [string]$Username,
+        [string]$PlainToken
+    )
+
+    $dockerConfigPath = Join-Path $env:USERPROFILE ".docker\config.json"
+    if (-not (Test-Path -LiteralPath $dockerConfigPath -PathType Leaf)) {
+        throw "Docker configuration is missing: $dockerConfigPath"
+    }
+
+    $dockerConfigObject = Get-Content -LiteralPath $dockerConfigPath -Raw | ConvertFrom-Json
+    $credentialStore = [string]$dockerConfigObject.credsStore
+    if ([string]::IsNullOrWhiteSpace($credentialStore)) {
+        throw "Docker is not configured with a credential store"
+    }
+
+    $credentialHelperName = "docker-credential-$credentialStore"
+    $credentialHelper = Get-Command $credentialHelperName -ErrorAction SilentlyContinue
+    if ($null -eq $credentialHelper) {
+        throw "Docker credential helper is unavailable: $credentialHelperName"
+    }
+
+    $credentialPayload = [ordered]@{
+        ServerURL = $Registry
+        Username = $Username
+        Secret = $PlainToken
+    } | ConvertTo-Json -Compress
+
+    # Windows PowerShell 5.1 prefixes native-pipeline input with a UTF-8 BOM,
+    # which Docker Desktop's credential helper rejects. Pass the ASCII-only
+    # JSON through a short-lived child-process environment variable instead.
+    $credentialEnvironmentName = "TRAVELMATE_DOCKER_CREDENTIAL"
+    $processStartInfo = [Diagnostics.ProcessStartInfo]::new()
+    $processStartInfo.FileName = $env:ComSpec
+    $processStartInfo.Arguments = "/d /s /c `"echo %${credentialEnvironmentName}%|$credentialHelperName store`""
+    $processStartInfo.UseShellExecute = $false
+    $processStartInfo.CreateNoWindow = $true
+    $processStartInfo.RedirectStandardOutput = $true
+    $processStartInfo.RedirectStandardError = $true
+    $processStartInfo.EnvironmentVariables[$credentialEnvironmentName] = $credentialPayload
+
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = $processStartInfo
+    try {
+        if (-not $process.Start()) {
+            throw "Unable to start Docker credential helper: $credentialHelperName"
+        }
+        $storeOutput = $process.StandardOutput.ReadToEnd()
+        $storeError = $process.StandardError.ReadToEnd()
+        $process.WaitForExit()
+        $storeExitCode = $process.ExitCode
+    }
+    finally {
+        $credentialPayload = $null
+        $processStartInfo.EnvironmentVariables.Remove($credentialEnvironmentName)
+        $process.Dispose()
+    }
+    if ($storeExitCode -ne 0) {
+        $storeMessage = @($storeOutput, $storeError) -join [Environment]::NewLine
+        throw "Unable to save the GHCR credential in Docker Desktop: $storeMessage"
+    }
+}
+
 foreach ($command in @("docker", "kubectl")) {
     if (-not (Get-Command $command -ErrorAction SilentlyContinue)) {
         throw "$command is not available"
@@ -68,16 +160,37 @@ try {
         throw "The GitHub token is empty"
     }
 
-    $dockerLoginOutput = $plainToken | & docker login ghcr.io --username $GitHubUsername --password-stdin 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        throw "Docker login to GHCR failed"
+    try {
+        $previousErrorActionPreference = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        $dockerLoginOutput = $plainToken | & docker login ghcr.io --username $GitHubUsername --password-stdin 2>&1
+        $dockerLoginExitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+    if ($dockerLoginExitCode -ne 0) {
+        # Some Docker Desktop/GHCR combinations reject Docker's unscoped /v2/
+        # login probe even though repository-scoped pull authorization succeeds.
+        foreach ($repository in @(
+            "miracle060811/travelmate-backend",
+            "miracle060811/travelmate-frontend"
+        )) {
+            Test-GhcrPullAccess -Repository $repository -Username $GitHubUsername -PlainToken $plainToken
+        }
+        Save-DockerCredential -Registry "ghcr.io" -Username $GitHubUsername -PlainToken $plainToken
+        $dockerLoginOutput = @(
+            "Docker's unscoped GHCR login probe was rejected; repository-scoped pull access was verified.",
+            "The credential was saved through Docker Desktop's configured credential helper."
+        )
     }
 
     foreach ($image in @(
         "ghcr.io/miracle060811/travelmate-backend:deploy",
         "ghcr.io/miracle060811/travelmate-frontend:deploy"
     )) {
-        & docker pull $image | Out-Null
+        Write-Output "Pulling $image ..."
+        & docker pull $image
         if ($LASTEXITCODE -ne 0) {
             throw "Unable to pull private image: $image"
         }

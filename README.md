@@ -200,13 +200,14 @@ npm run check:deployment
 kubectl kustomize deploy/k8s | Out-Null
 ```
 
-正式 CI 位于 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)：
+正式 CI/CD 位于 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)：
 
 - 所有提交都执行仓库清洁度、UC01—UC19 追溯、Flyway 迁移规则、Kubernetes 清单和部署脚本校验；
 - 代码、SQL、脚本或工作流变更执行后端 `verify`、前端 lint/审计/构建和 Mock E2E；
 - 后端 CI 从空的 `travelmate` 数据库启动，由 Flyway 自动执行全部迁移，并核对迁移历史表的最新版本；
 - `main`、面向 `main` 的 Pull Request 和手动运行还执行真实后端 E2E；
-- Markdown 等纯文档改动跳过无关构建，但仍经过总质量门禁。
+- `main` 的代码 push 在质量与安全门禁成功后，继续制作镜像、部署 Kubernetes、执行健康检查并上传证据；
+- Markdown 等纯文档改动跳过无关构建和部署，但仍经过总质量门禁。
 
 安全流水线位于 [`.github/workflows/security.yml`](.github/workflows/security.yml) 与 [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)，覆盖密钥、依赖漏洞和 Java/JavaScript 静态安全分析。流水线证据记录规则见 [`05_management/pipeline-records/README.md`](05_management/pipeline-records/README.md)。
 
@@ -218,17 +219,16 @@ kubectl kustomize deploy/k8s | Out-Null
 
 ## 持续部署
 
-合并到 `main` 的代码在同一 commit 的五项质量门禁全部成功后，由 [`.github/workflows/publish-images.yml`](.github/workflows/publish-images.yml) 使用 CI 已测试的 JAR 与前端 `dist` 构建镜像。镜像先发布为不可变的 `sha-<完整 commit>`，通过 Trivy 高危/严重漏洞扫描后，才同时推进 `main` 与 `deploy` 通道。前后端镜像都带有 OCI commit 标签，部署机只接受标签一致的镜像对，并最终把 Kubernetes Deployment 固定到仓库 digest。
+合并到 `main` 的代码在同一个 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) 中完成构建、测试、镜像制作、Kubernetes 部署和部署后健康检查。流水线使用 CI 已测试的 JAR 与前端 `dist` 构建镜像；镜像先发布为不可变的 `sha-<完整 commit>`，通过 Trivy 高危/严重漏洞扫描后，才推进 `main` 与 `deploy` 通道。自托管 Windows Runner 随后校验前后端 OCI commit 一致性，按仓库 digest 更新 Deployment，等待 rollout，并检查前端 `/healthz` 与后端 `/actuator/health/readiness`。失败时部署脚本恢复更新前镜像，流水线保留镜像扫描、digest、Kubernetes 状态和健康检查证据。
 
-演示机使用 Docker Desktop Kubernetes，资源清单位于 [`deploy/k8s`](deploy/k8s)，本机部署脚本说明位于 [`scripts/cd/README.md`](scripts/cd/README.md)。首次启用：
+演示机使用 Docker Desktop Kubernetes，并运行带有 `self-hosted`、`Windows`、`X64`、`travelmate-deploy` 标签的 GitHub Actions Runner。资源清单位于 [`deploy/k8s`](deploy/k8s)，本机部署脚本说明位于 [`scripts/cd/README.md`](scripts/cd/README.md)。首次启用：
 
 ```powershell
 .\scripts\cd\Configure-TravelMateGhcrCredential.ps1
 .\scripts\cd\Initialize-TravelMateKubernetes.ps1
-.\scripts\cd\Install-TravelMateDeploymentTask.ps1
 ```
 
-GHCR 包可保持私有：凭据脚本通过安全提示读取仅含 `read:packages` 的 classic PAT，验证镜像后配置 Docker 与 Kubernetes 拉取凭据，不把 Token 写入命令行、仓库或日志。初始化脚本会在本机生成并复用应用 Secret；计划任务每五分钟检查 GHCR `deploy` 通道，发现新 commit 后执行滚动更新、健康检查，失败则恢复更新前镜像。应用入口为 <http://localhost:30080>，部署日志位于 `%USERPROFILE%\TravelMateCD\deploy.log`。
+GHCR 包可保持私有：凭据脚本通过安全提示读取仅含 `read:packages` 的 classic PAT，验证镜像后配置 Docker 与 Kubernetes 拉取凭据，不把 Token 写入命令行、仓库或日志。初始化脚本会在本机生成并复用应用 Secret；自托管 Runner 必须以能够访问 Docker Desktop、Docker credential store 和 `docker-desktop` Kubernetes context 的当前用户运行。应用入口为 <http://localhost:30080>，部署日志位于 `%USERPROFILE%\TravelMateCD\deploy.log`。`Install-TravelMateDeploymentTask.ps1` 仅保留为 GitHub Runner 不在线时的可选本机轮询方案，不属于正式流水线。
 
 图片或种子数据有改动时，额外运行：
 
