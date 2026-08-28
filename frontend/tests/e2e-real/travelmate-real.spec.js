@@ -47,7 +47,7 @@ async function deleteAccount(request, session) {
 }
 
 test("UC01 registers and logs in against the real backend", async ({ page, request }) => {
-  const session = await registerAndLogin(request);
+  let session = await registerAndLogin(request);
 
   try {
     await page.goto("/login");
@@ -57,6 +57,26 @@ test("UC01 registers and logs in against the real backend", async ({ page, reque
 
     await expect(page).toHaveURL(/\/$/);
     await expect.poll(() => page.evaluate(() => localStorage.getItem("token"))).not.toBeNull();
+
+    const meBody = await (await request.get("/user/me", {
+      headers: authenticatedHeaders(session),
+    })).json();
+    expect(meBody.code).toBe(200);
+    expect(meBody.data.username).toBe(session.username);
+    expect(meBody.data.password).toBeNull();
+
+    const newPassword = `next${randomUUID().replaceAll("-", "").slice(0, 16)}`;
+    const changeBody = await (await request.post("/user/password", {
+      headers: authenticatedHeaders(session),
+      form: { oldPassword: session.password, newPassword },
+    })).json();
+    expect(changeBody.code).toBe(200);
+
+    const oldLoginBody = await (await request.post("/user/login", {
+      form: { username: session.username, password: session.password },
+    })).json();
+    expect(oldLoginBody.code).not.toBe(200);
+    session = await login(request, session.username, newPassword);
   } finally {
     await deleteAccount(request, session);
   }
@@ -224,6 +244,24 @@ test("UC02 flight search renders results from the real backend", async ({ page }
   await page.getByPlaceholder("如：上海").fill("上海");
   await page.getByRole("button", { name: /搜索航班/ }).click();
   await expect(page.locator(".flight-card").first()).toBeVisible();
+});
+
+test("UC08 exposes day-tour and nearby-tour contracts and rejects invalid type", async ({ request }) => {
+  for (const type of [0, 1]) {
+    const body = await (await request.get(`/api/tour/list?type=${type}`)).json();
+    expect(body.code).toBe(200);
+    expect(Array.isArray(body.data)).toBeTruthy();
+    expect(body.data.length).toBeGreaterThan(0);
+    for (const product of body.data) {
+      expect(product.tourType).toBe(type);
+      expect(product.name).toBeTruthy();
+      expect(Number(product.price)).toBeGreaterThanOrEqual(0);
+    }
+  }
+
+  const invalidBody = await (await request.get("/api/tour/list?type=9")).json();
+  expect(invalidBody.code).not.toBe(200);
+  expect(invalidBody.msg).toContain("必须为0或1");
 });
 
 test("UC03 creates and cancels a train order against real inventory", async ({ request }) => {
