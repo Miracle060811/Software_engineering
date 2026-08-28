@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1240" viewBox="0 0 1600 1240" role="img" aria-labelledby="title desc">
+  <title id="title">TravelMate 目标业务微服务划分图</title>
+  <desc id="desc">以低饱和工程制图风格展示前端接入层、六个目标业务微服务、跨服务契约层及数据库唯一写入归属。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,8 L8,4 z" fill="#3f474f"/></marker>
+    <style>
+      .page{fill:#fcfcfb;stroke:#202428;stroke-width:1.4}.rule{stroke:#202428;stroke-width:1.2;fill:none}.flow{stroke:#3f474f;stroke-width:1.6;fill:none;marker-end:url(#arrow)}.branch{stroke:#3f474f;stroke-width:1.3;fill:none}.contract{stroke:#66717b;stroke-width:1.3;stroke-dasharray:7 5;fill:none;marker-end:url(#arrow)}
+      .lane{fill:#ffffff;stroke:#40474e;stroke-width:1.2}.laneHead{fill:#eef0f1;stroke:#40474e;stroke-width:1.2}.card{fill:#fbfbfa;stroke:#363c42;stroke-width:1.3}.cardHead{fill:#e8ecef;stroke:#363c42;stroke-width:1.3}.db{fill:#f7f8f8;stroke:#4b535a;stroke-width:1.2}.note{fill:#f1f3f4;stroke:#59636c;stroke-width:1.1}
+      .title{font:700 31px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#111417;letter-spacing:1px}.subtitle{font:15px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#4a5259}.laneTitle{font:700 18px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#1f252a}.cardTitle{font:700 19px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#15191d}.cardSub{font:600 15px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#30373d}.body{font:14px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#22282d}.small{font:13px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#424a51}.tiny{font:12px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#505960}.mono{font:12px Consolas,'Microsoft YaHei',sans-serif;fill:#293139}.strong{font-weight:700;fill:#15191d}
+    </style>
+  </defs>
+  <rect x="8" y="8" width="1584" height="1224" class="page"/>
+  <text x="800" y="48" text-anchor="middle" class="title">MID-FIG-01　TravelMate 目标业务微服务划分图</text>
+  <text x="800" y="74" text-anchor="middle" class="subtitle">中期设计基线｜按业务能力、事务边界与数据所有权划分，不按用例数量机械拆分</text>
+  <line x1="8" y1="92" x2="1592" y2="92" class="rule"/>
+
+  <rect x="28" y="108" width="1544" height="62" class="note"/>
+  <line x1="515" y1="108" x2="515" y2="170" class="rule"/><line x1="1060" y1="108" x2="1060" y2="170" class="rule"/>
+  <text x="48" y="133" class="cardSub">当前形态</text><text x="48" y="156" class="body">单个 Spring Boot 应用，共享 MySQL，属于模块化单体</text>
+  <text x="535" y="133" class="cardSub">中期目标</text><text x="535" y="156" class="body">冻结 6 个业务服务的职责、接口和唯一数据归属</text>
+  <text x="1080" y="133" class="cardSub">后续目标</text><text x="1080" y="156" class="body">各服务独立构建、测试、制作镜像和部署</text>
+
+  <rect x="28" y="190" width="1544" height="130" class="lane"/>
+  <rect x="28" y="190" width="1544" height="34" class="laneHead"/>
+  <text x="50" y="214" class="laneTitle">一、前端接入层</text>
+  <rect x="95" y="247" width="260" height="50" rx="5" class="card"/><text x="225" y="277" text-anchor="middle" class="cardSub">Vue 前端</text>
+  <rect x="485" y="247" width="260" height="50" rx="5" class="card"/><text x="615" y="277" text-anchor="middle" class="cardSub">Nginx / Web Server</text>
+  <rect x="875" y="239" width="530" height="66" rx="5" class="card"/>
+  <text x="1140" y="267" text-anchor="middle" class="cardSub">API Gateway（目标组件）</text>
+  <text x="1140" y="289" text-anchor="middle" class="small">统一路由、JWT 鉴权、限流、X-Request-Id 与错误模型转换</text>
+  <path d="M355 272 H485" class="flow"/><path d="M745 272 H875" class="flow"/>
+
+  <rect x="28" y="338" width="1544" height="480" class="lane"/>
+  <rect x="28" y="338" width="1544" height="38" class="laneHead"/>
+  <text x="50" y="364" class="laneTitle">二、目标业务服务层（API Gateway、注册中心、配置中心和数据库不计入业务微服务数量）</text>
+  <path d="M1140 305 V383" class="flow"/>
+  <rect x="270" y="383" width="1060" height="22" rx="3" class="note"/>
+  <text x="800" y="399" text-anchor="middle" class="tiny">统一请求路由：API Gateway 根据路径前缀将请求分发到以下 6 个业务服务</text>
+
+  <rect x="62" y="410" width="430" height="160" rx="4" class="card"/><rect x="62" y="410" width="430" height="38" rx="4" class="cardHead"/>
+  <text x="277" y="436" text-anchor="middle" class="cardTitle">A. SVC-IDENTITY　身份与用户服务</text>
+  <text x="82" y="472" class="body">职责：注册登录、账户安全、用户资料、关注关系、常用旅客</text>
+  <text x="82" y="498" class="body">边界：统一签发身份凭证，只对外提供必要的公开用户信息</text>
+  <text x="82" y="525" class="mono">入口：/user/**　/api/user/**　/api/follow/**　/api/passenger/**</text>
+  <text x="82" y="551" class="small"><tspan class="strong">唯一写入：</tspan>identity schema</text>
+
+  <rect x="585" y="410" width="430" height="160" rx="4" class="card"/><rect x="585" y="410" width="430" height="38" rx="4" class="cardHead"/>
+  <text x="800" y="436" text-anchor="middle" class="cardTitle">B. SVC-TRAFFIC　交通与订单服务</text>
+  <text x="605" y="472" class="body">职责：航班、火车、候补、交通下单、支付、取消与退款</text>
+  <text x="605" y="498" class="body">边界：交通资源、库存和订单状态机保持在同一强事务域</text>
+  <text x="605" y="525" class="mono">入口：/api/flight/**　/api/train/**　/api/order/**　/api/price/**</text>
+  <text x="605" y="551" class="small"><tspan class="strong">唯一写入：</tspan>traffic schema</text>
+
+  <rect x="1108" y="410" width="430" height="160" rx="4" class="card"/><rect x="1108" y="410" width="430" height="38" rx="4" class="cardHead"/>
+  <text x="1323" y="436" text-anchor="middle" class="cardTitle">C. SVC-LOCAL　酒店景点与权益服务</text>
+  <text x="1128" y="472" class="body">职责：酒店、房型、景点、目的地、评价、优惠券与本地游</text>
+  <text x="1128" y="498" class="body">边界：本地资源、库存、订单和权益核销保持本地事务</text>
+  <text x="1128" y="525" class="mono">入口：/api/hotel/**　/api/attraction/**　/api/coupon/** 等</text>
+  <text x="1128" y="551" class="small"><tspan class="strong">唯一写入：</tspan>local schema</text>
+
+  <rect x="62" y="596" width="430" height="150" rx="4" class="card"/><rect x="62" y="596" width="430" height="38" rx="4" class="cardHead"/>
+  <text x="277" y="622" text-anchor="middle" class="cardTitle">D. SVC-AI　AI 与消息服务</text>
+  <text x="82" y="658" class="body">职责：AI 行程、AI 对话、通知中心、站内私信</text>
+  <text x="82" y="684" class="body">边界：外部 AI 可降级；通知失败不回滚已完成的业务事务</text>
+  <text x="82" y="711" class="mono">入口：/api/ai/**　/api/notification/**　/api/private-message/**</text>
+  <text x="82" y="735" class="small"><tspan class="strong">唯一写入：</tspan>ai schema</text>
+
+  <rect x="585" y="596" width="430" height="150" rx="4" class="card"/><rect x="585" y="596" width="430" height="38" rx="4" class="cardHead"/>
+  <text x="800" y="622" text-anchor="middle" class="cardTitle">E. SVC-COMMUNITY　社区内容服务</text>
+  <text x="605" y="658" class="body">职责：帖子、内容流、评论、点赞收藏与图片素材</text>
+  <text x="605" y="684" class="body">边界：内容发布与运营审核解耦，审核事件按帖子 ID 幂等</text>
+  <text x="605" y="711" class="mono">入口：/api/post/**　/api/comment/**　/api/like/**　/api/file/**</text>
+  <text x="605" y="735" class="small"><tspan class="strong">唯一写入：</tspan>community schema</text>
+
+  <rect x="1108" y="596" width="430" height="150" rx="4" class="card"/><rect x="1108" y="596" width="430" height="38" rx="4" class="cardHead"/>
+  <text x="1323" y="622" text-anchor="middle" class="cardTitle">F. SVC-OPS　运营管理服务</text>
+  <text x="1128" y="658" class="body">职责：审核编排、跨域管理命令、敏感词、日志与运营指标</text>
+  <text x="1128" y="684" class="body">边界：只拥有系统表，不直接读写其他服务的业务表</text>
+  <text x="1128" y="711" class="mono">入口：/api/admin/**</text>
+  <text x="1128" y="735" class="small"><tspan class="strong">唯一写入：</tspan>ops schema</text>
+
+  <rect x="170" y="770" width="1260" height="31" rx="3" class="note"/>
+  <text x="800" y="791" text-anchor="middle" class="small"><tspan class="strong">跨服务契约：</tspan>内部 REST（同步查询/命令）＋ 领域事件（通知/审核）｜超时、幂等、重试与补偿规则见 INT-01—INT-05、EVT-01—EVT-02</text>
+
+  <rect x="28" y="836" width="1544" height="282" class="lane"/>
+  <rect x="28" y="836" width="1544" height="38" class="laneHead"/>
+  <text x="50" y="862" class="laneTitle">三、数据与外部依赖层（同一 MySQL 实例可使用不同 Schema；禁止跨服务直接联表）</text>
+
+  <rect x="52" y="895" width="476" height="92" rx="3" class="db"/>
+  <text x="70" y="919" class="cardSub">A. identity schema</text><text x="70" y="945" class="mono">tm_user　tm_follow　tm_passenger</text><text x="70" y="971" class="tiny">用户与旅客资料由身份服务维护；交易服务仅做归属校验</text>
+  <rect x="562" y="895" width="476" height="92" rx="3" class="db"/>
+  <text x="580" y="919" class="cardSub">B. traffic schema</text><text x="580" y="945" class="mono">tm_flight　tm_train　tm_traffic_order　tm_train_waitlist</text><text x="580" y="971" class="mono">tm_price_history</text>
+  <rect x="1072" y="895" width="476" height="92" rx="3" class="db"/>
+  <text x="1090" y="919" class="cardSub">C. local schema</text><text x="1090" y="945" class="mono">酒店/房型/酒店订单、景点/门票订单、目的地、评价/回复/举报</text><text x="1090" y="971" class="mono">本地游产品/步骤、优惠券/用户券（共 13 表）</text>
+  <rect x="52" y="1004" width="476" height="92" rx="3" class="db"/>
+  <text x="70" y="1028" class="cardSub">D. ai schema</text><text x="70" y="1054" class="mono">tm_ai_plan　tm_ai_chat　tm_notification</text><text x="70" y="1080" class="mono">tm_private_message　tm_private_contact</text>
+  <rect x="562" y="1004" width="476" height="92" rx="3" class="db"/>
+  <text x="580" y="1028" class="cardSub">E. community schema</text><text x="580" y="1054" class="mono">tm_post　tm_comment　tm_like　tm_media_asset</text><text x="580" y="1080" class="tiny">审核状态通过服务命令变更，运营服务不直接写表</text>
+  <rect x="1072" y="1004" width="476" height="92" rx="3" class="db"/>
+  <text x="1090" y="1028" class="cardSub">F. ops schema 与外部依赖</text><text x="1090" y="1054" class="mono">sys_log　sys_sensitive_word</text><text x="1090" y="1080" class="tiny">Redis｜DeepSeek API｜12306 公共页面｜本地文件存储</text>
+
+  <rect x="28" y="1136" width="1544" height="78" class="note"/>
+  <text x="50" y="1163" class="cardSub">边界判定与验收口径</text>
+  <text x="50" y="1190" class="body">① 每张表只有一个写入责任服务；② 其他服务通过接口、事件或消息命令访问；③ 写请求携带 Request-Id，可重试命令携带 Idempotency-Key；④ 当前图表示目标拆分，不虚报已经完成独立部署。</text>
+</svg>

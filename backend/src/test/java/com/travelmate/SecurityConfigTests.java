@@ -6,9 +6,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
@@ -20,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         classes = TravelMateApplication.class,
         properties = "JWT_SECRET=YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=")
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class SecurityConfigTests {
 
     @Autowired
@@ -30,6 +33,14 @@ class SecurityConfigTests {
         mockMvc.perform(post("/api/post/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unauthenticatedFileUploadIsRejectedBySecurityLayer() throws Exception {
+        mockMvc.perform(multipart("/api/file/upload")
+                .file("file", "image".getBytes())
+                .param("name", "photo.jpg"))
                 .andExpect(status().isForbidden());
     }
 
@@ -55,6 +66,12 @@ class SecurityConfigTests {
     void unauthenticatedHotelOrdersRequestIsRejectedBySecurityLayer() throws Exception {
         mockMvc.perform(get("/api/hotel/orders"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void tourProductsCanBeBrowsedWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/api/tour/list").param("type", "0"))
+                .andExpect(status().isOk());
     }
 
     @Test

@@ -7,7 +7,7 @@ import com.travelmate.entity.AttractionOrder;
 import com.travelmate.mapper.AttractionMapper;
 import com.travelmate.mapper.AttractionOrderMapper;
 import com.travelmate.service.AttractionService;
-import com.travelmate.service.NotificationCenterService;
+import com.travelmate.integration.NotificationGateway;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +23,7 @@ public class AttractionServiceImpl extends ServiceImpl<AttractionMapper, Attract
         implements AttractionService {
 
     @Autowired
-    private NotificationCenterService notificationCenterService;
+    private NotificationGateway notificationGateway;
 
     @Autowired
     private AttractionOrderMapper attractionOrderMapper;
@@ -104,7 +104,7 @@ public class AttractionServiceImpl extends ServiceImpl<AttractionMapper, Attract
                 + "，儿童票: " + children
                 + "，总数: " + count + " ======");
 
-        notificationCenterService.createNotification(
+        notificationGateway.publish(
                 userId,
                 "attraction_order",
                 "景点门票购买成功",

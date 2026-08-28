@@ -1,0 +1,48 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#fcfcfb","primaryColor":"#f7f8f8","primaryTextColor":"#1f252a","primaryBorderColor":"#40474e","lineColor":"#59636c","secondaryColor":"#eef0f1","tertiaryColor":"#ffffff","fontFamily":"Microsoft YaHei, Noto Sans CJK SC, sans-serif"},"flowchart":{"curve":"linear","nodeSpacing":28,"rankSpacing":42}}}%%
+flowchart TB
+    STATUS["当前：Spring Boot 模块化单体、共享 MySQL<br/>中期：冻结 6 个服务的职责、接口和数据归属<br/>后续：各服务独立构建、测试与部署"]
+    subgraph ACCESS[一、前端接入层]
+        WEB[Vue 前端] --> NGINX[Nginx / Web Server] --> GW["API Gateway<br/>路由｜JWT 鉴权｜限流｜Request-Id"]
+    end
+    subgraph SERVICES[二、目标业务服务层]
+        direction TB
+        subgraph ROW1[ ]
+            direction LR
+            ID["A. SVC-IDENTITY 身份与用户服务<br/>账号｜资料｜关注｜常用旅客<br/>/user/**｜/api/user/**｜/api/follow/**｜/api/passenger/**"]
+            TRAFFIC["B. SVC-TRAFFIC 交通与订单服务<br/>航班｜火车｜候补｜交通订单<br/>/api/flight/**｜/api/train/**｜/api/order/**"]
+            LOCAL["C. SVC-LOCAL 酒店景点与权益服务<br/>酒店｜景点｜评价｜优惠券｜本地游<br/>/api/hotel/**｜/api/attraction/**｜/api/coupon/**"]
+        end
+        subgraph ROW2[ ]
+            direction LR
+            AI["D. SVC-AI AI 与消息服务<br/>AI 行程｜AI 对话｜通知｜私信<br/>/api/ai/**｜/api/notification/**｜/api/private-message/**"]
+            COMMUNITY["E. SVC-COMMUNITY 社区内容服务<br/>帖子｜评论｜点赞收藏｜图片素材<br/>/api/post/**｜/api/comment/**｜/api/like/**｜/api/file/**"]
+            OPS["F. SVC-OPS 运营管理服务<br/>审核编排｜管理命令｜日志｜敏感词<br/>/api/admin/**"]
+        end
+        CONTRACT["跨服务契约层<br/>内部 REST：同步查询/命令｜领域事件：通知/审核<br/>超时｜幂等｜重试｜补偿"]
+    end
+    subgraph DATA[三、数据与外部依赖层]
+        direction LR
+        IDDB["identity schema<br/>tm_user｜tm_follow｜tm_passenger"]
+        TRAFFICDB["traffic schema<br/>航班｜火车｜交通订单｜候补｜价格历史"]
+        LOCALDB["local schema<br/>酒店景点订单｜评价举报｜本地游｜优惠券"]
+        AIDB["ai schema<br/>AI 行程/对话｜通知｜私信"]
+        COMMUNITYDB["community schema<br/>帖子｜评论｜点赞收藏｜素材"]
+        OPSDB["ops schema / 外部依赖<br/>日志｜敏感词｜Redis｜DeepSeek｜12306｜文件"]
+    end
+    STATUS --> WEB
+    GW --> ID & TRAFFIC & LOCAL & AI & COMMUNITY & OPS
+    ID & TRAFFIC & LOCAL & AI & COMMUNITY & OPS -.接口或事件.-> CONTRACT
+    ID --> IDDB
+    TRAFFIC --> TRAFFICDB
+    LOCAL --> LOCALDB
+    AI --> AIDB
+    COMMUNITY --> COMMUNITYDB
+    OPS --> OPSDB
+    classDef default fill:#fbfbfa,stroke:#40474e,color:#1f252a,stroke-width:1px;
+    classDef muted fill:#e8ecef,stroke:#363c42,color:#15191d,stroke-width:1px;
+    class STATUS,GW,CONTRACT muted;
+    style ACCESS fill:#ffffff,stroke:#40474e,stroke-width:1px
+    style SERVICES fill:#ffffff,stroke:#40474e,stroke-width:1px
+    style DATA fill:#ffffff,stroke:#40474e,stroke-width:1px
+    style ROW1 fill:#ffffff,stroke:#ffffff
+    style ROW2 fill:#ffffff,stroke:#ffffff

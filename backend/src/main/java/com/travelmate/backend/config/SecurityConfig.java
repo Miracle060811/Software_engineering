@@ -65,8 +65,9 @@ public class SecurityConfig {
                                                 .requestMatchers(
                                                                 "/user/register", "/user/login",
                                                                 "/user/admin-register",
-                                                                "/user/reset-password",
-                                                                "/actuator/health",
+                                                "/user/reset-password",
+                                                "/internal/**",
+                                                "/actuator/health",
                                                                 "/actuator/health/**",
                                                                 "/favicon.ico",
                                                                 "/assets/**",
@@ -81,8 +82,11 @@ public class SecurityConfig {
                                                                 "/api/destinations/**",
                                                                 "/api/hotel/search",
                                                                 "/api/attraction/search",
+                                                                "/api/tour/list",
                                                                 "/api/review/list",
-                                                                "/api/coupon/list")
+                                                                "/api/coupon/list",
+                                                                "/api/user/profile/**",
+                                                                "/api/comment/list")
                                                 .permitAll()
                                                 .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET,
                                                                 "^/api/hotel/\\d+$"))

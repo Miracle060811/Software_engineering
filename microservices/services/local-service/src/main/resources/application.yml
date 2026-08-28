@@ -1,0 +1,28 @@
+server:
+  port: ${SERVER_PORT:8083}
+spring:
+  application.name: local-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:travelmate_local}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:root}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data.redis:
+    host: ${REDIS_HOST:127.0.0.1}
+    port: ${REDIS_PORT:6379}
+app:
+  cors.allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+  security.jwt-secret: ${JWT_SECRET:}
+  integration.mode: http
+  internal-service-token: ${INTERNAL_SERVICE_TOKEN}
+  services.notification-url: ${AI_SERVICE_URL:http://127.0.0.1:8084}
+  outbox.dispatcher:
+    enabled: ${OUTBOX_DISPATCHER_ENABLED:false}
+    fixed-delay-ms: ${OUTBOX_FIXED_DELAY_MS:5000}
+    batch-size: ${OUTBOX_BATCH_SIZE:20}
+    max-retries: ${OUTBOX_MAX_RETRIES:8}
+    base-delay-seconds: ${OUTBOX_BASE_DELAY_SECONDS:5}
+    claim-timeout-seconds: ${OUTBOX_CLAIM_TIMEOUT_SECONDS:60}
+management:
+  endpoints.web.exposure.include: health,info
+  endpoint.health.probes.enabled: true

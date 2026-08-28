@@ -1,10 +1,19 @@
 package com.travelmate;
 
+import com.travelmate.backend.service.UserService;
+import com.travelmate.service.AttractionService;
+import com.travelmate.service.CouponService;
+import com.travelmate.service.FlightService;
+import com.travelmate.service.HotelService;
+import com.travelmate.service.PostService;
+import com.travelmate.service.TrainService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.is;
@@ -18,10 +27,32 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         classes = TravelMateApplication.class,
         properties = "JWT_SECRET=YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=")
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class PublicApiSmokeTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private FlightService flightService;
+
+    @MockitoBean
+    private TrainService trainService;
+
+    @MockitoBean
+    private HotelService hotelService;
+
+    @MockitoBean
+    private AttractionService attractionService;
+
+    @MockitoBean
+    private PostService postService;
+
+    @MockitoBean
+    private CouponService couponService;
+
+    @MockitoBean
+    private UserService userService;
 
     @Test
     void publicReadApisReturnUnifiedSuccessPayloads() throws Exception {

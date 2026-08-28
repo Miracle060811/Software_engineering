@@ -2,10 +2,9 @@ package com.travelmate.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travelmate.dto.TrainWaitlistCreateDTO;
-import com.travelmate.entity.Passenger;
 import com.travelmate.entity.Train;
 import com.travelmate.entity.TrainWaitlist;
-import com.travelmate.mapper.PassengerMapper;
+import com.travelmate.integration.PassengerGateway;
 import com.travelmate.mapper.TrainMapper;
 import com.travelmate.mapper.TrainWaitlistMapper;
 import com.travelmate.service.TrainWaitlistService;
@@ -18,11 +17,11 @@ import java.time.LocalDateTime;
 public class TrainWaitlistServiceImpl extends ServiceImpl<TrainWaitlistMapper, TrainWaitlist>
         implements TrainWaitlistService {
     private final TrainMapper trainMapper;
-    private final PassengerMapper passengerMapper;
+    private final PassengerGateway passengerGateway;
 
-    public TrainWaitlistServiceImpl(TrainMapper trainMapper, PassengerMapper passengerMapper) {
+    public TrainWaitlistServiceImpl(TrainMapper trainMapper, PassengerGateway passengerGateway) {
         this.trainMapper = trainMapper;
-        this.passengerMapper = passengerMapper;
+        this.passengerGateway = passengerGateway;
     }
 
     @Override
@@ -30,8 +29,8 @@ public class TrainWaitlistServiceImpl extends ServiceImpl<TrainWaitlistMapper, T
         if (dto == null) {
             throw new RuntimeException("候补信息不能为空");
         }
-        Passenger passenger = passengerMapper.selectById(dto.getPassengerId());
-        if (passenger == null || !passenger.getUserId().equals(userId)) {
+        PassengerGateway.PassengerSnapshot passenger = passengerGateway.findOwnedPassenger(dto.getPassengerId(), userId);
+        if (passenger == null) {
             throw new RuntimeException("乘车人选择错误或不存在");
         }
 
@@ -46,8 +45,8 @@ public class TrainWaitlistServiceImpl extends ServiceImpl<TrainWaitlistMapper, T
                 train == null || train.getDepartureTime() == null ? null : train.getDepartureTime().toString())));
         item.setSeatType(firstText(dto.getSeatType(), "SecondClass"));
         item.setTicketCount(normalizeCount(dto.getTicketCount()));
-        item.setPassengerName(passenger.getName());
-        item.setPassengerIdCard(passenger.getIdCard());
+        item.setPassengerName(passenger.name());
+        item.setPassengerIdCard(passenger.idCard());
         item.setStatus(0);
         item.setCreateTime(LocalDateTime.now());
 

@@ -167,11 +167,13 @@ jobs:
           docker build --pull \
             --build-arg "GIT_SHA=$RELEASE_SHA" \
             --build-arg "BUILD_DATE=$build_date" \
+            --build-arg "IMAGE_VERSION=$image_tag" \
             --tag "$BACKEND_IMAGE:$image_tag" \
             backend
           docker build --pull \
             --build-arg "GIT_SHA=$RELEASE_SHA" \
             --build-arg "BUILD_DATE=$build_date" \
+            --build-arg "IMAGE_VERSION=$image_tag" \
             --tag "$FRONTEND_IMAGE:$image_tag" \
             frontend
 

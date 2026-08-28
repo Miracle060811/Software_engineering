@@ -47,7 +47,7 @@ public class UserService {
                 .eq("status", 1)
                 .eq("deleted", 0));
         if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-            return jwtUtil.generateToken(normalizedUsername);
+            return jwtUtil.generateToken(user.getId(), normalizedUsername, user.getRole());
         }
         return null;
     }

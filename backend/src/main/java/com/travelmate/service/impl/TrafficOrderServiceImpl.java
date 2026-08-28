@@ -5,15 +5,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travelmate.dto.FlightOrderCreateDTO;
 import com.travelmate.dto.TrainOrderCreateDTO;
 import com.travelmate.entity.Flight;
-import com.travelmate.entity.Passenger;
 import com.travelmate.entity.TrafficOrder;
 import com.travelmate.entity.Train;
 import com.travelmate.mapper.FlightMapper;
-import com.travelmate.mapper.PassengerMapper;
 import com.travelmate.mapper.TrafficOrderMapper;
 import com.travelmate.mapper.TrainMapper;
-import com.travelmate.service.CouponService;
-import com.travelmate.service.NotificationCenterService;
+import com.travelmate.integration.CouponGateway;
+import com.travelmate.integration.NotificationGateway;
+import com.travelmate.integration.PassengerGateway;
 import com.travelmate.service.TrafficOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,13 +35,13 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
     private TrainMapper trainMapper;
 
     @Autowired
-    private PassengerMapper passengerMapper;
+    private PassengerGateway passengerGateway;
 
     @Autowired
-    private CouponService couponService;
+    private CouponGateway couponGateway;
 
     @Autowired
-    private NotificationCenterService notificationCenterService;
+    private NotificationGateway notificationGateway;
 
     /**
      * 核心难点：防超卖事务拦截、减库存并生成订单
@@ -53,8 +52,8 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         validateFlightOrder(dto);
 
         // 1. 查询乘车人信息
-        Passenger passenger = passengerMapper.selectById(dto.getPassengerId());
-        if (passenger == null || !passenger.getUserId().equals(userId)) {
+        PassengerGateway.PassengerSnapshot passenger = passengerGateway.findOwnedPassenger(dto.getPassengerId(), userId);
+        if (passenger == null) {
             throw new RuntimeException("乘车人选错或不存在");
         }
 
@@ -81,7 +80,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
             throw new RuntimeException("该舱位暂不可售");
         }
         BigDecimal amount = price.multiply(BigDecimal.valueOf(ticketCount));
-        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), amount, "flight");
+        BigDecimal payableAmount = couponGateway.redeem(userId, dto.getUserCouponId(), amount, "flight");
 
         // 4. 构建订单对象并落表生成
         TrafficOrder order = new TrafficOrder();
@@ -93,8 +92,8 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         order.setTicketId(dto.getFlightId());
         order.setSeatType(seatType);
         order.setTicketCount(ticketCount);
-        order.setPassengerName(passenger.getName());
-        order.setPassengerIdCard(passenger.getIdCard());
+        order.setPassengerName(passenger.name());
+        order.setPassengerIdCard(passenger.idCard());
         order.setAmount(payableAmount);
         order.setStatus(0); // 0 = 待支付
         order.setCreateTime(LocalDateTime.now());
@@ -109,8 +108,8 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
     public String createTrainOrder(Long userId, TrainOrderCreateDTO dto) {
         validateTrainOrder(dto);
 
-        Passenger passenger = passengerMapper.selectById(dto.getPassengerId());
-        if (passenger == null || !passenger.getUserId().equals(userId)) {
+        PassengerGateway.PassengerSnapshot passenger = passengerGateway.findOwnedPassenger(dto.getPassengerId(), userId);
+        if (passenger == null) {
             throw new RuntimeException("乘车人选错或不存在");
         }
 
@@ -140,7 +139,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
             throw new RuntimeException("该席别暂不可售");
         }
         BigDecimal amount = price.multiply(BigDecimal.valueOf(ticketCount));
-        BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), amount, "train");
+        BigDecimal payableAmount = couponGateway.redeem(userId, dto.getUserCouponId(), amount, "train");
 
         TrafficOrder order = new TrafficOrder();
         String orderNo = "TR" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
@@ -150,8 +149,8 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         order.setTicketId(dto.getTrainId());
         order.setSeatType(seatType);
         order.setTicketCount(ticketCount);
-        order.setPassengerName(passenger.getName());
-        order.setPassengerIdCard(passenger.getIdCard());
+        order.setPassengerName(passenger.name());
+        order.setPassengerIdCard(passenger.idCard());
         order.setAmount(payableAmount);
         order.setStatus(0);
         order.setCreateTime(LocalDateTime.now());
@@ -179,7 +178,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
         if (updated == 0) {
             throw new RuntimeException("订单状态已变化，请刷新后重试");
         }
-        notificationCenterService.createNotification(
+        notificationGateway.publish(
                 userId,
                 "traffic_order",
                 Objects.equals(order.getOrderType(), 0) ? "机票购票成功" : "火车票购票成功",
@@ -241,7 +240,7 @@ public class TrafficOrderServiceImpl extends ServiceImpl<TrafficOrderMapper, Tra
             throw new RuntimeException("订单状态已变化，请刷新后重试");
         }
 
-        notificationCenterService.createNotification(
+        notificationGateway.publish(
                 userId,
                 "traffic_order",
                 "退票申请已提交",

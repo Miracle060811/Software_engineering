@@ -1,10 +1,14 @@
 # 敏感配置文件
 .env
+.env.*
+!.env.example
 backend/application-local.yml
 
 # 构建产物
 target/
 frontend/dist/
+dist/
+build/
 
 # 前端依赖与缓存
 node_modules/
@@ -15,9 +19,11 @@ playwright-report/
 test-results/
 coverage/
 .nyc_output/
-04_tests/reports/ci/
-frontend/playwright-report-real/
-frontend/test-results-real/
+blob-report/
+/04_tests/reports/ci/
+/04_tests/stress/results/*.json
+/frontend/playwright-report-real/
+/frontend/test-results-real/
 
 # 本地上传文件
 uploads/
@@ -30,6 +36,7 @@ uploads/
 /travelmate_editorial_low_ai_v82_package.zip
 outputs/
 pdf_extracted/
+/tmp/
 
 # 本地 AI 工具配置与分析缓存
 .claude/
@@ -38,7 +45,8 @@ pdf_extracted/
 
 # Java / Maven
 *.class
-hs_err_pid*.log
+hs_err_pid*
+replay_pid*
 
 # Node.js / 前端工具缓存
 npm-debug.log*
@@ -47,20 +55,27 @@ yarn-error.log*
 pnpm-debug.log*
 .cache/
 .parcel-cache/
+.turbo/
 .eslintcache
 
 # IDE / 操作系统
 .idea/
 .vscode/
 *.iml
+*.iws
+*.ipr
 .DS_Store
 Thumbs.db
+Desktop.ini
 
 # 通用日志与临时文件
 *.log
 *.tmp
 *.temp
 *.bak
+*.orig
 *.swp
 *.swo
+*.pid
+*.pid.lock
 *~

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>com.travelmate</groupId><artifactId>travelmate-microservices</artifactId><version>0.1.0-SNAPSHOT</version><relativePath>../../pom.xml</relativePath></parent>
+    <artifactId>local-service</artifactId>
+    <dependencies>
+        <dependency><groupId>com.travelmate</groupId><artifactId>travelmate-contract</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-security</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-redis</artifactId></dependency>
+        <dependency><groupId>com.baomidou</groupId><artifactId>mybatis-plus-spring-boot3-starter</artifactId><version>${mybatis-plus.version}</version></dependency>
+        <dependency><groupId>com.mysql</groupId><artifactId>mysql-connector-j</artifactId><scope>runtime</scope></dependency>
+        <dependency><groupId>io.jsonwebtoken</groupId><artifactId>jjwt-api</artifactId><version>${jjwt.version}</version></dependency>
+        <dependency><groupId>io.jsonwebtoken</groupId><artifactId>jjwt-impl</artifactId><version>${jjwt.version}</version><scope>runtime</scope></dependency>
+        <dependency><groupId>io.jsonwebtoken</groupId><artifactId>jjwt-jackson</artifactId><version>${jjwt.version}</version><scope>runtime</scope></dependency>
+        <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><optional>true</optional></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
+    </dependencies>
+    <build><plugins>
+        <plugin><groupId>org.codehaus.mojo</groupId><artifactId>build-helper-maven-plugin</artifactId><version>3.6.1</version><executions><execution><id>legacy-local-source</id><phase>generate-sources</phase><goals><goal>add-source</goal></goals><configuration><sources><source>${project.basedir}/../../../backend/src/main/java</source></sources></configuration></execution></executions></plugin>
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><configuration><includes>
+            <include>com/travelmate/microservices/local/**</include>
+            <include>com/travelmate/controller/HotelController.java</include><include>com/travelmate/controller/AttractionController.java</include><include>com/travelmate/controller/DestinationController.java</include><include>com/travelmate/controller/CouponController.java</include><include>com/travelmate/controller/ReviewController.java</include><include>com/travelmate/controller/ReplyController.java</include><include>com/travelmate/controller/ReviewReportController.java</include><include>com/travelmate/controller/TourProductController.java</include>
+            <include>com/travelmate/service/HotelService.java</include><include>com/travelmate/service/HotelOrderService.java</include><include>com/travelmate/service/HotelRoomStockService.java</include><include>com/travelmate/service/StockPreDeductResult.java</include><include>com/travelmate/service/AttractionService.java</include><include>com/travelmate/service/CouponService.java</include><include>com/travelmate/service/ReviewService.java</include><include>com/travelmate/service/TourProductService.java</include>
+            <include>com/travelmate/service/impl/HotelServiceImpl.java</include><include>com/travelmate/service/impl/HotelOrderServiceImpl.java</include><include>com/travelmate/service/impl/HotelRoomStockServiceImpl.java</include><include>com/travelmate/service/impl/AttractionServiceImpl.java</include><include>com/travelmate/service/impl/CouponServiceImpl.java</include><include>com/travelmate/service/impl/ReviewServiceImpl.java</include><include>com/travelmate/service/impl/TourProductServiceImpl.java</include>
+            <include>com/travelmate/entity/Hotel.java</include><include>com/travelmate/entity/HotelRoom.java</include><include>com/travelmate/entity/HotelOrder.java</include><include>com/travelmate/entity/Attraction.java</include><include>com/travelmate/entity/AttractionOrder.java</include><include>com/travelmate/entity/Destination.java</include><include>com/travelmate/entity/Review.java</include><include>com/travelmate/entity/Reply.java</include><include>com/travelmate/entity/ReviewReport.java</include><include>com/travelmate/entity/TourProduct.java</include><include>com/travelmate/entity/Coupon.java</include><include>com/travelmate/entity/UserCoupon.java</include>
+            <include>com/travelmate/mapper/HotelMapper.java</include><include>com/travelmate/mapper/HotelRoomMapper.java</include><include>com/travelmate/mapper/HotelOrderMapper.java</include><include>com/travelmate/mapper/AttractionMapper.java</include><include>com/travelmate/mapper/AttractionOrderMapper.java</include><include>com/travelmate/mapper/DestinationMapper.java</include><include>com/travelmate/mapper/ReviewMapper.java</include><include>com/travelmate/mapper/ReplyMapper.java</include><include>com/travelmate/mapper/ReviewReportMapper.java</include><include>com/travelmate/mapper/TourProductMapper.java</include><include>com/travelmate/mapper/CouponMapper.java</include><include>com/travelmate/mapper/UserCouponMapper.java</include>
+            <include>com/travelmate/dto/HotelOrderCreateDTO.java</include>
+            <include>com/travelmate/integration/NotificationGateway.java</include>
+            <include>com/travelmate/common/UserContext.java</include><include>com/travelmate/common/GlobalExceptionHandler.java</include><include>com/travelmate/common/RedisKeyConstants.java</include><include>com/travelmate/annotation/RateLimiter.java</include><include>com/travelmate/interceptor/RateLimiterInterceptor.java</include>
+            <include>com/travelmate/config/MybatisPlusConfig.java</include><include>com/travelmate/config/RedisConfig.java</include><include>com/travelmate/config/WebConfig.java</include><include>com/travelmate/backend/config/JwtUtil.java</include><include>com/travelmate/backend/config/JwtFilter.java</include><include>com/travelmate/backend/config/SecurityConfig.java</include><include>com/travelmate/backend/config/CorsConfig.java</include>
+        </includes></configuration></plugin>
+        <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId><configuration><mainClass>com.travelmate.microservices.local.LocalServiceApplication</mainClass></configuration></plugin>
+    </plugins></build>
+</project>

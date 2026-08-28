@@ -1,6 +1,6 @@
 # TravelMate（伴游）出行旅游平台
 
-TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划—资源预订—行中服务—行后分享”提供一体化旅行体验。当前仓库是一套可本地运行、可自动化验证的前后端单体应用，不是接入真实支付、出票或商用库存的生产 OTA。
+TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划—资源预订—行中服务—行后分享”提供一体化旅行体验。当前仓库以可本地运行、可自动化验证的前后端单体作为回归基线，并已开始并行建设四个独立微服务；它不是接入真实支付、出票或商用库存的生产 OTA。
 
 ## 当前能力
 
@@ -14,6 +14,12 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 | 工程质量 | 后端 JUnit/MockMvc、前端 ESLint/构建、Mock 与真实后端 Playwright E2E、JaCoCo、SpotBugs、依赖/密钥扫描及 CodeQL |
 
 系统目前处于“核心主链路可运行，测试覆盖持续补齐”的阶段。UC01—UC19 的证据基线由 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json) 与 [`docs/ci/test-quality-policy.json`](docs/ci/test-quality-policy.json) 管理，不能把“代码已存在”直接视为“场景已被完整自动化覆盖”。
+
+## 微服务迁移状态
+
+第一批 `identity-service`、`traffic-service`、`local-service`、`ai-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。交通服务跨域读取旅客和优惠券时已改用内部 HTTP 接口，不再直接打包对应 Mapper；AI 服务已实现通知事件的幂等消费；单体 `backend` 继续保留，便于迁移期间做功能回归。
+
+本阶段仍属于渐进式迁移：服务暂时选择性复用单体源码，四服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；真实数据切换验收、AI 其余业务、API Gateway 与生产部署编排尚未完成。中期设计基线见 [`document/TravelMate中期验收基线.md`](document/TravelMate中期验收基线.md)。
 
 ## 技术栈
 
@@ -188,16 +194,27 @@ npx playwright test --reporter=list --workers=1
 # 用例追溯门禁（回到仓库根目录）
 Set-Location ..
 npm run check:traceability
+
+# 数据库迁移与 Kubernetes 部署配置门禁
+npm run check:deployment
+kubectl kustomize deploy/k8s | Out-Null
 ```
 
 正式 CI 位于 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)：
 
-- 所有提交都执行仓库清洁度与 UC01—UC19 追溯校验；
+- 所有提交都执行仓库清洁度、UC01—UC19 追溯、Flyway 迁移规则、Kubernetes 清单和部署脚本校验；
 - 代码、SQL、脚本或工作流变更执行后端 `verify`、前端 lint/审计/构建和 Mock E2E；
+- 后端 CI 从空的 `travelmate` 数据库启动，由 Flyway 自动执行全部迁移，并核对迁移历史表的最新版本；
 - `main`、面向 `main` 的 Pull Request 和手动运行还执行真实后端 E2E；
 - Markdown 等纯文档改动跳过无关构建，但仍经过总质量门禁。
 
 安全流水线位于 [`.github/workflows/security.yml`](.github/workflows/security.yml) 与 [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)，覆盖密钥、依赖漏洞和 Java/JavaScript 静态安全分析。流水线证据记录规则见 [`05_management/pipeline-records/README.md`](05_management/pipeline-records/README.md)。
+
+### 数据库版本迁移
+
+数据库结构与种子数据由 Flyway 管理，迁移文件位于 [`backend/src/main/resources/db/migration`](backend/src/main/resources/db/migration)。新迁移只能新增文件，命名格式为 `V<连续版本号>__<英文说明>.sql`；已经进入共享分支的迁移文件不要修改或删除。应用启动时默认自动迁移，可通过 `.env` 中的 `FLYWAY_ENABLED=false` 临时关闭，仅建议用于故障排查。
+
+`V1__baseline_schema.sql` 用于新数据库初始化；已有旧数据库首次接入时会登记为 V1 基线，再执行后续增量迁移。原有 [`docs/sql/init.sql`](docs/sql/init.sql) 暂时保留给旧版初始化脚本和演示环境兼容使用，后续数据库变更以 Flyway 文件为准。
 
 ## 持续部署
 
@@ -224,7 +241,7 @@ npm run check:images
 - 当前是模块化单体；现有 Kubernetes/CD 面向单机 Docker Desktop 演示环境，不等同于生产级多节点容灾、备份和可观测平台。
 - Redis 不可用时支持降级，但缓存、限流和高并发库存场景不能按完整状态验收。
 - 管理后台的 QPS、延迟和告警来自本地 `sys_log` 的轻量统计，尚未接入真实 APM 或分布式追踪。
-- 用例追溯矩阵目前仍包含 `partial` 与 `planned` 项；新增功能应同步补测试并收紧质量策略。
+- 用例追溯矩阵的 19 个场景均已具备至少一项自动化证据，当前均为 `partial`；新增功能应同步补测试，并逐步将场景提升为完整 `covered`。
 - SQL 包含演示数据和部分外部图片/资料来源；对外发布前仍需复核授权、时效性与稳定性。
 
 ## 项目结构
@@ -256,6 +273,7 @@ Software_engineering/
 
 - [软件需求规格说明书](document/5组-软件需求规格说明.md)
 - [软件详细设计说明](document/5组-软件详细设计说明.md)
+- [微服务改造中期验收基线](document/TravelMate中期验收基线.md)
 - [业务场景清单与用例说明](document/业务场景清单与用例说明.md)
 - [版本日志](CHANGELOG.md)
 - [用例测试矩阵](docs/ci/use-case-test-matrix.json)

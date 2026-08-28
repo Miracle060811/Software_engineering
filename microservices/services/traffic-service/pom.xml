@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>com.travelmate</groupId><artifactId>travelmate-microservices</artifactId><version>0.1.0-SNAPSHOT</version><relativePath>../../pom.xml</relativePath></parent>
+    <artifactId>traffic-service</artifactId>
+    <dependencies>
+        <dependency><groupId>com.travelmate</groupId><artifactId>travelmate-contract</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-security</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-redis</artifactId></dependency>
+        <dependency><groupId>com.baomidou</groupId><artifactId>mybatis-plus-spring-boot3-starter</artifactId><version>${mybatis-plus.version}</version></dependency>
+        <dependency><groupId>com.mysql</groupId><artifactId>mysql-connector-j</artifactId><scope>runtime</scope></dependency>
+        <dependency><groupId>io.jsonwebtoken</groupId><artifactId>jjwt-api</artifactId><version>${jjwt.version}</version></dependency>
+        <dependency><groupId>io.jsonwebtoken</groupId><artifactId>jjwt-impl</artifactId><version>${jjwt.version}</version><scope>runtime</scope></dependency>
+        <dependency><groupId>io.jsonwebtoken</groupId><artifactId>jjwt-jackson</artifactId><version>${jjwt.version}</version><scope>runtime</scope></dependency>
+        <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><optional>true</optional></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
+    </dependencies>
+    <build><plugins>
+        <plugin><groupId>org.codehaus.mojo</groupId><artifactId>build-helper-maven-plugin</artifactId><version>3.6.1</version><executions><execution><id>legacy-traffic-source</id><phase>generate-sources</phase><goals><goal>add-source</goal></goals><configuration><sources><source>${project.basedir}/../../../backend/src/main/java</source></sources></configuration></execution></executions></plugin>
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><configuration><includes>
+            <include>com/travelmate/microservices/traffic/**</include>
+            <include>com/travelmate/controller/FlightController.java</include><include>com/travelmate/controller/TrainController.java</include><include>com/travelmate/controller/TrafficOrderController.java</include><include>com/travelmate/controller/PriceHistoryController.java</include>
+            <include>com/travelmate/service/FlightService.java</include><include>com/travelmate/service/TrainService.java</include><include>com/travelmate/service/TrainLiveSyncService.java</include><include>com/travelmate/service/TrainBrowserSyncService.java</include><include>com/travelmate/service/TrainWaitlistService.java</include><include>com/travelmate/service/TrafficOrderService.java</include><include>com/travelmate/service/PriceHistoryService.java</include>
+            <include>com/travelmate/service/impl/FlightServiceImpl.java</include><include>com/travelmate/service/impl/TrainServiceImpl.java</include><include>com/travelmate/service/impl/TrainLiveSyncServiceImpl.java</include><include>com/travelmate/service/impl/TrainBrowserSyncServiceImpl.java</include><include>com/travelmate/service/impl/TrainStationResolver.java</include><include>com/travelmate/service/impl/TrainWaitlistServiceImpl.java</include><include>com/travelmate/service/impl/TrafficOrderServiceImpl.java</include><include>com/travelmate/service/impl/PriceHistoryServiceImpl.java</include><include>com/travelmate/service/impl/ExternalHttpClientFactory.java</include>
+            <include>com/travelmate/entity/Flight.java</include><include>com/travelmate/entity/Train.java</include><include>com/travelmate/entity/TrainWaitlist.java</include><include>com/travelmate/entity/TrafficOrder.java</include><include>com/travelmate/entity/PriceHistory.java</include>
+            <include>com/travelmate/mapper/FlightMapper.java</include><include>com/travelmate/mapper/TrainMapper.java</include><include>com/travelmate/mapper/TrainWaitlistMapper.java</include><include>com/travelmate/mapper/TrafficOrderMapper.java</include><include>com/travelmate/mapper/PriceHistoryMapper.java</include>
+            <include>com/travelmate/dto/FlightOrderCreateDTO.java</include><include>com/travelmate/dto/TrainOrderCreateDTO.java</include><include>com/travelmate/dto/TrainWaitlistCreateDTO.java</include><include>com/travelmate/dto/TrainLiveSyncStatus.java</include><include>com/travelmate/dto/TrainBrowserTicket.java</include>
+            <include>com/travelmate/integration/PassengerGateway.java</include><include>com/travelmate/integration/CouponGateway.java</include><include>com/travelmate/integration/NotificationGateway.java</include>
+            <include>com/travelmate/common/UserContext.java</include><include>com/travelmate/common/GlobalExceptionHandler.java</include><include>com/travelmate/common/RedisKeyConstants.java</include><include>com/travelmate/annotation/RateLimiter.java</include><include>com/travelmate/interceptor/RateLimiterInterceptor.java</include>
+            <include>com/travelmate/config/MybatisPlusConfig.java</include><include>com/travelmate/config/RedisConfig.java</include><include>com/travelmate/config/WebConfig.java</include><include>com/travelmate/backend/config/JwtUtil.java</include><include>com/travelmate/backend/config/JwtFilter.java</include><include>com/travelmate/backend/config/SecurityConfig.java</include><include>com/travelmate/backend/config/CorsConfig.java</include>
+        </includes></configuration></plugin>
+        <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId><configuration><mainClass>com.travelmate.microservices.traffic.TrafficServiceApplication</mainClass></configuration></plugin>
+    </plugins></build>
+</project>
