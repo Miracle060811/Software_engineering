@@ -732,6 +732,89 @@ test("UC17 follows a user and exposes only public profile data", async ({ reques
   }
 });
 
+test("UC18 and UC19 enforce admin RBAC and complete audit workflows", async ({ request }) => {
+  const ordinary = await registerAndLogin(request);
+  const ordinaryHeaders = authenticatedHeaders(ordinary);
+  let sensitiveWordId;
+
+  try {
+    const forbiddenResponse = await request.get("/api/admin/stats", { headers: ordinaryHeaders });
+    expect(forbiddenResponse.status()).toBe(403);
+
+    const marker = `UC19-${randomUUID()}`;
+    const reviewBody = await (await request.post("/api/review/add", {
+      headers: ordinaryHeaders,
+      data: { targetId: 1, targetType: 0, rating: 3, content: `待审核评价 ${marker}` },
+    })).json();
+    expect(reviewBody.code).toBe(200);
+    const reviewsBody = await (await request.get("/api/review/list?targetId=1&targetType=0")).json();
+    const review = reviewsBody.data.find((item) => item.content.includes(marker));
+    expect(review).toBeTruthy();
+    const reportBody = await (await request.post("/api/review/report", {
+      headers: ordinaryHeaders,
+      data: { reviewId: review.id, reason: marker },
+    })).json();
+    expect(reportBody.code).toBe(200);
+
+    const admin = await login(request, "admin", ["admin", "123"].join(""));
+    const adminHeaders = authenticatedHeaders(admin);
+    const statsBody = await (await request.get("/api/admin/stats", { headers: adminHeaders })).json();
+    expect(statsBody.code).toBe(200);
+    expect(Number(statsBody.data.totalUsers)).toBeGreaterThanOrEqual(2);
+    expect(statsBody.data).toHaveProperty("totalOrders");
+    expect(statsBody.data).toHaveProperty("pendingPosts");
+
+    const word = `ci-${randomUUID()}`;
+    const createWordBody = await (await request.post("/api/admin/sensitive-words", {
+      headers: adminHeaders,
+      data: { word: `  ${word}  `, level: 2 },
+    })).json();
+    expect(createWordBody.code).toBe(200);
+    expect(createWordBody.data.word).toBe(word);
+    sensitiveWordId = createWordBody.data.id;
+
+    const duplicateWordBody = await (await request.post("/api/admin/sensitive-words", {
+      headers: adminHeaders,
+      data: { word, level: 2 },
+    })).json();
+    expect(duplicateWordBody.code).not.toBe(200);
+    expect(duplicateWordBody.msg).toContain("已存在");
+
+    const pendingReports = await (await request.get(
+      "/api/admin/review-reports?status=0", { headers: adminHeaders },
+    )).json();
+    const report = pendingReports.data.find((item) => item.reason === marker);
+    expect(report).toBeTruthy();
+    const resolveBody = await (await request.post(`/api/admin/review-reports/${report.id}/resolve`, {
+      headers: adminHeaders,
+      data: { remark: "CI 人工复核完成" },
+    })).json();
+    expect(resolveBody.code).toBe(200);
+
+    const handledReports = await (await request.get(
+      "/api/admin/review-reports?status=1", { headers: adminHeaders },
+    )).json();
+    const handled = handledReports.data.find((item) => item.id === report.id);
+    expect(handled.handleRemark).toBe("CI 人工复核完成");
+
+    const logsBody = await (await request.get("/api/admin/logs?page=1&size=20", {
+      headers: adminHeaders,
+    })).json();
+    expect(logsBody.code).toBe(200);
+    expect(Array.isArray(logsBody.data.records)).toBeTruthy();
+    expect(logsBody.data.size).toBe(20);
+  } finally {
+    if (sensitiveWordId) {
+      const admin = await login(request, "admin", ["admin", "123"].join(""));
+      await request.delete(`/api/admin/sensitive-words/${sensitiveWordId}`, {
+        headers: authenticatedHeaders(admin),
+      });
+    }
+    const activeOrdinary = await login(request, ordinary.username, ordinary.password);
+    await deleteAccount(request, activeOrdinary);
+  }
+});
+
 test("UC14 creates, edits and deletes a post against the real backend", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);

@@ -16,6 +16,6 @@
   "UC15": { "status": "covered", "tests": ["backend/src/test/java/com/travelmate/UseCase15CommunityInteractionTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
   "UC16": { "status": "covered", "tests": ["backend/src/test/java/com/travelmate/UseCase16PassengerWorkflowTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
   "UC17": { "status": "covered", "tests": ["backend/src/test/java/com/travelmate/UseCase17FollowWorkflowTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
-  "UC18": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/SecurityConfigTests.java"] },
-  "UC19": { "status": "partial", "tests": ["backend/src/test/java/com/travelmate/SecurityConfigTests.java"] }
+  "UC18": { "status": "covered", "tests": ["backend/src/test/java/com/travelmate/UseCase18AdminOperationsWorkflowTests.java", "backend/src/test/java/com/travelmate/SecurityConfigTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] },
+  "UC19": { "status": "covered", "tests": ["backend/src/test/java/com/travelmate/UseCase19AdminAuditWorkflowTests.java", "backend/src/test/java/com/travelmate/AdminControllerWorkflowTests.java", "frontend/tests/e2e-real/travelmate-real.spec.js"] }
 }
