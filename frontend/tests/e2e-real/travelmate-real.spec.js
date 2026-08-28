@@ -226,6 +226,185 @@ test("UC02 flight search renders results from the real backend", async ({ page }
   await expect(page.locator(".flight-card").first()).toBeVisible();
 });
 
+test("UC03 creates and cancels a train order against real inventory", async ({ request }) => {
+  const session = await registerAndLogin(request);
+  const headers = authenticatedHeaders(session);
+  let orderNo;
+
+  try {
+    const passengerResponse = await request.post("/api/passenger/add", {
+      headers,
+      data: {
+        name: "CI 火车旅客",
+        idCard: `T${randomUUID().replaceAll("-", "").slice(0, 11).toUpperCase()}`,
+        phone: "13800138000",
+      },
+    });
+    expect((await passengerResponse.json()).code).toBe(200);
+    const passengersBody = await (await request.get("/api/passenger/list", { headers })).json();
+    const passenger = passengersBody.data.find((item) => item.name === "CI 火车旅客");
+    expect(passenger).toBeTruthy();
+
+    const trainsBody = await (await request.get(
+      "/api/train/search?depStation=北京南&arrStation=上海虹桥",
+    )).json();
+    expect(trainsBody.code).toBe(200);
+    const train = trainsBody.data.find((item) => Number(item.secondClassSeats) > 0);
+    expect(train).toBeTruthy();
+
+    const createBody = await (await request.post("/api/order/train/create", {
+      headers,
+      data: {
+        trainId: train.id,
+        passengerId: passenger.id,
+        seatType: "SecondClass",
+        ticketCount: 1,
+        userCouponId: null,
+      },
+    })).json();
+    expect(createBody.code).toBe(200);
+    expect(createBody.data).toMatch(/^TR/);
+    orderNo = createBody.data;
+
+    const receiptBody = await (await request.get(`/api/order/${orderNo}/receipt`, { headers })).json();
+    expect(receiptBody.code).toBe(200);
+    expect(receiptBody.data.ticketNo).toBe(train.trainNo);
+    expect(receiptBody.data.seatType).toBe("SecondClass");
+    expect(Number(receiptBody.data.amount)).toBeCloseTo(Number(train.secondClassPrice), 2);
+
+    const cancelBody = await (await request.post(`/api/order/${orderNo}/cancel`, { headers })).json();
+    expect(cancelBody.code).toBe(200);
+    orderNo = undefined;
+  } finally {
+    if (orderNo) {
+      await request.post(`/api/order/${orderNo}/cancel`, { headers });
+    }
+    await deleteAccount(request, session);
+  }
+});
+
+test("UC05 and UC06 create, pay, refund and cancel hotel orders", async ({ request }) => {
+  const session = await registerAndLogin(request);
+  const headers = authenticatedHeaders(session);
+  const checkInDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const checkOutDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const pendingOrders = new Set();
+
+  try {
+    const hotelsBody = await (await request.get("/api/hotel/search?city=上海")).json();
+    expect(hotelsBody.code).toBe(200);
+    expect(hotelsBody.data.length).toBeGreaterThan(0);
+    const hotel = hotelsBody.data[0];
+    const roomsBody = await (await request.get(`/api/hotel/${hotel.id}/rooms`)).json();
+    expect(roomsBody.code).toBe(200);
+    const room = roomsBody.data.find((item) => Number(item.availableRooms) > 1);
+    expect(room).toBeTruthy();
+
+    const createHotelOrder = async () => {
+      const body = await (await request.post("/api/hotel/order/create", {
+        headers,
+        data: {
+          hotelId: hotel.id,
+          roomId: room.id,
+          roomCount: 1,
+          checkInDate,
+          checkOutDate,
+          guestName: "CI 酒店住客",
+          guestPhone: "13800138000",
+          userCouponId: null,
+        },
+      })).json();
+      expect(body.code).toBe(200);
+      expect(body.data).toMatch(/^HT/);
+      pendingOrders.add(body.data);
+      return body.data;
+    };
+
+    const refundOrderNo = await createHotelOrder();
+    const receiptBody = await (await request.get(
+      `/api/hotel/order/${refundOrderNo}/receipt`, { headers },
+    )).json();
+    expect(receiptBody.data.roomId).toBe(room.id);
+    expect(receiptBody.data.nights).toBe(2);
+    expect(Number(receiptBody.data.amount)).toBeCloseTo(Number(room.price) * 2, 2);
+
+    expect((await (await request.post(
+      `/api/hotel/order/${refundOrderNo}/pay`, { headers },
+    )).json()).code).toBe(200);
+    expect((await (await request.post(
+      `/api/hotel/order/${refundOrderNo}/refund`, { headers },
+    )).json()).code).toBe(200);
+    const refundedBody = await (await request.get(
+      `/api/hotel/order/${refundOrderNo}/receipt`, { headers },
+    )).json();
+    expect(refundedBody.data.status).toBe(5);
+    pendingOrders.delete(refundOrderNo);
+
+    const cancelOrderNo = await createHotelOrder();
+    expect((await (await request.post(
+      `/api/hotel/order/${cancelOrderNo}/cancel`, { headers },
+    )).json()).code).toBe(200);
+    const cancelledBody = await (await request.get(
+      `/api/hotel/order/${cancelOrderNo}/receipt`, { headers },
+    )).json();
+    expect(cancelledBody.data.status).toBe(4);
+    pendingOrders.delete(cancelOrderNo);
+  } finally {
+    for (const orderNo of pendingOrders) {
+      await request.post(`/api/hotel/order/${orderNo}/cancel`, { headers });
+    }
+    await deleteAccount(request, session);
+  }
+});
+
+test("UC07 buys attraction tickets and isolates receipt ownership", async ({ request }) => {
+  const buyer = await registerAndLogin(request);
+  const outsider = await registerAndLogin(request);
+  let activeBuyer;
+
+  try {
+    activeBuyer = await login(request, buyer.username, buyer.password);
+    const buyerHeaders = authenticatedHeaders(activeBuyer);
+    const attractionsBody = await (await request.get("/api/attraction/search?city=北京")).json();
+    expect(attractionsBody.code).toBe(200);
+    const attraction = attractionsBody.data.find((item) => Number(item.availableTickets) >= 2);
+    expect(attraction).toBeTruthy();
+
+    const buyBody = await (await request.post(`/api/attraction/${attraction.id}/ticket`, {
+      headers: buyerHeaders,
+      data: {
+        adultCount: 1,
+        childCount: 1,
+        guestName: "CI 景点游客",
+        guestPhone: "13800138000",
+      },
+    })).json();
+    expect(buyBody.code).toBe(200);
+    expect(buyBody.data).toMatch(/^AT/);
+
+    const receiptBody = await (await request.get(
+      `/api/attraction/order/${buyBody.data}/receipt`, { headers: buyerHeaders },
+    )).json();
+    expect(receiptBody.code).toBe(200);
+    expect(receiptBody.data.ticketCount).toBe(2);
+    const expectedAmount = Number(attraction.adultPrice) + Number(attraction.childPrice || 0);
+    expect(Number(receiptBody.data.amount)).toBeCloseTo(expectedAmount, 2);
+
+    const activeOutsider = await login(request, outsider.username, outsider.password);
+    const outsiderBody = await (await request.get(
+      `/api/attraction/order/${buyBody.data}/receipt`,
+      { headers: authenticatedHeaders(activeOutsider) },
+    )).json();
+    expect(outsiderBody.code).not.toBe(200);
+    expect(outsiderBody.msg).toContain("无权查看");
+  } finally {
+    const activeOutsider = await login(request, outsider.username, outsider.password);
+    await deleteAccount(request, activeOutsider);
+    activeBuyer = await login(request, buyer.username, buyer.password);
+    await deleteAccount(request, activeBuyer);
+  }
+});
+
 test("UC09 submits, lists and reports a review against the real backend", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);
