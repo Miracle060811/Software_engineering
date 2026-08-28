@@ -742,8 +742,37 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout released commit
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Checkout released commit over SSH 443
+        shell: powershell
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sourceDirectory = Join-Path $env:RUNNER_TEMP "travelmate-source-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          [System.IO.Directory]::CreateDirectory($sourceDirectory) | Out-Null
+
+          git -C $sourceDirectory init
+          if ($LASTEXITCODE -ne 0) { throw "Unable to initialize the deployment source directory" }
+
+          git -C $sourceDirectory remote add origin "ssh://git@ssh.github.com:443/Miracle060811/Software_engineering.git"
+          if ($LASTEXITCODE -ne 0) { throw "Unable to configure the deployment repository" }
+
+          git -C $sourceDirectory -c core.sshCommand="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p 443" fetch --depth=1 origin $env:RELEASE_SHA
+          if ($LASTEXITCODE -ne 0) { throw "Unable to fetch released commit $env:RELEASE_SHA over SSH port 443" }
+
+          git -C $sourceDirectory checkout --detach FETCH_HEAD
+          if ($LASTEXITCODE -ne 0) { throw "Unable to check out released commit $env:RELEASE_SHA" }
+
+          $checkedOutSha = (git -C $sourceDirectory rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $checkedOutSha -ne $env:RELEASE_SHA) {
+            throw "Deployment source SHA mismatch: expected $env:RELEASE_SHA, got $checkedOutSha"
+          }
+
+          [System.IO.File]::AppendAllText(
+            $env:GITHUB_ENV,
+            "TRAVELMATE_SOURCE=$sourceDirectory`n",
+            [System.Text.UTF8Encoding]::new($false)
+          )
 
       - name: Verify deployment host
         shell: powershell
@@ -759,7 +788,7 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
-          .\scripts\cd\Deploy-TravelMate.ps1 -KubeContext docker-desktop
+          & (Join-Path $env:TRAVELMATE_SOURCE "scripts\cd\Deploy-TravelMate.ps1") -KubeContext docker-desktop
 
       - name: Verify deployed digests and health
         shell: powershell
