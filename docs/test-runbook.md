@@ -84,8 +84,8 @@ npm run check:traceability
 
 ### 4.1 后端测试
 
-- 总数：121
-- 通过：121
+- 总数：161
+- 通过：161
 - 失败：0
 - 跳过：0
 - 构建：BUILD SUCCESS
@@ -103,15 +103,15 @@ npm run check:traceability
 
 ### 4.4 真实 E2E
 
-- 测试用例：10 个
-- 全部通过（需要 MySQL + Redis + 后端运行）
+- 测试用例：16 个
+- PR CI 中执行（需要 MySQL + Redis + 后端运行）
 
 ### 4.5 追溯门禁
 
-- covered：8 个
-- partial：11 个
+- covered：19 个
+- partial：0 个
 - planned：0 个
-- 证据分：27（门槛 27）
+- 证据分：38（门槛 38）
 - 结构错误：0
 
 ## 5. 失败排查
