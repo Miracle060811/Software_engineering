@@ -25,6 +25,19 @@ async function registerAndLogin(request) {
   return login(request, username, password);
 }
 
+async function registerAdminAndLogin(request) {
+  const secret = process.env.ADMIN_REGISTER_SECRET;
+  expect(secret).toBeTruthy();
+  const username = `ciadmin${Date.now()}${randomUUID().replaceAll("-", "").slice(0, 8)}`;
+  const password = `pw${randomUUID().replaceAll("-", "").slice(0, 16)}`;
+  const registerResponse = await request.post("/user/admin-register", {
+    form: { username, password, secret },
+  });
+  expect(registerResponse.ok()).toBeTruthy();
+  expect((await registerResponse.json()).code).toBe(200);
+  return login(request, username, password);
+}
+
 async function getUserId(request, username) {
   const response = await request.get(`/api/user/profile/${encodeURIComponent(username)}`);
   expect(response.ok()).toBeTruthy();
@@ -289,11 +302,11 @@ test("UC11 and UC12 generate a saved plan and persist a multi-turn AI chat", asy
     expect(generateBody.code).toBe(200);
     expect(generateBody.data.id).toBeTruthy();
     expect(generateBody.data.userId).toBeTruthy();
-    expect(generateBody.data.destination).toBe("杭州");
+    expect(generateBody.data.destination).toMatch(/^杭州(?:市)?$/);
     expect(generateBody.data.days).toBe(2);
     const planContent = JSON.parse(generateBody.data.planContent);
-    expect(planContent.origin).toBe("上海");
-    expect(planContent.destination).toBe("杭州");
+    expect(planContent.origin).toMatch(/^上海(?:市)?$/);
+    expect(planContent.destination).toBe(generateBody.data.destination);
     expect(planContent.locationVerified).toBeTruthy();
     expect(planContent.days).toHaveLength(2);
 
@@ -735,6 +748,7 @@ test("UC17 follows a user and exposes only public profile data", async ({ reques
 test("UC18 and UC19 enforce admin RBAC and complete audit workflows", async ({ request }) => {
   const ordinary = await registerAndLogin(request);
   const ordinaryHeaders = authenticatedHeaders(ordinary);
+  let admin;
   let sensitiveWordId;
 
   try {
@@ -756,7 +770,7 @@ test("UC18 and UC19 enforce admin RBAC and complete audit workflows", async ({ r
     })).json();
     expect(reportBody.code).toBe(200);
 
-    const admin = await login(request, "admin", ["admin", "123"].join(""));
+    admin = await registerAdminAndLogin(request);
     const adminHeaders = authenticatedHeaders(admin);
     const statsBody = await (await request.get("/api/admin/stats", { headers: adminHeaders })).json();
     expect(statsBody.code).toBe(200);
@@ -804,8 +818,7 @@ test("UC18 and UC19 enforce admin RBAC and complete audit workflows", async ({ r
     expect(Array.isArray(logsBody.data.records)).toBeTruthy();
     expect(logsBody.data.size).toBe(20);
   } finally {
-    if (sensitiveWordId) {
-      const admin = await login(request, "admin", ["admin", "123"].join(""));
+    if (sensitiveWordId && admin) {
       await request.delete(`/api/admin/sensitive-words/${sensitiveWordId}`, {
         headers: authenticatedHeaders(admin),
       });

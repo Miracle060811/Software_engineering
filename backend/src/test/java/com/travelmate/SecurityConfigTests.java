@@ -69,6 +69,12 @@ class SecurityConfigTests {
     }
 
     @Test
+    void tourProductsCanBeBrowsedWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/api/tour/list").param("type", "0"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void unauthenticatedAdminRequestIsRejectedBySecurityLayer() throws Exception {
         mockMvc.perform(get("/api/admin/dashboard/data"))
                 .andExpect(status().isForbidden());
