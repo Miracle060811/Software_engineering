@@ -50,7 +50,7 @@ jobs:
 
           files="$(git diff --name-only "$base" "$GITHUB_SHA")"
           printf '%s\n' "$files"
-          if printf '%s\n' "$files" | grep -Eq '^(backend/|frontend/|deploy/|docs/sql/|scripts/|package(-lock)?\.json$|\.github/workflows/)'; then
+          if printf '%s\n' "$files" | grep -Eq '^(backend/|frontend/|microservices/|deploy/|docs/sql/|scripts/|package(-lock)?\.json$|\.github/workflows/)'; then
             echo "code=true" >> "$GITHUB_OUTPUT"
           else
             echo "code=false" >> "$GITHUB_OUTPUT"
@@ -240,6 +240,40 @@ jobs:
           name: backend-package
           path: backend/target/*.jar
           if-no-files-found: error
+          retention-days: 14
+
+  microservices:
+    name: Microservices build and unit tests
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Java 21
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: |
+            microservices/**/pom.xml
+
+      - name: Run microservices tests and package
+        working-directory: microservices
+        run: mvn --batch-mode --no-transfer-progress verify
+
+      - name: Upload microservices test reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservices-test-reports
+          path: |
+            microservices/**/target/surefire-reports/
+          if-no-files-found: warn
           retention-days: 14
 
   frontend:
@@ -443,6 +477,7 @@ jobs:
       - changes
       - validation
       - backend
+      - microservices
       - frontend
       - real-e2e
     runs-on: ubuntu-latest
@@ -455,6 +490,7 @@ jobs:
           echo "validation=${{ needs.validation.result }}"
           echo "changes=${{ needs.changes.result }}"
           echo "backend=${{ needs.backend.result }}"
+          echo "microservices=${{ needs.microservices.result }}"
           echo "frontend=${{ needs.frontend.result }}"
           echo "real-e2e=${{ needs.real-e2e.result }}"
           [[ "${{ needs.changes.result }}" == "success" ]]
@@ -463,9 +499,11 @@ jobs:
           code="${{ needs.changes.outputs.code }}"
           if [[ "$code" == "true" ]]; then
             [[ "${{ needs.backend.result }}" == "success" ]]
+            [[ "${{ needs.microservices.result }}" == "success" ]]
             [[ "${{ needs.frontend.result }}" == "success" ]]
           else
             [[ "${{ needs.backend.result }}" == "skipped" ]]
+            [[ "${{ needs.microservices.result }}" == "skipped" ]]
             [[ "${{ needs.frontend.result }}" == "skipped" ]]
           fi
 
