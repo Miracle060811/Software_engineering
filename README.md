@@ -188,16 +188,27 @@ npx playwright test --reporter=list --workers=1
 # 用例追溯门禁（回到仓库根目录）
 Set-Location ..
 npm run check:traceability
+
+# 数据库迁移与 Kubernetes 部署配置门禁
+npm run check:deployment
+kubectl kustomize deploy/k8s | Out-Null
 ```
 
 正式 CI 位于 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)：
 
-- 所有提交都执行仓库清洁度与 UC01—UC19 追溯校验；
+- 所有提交都执行仓库清洁度、UC01—UC19 追溯、Flyway 迁移规则、Kubernetes 清单和部署脚本校验；
 - 代码、SQL、脚本或工作流变更执行后端 `verify`、前端 lint/审计/构建和 Mock E2E；
+- 后端 CI 从空的 `travelmate` 数据库启动，由 Flyway 自动执行全部迁移，并核对迁移历史表的最新版本；
 - `main`、面向 `main` 的 Pull Request 和手动运行还执行真实后端 E2E；
 - Markdown 等纯文档改动跳过无关构建，但仍经过总质量门禁。
 
 安全流水线位于 [`.github/workflows/security.yml`](.github/workflows/security.yml) 与 [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)，覆盖密钥、依赖漏洞和 Java/JavaScript 静态安全分析。流水线证据记录规则见 [`05_management/pipeline-records/README.md`](05_management/pipeline-records/README.md)。
+
+### 数据库版本迁移
+
+数据库结构与种子数据由 Flyway 管理，迁移文件位于 [`backend/src/main/resources/db/migration`](backend/src/main/resources/db/migration)。新迁移只能新增文件，命名格式为 `V<连续版本号>__<英文说明>.sql`；已经进入共享分支的迁移文件不要修改或删除。应用启动时默认自动迁移，可通过 `.env` 中的 `FLYWAY_ENABLED=false` 临时关闭，仅建议用于故障排查。
+
+`V1__baseline_schema.sql` 用于新数据库初始化；已有旧数据库首次接入时会登记为 V1 基线，再执行后续增量迁移。原有 [`docs/sql/init.sql`](docs/sql/init.sql) 暂时保留给旧版初始化脚本和演示环境兼容使用，后续数据库变更以 Flyway 文件为准。
 
 ## 持续部署
 
