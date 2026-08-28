@@ -81,6 +81,7 @@ public class SecurityConfig {
                                                                 "/api/destinations/**",
                                                                 "/api/hotel/search",
                                                                 "/api/attraction/search",
+                                                                "/api/tour/list",
                                                                 "/api/review/list",
                                                                 "/api/coupon/list",
                                                                 "/api/user/profile/**",

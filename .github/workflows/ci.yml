@@ -166,7 +166,19 @@ jobs:
         working-directory: backend
         run: |
           chmod +x mvnw
-          ./mvnw --batch-mode --no-transfer-progress verify
+          ./mvnw --batch-mode --no-transfer-progress verify -DskipITs
+
+      - name: Run MySQL integration tests
+        working-directory: backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/travelmate?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: travelmate-ci
+          SPRING_DATA_REDIS_HOST: 127.0.0.1
+          SPRING_DATA_REDIS_PORT: "6379"
+        run: |
+          chmod +x mvnw
+          ./mvnw --batch-mode --no-transfer-progress failsafe:integration-test failsafe:verify -Dspring.profiles.active=mysql-test
 
       - name: Verify Flyway initialized the empty database
         shell: bash
@@ -231,6 +243,10 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         run: npm run build
+
+      - name: Run frontend unit tests
+        working-directory: frontend
+        run: npm run test:unit
 
       - name: Cache Playwright Chromium
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -309,6 +325,7 @@ jobs:
       CI: "true"
       SPRING_DATASOURCE_PASSWORD: travelmate-ci
       JWT_SECRET: YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=
+      ADMIN_REGISTER_SECRET: travelmate-ci-admin-register
       DEEPSEEK_API_KEY: ""
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
 

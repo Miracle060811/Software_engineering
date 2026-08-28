@@ -73,7 +73,20 @@ for (const id of expectedIds) {
     errors.push(`${id} 标记为 ${entry.status}，但没有测试证据`);
   }
 
-  const missingTests = (entry.tests || []).filter((testPath) => !fs.existsSync(path.join(root, testPath)));
+  const tests = entry.tests || [];
+  const hasBackendTest = tests.some((t) => /^backend\/src\/test\/.*\.java$/.test(t));
+  const hasE2ETest = tests.some((t) => /^frontend\/tests\/e2e-real\/.*\.(js|ts)$/.test(t));
+
+  if (entry.status === "covered" && policy.coveredRequiresBothLayers !== false) {
+    if (!hasBackendTest) {
+      errors.push(`${id} 标记为 covered，但缺少后端 UNIT/INT 测试证据`);
+    }
+    if (!hasE2ETest) {
+      errors.push(`${id} 标记为 covered，但缺少真实 E2E 测试证据`);
+    }
+  }
+
+  const missingTests = tests.filter((testPath) => !fs.existsSync(path.join(root, testPath)));
   for (const testPath of missingTests) errors.push(`${id} 引用了不存在的测试：${testPath}`);
 
   rows.push({ id, status: entry.status, tests: entry.tests || [], hasList, hasDesign, hasSysDiagram, hasSysSource, hasCompDiagram, hasCompSource, hasDiagram, hasSource });
