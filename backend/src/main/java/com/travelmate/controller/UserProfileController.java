@@ -85,10 +85,10 @@ public class UserProfileController {
 
     @PutMapping("/profile/update")
     public Result<Void> updateProfile(@RequestBody Map<String, Object> body) {
-        User currentUser = userContext.getCurrentUser();
+        Long currentUserId = userContext.getCurrentUserId();
 
         LambdaUpdateWrapper<User> upd = new LambdaUpdateWrapper<>();
-        upd.eq(User::getId, currentUser.getId());
+        upd.eq(User::getId, currentUserId);
 
         if (body.containsKey("nickname")) {
             upd.set(User::getNickname, body.get("nickname"));

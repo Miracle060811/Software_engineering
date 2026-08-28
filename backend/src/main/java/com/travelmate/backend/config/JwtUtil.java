@@ -2,8 +2,10 @@ package com.travelmate.backend.config;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import com.travelmate.common.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -34,8 +36,14 @@ public class JwtUtil {
     }
 
     public String generateToken(String username) {
+        return generateToken(null, username, 0);
+    }
+
+    public String generateToken(Long userId, String username, Integer role) {
         return Jwts.builder()
                 .setSubject(username)
+                .claim("uid", userId)
+                .claim("role", role == null ? 0 : role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(key)
@@ -43,11 +51,24 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    public AuthenticatedUser extractPrincipal(String token) {
+        Claims claims = parseClaims(token);
+        Number userId = claims.get("uid", Number.class);
+        Number role = claims.get("role", Number.class);
+        return new AuthenticatedUser(
+                userId == null ? null : userId.longValue(),
+                claims.getSubject(),
+                role == null ? 0 : role.intValue());
+    }
+
+    private Claims parseClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+                .getBody();
     }
 }

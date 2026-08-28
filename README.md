@@ -1,6 +1,6 @@
 # TravelMate（伴游）出行旅游平台
 
-TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划—资源预订—行中服务—行后分享”提供一体化旅行体验。当前仓库是一套可本地运行、可自动化验证的前后端单体应用，不是接入真实支付、出票或商用库存的生产 OTA。
+TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划—资源预订—行中服务—行后分享”提供一体化旅行体验。当前仓库以可本地运行、可自动化验证的前后端单体作为回归基线，并已开始并行建设四个独立微服务；它不是接入真实支付、出票或商用库存的生产 OTA。
 
 ## 当前能力
 
@@ -14,6 +14,12 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 | 工程质量 | 后端 JUnit/MockMvc、前端 ESLint/构建、Mock 与真实后端 Playwright E2E、JaCoCo、SpotBugs、依赖/密钥扫描及 CodeQL |
 
 系统目前处于“核心主链路可运行，测试覆盖持续补齐”的阶段。UC01—UC19 的证据基线由 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json) 与 [`docs/ci/test-quality-policy.json`](docs/ci/test-quality-policy.json) 管理，不能把“代码已存在”直接视为“场景已被完整自动化覆盖”。
+
+## 微服务迁移状态
+
+第一批 `identity-service`、`traffic-service`、`local-service`、`ai-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。交通服务跨域读取旅客和优惠券时已改用内部 HTTP 接口，不再直接打包对应 Mapper；AI 服务已实现通知事件的幂等消费；单体 `backend` 继续保留，便于迁移期间做功能回归。
+
+本阶段仍属于渐进式迁移：服务暂时选择性复用单体源码，四服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；真实数据切换验收、AI 其余业务、API Gateway 与生产部署编排尚未完成。中期设计基线见 [`document/TravelMate中期验收基线.md`](document/TravelMate中期验收基线.md)。
 
 ## 技术栈
 
@@ -267,6 +273,7 @@ Software_engineering/
 
 - [软件需求规格说明书](document/5组-软件需求规格说明.md)
 - [软件详细设计说明](document/5组-软件详细设计说明.md)
+- [微服务改造中期验收基线](document/TravelMate中期验收基线.md)
 - [业务场景清单与用例说明](document/业务场景清单与用例说明.md)
 - [版本日志](CHANGELOG.md)
 - [用例测试矩阵](docs/ci/use-case-test-matrix.json)

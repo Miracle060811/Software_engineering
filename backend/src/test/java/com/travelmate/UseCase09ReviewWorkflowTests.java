@@ -1,9 +1,8 @@
 package com.travelmate;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
-import com.travelmate.backend.entity.User;
-import com.travelmate.backend.mapper.UserMapper;
 import com.travelmate.common.Result;
+import com.travelmate.common.UserContext;
 import com.travelmate.controller.ReviewReportController;
 import com.travelmate.entity.Review;
 import com.travelmate.entity.ReviewReport;
@@ -65,13 +64,11 @@ class UseCase09ReviewWorkflowTests {
     void intTc109CreatesReportForCurrentUserAndBlocksDuplicate() {
         ReviewReportController controller = new ReviewReportController();
         ReviewReportMapper reportMapper = mock(ReviewReportMapper.class);
-        UserMapper userMapper = mock(UserMapper.class);
-        User user = new User();
-        user.setId(7L);
-        when(userMapper.selectOne(any(Wrapper.class))).thenReturn(user);
+        UserContext userContext = mock(UserContext.class);
+        when(userContext.getCurrentUserIdOrNull()).thenReturn(7L);
         when(reportMapper.selectCount(any(Wrapper.class))).thenReturn(0L, 1L);
         ReflectionTestUtils.setField(controller, "reportMapper", reportMapper);
-        ReflectionTestUtils.setField(controller, "userMapper", userMapper);
+        ReflectionTestUtils.setField(controller, "userContext", userContext);
         SecurityContextHolder.getContext().setAuthentication(
                 new TestingAuthenticationToken("reviewer", null, "ROLE_USER"));
 

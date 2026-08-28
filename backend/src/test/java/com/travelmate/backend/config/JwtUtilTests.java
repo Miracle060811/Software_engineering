@@ -21,7 +21,11 @@ class JwtUtilTests {
         JwtUtil issuer = new JwtUtil(SHARED_SECRET);
         JwtUtil verifier = new JwtUtil(SHARED_SECRET);
 
-        assertEquals("alice", verifier.extractUsername(issuer.generateToken("alice")));
+        String token = issuer.generateToken(42L, "alice", 1);
+
+        assertEquals("alice", verifier.extractUsername(token));
+        assertEquals(42L, verifier.extractPrincipal(token).userId());
+        assertEquals(1, verifier.extractPrincipal(token).role());
     }
 
     @Test

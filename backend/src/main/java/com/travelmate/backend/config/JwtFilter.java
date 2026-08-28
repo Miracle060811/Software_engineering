@@ -13,21 +13,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.travelmate.backend.entity.User;
-import com.travelmate.backend.mapper.UserMapper;
+import com.travelmate.common.AuthenticatedUser;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtil jwtUtil;
-
-    @Autowired
-    private UserMapper userMapper;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -40,15 +34,12 @@ public class JwtFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
             try {
-                String username = jwtUtil.extractUsername(token);
-                List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-                User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
-                if (user != null && Integer.valueOf(1).equals(user.getStatus())
-                        && Integer.valueOf(0).equals(user.getDeleted())) {
-                    if (user.getRole() != null && user.getRole() == 1) {
-                        authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                    }
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null,
+                AuthenticatedUser principal = jwtUtil.extractPrincipal(token);
+                if (principal.userId() != null && principal.username() != null && !principal.username().isBlank()) {
+                    List<SimpleGrantedAuthority> authorities = principal.isAdmin()
+                            ? List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                            : List.of();
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(principal, null,
                             authorities);
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }

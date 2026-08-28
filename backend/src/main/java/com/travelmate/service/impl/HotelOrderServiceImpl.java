@@ -12,7 +12,7 @@ import com.travelmate.mapper.HotelRoomMapper;
 import com.travelmate.service.CouponService;
 import com.travelmate.service.HotelOrderService;
 import com.travelmate.service.HotelRoomStockService;
-import com.travelmate.service.NotificationCenterService;
+import com.travelmate.integration.NotificationGateway;
 import com.travelmate.service.StockPreDeductResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,7 +39,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
     private HotelRoomStockService hotelRoomStockService;
 
     @Autowired
-    private NotificationCenterService notificationCenterService;
+    private NotificationGateway notificationGateway;
 
     @Autowired
     private CouponService couponService;
@@ -112,7 +112,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
                 throw new RuntimeException("订单创建失败，请稍后重试");
             }
 
-            notificationCenterService.createNotification(
+            notificationGateway.publish(
                     userId,
                     "hotel_order",
                     "酒店订单已创建",
@@ -147,7 +147,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
             throw new RuntimeException("订单状态已变化，请刷新后重试");
         }
 
-        notificationCenterService.createNotification(
+        notificationGateway.publish(
                 userId,
                 "hotel_order",
                 "酒店订单支付成功",
@@ -180,7 +180,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
         // 2. 归还房间库存
         hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());
         hotelRoomStockService.syncWithDatabase(order.getRoomId());
-        notificationCenterService.createNotification(
+        notificationGateway.publish(
                 userId,
                 "hotel_order",
                 "酒店订单已取消",
@@ -209,7 +209,7 @@ public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOr
             throw new RuntimeException("订单状态已变化，请刷新后重试");
         }
 
-        notificationCenterService.createNotification(
+        notificationGateway.publish(
                 userId,
                 "hotel_order",
                 "酒店退款申请已提交",

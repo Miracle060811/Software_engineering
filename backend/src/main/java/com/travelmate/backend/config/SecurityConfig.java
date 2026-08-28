@@ -65,8 +65,9 @@ public class SecurityConfig {
                                                 .requestMatchers(
                                                                 "/user/register", "/user/login",
                                                                 "/user/admin-register",
-                                                                "/user/reset-password",
-                                                                "/actuator/health",
+                                                "/user/reset-password",
+                                                "/internal/**",
+                                                "/actuator/health",
                                                                 "/actuator/health/**",
                                                                 "/favicon.ico",
                                                                 "/assets/**",

@@ -533,6 +533,54 @@ CREATE TABLE IF NOT EXISTS `sys_sensitive_word` (
   UNIQUE KEY `uk_word` (`word`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='敏感词表';
 
+-- 微服务事务 Outbox：同一业务事务内记录待投递通知事件
+CREATE TABLE IF NOT EXISTS `tm_traffic_outbox_event` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `event_id` VARCHAR(36) NOT NULL COMMENT '全局事件ID',
+  `aggregate_type` VARCHAR(50) NOT NULL COMMENT '聚合类型',
+  `aggregate_id` VARCHAR(100) NOT NULL COMMENT '聚合ID',
+  `event_type` VARCHAR(100) NOT NULL COMMENT '事件类型',
+  `payload` JSON NOT NULL COMMENT '事件负载',
+  `status` TINYINT NOT NULL DEFAULT '0' COMMENT '0-待投递 1-已投递 2-死信 3-投递中',
+  `retry_count` INT NOT NULL DEFAULT '0',
+  `next_retry_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_error` VARCHAR(500) DEFAULT NULL,
+  `published_time` DATETIME DEFAULT NULL,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_traffic_outbox_event_id` (`event_id`),
+  KEY `idx_traffic_outbox_pending` (`status`, `next_retry_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='交通服务事务Outbox';
+
+CREATE TABLE IF NOT EXISTS `tm_local_outbox_event` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `event_id` VARCHAR(36) NOT NULL COMMENT '全局事件ID',
+  `aggregate_type` VARCHAR(50) NOT NULL COMMENT '聚合类型',
+  `aggregate_id` VARCHAR(100) NOT NULL COMMENT '聚合ID',
+  `event_type` VARCHAR(100) NOT NULL COMMENT '事件类型',
+  `payload` JSON NOT NULL COMMENT '事件负载',
+  `status` TINYINT NOT NULL DEFAULT '0' COMMENT '0-待投递 1-已投递 2-死信 3-投递中',
+  `retry_count` INT NOT NULL DEFAULT '0',
+  `next_retry_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_error` VARCHAR(500) DEFAULT NULL,
+  `published_time` DATETIME DEFAULT NULL,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_local_outbox_event_id` (`event_id`),
+  KEY `idx_local_outbox_pending` (`status`, `next_retry_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='本地生活服务事务Outbox';
+
+CREATE TABLE IF NOT EXISTS `tm_ai_consumed_event` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `event_id` VARCHAR(36) NOT NULL COMMENT '已消费的全局事件ID',
+  `event_type` VARCHAR(100) NOT NULL COMMENT '事件类型',
+  `processed_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_ai_consumed_event_id` (`event_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI消息服务幂等消费记录';
+
 -- =============================================
 -- Mock 数据初始化
 -- =============================================

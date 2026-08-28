@@ -1,0 +1,170 @@
+name: travelmate-microservices
+
+services:
+  identity-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: travelmate_identity
+      MYSQL_USER: travelmate_identity_app
+      MYSQL_PASSWORD: ${IDENTITY_DB_PASSWORD}
+    ports:
+      - "${IDENTITY_MYSQL_PORT:-3307}:3306"
+    volumes:
+      - identity-db-data:/var/lib/mysql
+      - ./sql/identity-schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  traffic-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: travelmate_traffic
+      MYSQL_USER: travelmate_traffic_app
+      MYSQL_PASSWORD: ${TRAFFIC_DB_PASSWORD}
+    ports:
+      - "${TRAFFIC_MYSQL_PORT:-3308}:3306"
+    volumes:
+      - traffic-db-data:/var/lib/mysql
+      - ./sql/traffic-schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  local-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: travelmate_local
+      MYSQL_USER: travelmate_local_app
+      MYSQL_PASSWORD: ${LOCAL_DB_PASSWORD}
+    ports:
+      - "${LOCAL_MYSQL_PORT:-3309}:3306"
+    volumes:
+      - local-db-data:/var/lib/mysql
+      - ./sql/local-schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  ai-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: travelmate_ai
+      MYSQL_USER: travelmate_ai_app
+      MYSQL_PASSWORD: ${AI_DB_PASSWORD}
+    ports:
+      - "${AI_MYSQL_PORT:-3310}:3306"
+    volumes:
+      - ai-db-data:/var/lib/mysql
+      - ./sql/ai-schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+
+  identity-service:
+    build: ./services/identity-service
+    environment:
+      DB_HOST: identity-db
+      DB_NAME: travelmate_identity
+      DB_USERNAME: travelmate_identity_app
+      DB_PASSWORD: ${IDENTITY_DB_PASSWORD}
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+    ports:
+      - "${IDENTITY_PORT:-8081}:8081"
+    depends_on:
+      identity-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  traffic-service:
+    build: ./services/traffic-service
+    environment:
+      DB_HOST: traffic-db
+      DB_NAME: travelmate_traffic
+      DB_USERNAME: travelmate_traffic_app
+      DB_PASSWORD: ${TRAFFIC_DB_PASSWORD}
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      OUTBOX_DISPATCHER_ENABLED: "true"
+      AI_SERVICE_URL: http://ai-service:8084
+      IDENTITY_SERVICE_URL: http://identity-service:8081
+      LOCAL_SERVICE_URL: http://local-service:8083
+    ports:
+      - "${TRAFFIC_PORT:-8082}:8082"
+    depends_on:
+      traffic-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      identity-service:
+        condition: service_started
+      local-service:
+        condition: service_started
+      ai-service:
+        condition: service_started
+
+  local-service:
+    build: ./services/local-service
+    environment:
+      DB_HOST: local-db
+      DB_NAME: travelmate_local
+      DB_USERNAME: travelmate_local_app
+      DB_PASSWORD: ${LOCAL_DB_PASSWORD}
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      OUTBOX_DISPATCHER_ENABLED: "true"
+      AI_SERVICE_URL: http://ai-service:8084
+    ports:
+      - "${LOCAL_PORT:-8083}:8083"
+    depends_on:
+      local-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ai-service:
+        condition: service_started
+
+  ai-service:
+    build: ./services/ai-service
+    environment:
+      DB_HOST: ai-db
+      DB_NAME: travelmate_ai
+      DB_USERNAME: travelmate_ai_app
+      DB_PASSWORD: ${AI_DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+    ports:
+      - "${AI_PORT:-8084}:8084"
+    depends_on:
+      ai-db:
+        condition: service_healthy
+
+volumes:
+  identity-db-data:
+  traffic-db-data:
+  local-db-data:
+  ai-db-data:
+  redis-data:

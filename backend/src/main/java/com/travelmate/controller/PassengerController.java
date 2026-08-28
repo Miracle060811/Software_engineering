@@ -1,14 +1,10 @@
 package com.travelmate.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.travelmate.backend.entity.User;
-import com.travelmate.backend.mapper.UserMapper;
 import com.travelmate.common.Result;
+import com.travelmate.common.UserContext;
 import com.travelmate.entity.Passenger;
 import com.travelmate.service.PassengerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +18,7 @@ public class PassengerController {
     private PassengerService passengerService;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserContext userContext;
 
     @GetMapping("/list")
     public Result<List<Passenger>> getList() {
@@ -53,13 +49,6 @@ public class PassengerController {
     }
 
     private Long getCurrentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated())
-            return null;
-        String username = auth.getName();
-        if ("anonymousUser".equals(username))
-            return null;
-        User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
-        return user != null ? user.getId() : null;
+        return userContext.getCurrentUserIdOrNull();
     }
 }
