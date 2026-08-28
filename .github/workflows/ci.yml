@@ -85,6 +85,27 @@ jobs:
           TRACEABILITY_REPORT: 04_tests/reports/ci/use-case-traceability.md
         run: npm run check:traceability
 
+      - name: Validate database migrations and Kubernetes manifests
+        run: npm run check:deployment
+
+      - name: Render Kubernetes manifests
+        run: kubectl kustomize deploy/k8s > /tmp/travelmate-k8s.yaml
+
+      - name: Validate deployment PowerShell syntax
+        shell: pwsh
+        run: |
+          $hasErrors = $false
+          Get-ChildItem scripts/cd -Filter *.ps1 | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $hasErrors = $true
+              Write-Error "$($_.Name): $($errors.Message -join '; ')"
+            }
+          }
+          if ($hasErrors) { exit 1 }
+
       - name: Upload traceability report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -141,12 +162,6 @@ jobs:
           cache: maven
           cache-dependency-path: backend/pom.xml
 
-      - name: Initialize MySQL schema and test data
-        run: >-
-          docker exec -i ${{ job.services.mysql.id }}
-          mysql --default-character-set=utf8mb4 -uroot -ptravelmate-ci
-          < docs/sql/init.sql
-
       - name: Run backend tests and package
         working-directory: backend
         run: |
@@ -164,6 +179,15 @@ jobs:
         run: |
           chmod +x mvnw
           ./mvnw --batch-mode --no-transfer-progress failsafe:integration-test failsafe:verify -Dspring.profiles.active=mysql-test
+
+      - name: Verify Flyway initialized the empty database
+        shell: bash
+        run: |
+          applied="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate -e "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1;")"
+          latest="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate -e "SELECT MAX(CAST(version AS UNSIGNED)) FROM flyway_schema_history WHERE success = 1;")"
+          echo "Successful Flyway migrations: $applied; latest version: $latest"
+          [[ "$applied" -ge 2 ]]
+          [[ "$latest" == "2" ]]
 
       - name: Upload backend test reports
         if: always()
@@ -327,12 +351,6 @@ jobs:
           name: backend-package
           path: ci-artifacts/backend
 
-      - name: Initialize MySQL schema and test data
-        run: >-
-          docker exec -i ${{ job.services.mysql.id }}
-          mysql --default-character-set=utf8mb4 -uroot -ptravelmate-ci
-          < docs/sql/init.sql
-
       - name: Start tested backend package
         shell: bash
         run: |
@@ -347,6 +365,13 @@ jobs:
           done
           cat backend-ci.log
           exit 1
+
+      - name: Verify packaged backend applied Flyway migrations
+        shell: bash
+        run: |
+          latest="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate -e "SELECT MAX(CAST(version AS UNSIGNED)) FROM flyway_schema_history WHERE success = 1;")"
+          echo "Latest Flyway version after packaged startup: $latest"
+          [[ "$latest" == "2" ]]
 
       - name: Install frontend dependencies
         working-directory: frontend
