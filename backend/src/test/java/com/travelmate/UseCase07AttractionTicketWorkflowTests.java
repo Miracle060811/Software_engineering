@@ -2,6 +2,7 @@ package com.travelmate;
 
 import com.travelmate.entity.Attraction;
 import com.travelmate.entity.AttractionOrder;
+import com.travelmate.integration.local.LocalNotificationGateway;
 import com.travelmate.mapper.AttractionMapper;
 import com.travelmate.mapper.AttractionOrderMapper;
 import com.travelmate.service.NotificationCenterService;
@@ -36,7 +37,7 @@ class UseCase07AttractionTicketWorkflowTests {
         notificationService = mock(NotificationCenterService.class);
         ReflectionTestUtils.setField(service, "baseMapper", attractionMapper);
         ReflectionTestUtils.setField(service, "attractionOrderMapper", orderMapper);
-        ReflectionTestUtils.setField(service, "notificationCenterService", notificationService);
+        ReflectionTestUtils.setField(service, "notificationGateway", new LocalNotificationGateway(notificationService));
     }
 
     @Test

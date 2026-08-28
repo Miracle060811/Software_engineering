@@ -5,6 +5,7 @@ import com.travelmate.dto.HotelOrderCreateDTO;
 import com.travelmate.entity.Hotel;
 import com.travelmate.entity.HotelOrder;
 import com.travelmate.entity.HotelRoom;
+import com.travelmate.integration.local.LocalNotificationGateway;
 import com.travelmate.mapper.HotelMapper;
 import com.travelmate.mapper.HotelOrderMapper;
 import com.travelmate.mapper.HotelRoomMapper;
@@ -54,7 +55,7 @@ class UseCase05And06HotelWorkflowTests {
         ReflectionTestUtils.setField(service, "hotelRoomMapper", roomMapper);
         ReflectionTestUtils.setField(service, "hotelRoomStockService", stockService);
         ReflectionTestUtils.setField(service, "couponService", couponService);
-        ReflectionTestUtils.setField(service, "notificationCenterService", notificationService);
+        ReflectionTestUtils.setField(service, "notificationGateway", new LocalNotificationGateway(notificationService));
     }
 
     @Test

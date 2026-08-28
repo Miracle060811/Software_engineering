@@ -2,10 +2,10 @@ package com.travelmate;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.travelmate.entity.TrafficOrder;
+import com.travelmate.integration.NotificationGateway;
 import com.travelmate.mapper.FlightMapper;
 import com.travelmate.mapper.TrafficOrderMapper;
 import com.travelmate.mapper.TrainMapper;
-import com.travelmate.service.NotificationCenterService;
 import com.travelmate.service.impl.TrafficOrderServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ class UseCase04TrafficOrderWorkflowTests {
     private TrafficOrderMapper orderMapper;
     private FlightMapper flightMapper;
     private TrainMapper trainMapper;
-    private NotificationCenterService notificationCenterService;
+    private NotificationGateway notificationGateway;
 
     @BeforeEach
     void setUp() {
@@ -34,12 +34,12 @@ class UseCase04TrafficOrderWorkflowTests {
         orderMapper = mock(TrafficOrderMapper.class);
         flightMapper = mock(FlightMapper.class);
         trainMapper = mock(TrainMapper.class);
-        notificationCenterService = mock(NotificationCenterService.class);
+        notificationGateway = mock(NotificationGateway.class);
 
         ReflectionTestUtils.setField(service, "baseMapper", orderMapper);
         ReflectionTestUtils.setField(service, "flightMapper", flightMapper);
         ReflectionTestUtils.setField(service, "trainMapper", trainMapper);
-        ReflectionTestUtils.setField(service, "notificationCenterService", notificationCenterService);
+        ReflectionTestUtils.setField(service, "notificationGateway", notificationGateway);
     }
 
     @Test
@@ -51,7 +51,7 @@ class UseCase04TrafficOrderWorkflowTests {
         assertThat(service.payOrder(7L, order.getOrderNo())).isTrue();
 
         verify(orderMapper).markPaid(7L, order.getOrderNo());
-        verify(notificationCenterService).createNotification(
+        verify(notificationGateway).publish(
                 eq(7L), eq("traffic_order"), eq("机票购票成功"),
                 eq("订单 T202608270001 支付成功，系统正在为您出票。"),
                 eq("/my-orders?tab=traffic"));
@@ -77,7 +77,7 @@ class UseCase04TrafficOrderWorkflowTests {
         assertThatThrownBy(() -> service.payOrder(7L, order.getOrderNo()))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("订单状态已变化，请刷新后重试");
-        verify(notificationCenterService, never()).createNotification(any(), any(), any(), any(), any());
+        verify(notificationGateway, never()).publish(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -143,7 +143,7 @@ class UseCase04TrafficOrderWorkflowTests {
         assertThat(service.requestRefund(7L, order.getOrderNo())).isTrue();
 
         verify(orderMapper).markRefundRequested(7L, order.getOrderNo());
-        verify(notificationCenterService).createNotification(
+        verify(notificationGateway).publish(
                 eq(7L), eq("traffic_order"), eq("退票申请已提交"),
                 eq("订单 TR202608270001 已提交退票申请，请等待管理员处理。"),
                 eq("/my-orders?tab=traffic"));
@@ -169,7 +169,7 @@ class UseCase04TrafficOrderWorkflowTests {
         assertThatThrownBy(() -> service.requestRefund(7L, order.getOrderNo()))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("订单状态已变化，请刷新后重试");
-        verify(notificationCenterService, never()).createNotification(any(), any(), any(), any(), any());
+        verify(notificationGateway, never()).publish(any(), any(), any(), any(), any());
     }
 
     private TrafficOrder order(int status, int orderType, String seatType, int ticketCount) {

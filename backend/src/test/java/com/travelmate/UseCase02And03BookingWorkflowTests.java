@@ -8,6 +8,9 @@ import com.travelmate.entity.Passenger;
 import com.travelmate.entity.TrafficOrder;
 import com.travelmate.entity.Train;
 import com.travelmate.entity.TrainWaitlist;
+import com.travelmate.integration.local.LocalCouponGateway;
+import com.travelmate.integration.local.LocalNotificationGateway;
+import com.travelmate.integration.local.LocalPassengerGateway;
 import com.travelmate.mapper.FlightMapper;
 import com.travelmate.mapper.PassengerMapper;
 import com.travelmate.mapper.TrafficOrderMapper;
@@ -53,9 +56,10 @@ class UseCase02And03BookingWorkflowTests {
         ReflectionTestUtils.setField(service, "baseMapper", orderMapper);
         ReflectionTestUtils.setField(service, "flightMapper", flightMapper);
         ReflectionTestUtils.setField(service, "trainMapper", trainMapper);
-        ReflectionTestUtils.setField(service, "passengerMapper", passengerMapper);
-        ReflectionTestUtils.setField(service, "couponService", couponService);
-        ReflectionTestUtils.setField(service, "notificationCenterService", mock(NotificationCenterService.class));
+        ReflectionTestUtils.setField(service, "passengerGateway", new LocalPassengerGateway(passengerMapper));
+        ReflectionTestUtils.setField(service, "couponGateway", new LocalCouponGateway(couponService));
+        ReflectionTestUtils.setField(service, "notificationGateway",
+                new LocalNotificationGateway(mock(NotificationCenterService.class)));
         when(orderMapper.insert(any(TrafficOrder.class))).thenReturn(1);
     }
 
@@ -144,7 +148,8 @@ class UseCase02And03BookingWorkflowTests {
     @Test
     void intTc103CreatesWaitlistWithPassengerAndTrainSnapshot() {
         TrainWaitlistMapper waitlistMapper = mock(TrainWaitlistMapper.class);
-        TrainWaitlistServiceImpl waitlistService = new TrainWaitlistServiceImpl(trainMapper, passengerMapper);
+        TrainWaitlistServiceImpl waitlistService = new TrainWaitlistServiceImpl(trainMapper,
+                new LocalPassengerGateway(passengerMapper));
         ReflectionTestUtils.setField(waitlistService, "baseMapper", waitlistMapper);
         when(passengerMapper.selectById(21L)).thenReturn(passenger(21L, 7L));
         when(trainMapper.selectById(41L)).thenReturn(train(41L));
