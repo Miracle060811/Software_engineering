@@ -264,6 +264,82 @@ test("UC08 exposes day-tour and nearby-tour contracts and rejects invalid type",
   expect(invalidBody.msg).toContain("必须为0或1");
 });
 
+test("UC11 and UC12 generate a saved plan and persist a multi-turn AI chat", async ({ request }) => {
+  const owner = await registerAndLogin(request);
+  const outsider = await registerAndLogin(request);
+  const ownerHeaders = authenticatedHeaders(owner);
+
+  try {
+    const startDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const generateBody = await (await request.post("/api/ai/plan/generate", {
+      headers: ownerHeaders,
+      data: {
+        origin: "上海",
+        destination: "杭州",
+        days: 2,
+        budget: 3000,
+        peopleCount: 2,
+        preferences: "美食,轻松",
+        startDate,
+        travelStyle: "轻松",
+        transportPreference: "公共交通",
+        accommodationPreference: "安静",
+      },
+    })).json();
+    expect(generateBody.code).toBe(200);
+    expect(generateBody.data.id).toBeTruthy();
+    expect(generateBody.data.userId).toBeTruthy();
+    expect(generateBody.data.destination).toBe("杭州");
+    expect(generateBody.data.days).toBe(2);
+    const planContent = JSON.parse(generateBody.data.planContent);
+    expect(planContent.origin).toBe("上海");
+    expect(planContent.destination).toBe("杭州");
+    expect(planContent.locationVerified).toBeTruthy();
+    expect(planContent.days).toHaveLength(2);
+
+    const listBody = await (await request.get("/api/ai/plan/list", { headers: ownerHeaders })).json();
+    expect(listBody.code).toBe(200);
+    expect(listBody.data.some((plan) => plan.id === generateBody.data.id)).toBeTruthy();
+
+    const outsiderSession = await login(request, outsider.username, outsider.password);
+    const forbiddenBody = await (await request.get(`/api/ai/plan/${generateBody.data.id}`, {
+      headers: authenticatedHeaders(outsiderSession),
+    })).json();
+    expect(forbiddenBody.code).not.toBe(200);
+    expect(forbiddenBody.msg).toContain("无权访问");
+
+    const chatSession = `uc12-${randomUUID()}`;
+    const firstReply = await (await request.post("/api/ai/chat", {
+      headers: ownerHeaders,
+      data: { sessionId: chatSession, message: "你好", clientDate: startDate, clientTimeZone: "Asia/Shanghai" },
+    })).json();
+    expect(firstReply.code).toBe(200);
+    expect(firstReply.data.sessionId).toBe(chatSession);
+    expect(firstReply.data.role).toBe("assistant");
+    expect(firstReply.data.content).toContain("目的地");
+
+    const secondReply = await (await request.post("/api/ai/chat", {
+      headers: ownerHeaders,
+      data: { sessionId: chatSession, message: "酒店怎么选", clientDate: startDate, clientTimeZone: "Asia/Shanghai" },
+    })).json();
+    expect(secondReply.code).toBe(200);
+    expect(secondReply.data.sessionId).toBe(chatSession);
+    expect(secondReply.data.content).toContain("酒店");
+
+    const blankBody = await (await request.post("/api/ai/chat", {
+      headers: ownerHeaders,
+      data: { sessionId: chatSession, message: "   " },
+    })).json();
+    expect(blankBody.code).not.toBe(200);
+    expect(blankBody.msg).toContain("消息不能为空");
+  } finally {
+    const activeOutsider = await login(request, outsider.username, outsider.password);
+    await deleteAccount(request, activeOutsider);
+    const activeOwner = await login(request, owner.username, owner.password);
+    await deleteAccount(request, activeOwner);
+  }
+});
+
 test("UC03 creates and cancels a train order against real inventory", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);
