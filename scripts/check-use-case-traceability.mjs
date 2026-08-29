@@ -7,6 +7,7 @@ const listPath = path.join(root, "document", "业务场景清单与用例说明.
 const designPath = path.join(root, "document", "5组-软件详细设计说明.md");
 const requirementsPath = path.join(root, "document", "5组-软件需求规格说明.md");
 const overviewPath = path.join(root, "document", "软件概要设计说明书.md");
+const traceabilityPath = path.join(root, "document", "需求设计代码测试追溯表.md");
 const sysDiagramPath = path.join(root, "document", "需求规格说明");
 const sysSourcePath = path.join(sysDiagramPath, "source");
 const compDiagramPath = path.join(root, "document", "概要设计说明");
@@ -18,7 +19,7 @@ const policyPath = path.join(root, "docs", "ci", "test-quality-policy.json");
 const reportPath = path.resolve(root, process.env.TRACEABILITY_REPORT || "04_tests/reports/ci/use-case-traceability.md");
 const errors = [];
 
-for (const requiredPath of [listPath, requirementsPath, overviewPath, designPath, sysDiagramPath, sysSourcePath, compDiagramPath, compSourcePath, diagramPath, diagramSourcePath, matrixPath, policyPath]) {
+for (const requiredPath of [listPath, requirementsPath, overviewPath, designPath, traceabilityPath, sysDiagramPath, sysSourcePath, compDiagramPath, compSourcePath, diagramPath, diagramSourcePath, matrixPath, policyPath]) {
   if (!fs.existsSync(requiredPath)) errors.push(`缺少文件或目录：${path.relative(root, requiredPath)}`);
 }
 
@@ -31,6 +32,7 @@ const listText = fs.readFileSync(listPath, "utf8");
 const requirementsText = fs.readFileSync(requirementsPath, "utf8");
 const overviewText = fs.readFileSync(overviewPath, "utf8");
 const designText = fs.readFileSync(designPath, "utf8");
+const traceabilityText = fs.readFileSync(traceabilityPath, "utf8");
 const matrix = JSON.parse(fs.readFileSync(matrixPath, "utf8"));
 const policy = JSON.parse(fs.readFileSync(policyPath, "utf8"));
 const diagrams = fs.readdirSync(diagramPath);
@@ -41,6 +43,19 @@ const compDiagrams = fs.readdirSync(compDiagramPath);
 const compSources = fs.readdirSync(compSourcePath);
 const allowedStatuses = new Set(["covered", "partial", "planned"]);
 const rows = [];
+const sourceCache = new Map();
+
+function expectedTestCaseIds(id) {
+  const numericId = 100 + Number(id.slice(2));
+  return [`UNIT-TC-${numericId}`, `INT-TC-${numericId}`, `E2E-TC-${numericId}`];
+}
+
+function readSource(relativePath) {
+  if (!sourceCache.has(relativePath)) {
+    sourceCache.set(relativePath, fs.readFileSync(path.join(root, relativePath), "utf8"));
+  }
+  return sourceCache.get(relativePath);
+}
 
 for (const id of expectedIds) {
   const entry = matrix[id];
@@ -63,6 +78,20 @@ for (const id of expectedIds) {
   if (!hasCompSource) errors.push(`COMP-${id} 缺少组件级 Mermaid 源文件`);
   if (!hasDiagram) errors.push(`${id} 缺少对象级顺序图 PNG`);
   if (!hasSource) errors.push(`${id} 缺少对象级顺序图 Mermaid 源文件`);
+  const requirementId = `REQ-${id.slice(2)}`;
+  const traceabilityRow = traceabilityText.split(/\r?\n/).find((line) => line.startsWith(`| ${requirementId} |`));
+  if (!traceabilityRow) {
+    errors.push(`${id} 缺少统一追溯表主表行`);
+  } else {
+    const cells = traceabilityRow.split("|").slice(1, -1).map((cell) => cell.trim());
+    const actualResult = cells.at(-1) || "";
+    if (actualResult === "通过" || actualResult.length < 20) {
+      errors.push(`${id} 的主表测试结果过于笼统，必须记录实际验证内容与证据位置`);
+    }
+    if (!actualResult.includes("§3.2") && !actualResult.includes("矩阵锚点")) {
+      errors.push(`${id} 的主表测试结果缺少 §3.2 或矩阵锚点引用`);
+    }
+  }
   if (!entry) {
     errors.push(`${id} 缺少测试追溯矩阵条目`);
     continue;
@@ -89,7 +118,49 @@ for (const id of expectedIds) {
   const missingTests = tests.filter((testPath) => !fs.existsSync(path.join(root, testPath)));
   for (const testPath of missingTests) errors.push(`${id} 引用了不存在的测试：${testPath}`);
 
-  rows.push({ id, status: entry.status, tests: entry.tests || [], hasList, hasDesign, hasSysDiagram, hasSysSource, hasCompDiagram, hasCompSource, hasDiagram, hasSource });
+  const expectedCaseIds = expectedTestCaseIds(id);
+  const expectedAnchors = {
+    unit: `unitTc${expectedCaseIds[0].slice(-3)}*`,
+    integration: `intTc${expectedCaseIds[1].slice(-3)}*`,
+    e2e: `[${expectedCaseIds[2]}]`,
+  };
+  const testCaseAnchors = [];
+  if (!Array.isArray(entry.testIds) || entry.testIds.length !== expectedCaseIds.length || expectedCaseIds.some((testCaseId) => !entry.testIds.includes(testCaseId))) {
+    errors.push(`${id} 的 testIds 必须且只能包含：${expectedCaseIds.join("、")}`);
+  }
+  if (!entry.anchors || typeof entry.anchors !== "object" || Array.isArray(entry.anchors)) {
+    errors.push(`${id} 缺少 UNIT/INT/E2E 编号到代码符号的 anchors 映射`);
+  } else {
+    for (const [layer, expectedAnchor] of Object.entries(expectedAnchors)) {
+      if (entry.anchors[layer] !== expectedAnchor) {
+        errors.push(`${id} 的 ${layer} 锚点应为 ${expectedAnchor}，实际为 ${entry.anchors[layer] || "缺失"}`);
+        continue;
+      }
+
+      const testCaseId = expectedCaseIds[layer === "unit" ? 0 : layer === "integration" ? 1 : 2];
+      const sourceAnchor = expectedAnchor.endsWith("*") ? expectedAnchor.slice(0, -1) : expectedAnchor;
+      const candidatePaths = tests.filter((testPath) => layer === "e2e"
+        ? /^frontend\/tests\/e2e-real\/.*\.(js|ts)$/.test(testPath)
+        : /^backend\/src\/test\/.*\.java$/.test(testPath));
+      const matches = [];
+      for (const testPath of candidatePaths) {
+        if (!fs.existsSync(path.join(root, testPath))) continue;
+        const sourceLines = readSource(testPath).split(/\r?\n/);
+        for (const [index, line] of sourceLines.entries()) {
+          if (line.toLowerCase().includes(sourceAnchor.toLowerCase())) {
+            matches.push(`${testCaseId}: ${testPath}:${index + 1} (${line.trim()})`);
+          }
+        }
+      }
+      if (matches.length === 0) {
+        errors.push(`${id} 的 ${testCaseId} 在已登记测试文件中找不到锚点：${expectedAnchor}`);
+      } else {
+        testCaseAnchors.push(...matches);
+      }
+    }
+  }
+
+  rows.push({ id, status: entry.status, tests: entry.tests || [], testCaseAnchors, hasList, hasDesign, hasSysDiagram, hasSysSource, hasCompDiagram, hasCompSource, hasDiagram, hasSource });
 }
 
 for (const id of Object.keys(matrix)) {
@@ -126,6 +197,12 @@ const report = [
   "| 用例 | 测试状态 | 证据数 | SYS PNG/源 | COMP PNG/源 | OBJ PNG/源 | 清单/详细设计 |",
   "| --- | --- | ---: | --- | --- | --- | --- |",
   ...rows.map((row) => `| ${row.id} | ${row.status} | ${row.tests.length} | ${row.hasSysDiagram && row.hasSysSource ? "是" : "否"} | ${row.hasCompDiagram && row.hasCompSource ? "是" : "否"} | ${row.hasDiagram && row.hasSource ? "是" : "否"} | ${row.hasList && row.hasDesign ? "是" : "否"} |`),
+  "",
+  "## 测试编号锚点",
+  "",
+  "| 用例 | UNIT / INT / E2E 代码锚点 |",
+  "| --- | --- |",
+  ...rows.map((row) => `| ${row.id} | ${row.testCaseAnchors.join("<br>")} |`),
   "",
   "## 当前缺口",
   "",
