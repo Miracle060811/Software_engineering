@@ -85,6 +85,9 @@ jobs:
           TRACEABILITY_REPORT: 04_tests/reports/ci/use-case-traceability.md
         run: npm run check:traceability
 
+      - name: Validate microservice UC01-UC19 E2E structure
+        run: npm run check:microservice-e2e
+
       - name: Validate database migrations and Kubernetes manifests
         run: npm run check:deployment
 

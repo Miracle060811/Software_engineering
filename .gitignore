@@ -24,6 +24,8 @@ blob-report/
 /04_tests/stress/results/*.json
 /frontend/playwright-report-real/
 /frontend/test-results-real/
+/frontend/playwright-report-microservices/
+/frontend/test-results-microservices/
 
 # 本地上传文件
 uploads/
