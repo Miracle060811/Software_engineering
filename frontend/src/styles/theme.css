@@ -196,15 +196,15 @@ h3 {
   transform: none;
 }
 
-.el-button--primary {
+.el-button--primary:not(.is-link) {
   border-color: var(--tm-primary);
   color: var(--tm-paper-2);
   background: var(--tm-primary);
   box-shadow: 0 8px 22px rgba(7, 89, 78, 0.16);
 }
 
-.el-button--primary:hover,
-.el-button--primary:focus {
+.el-button--primary:not(.is-link):hover,
+.el-button--primary:not(.is-link):focus {
   border-color: var(--tm-primary-hover);
   background: var(--tm-primary-hover);
   box-shadow: 0 10px 25px rgba(7, 89, 78, 0.2);
