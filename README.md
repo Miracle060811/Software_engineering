@@ -327,6 +327,18 @@ package-lock.json
 .\scripts\cd\Initialize-TravelMateKubernetes.ps1
 ```
 
+若部署机通过本机 HTTP 代理访问 GitHub，建议在 `C:\actions-runner\start-runner.ps1` 中统一设置代理后再启动 Runner，避免每次手动输入环境变量：
+
+```powershell
+$env:HTTP_PROXY = "http://127.0.0.1:7897"
+$env:HTTPS_PROXY = "http://127.0.0.1:7897"
+$env:NO_PROXY = "localhost,127.0.0.1"
+
+& "$PSScriptRoot\run.cmd"
+```
+
+此时使用 `C:\actions-runner\start-runner.ps1` 启动；代理程序必须先运行，端口不同则按实际代理地址调整。这样 GitHub Actions Runner 下载 `codeload.github.com` 依赖和 workflow 中的 HTTPS Git 拉取都会使用代理。部署源码拉取已使用 HTTPS，并配置为 HTTP/1.1、低速中断、最多 3 次重试和 5 分钟步骤上限，以避免 SSH 443 传输停滞时长期占用部署任务。不要将该 Runner 改为 Windows 服务：Docker Desktop、`docker-desktop` Kubernetes context 和本机代理通常依赖当前用户会话。
+
 GHCR Token 建议使用仅含 `read:packages`、设置了到期时间的 classic PAT。不要把 Token 放入命令参数、仓库文件、聊天记录或截图；Token 到期后重新运行凭据配置脚本。
 
 #### 本地检查 Docker 与 Kubernetes 改动
