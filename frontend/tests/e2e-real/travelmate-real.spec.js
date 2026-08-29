@@ -59,7 +59,7 @@ async function deleteAccount(request, session) {
   expect((await response.json()).code).toBe(200);
 }
 
-test("UC01 registers and logs in against the real backend", async ({ page, request }) => {
+test("[E2E-TC-101] UC01 registers and logs in against the real backend", async ({ page, request }) => {
   let session = await registerAndLogin(request);
 
   try {
@@ -123,7 +123,7 @@ test("representative use-case APIs return real database-backed contracts", async
   }
 });
 
-test("UC04 and UC10 create, pay/refund and cancel flight orders with a real coupon", async ({ request }) => {
+test("[E2E-TC-104][E2E-TC-110] UC04 and UC10 create, pay/refund and cancel flight orders with a real coupon", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);
   let pendingOrderNo;
@@ -251,7 +251,7 @@ test("UC04 and UC10 create, pay/refund and cancel flight orders with a real coup
   }
 });
 
-test("UC02 flight search renders results from the real backend", async ({ page }) => {
+test("[E2E-TC-102] UC02 flight search renders results from the real backend", async ({ page }) => {
   await page.goto("/flight-search");
   await page.getByPlaceholder("如：北京").fill("北京");
   await page.getByPlaceholder("如：上海").fill("上海");
@@ -259,7 +259,7 @@ test("UC02 flight search renders results from the real backend", async ({ page }
   await expect(page.locator(".flight-card").first()).toBeVisible();
 });
 
-test("UC08 exposes day-tour and nearby-tour contracts and rejects invalid type", async ({ request }) => {
+test("[E2E-TC-108] UC08 exposes day-tour and nearby-tour contracts and rejects invalid type", async ({ request }) => {
   for (const type of [0, 1]) {
     const body = await (await request.get(`/api/tour/list?type=${type}`)).json();
     expect(body.code).toBe(200);
@@ -277,7 +277,7 @@ test("UC08 exposes day-tour and nearby-tour contracts and rejects invalid type",
   expect(invalidBody.msg).toContain("必须为0或1");
 });
 
-test("UC11 and UC12 generate a saved plan and persist a multi-turn AI chat", async ({ request }) => {
+test("[E2E-TC-111][E2E-TC-112] UC11 and UC12 generate a saved plan and persist a multi-turn AI chat", async ({ request }) => {
   const owner = await registerAndLogin(request);
   const outsider = await registerAndLogin(request);
   const ownerHeaders = authenticatedHeaders(owner);
@@ -353,7 +353,7 @@ test("UC11 and UC12 generate a saved plan and persist a multi-turn AI chat", asy
   }
 });
 
-test("UC03 creates and cancels a train order against real inventory", async ({ request }) => {
+test("[E2E-TC-103] UC03 creates and cancels a train order against real inventory", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);
   let orderNo;
@@ -410,7 +410,7 @@ test("UC03 creates and cancels a train order against real inventory", async ({ r
   }
 });
 
-test("UC05 and UC06 create, pay, refund and cancel hotel orders", async ({ request }) => {
+test("[E2E-TC-105][E2E-TC-106] UC05 and UC06 create, pay, refund and cancel hotel orders", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);
   const checkInDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -484,7 +484,7 @@ test("UC05 and UC06 create, pay, refund and cancel hotel orders", async ({ reque
   }
 });
 
-test("UC07 buys attraction tickets and isolates receipt ownership", async ({ request }) => {
+test("[E2E-TC-107] UC07 buys attraction tickets and isolates receipt ownership", async ({ request }) => {
   const buyer = await registerAndLogin(request);
   const outsider = await registerAndLogin(request);
   let activeBuyer;
@@ -532,7 +532,7 @@ test("UC07 buys attraction tickets and isolates receipt ownership", async ({ req
   }
 });
 
-test("UC09 submits, lists and reports a review against the real backend", async ({ request }) => {
+test("[E2E-TC-109] UC09 submits, lists and reports a review against the real backend", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);
   const marker = `UC09-${randomUUID()}`;
@@ -570,7 +570,7 @@ test("UC09 submits, lists and reports a review against the real backend", async 
   }
 });
 
-test("UC13 sends and reads a private message against the real backend", async ({ request }) => {
+test("[E2E-TC-113] UC13 sends and reads a private message against the real backend", async ({ request }) => {
   const sender = await registerAndLogin(request);
   const receiver = await registerAndLogin(request);
   const senderId = await getUserId(request, sender.username);
@@ -613,7 +613,7 @@ test("UC13 sends and reads a private message against the real backend", async ({
   }
 });
 
-test("UC15 likes, collects and comments on a post against the real backend", async ({ request }) => {
+test("[E2E-TC-115] UC15 likes, collects and comments on a post against the real backend", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);
   let postId;
@@ -669,7 +669,7 @@ test("UC15 likes, collects and comments on a post against the real backend", asy
   }
 });
 
-test("UC16 adds, validates and deletes a passenger against the real backend", async ({ request }) => {
+test("[E2E-TC-116] UC16 adds, validates and deletes a passenger against the real backend", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);
   const idCard = `P${randomUUID().replaceAll("-", "").slice(0, 11).toUpperCase()}`;
@@ -702,7 +702,7 @@ test("UC16 adds, validates and deletes a passenger against the real backend", as
   }
 });
 
-test("UC17 follows a user and exposes only public profile data", async ({ request }) => {
+test("[E2E-TC-117] UC17 follows a user and exposes only public profile data", async ({ request }) => {
   const follower = await registerAndLogin(request);
   const followee = await registerAndLogin(request);
   const followerId = await getUserId(request, follower.username);
@@ -745,7 +745,7 @@ test("UC17 follows a user and exposes only public profile data", async ({ reques
   }
 });
 
-test("UC18 and UC19 enforce admin RBAC and complete audit workflows", async ({ request }) => {
+test("[E2E-TC-118][E2E-TC-119] UC18 and UC19 enforce admin RBAC and complete audit workflows", async ({ request }) => {
   const ordinary = await registerAndLogin(request);
   const ordinaryHeaders = authenticatedHeaders(ordinary);
   let admin;
@@ -828,7 +828,7 @@ test("UC18 and UC19 enforce admin RBAC and complete audit workflows", async ({ r
   }
 });
 
-test("UC14 creates, edits and deletes a post against the real backend", async ({ request }) => {
+test("[E2E-TC-114] UC14 creates, edits and deletes a post against the real backend", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);
   let postId;
