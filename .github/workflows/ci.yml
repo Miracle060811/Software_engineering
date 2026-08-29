@@ -742,7 +742,8 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout released commit over SSH 443
+      - name: Checkout released commit over HTTPS
+        timeout-minutes: 5
         shell: powershell
         env:
           RELEASE_SHA: ${{ github.sha }}
@@ -754,11 +755,27 @@ jobs:
           git -C $sourceDirectory init
           if ($LASTEXITCODE -ne 0) { throw "Unable to initialize the deployment source directory" }
 
-          git -C $sourceDirectory remote add origin "ssh://git@ssh.github.com:443/Miracle060811/Software_engineering.git"
+          git -C $sourceDirectory remote add origin "https://github.com/Miracle060811/Software_engineering.git"
           if ($LASTEXITCODE -ne 0) { throw "Unable to configure the deployment repository" }
 
-          git -C $sourceDirectory -c core.sshCommand="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p 443" fetch --depth=1 origin $env:RELEASE_SHA
-          if ($LASTEXITCODE -ne 0) { throw "Unable to fetch released commit $env:RELEASE_SHA over SSH port 443" }
+          $fetched = $false
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            Write-Output "Fetching released commit over HTTPS: attempt $attempt/3"
+            git -C $sourceDirectory `
+              -c http.version=HTTP/1.1 `
+              -c http.lowSpeedLimit=1024 `
+              -c http.lowSpeedTime=30 `
+              fetch --depth=1 origin $env:RELEASE_SHA
+            if ($LASTEXITCODE -eq 0) {
+              $fetched = $true
+              break
+            }
+
+            if ($attempt -lt 3) {
+              Start-Sleep -Seconds 10
+            }
+          }
+          if (-not $fetched) { throw "Unable to fetch released commit $env:RELEASE_SHA over HTTPS after 3 attempts" }
 
           git -C $sourceDirectory checkout --detach FETCH_HEAD
           if ($LASTEXITCODE -ne 0) { throw "Unable to check out released commit $env:RELEASE_SHA" }

@@ -230,6 +230,233 @@ kubectl kustomize deploy/k8s | Out-Null
 
 GHCR 包可保持私有：凭据脚本通过安全提示读取仅含 `read:packages` 的 classic PAT，验证镜像后配置 Docker 与 Kubernetes 拉取凭据，不把 Token 写入命令行、仓库或日志。初始化脚本会在本机生成并复用应用 Secret；自托管 Runner 必须以能够访问 Docker Desktop、Docker credential store 和 `docker-desktop` Kubernetes context 的当前用户运行。应用入口为 <http://localhost:30080>，部署日志位于 `%USERPROFILE%\TravelMateCD\deploy.log`。`Install-TravelMateDeploymentTask.ps1` 仅保留为 GitHub Runner 不在线时的可选本机轮询方案，不属于正式流水线。
 
+### 初学者 CI/CD、Docker 与 Kubernetes 维护指南
+
+#### 基本概念与发布流程
+
+- **CI（持续集成）**：提交代码后自动构建并运行测试，阻止未通过质量门禁的代码进入部署阶段。
+- **Docker**：把前端、后端及其运行环境制作成可重复部署的镜像。
+- **Kubernetes**：根据镜像创建和管理 Pod、Deployment、Service、PVC 等运行资源。
+- **CD（持续部署）**：CI 通过后自动发布镜像、更新 Kubernetes，并执行部署后健康检查。
+
+本项目的标准发布路径是：
+
+```text
+创建开发分支
+  → 修改代码并完成本地测试
+  → 推送分支并创建 Pull Request
+  → PR 执行 CI、依赖检查和安全扫描
+  → 检查全部通过后合并到 main
+  → 构建前后端 Docker 镜像
+  → Trivy 扫描并推送 GHCR
+  → self-hosted Runner 部署 Docker Desktop Kubernetes
+  → 校验镜像 digest、Pod 状态和前后端健康接口
+```
+
+#### 日常开发与发布步骤
+
+不要直接在 `main` 上开发。开始工作前先同步主分支并创建功能分支：
+
+```powershell
+git switch main
+git pull
+git switch -c feature/功能名称
+```
+
+修改完成后先检查改动，并按涉及的模块执行本地测试：
+
+```powershell
+git status
+git diff
+
+# 仓库级常用回归
+.\scripts\run-tests.ps1
+
+# Kubernetes 清单和部署配置检查
+npm run check:deployment
+kubectl kustomize deploy/k8s | Out-Null
+```
+
+确认无误后只暂存本次相关文件，再提交和推送：
+
+```powershell
+git add <本次修改的文件或目录>
+git diff --cached
+git commit -m "feat: 简要说明修改内容"
+git push -u origin feature/功能名称
+```
+
+随后在 GitHub 创建 Pull Request。PR 检查全部通过后再合并到 `main`，不要为了部署而跳过失败的测试或安全门禁。
+
+#### 什么情况下会自动部署
+
+所有 push 都会触发 [TravelMate CI/CD](.github/workflows/ci.yml)，但只有合并到 `main` 且包含代码或部署相关改动时，才会制作镜像并部署。以下路径会被视为需要完整构建和测试：
+
+```text
+backend/
+frontend/
+microservices/
+deploy/
+docs/sql/
+scripts/
+.github/workflows/
+package.json
+package-lock.json
+```
+
+纯 Markdown 等文档改动会跳过镜像构建和 Kubernetes 部署，这是正常行为。需要验证完整流水线时，可以在 GitHub Actions 页面手动运行 `TravelMate CI/CD`；`workflow_dispatch` 会按代码改动处理并执行完整质量检查。
+
+#### 部署电脑需要保持的状态
+
+合并代码前确认部署电脑满足以下条件：
+
+1. Docker Desktop 已启动并启用 Kubernetes；
+2. `kubectl config current-context` 返回 `docker-desktop`；
+3. GitHub Actions Runner 显示 Online，并具有 `self-hosted`、`Windows`、`X64`、`travelmate-deploy` 标签；
+4. Runner 账号能够访问 Docker Desktop、Docker credential store 和 `%USERPROFILE%\.kube\config`；
+5. GHCR 的只读拉取凭据尚未过期。
+
+首次使用按以下顺序配置：
+
+```powershell
+# 在 C:\actions-runner 中交互启动 Runner，窗口关闭后 Runner 会离线
+.\run.cmd
+
+# 在项目根目录配置 GHCR 和初始化 Kubernetes
+.\scripts\cd\Configure-TravelMateGhcrCredential.ps1 -GitHubUsername <GitHub用户名>
+.\scripts\cd\Initialize-TravelMateKubernetes.ps1
+```
+
+GHCR Token 建议使用仅含 `read:packages`、设置了到期时间的 classic PAT。不要把 Token 放入命令参数、仓库文件、聊天记录或截图；Token 到期后重新运行凭据配置脚本。
+
+#### 本地检查 Docker 与 Kubernetes 改动
+
+修改 Dockerfile 后，可先在本地验证镜像是否能够构建：
+
+```powershell
+docker build -t travelmate-backend:local backend
+docker build -t travelmate-frontend:local frontend
+```
+
+修改 `deploy/k8s` 后，应先渲染并检查清单：
+
+```powershell
+npm run check:deployment
+kubectl kustomize deploy/k8s | Out-Null
+```
+
+不要长期使用 `kubectl edit` 直接修改集群中的 Deployment。正式配置必须写回 `deploy/k8s/`，否则下一次自动部署会覆盖手工修改。
+
+正常情况下不需要手动部署。确需重新部署已经通过审批的 GHCR `deploy` 镜像时，可执行：
+
+```powershell
+.\scripts\cd\Deploy-TravelMate.ps1
+```
+
+该脚本会核对前后端镜像 commit，按不可变 digest 更新 Deployment，并在 rollout 或健康检查失败时尝试恢复更新前镜像。
+
+#### 部署后验证
+
+```powershell
+kubectl --context docker-desktop -n travelmate get deployments
+kubectl --context docker-desktop -n travelmate get pods
+
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:30080/healthz |
+  Select-Object StatusCode, Content
+
+kubectl --context docker-desktop get --raw `
+  "/api/v1/namespaces/travelmate/services/http:travelmate-backend:8080/proxy/actuator/health/readiness"
+```
+
+正常结果应满足：前后端 Deployment 达到期望副本数、Pod 为 `Running`、前端返回 `200 / ok`、后端返回 `{"status":"UP"}`。
+
+#### 常见故障排查
+
+| 现象 | 常见原因 | 处理方式 |
+| --- | --- | --- |
+| Deploy job 一直排队 | self-hosted Runner 离线或标签不匹配 | 启动 Runner，并在 GitHub 检查 `travelmate-deploy` 标签 |
+| `ImagePullBackOff` | GHCR Token 过期、被撤销或无包读取权限 | 重新运行 `Configure-TravelMateGhcrCredential.ps1` |
+| `CrashLoopBackOff` | 应用配置、数据库连接或启动过程失败 | 使用 `kubectl logs` 和 `kubectl describe pod` 查看原因 |
+| Deployment 长时间未 Ready | readiness probe、镜像、数据库或资源不足 | 查看 rollout、Pod events 和容器日志 |
+| Docker 镜像构建失败 | Dockerfile、依赖或构建上下文错误 | 先使用本地 `docker build` 复现 |
+| Trivy 阶段失败 | 基础镜像或应用依赖存在高危漏洞 | 升级基础镜像或依赖后重新提交 |
+| 文档提交没有执行部署 | 路径检测判定为纯文档变更 | 正常，无需处理 |
+
+常用诊断命令：
+
+```powershell
+kubectl -n travelmate get pods
+kubectl -n travelmate get events --sort-by=.lastTimestamp
+kubectl -n travelmate describe pod <Pod名称>
+kubectl -n travelmate logs deployment/travelmate-backend --tail=200
+kubectl -n travelmate logs deployment/travelmate-frontend --tail=200
+kubectl -n travelmate rollout status deployment/travelmate-backend
+kubectl -n travelmate rollout status deployment/travelmate-frontend
+```
+
+处理故障时不要删除 PVC、Secret 或整个 `travelmate` namespace，除非已经确认数据可以丢失并明确执行重建。更完整的首次配置、回滚和部署脚本说明见 [`scripts/cd/README.md`](scripts/cd/README.md)。
+
+### Kubernetes 运行配置与敏感信息更新
+
+> 本节只适用于 Docker Desktop Kubernetes 的 `travelmate` 命名空间。仓库根目录 `.env` 仅供 `start.ps1` 等本地开发脚本使用，**不会被已部署的 Kubernetes Pod 读取**。
+
+运行配置分为两类：
+
+| 配置位置 | 内容 | 修改方式 |
+| --- | --- | --- |
+| [`deploy/k8s/configmap.yaml`](deploy/k8s/configmap.yaml) → `travelmate-config` | 非敏感参数，如数据库地址、Redis 地址、上传目录和 CORS 来源 | 修改 YAML 后执行 `kubectl apply -k deploy/k8s`，再重启后端 |
+| Kubernetes Secret `travelmate-secrets` | `mysql-root-password`、`mysql-password`、`jwt-secret`、`admin-register-secret`、`deepseek-api-key` | 使用 `kubectl patch` 更新指定键，避免把值写入仓库 |
+
+`travelmate-config` 会整体注入后端容器环境变量；Secret 中的 `mysql-password` 被注入后端的 `SPRING_DATASOURCE_PASSWORD`，其余密钥分别注入 `JWT_SECRET`、`ADMIN_REGISTER_SECRET` 与 `DEEPSEEK_API_KEY`。可安全检查 Secret 是否存在（命令不会打印真实值）：
+
+```powershell
+kubectl describe secret travelmate-secrets -n travelmate
+```
+
+#### 修改 DeepSeek API Key（PowerShell）
+
+以下流程通过交互方式输入密钥，并使用自动删除的临时 JSON 文件传给 `kubectl`，避免 PowerShell 破坏 JSON 格式，也避免密钥出现在命令历史中。不要把真实密钥写入 `.env.example`、部署 YAML、Git 提交、聊天记录或截图。
+
+```powershell
+# 1. 交互输入新 Key；输入内容不会显示在终端。
+$secretInput = Read-Host '输入新的 DeepSeek API Key' -AsSecureString
+$bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secretInput)
+$tempPatch = Join-Path $env:TEMP ("travelmate-deepseek-" + [guid]::NewGuid().ToString() + ".json")
+
+try {
+  $plain = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+  @{ stringData = @{ 'deepseek-api-key' = $plain } } |
+    ConvertTo-Json -Compress |
+    Set-Content -LiteralPath $tempPatch -Encoding utf8 -NoNewline
+
+  kubectl patch secret travelmate-secrets -n travelmate `
+    --type=merge `
+    --patch-file=$tempPatch
+
+  if ($LASTEXITCODE -ne 0) {
+    throw "Secret 更新失败；请勿重启后端。"
+  }
+}
+finally {
+  if ($bstr -ne [IntPtr]::Zero) {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+  }
+  Remove-Item -LiteralPath $tempPatch -Force -ErrorAction SilentlyContinue
+  Remove-Variable plain,secretInput,bstr,tempPatch -ErrorAction SilentlyContinue
+}
+
+# 2. Pod 仅在启动时读取环境变量，更新 Secret 后必须滚动重启后端。
+kubectl rollout restart deployment/travelmate-backend -n travelmate
+kubectl rollout status deployment/travelmate-backend -n travelmate
+kubectl get pods -n travelmate
+```
+
+出现 `secret/travelmate-secrets patched`，并且 rollout 显示 `successfully rolled out` 后，新 Key 才已生效；两个 `travelmate-backend` Pod 应均为 `1/1 Running`。中间的 “new replicas have been updated” 和 “old replicas are pending termination” 是正常的滚动更新过程。
+
+修改管理员注册密钥或 JWT 密钥时复用同一流程，只把脚本中的 `deepseek-api-key` 分别改为 `admin-register-secret` 或 `jwt-secret`。修改 `jwt-secret` 会让所有现有登录 Token 失效，用户需要重新登录。
+
+> **数据库密码例外：** 不要仅更新 `mysql-password` 或 `mysql-root-password`。MySQL 数据卷中已保存 `travelmate` 和 `root` 用户的实际认证密码；只更新 Secret 会导致容器配置与数据库账号不一致，后端将无法连接数据库。必须先在 MySQL 内完成账号密码轮换，再更新对应 Secret，并重启后端；请在维护窗口内单独执行和验证。
+
 图片或种子数据有改动时，额外运行：
 
 ```powershell
