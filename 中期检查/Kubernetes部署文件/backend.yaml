@@ -1,0 +1,125 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: travelmate-backend
+  labels:
+    app.kubernetes.io/name: travelmate-backend
+    app.kubernetes.io/part-of: travelmate
+spec:
+  selector:
+    app.kubernetes.io/name: travelmate-backend
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: travelmate-backend
+  labels:
+    app.kubernetes.io/name: travelmate-backend
+    app.kubernetes.io/part-of: travelmate
+  annotations:
+    travelmate.io/commit: bootstrap
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  minReadySeconds: 5
+  progressDeadlineSeconds: 300
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: travelmate-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: travelmate-backend
+        app.kubernetes.io/part-of: travelmate
+    spec:
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+        - name: travelmate-ghcr
+      containers:
+        - name: backend
+          image: ghcr.io/miracle060811/travelmate-backend:deploy
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: travelmate-config
+          env:
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-secrets
+                  key: mysql-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-secrets
+                  key: jwt-secret
+            - name: ADMIN_REGISTER_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-secrets
+                  key: admin-register-secret
+            - name: DEEPSEEK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-secrets
+                  key: deepseek-api-key
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 200m
+              memory: 384Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: travelmate-uploads
+        - name: tmp
+          emptyDir: {}

@@ -1,0 +1,118 @@
+name: CodeQL
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "23 18 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: java-kotlin
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Java 21
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Prepare Maven Wrapper
+        if: matrix.language == 'java-kotlin'
+        run: chmod +x backend/mvnw
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@4c0873ef8656cb3c50b3f42fb63bc1ade0cfa827 # v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-extended
+          dependency-caching: true
+
+      - name: Build Java and tests for CodeQL
+        if: matrix.language == 'java-kotlin'
+        working-directory: backend
+        run: ./mvnw --batch-mode --no-transfer-progress -DskipTests test-compile
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@4c0873ef8656cb3c50b3f42fb63bc1ade0cfa827 # v4
+        with:
+          category: /language:${{ matrix.language }}
+          output: ${{ runner.temp }}/codeql-results
+
+      - name: Reject incomplete CodeQL extraction
+        if: always()
+        shell: bash
+        run: |
+          mapfile -d '' sarif_files < <(find "$RUNNER_TEMP/codeql-results" -type f -name '*.sarif' -print0)
+          if [[ "${#sarif_files[@]}" -eq 0 ]]; then
+            echo "No CodeQL SARIF output was produced"
+            exit 1
+          fi
+
+          extraction_errors=0
+          for sarif_file in "${sarif_files[@]}"; do
+            count="$(jq '[.runs[]?.invocations[]?.toolExecutionNotifications[]? | select(.level == "error")] | length' "$sarif_file")"
+            if [[ "$count" -gt 0 ]]; then
+              echo "CodeQL extraction errors in $sarif_file:"
+              jq -r '.runs[]?.invocations[]?.toolExecutionNotifications[]? | select(.level == "error") | "- \(.message.text)"' "$sarif_file"
+              extraction_errors=$((extraction_errors + count))
+            fi
+          done
+
+          [[ "$extraction_errors" -eq 0 ]]
+
+      - name: Upload CodeQL SARIF evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: codeql-${{ matrix.language }}-sarif
+          path: ${{ runner.temp }}/codeql-results/
+          if-no-files-found: error
+          retention-days: 30
+
+  codeql-gate:
+    name: CodeQL quality gate
+    if: always()
+    needs:
+      - analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+
+    steps:
+      - name: Require every CodeQL language analysis to pass
+        shell: bash
+        run: |
+          echo "analyze=${{ needs.analyze.result }}"
+          [[ "${{ needs.analyze.result }}" == "success" ]]
