@@ -201,11 +201,14 @@ jobs:
       - name: Verify Flyway initialized the empty database
         shell: bash
         run: |
+          migration_files=(backend/src/main/resources/db/migration/V*__*.sql)
+          expected_count="${#migration_files[@]}"
+          expected_latest="$(printf '%s\n' "${migration_files[@]}" | sed -E 's#^.*/V([0-9]+)__.*#\1#' | sort -n | tail -n1)"
           applied="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate -e "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1;")"
           latest="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate -e "SELECT MAX(CAST(version AS UNSIGNED)) FROM flyway_schema_history WHERE success = 1;")"
-          echo "Successful Flyway migrations: $applied; latest version: $latest"
-          [[ "$applied" -ge 2 ]]
-          [[ "$latest" == "2" ]]
+          echo "Successful Flyway migrations: $applied/$expected_count; latest version: $latest (expected $expected_latest)"
+          [[ "$applied" -eq "$expected_count" ]]
+          [[ "$latest" == "$expected_latest" ]]
 
       - name: Stop Flyway verification backend
         if: always()
@@ -439,9 +442,14 @@ jobs:
       - name: Verify packaged backend applied Flyway migrations
         shell: bash
         run: |
+          migration_files=(backend/src/main/resources/db/migration/V*__*.sql)
+          expected_count="${#migration_files[@]}"
+          expected_latest="$(printf '%s\n' "${migration_files[@]}" | sed -E 's#^.*/V([0-9]+)__.*#\1#' | sort -n | tail -n1)"
+          applied="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate -e "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1;")"
           latest="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate -e "SELECT MAX(CAST(version AS UNSIGNED)) FROM flyway_schema_history WHERE success = 1;")"
-          echo "Latest Flyway version after packaged startup: $latest"
-          [[ "$latest" == "2" ]]
+          echo "Packaged backend Flyway migrations: $applied/$expected_count; latest version: $latest (expected $expected_latest)"
+          [[ "$applied" -eq "$expected_count" ]]
+          [[ "$latest" == "$expected_latest" ]]
 
       - name: Install frontend dependencies
         working-directory: frontend
