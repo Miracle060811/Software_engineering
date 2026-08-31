@@ -197,7 +197,7 @@ CI 全部通过 + main 分支 push → 自动触发 `publish-images.yml` → 推
 
 | 用户名 | 密码 | 角色 |
 | --- | --- | --- |
-| admin | admin123 | 管理员 |
+| admin | 123456 | 管理员（首次登录后请修改默认密码） |
 | testuser | 123456 | 普通用户 |
 | testuser2 | 123456 | 普通用户 |
 

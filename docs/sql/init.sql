@@ -587,10 +587,10 @@ CREATE TABLE IF NOT EXISTS `tm_ai_consumed_event` (
 -- =============================================
 
 -- 管理员和测试用户
--- 密码哈希对应原始密码: admin123 (BCrypt加密，rounds=10)
--- 如果登录失败，可通过 POST /user/register?username=admin&password=admin123&role=1 重新注册
+-- 默认管理员账号: admin；默认密码: 123456（BCrypt加密，rounds=10）
+-- 首次登录后请立即修改默认密码
 INSERT IGNORE INTO `tm_user` (`id`, `username`, `password`, `nickname`, `avatar`, `role`, `status`) VALUES
-(1, 'admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTpSn4DZe6m', '超级管理员', NULL, 1, 1),
+(1, 'admin', '$2a$10$EqXcym8OtggJIwHYz1TkMOzw0RoZYxzv6m9Ge7tGk64gdbghNlKhG', '超级管理员', NULL, 1, 1),
 (2, 'test', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTpSn4DZe6m', '测试用户', NULL, 0, 1),
 (3, 'alice', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTpSn4DZe6m', '爱旅行的Alice', NULL, 0, 1),
 (4, 'bob', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTpSn4DZe6m', '旅行博主Bob', NULL, 0, 1);

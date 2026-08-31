@@ -740,7 +740,7 @@ jobs:
       - Windows
       - X64
       - travelmate-deploy
-    timeout-minutes: 25
+    timeout-minutes: 10
     permissions:
       contents: read
 
