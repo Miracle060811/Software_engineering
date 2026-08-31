@@ -72,6 +72,7 @@ Desktop.ini
 
 # 通用日志与临时文件
 *.log
+!04_tests/fault/results/*.log
 *.tmp
 *.temp
 *.bak
