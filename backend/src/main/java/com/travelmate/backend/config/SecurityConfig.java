@@ -30,7 +30,8 @@ public class SecurityConfig {
                                                 "/user/register",
                                                 "/user/login",
                                                 "/user/admin-register",
-                                                "/user/reset-password"))
+                                                "/user/reset-password",
+                                                "/internal/**"))
                                 .cors(Customizer.withDefaults())
                                 .formLogin(form -> form.disable())
                                 .httpBasic(basic -> basic.disable())
