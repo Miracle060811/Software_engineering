@@ -11,6 +11,8 @@
 
 内部接口使用 `X-Internal-Token`，四个服务必须配置同一个 `INTERNAL_SERVICE_TOKEN`。`/internal/**` 不参与面向浏览器的 CSRF 校验，但仍由各内部控制器校验服务 Token。JWT 密钥也必须一致，且 `JWT_SECRET` 为解码后至少 32 字节的 Base64 文本。
 
+`traffic-service` 调用 IDENTITY 默认使用 1 秒连接超时和 2 秒读取超时，可通过 `IDENTITY_CONNECT_TIMEOUT_MS`、`IDENTITY_READ_TIMEOUT_MS` 调整。连接失败、读取超时或 IDENTITY 5xx 会返回 HTTP 503 和“身份服务暂不可用，请稍后重试”，订单事务不会进入库存扣减阶段。
+
 ## 构建
 
 在本目录执行：

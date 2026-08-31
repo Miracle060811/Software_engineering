@@ -8,6 +8,7 @@ import com.travelmate.entity.TrafficOrder;
 import com.travelmate.service.TrafficOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -34,6 +35,8 @@ public class TrafficOrderController {
             return Result.error("用户未登录");
         try {
             return Result.success(trafficOrderService.createFlightOrder(userId, dto));
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }
@@ -47,6 +50,8 @@ public class TrafficOrderController {
             return Result.error("用户未登录");
         try {
             return Result.success(trafficOrderService.createTrainOrder(userId, dto));
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }

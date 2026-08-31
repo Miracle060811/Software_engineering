@@ -63,7 +63,10 @@ class GlobalExceptionHandlerTests {
                 new ResponseStatusException(HttpStatus.FORBIDDEN, "内部服务凭证无效"));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        assertError(response.getBody(), "内部服务凭证无效");
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getCode()).isEqualTo(403);
+        assertThat(response.getBody().getMsg()).isEqualTo("内部服务凭证无效");
+        assertThat(response.getBody().getData()).isNull();
     }
 
     private void assertError(Result<?> result, String expectedMessage) {

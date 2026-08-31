@@ -18,7 +18,9 @@ public class GlobalExceptionHandler {
         String message = e.getReason() == null || e.getReason().isBlank()
                 ? "请求处理失败"
                 : e.getReason();
-        return ResponseEntity.status(e.getStatusCode()).body(Result.error(message));
+        Result<?> result = Result.error(message);
+        result.setCode(e.getStatusCode().value());
+        return ResponseEntity.status(e.getStatusCode()).body(result);
     }
 
     @ExceptionHandler(RuntimeException.class)

@@ -4,6 +4,7 @@ import com.travelmate.controller.FlightController;
 import com.travelmate.controller.TrafficOrderController;
 import com.travelmate.controller.TrainController;
 import com.travelmate.common.UserContext;
+import com.travelmate.common.GlobalExceptionHandler;
 import com.travelmate.entity.Flight;
 import com.travelmate.entity.TrafficOrder;
 import com.travelmate.entity.Train;
@@ -17,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -55,7 +58,9 @@ class TrafficPublicApiTests {
         ReflectionTestUtils.setField(orderController, "trafficOrderService", trafficOrderService);
         ReflectionTestUtils.setField(orderController, "userContext", userContext);
 
-        mockMvc = MockMvcBuilders.standaloneSetup(flightController, trainController, orderController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(flightController, trainController, orderController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -129,5 +134,21 @@ class TrafficPublicApiTests {
                 .andExpect(jsonPath("$.data[0].orderNo").value("TR202608310001"));
 
         verify(trafficOrderService).getUserOrders(7L);
+    }
+
+    @Test
+    void identityOutageReturnsDesignedServiceUnavailableResponse() throws Exception {
+        when(userContext.getCurrentUserIdOrNull()).thenReturn(7L);
+        when(trafficOrderService.createTrainOrder(org.mockito.ArgumentMatchers.eq(7L),
+                org.mockito.ArgumentMatchers.any()))
+                .thenThrow(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                        "身份服务暂不可用，请稍后重试"));
+
+        mockMvc.perform(post("/api/order/train/create")
+                        .contentType("application/json")
+                        .content("{\"trainId\":21,\"seatType\":\"SecondClass\",\"ticketCount\":1,\"passengerId\":9}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value(503))
+                .andExpect(jsonPath("$.msg").value("身份服务暂不可用，请稍后重试"));
     }
 }
