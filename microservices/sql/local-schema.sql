@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS `tm_review` (
   `rating` TINYINT(1) NOT NULL COMMENT '评分(1-5)',
   `content` TEXT COMMENT '评价内容',
   `images` VARCHAR(500) COMMENT '图片URLs',
+  `tags` VARCHAR(200) DEFAULT NULL COMMENT '评价标签，逗号分隔',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `deleted` TINYINT(1) DEFAULT '0',
   PRIMARY KEY (`id`)
