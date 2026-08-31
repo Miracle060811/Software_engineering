@@ -410,6 +410,131 @@ test("[E2E-TC-103] UC03 creates and cancels a train order against real inventory
   }
 });
 
+test("[MS-E2E-MEMBER1] identity ownership, traffic order and Outbox notification form a real service chain", async ({ request }) => {
+  const owner = await registerAndLogin(request);
+  const outsider = await registerAndLogin(request);
+  const ownerIdCard = `O${randomUUID().replaceAll("-", "").slice(0, 11).toUpperCase()}`;
+  const outsiderIdCard = `X${randomUUID().replaceAll("-", "").slice(0, 11).toUpperCase()}`;
+  let ownerPassengerId;
+  let outsiderPassengerId;
+
+  try {
+    const outsiderHeaders = authenticatedHeaders(outsider);
+    const outsiderAddBody = await (await request.post("/api/passenger/add", {
+      headers: outsiderHeaders,
+      data: {
+        name: "CI 越权旅客",
+        idCard: outsiderIdCard,
+        phone: "13900139000",
+      },
+    })).json();
+    expect(outsiderAddBody.code).toBe(200);
+    const outsiderPassengers = await (await request.get("/api/passenger/list", {
+      headers: outsiderHeaders,
+    })).json();
+    outsiderPassengerId = outsiderPassengers.data.find(
+      (item) => item.idCard === outsiderIdCard,
+    )?.id;
+    expect(outsiderPassengerId).toBeTruthy();
+
+    const activeOwner = await login(request, owner.username, owner.password);
+    const ownerHeaders = authenticatedHeaders(activeOwner);
+    const ownerAddBody = await (await request.post("/api/passenger/add", {
+      headers: ownerHeaders,
+      data: {
+        name: "CI 跨服务旅客",
+        idCard: ownerIdCard,
+        phone: "13800138000",
+      },
+    })).json();
+    expect(ownerAddBody.code).toBe(200);
+    const ownerPassengers = await (await request.get("/api/passenger/list", {
+      headers: ownerHeaders,
+    })).json();
+    ownerPassengerId = ownerPassengers.data.find((item) => item.idCard === ownerIdCard)?.id;
+    expect(ownerPassengerId).toBeTruthy();
+
+    const trainsBody = await (await request.get(
+      "/api/train/search?depStation=北京南&arrStation=上海虹桥",
+    )).json();
+    expect(trainsBody.code).toBe(200);
+    const train = trainsBody.data.find((item) => Number(item.secondClassSeats) > 1);
+    expect(train).toBeTruthy();
+
+    const ordersBefore = await (await request.get("/api/order/list", {
+      headers: ownerHeaders,
+    })).json();
+    const inventoryBefore = Number(train.secondClassSeats);
+    const forbiddenBody = await (await request.post("/api/order/train/create", {
+      headers: ownerHeaders,
+      data: {
+        trainId: train.id,
+        passengerId: outsiderPassengerId,
+        seatType: "SecondClass",
+        ticketCount: 1,
+        userCouponId: null,
+      },
+    })).json();
+    expect(forbiddenBody.code).not.toBe(200);
+
+    const ordersAfterForbidden = await (await request.get("/api/order/list", {
+      headers: ownerHeaders,
+    })).json();
+    const trainAfterForbidden = await (await request.get(`/api/train/${train.id}`)).json();
+    expect(ordersAfterForbidden.data).toHaveLength(ordersBefore.data.length);
+    expect(Number(trainAfterForbidden.data.secondClassSeats)).toBe(inventoryBefore);
+
+    const createBody = await (await request.post("/api/order/train/create", {
+      headers: ownerHeaders,
+      data: {
+        trainId: train.id,
+        passengerId: ownerPassengerId,
+        seatType: "SecondClass",
+        ticketCount: 1,
+        userCouponId: null,
+      },
+    })).json();
+    expect(createBody.code).toBe(200);
+    expect(createBody.data).toMatch(/^TR/);
+    const orderNo = createBody.data;
+
+    const payBody = await (await request.post(`/api/order/${orderNo}/pay`, {
+      headers: ownerHeaders,
+    })).json();
+    expect(payBody.code).toBe(200);
+    const receiptBody = await (await request.get(`/api/order/${orderNo}/receipt`, {
+      headers: ownerHeaders,
+    })).json();
+    expect(receiptBody.code).toBe(200);
+    expect(receiptBody.data.status).toBe(1);
+
+    await expect.poll(async () => {
+      const notificationBody = await (await request.get("/api/notification/list", {
+        headers: ownerHeaders,
+      })).json();
+      return notificationBody.data?.some(
+        (item) => item.type === "traffic_order" && item.content?.includes(orderNo),
+      );
+    }, { timeout: 20000, intervals: [500, 1000, 2000] }).toBeTruthy();
+  } finally {
+    const activeOutsider = await login(request, outsider.username, outsider.password);
+    if (outsiderPassengerId) {
+      await request.delete(`/api/passenger/${outsiderPassengerId}`, {
+        headers: authenticatedHeaders(activeOutsider),
+      });
+    }
+    await deleteAccount(request, activeOutsider);
+
+    const activeOwner = await login(request, owner.username, owner.password);
+    if (ownerPassengerId) {
+      await request.delete(`/api/passenger/${ownerPassengerId}`, {
+        headers: authenticatedHeaders(activeOwner),
+      });
+    }
+    await deleteAccount(request, activeOwner);
+  }
+});
+
 test("[E2E-TC-105][E2E-TC-106] UC05 and UC06 create, pay, refund and cancel hotel orders", async ({ request }) => {
   const session = await registerAndLogin(request);
   const headers = authenticatedHeaders(session);

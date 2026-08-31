@@ -1,0 +1,21 @@
+{
+  "UC01": { "status": "runnable", "services": ["identity-service"], "routes": ["/user/register", "/user/login"] },
+  "UC02": { "status": "runnable", "services": ["traffic-service", "identity-service", "local-service"], "routes": ["/api/flight/search", "/api/order/flight/create"] },
+  "UC03": { "status": "runnable", "services": ["traffic-service", "identity-service"], "routes": ["/api/train/search", "/api/order/train/create", "/api/train/waitlist"] },
+  "UC04": { "status": "runnable", "services": ["traffic-service"], "routes": ["/api/order/{orderNo}/pay", "/api/order/{orderNo}/cancel", "/api/order/{orderNo}/refund"] },
+  "UC05": { "status": "runnable", "services": ["local-service"], "routes": ["/api/hotel/search", "/api/hotel/order/create"] },
+  "UC06": { "status": "runnable", "services": ["local-service"], "routes": ["/api/hotel/order/{orderNo}/pay", "/api/hotel/order/{orderNo}/cancel", "/api/hotel/order/{orderNo}/refund"] },
+  "UC07": { "status": "runnable", "services": ["local-service"], "routes": ["/api/attraction/search", "/api/attraction/{id}/ticket"] },
+  "UC08": { "status": "runnable", "services": ["local-service"], "routes": ["/api/tour/list"] },
+  "UC09": { "status": "partial", "services": ["local-service", "ops-service"], "routes": ["/api/review/add", "/api/review/report", "/api/admin/review-reports/{id}/resolve"] },
+  "UC10": { "status": "runnable", "services": ["local-service", "traffic-service"], "routes": ["/api/coupon/claim/{id}", "/api/order/flight/create"] },
+  "UC11": { "status": "blocked", "services": ["ai-service"], "routes": ["/api/ai/plan/generate", "/api/ai/plan/list"] },
+  "UC12": { "status": "blocked", "services": ["ai-service"], "routes": ["/api/ai/chat"] },
+  "UC13": { "status": "partial", "services": ["ai-service"], "routes": ["/api/notification/list", "/api/private-message/send"] },
+  "UC14": { "status": "blocked", "services": ["community-service", "ops-service"], "routes": ["/api/post/create", "/api/post/{id}", "/api/admin/posts/{id}/approve"] },
+  "UC15": { "status": "blocked", "services": ["community-service"], "routes": ["/api/like/toggle", "/api/comment/add"] },
+  "UC16": { "status": "runnable", "services": ["identity-service"], "routes": ["/api/passenger/add", "/api/passenger/list", "/api/passenger/{id}"] },
+  "UC17": { "status": "partial", "services": ["identity-service", "community-service"], "routes": ["/api/follow/{userId}", "/api/user/profile/{username}", "/api/post/my"] },
+  "UC18": { "status": "blocked", "services": ["ops-service"], "routes": ["/api/admin/users", "/api/admin/orders", "/api/admin/flights"] },
+  "UC19": { "status": "blocked", "services": ["ops-service", "community-service"], "routes": ["/api/admin/review-reports", "/api/admin/sensitive-words", "/api/admin/logs"] }
+}

@@ -10,6 +10,7 @@
         "audit:prod": "npm audit --omit=dev --audit-level=high",
         "preview": "vite preview",
         "test:e2e": "playwright test",
+        "test:e2e:microservices": "playwright test --config=playwright.microservices.config.js --workers=1",
         "test:unit": "vitest run"
     },
     "dependencies": {

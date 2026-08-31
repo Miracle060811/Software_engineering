@@ -24,6 +24,8 @@ blob-report/
 /04_tests/stress/results/*.json
 /frontend/playwright-report-real/
 /frontend/test-results-real/
+/frontend/playwright-report-microservices/
+/frontend/test-results-microservices/
 
 # 本地上传文件
 uploads/
@@ -70,6 +72,7 @@ Desktop.ini
 
 # 通用日志与临时文件
 *.log
+!04_tests/fault/results/*.log
 *.tmp
 *.temp
 *.bak

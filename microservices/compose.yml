@@ -13,6 +13,7 @@ services:
     volumes:
       - identity-db-data:/var/lib/mysql
       - ./sql/identity-schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+      - ./sql/identity-seed.sql:/docker-entrypoint-initdb.d/002-seed.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 5s
@@ -31,6 +32,7 @@ services:
     volumes:
       - traffic-db-data:/var/lib/mysql
       - ./sql/traffic-schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+      - ./sql/traffic-seed.sql:/docker-entrypoint-initdb.d/002-seed.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 5s
@@ -49,6 +51,7 @@ services:
     volumes:
       - local-db-data:/var/lib/mysql
       - ./sql/local-schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+      - ./sql/local-seed.sql:/docker-entrypoint-initdb.d/002-seed.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 5s
@@ -67,6 +70,7 @@ services:
     volumes:
       - ai-db-data:/var/lib/mysql
       - ./sql/ai-schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+      - ./sql/ai-seed.sql:/docker-entrypoint-initdb.d/002-seed.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 5s
@@ -89,6 +93,7 @@ services:
       REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100}
     ports:
       - "${IDENTITY_PORT:-8081}:8081"
     depends_on:
@@ -107,6 +112,7 @@ services:
       REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100}
       OUTBOX_DISPATCHER_ENABLED: "true"
       AI_SERVICE_URL: http://ai-service:8084
       IDENTITY_SERVICE_URL: http://identity-service:8081
@@ -135,6 +141,7 @@ services:
       REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100}
       OUTBOX_DISPATCHER_ENABLED: "true"
       AI_SERVICE_URL: http://ai-service:8084
     ports:
@@ -156,6 +163,7 @@ services:
       DB_PASSWORD: ${AI_DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100}
     ports:
       - "${AI_PORT:-8084}:8084"
     depends_on:

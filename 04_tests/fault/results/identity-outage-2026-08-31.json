@@ -1,0 +1,17 @@
+{
+  "experiment": "TRAFFIC_TO_IDENTITY_OUTAGE",
+  "executedAt": "2026-08-31T10:15:51.5902046+08:00",
+  "identityConnectTimeoutMs": 1000,
+  "identityReadTimeoutMs": 2000,
+  "orderHttpStatus": 503,
+  "orderBusinessCode": 503,
+  "orderMessage": "身份服务暂不可用，请稍后重试",
+  "trafficHealthDuringOutage": "UP",
+  "trafficSearchDuringOutage": 200,
+  "ordersBefore": 0,
+  "ordersAfter": 0,
+  "inventoryBefore": 317,
+  "inventoryAfter": 317,
+  "identityRestored": true,
+  "passed": true
+}

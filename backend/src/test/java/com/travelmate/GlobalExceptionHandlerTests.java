@@ -3,7 +3,10 @@ package com.travelmate;
 import com.travelmate.common.GlobalExceptionHandler;
 import com.travelmate.common.Result;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.SQLException;
 
@@ -52,6 +55,18 @@ class GlobalExceptionHandlerTests {
                 new RuntimeException("query failed", new SQLException("Table 'travelmate.tm_user' doesn't exist")));
 
         assertError(result, "数据库表不存在，请先执行 docs/sql/init.sql 初始化数据库");
+    }
+
+    @Test
+    void responseStatusExceptionPreservesHttpStatus() {
+        ResponseEntity<Result<?>> response = handler.handleResponseStatusException(
+                new ResponseStatusException(HttpStatus.FORBIDDEN, "内部服务凭证无效"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getCode()).isEqualTo(403);
+        assertThat(response.getBody().getMsg()).isEqualTo("内部服务凭证无效");
+        assertThat(response.getBody().getData()).isNull();
     }
 
     private void assertError(Result<?> result, String expectedMessage) {
