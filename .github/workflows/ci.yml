@@ -1066,11 +1066,13 @@ jobs:
     needs:
       - changes
       - images
+      - microservice-release-evidence
     if: >-
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
       needs.changes.outputs.code == 'true' &&
-      needs.images.result == 'success'
+      needs.images.result == 'success' &&
+      needs.microservice-release-evidence.result == 'success'
     runs-on:
       - self-hosted
       - Windows
@@ -1239,6 +1241,7 @@ jobs:
       - changes
       - images
       - deploy
+      - microservice-release-evidence
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -1255,10 +1258,13 @@ jobs:
           echo "delivery_required=$delivery_required"
           echo "images=${{ needs.images.result }}"
           echo "deploy=${{ needs.deploy.result }}"
+          echo "microservice_release_evidence=${{ needs.microservice-release-evidence.result }}"
           if [[ "$delivery_required" == "true" ]]; then
             [[ "${{ needs.images.result }}" == "success" ]]
             [[ "${{ needs.deploy.result }}" == "success" ]]
+            [[ "${{ needs.microservice-release-evidence.result }}" == "success" ]]
           else
             [[ "${{ needs.images.result }}" == "skipped" ]]
             [[ "${{ needs.deploy.result }}" == "skipped" ]]
+            [[ "${{ needs.microservice-release-evidence.result }}" == "skipped" ]]
           fi
