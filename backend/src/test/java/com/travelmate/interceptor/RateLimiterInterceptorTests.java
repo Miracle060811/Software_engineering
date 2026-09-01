@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -111,6 +113,20 @@ class RateLimiterInterceptorTests {
 
         assertThat(result).isTrue();
         verify(valueOperations, never()).increment(anyString());
+    }
+
+    @Test
+    void bindsRateLimitSwitchToApplicationSecurityConfiguration() {
+        try (var context = new AnnotationConfigApplicationContext()) {
+            TestPropertyValues.of("app.security.rate-limit-enabled=false").applyTo(context);
+            context.registerBean("redisTemplate", RedisTemplate.class, () -> redisTemplate);
+            context.registerBean(UserContext.class, () -> userContext);
+            context.register(RateLimiterInterceptor.class);
+            context.refresh();
+
+            var configuredInterceptor = context.getBean(RateLimiterInterceptor.class);
+            assertThat(ReflectionTestUtils.getField(configuredInterceptor, "rateLimitEnabled")).isEqualTo(false);
+        }
     }
 
     @Test
