@@ -33,7 +33,7 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
     @Autowired
     private UserContext userContext;
 
-    @Value("${travelmate.security.rate-limit-enabled:true}")
+    @Value("${app.security.rate-limit-enabled:true}")
     private boolean rateLimitEnabled = true;
 
     @Override
