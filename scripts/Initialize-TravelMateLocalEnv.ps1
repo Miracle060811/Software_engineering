@@ -54,6 +54,7 @@ if (-not $keys.Contains("JWT_SECRET")) {
 }
 if (-not $keys.Contains("JWT_ACCESS_TOKEN_MINUTES")) { $additions.JWT_ACCESS_TOKEN_MINUTES = "30" }
 if (-not $keys.Contains("REFRESH_TOKEN_DAYS")) { $additions.REFRESH_TOKEN_DAYS = "14" }
+if (-not $keys.Contains("RATE_LIMIT_ENABLED")) { $additions.RATE_LIMIT_ENABLED = "true" }
 if (-not $keys.Contains("REFRESH_COOKIE_SECURE")) { $additions.REFRESH_COOKIE_SECURE = "false" }
 if (-not $keys.Contains("ADMIN_REGISTER_ENABLED")) { $additions.ADMIN_REGISTER_ENABLED = "false" }
 if (-not $keys.Contains("ADMIN_REGISTER_EXPIRES_AT")) { $additions.ADMIN_REGISTER_EXPIRES_AT = "" }
