@@ -521,6 +521,16 @@ jobs:
           [[ "$applied" -eq "$expected_count" ]]
           [[ "$latest" == "$expected_latest" ]]
 
+      - name: Prepare isolated admin bootstrap state
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec ${{ job.services.mysql.id }} mysql -uroot -ptravelmate-ci travelmate \
+            -e "UPDATE tm_user SET role = 0 WHERE role = 1 AND deleted = 0;"
+          remaining_admins="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate \
+            -e "SELECT COUNT(*) FROM tm_user WHERE role = 1 AND status = 1 AND deleted = 0;")"
+          [[ "$remaining_admins" -eq 0 ]]
+
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
