@@ -31,6 +31,7 @@ app:
     admin-register-enabled: ${ADMIN_REGISTER_ENABLED:false}
     admin-register-secret: ${ADMIN_REGISTER_SECRET:}
     admin-register-expires-at: ${ADMIN_REGISTER_EXPIRES_AT:}
+    rate-limit-enabled: ${RATE_LIMIT_ENABLED:true}
   storage:
     type: ${STORAGE_TYPE:local}
     s3:

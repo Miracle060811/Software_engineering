@@ -465,6 +465,7 @@ jobs:
       SPRING_DATASOURCE_PASSWORD: travelmate-ci
       JWT_SECRET: YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=
       ADMIN_REGISTER_SECRET: travelmate-ci-admin-register
+      RATE_LIMIT_ENABLED: "false"
       DEEPSEEK_API_KEY: ""
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
 

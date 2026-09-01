@@ -9,6 +9,7 @@ import com.travelmate.common.UserContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.lang.NonNull;
@@ -32,9 +33,16 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
     @Autowired
     private UserContext userContext;
 
+    @Value("${app.security.rate-limit-enabled:true}")
+    private boolean rateLimitEnabled = true;
+
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull Object handler) throws Exception {
+        if (!rateLimitEnabled) {
+            return true;
+        }
+
         if (!(handler instanceof HandlerMethod handlerMethod)) {
             return true;
         }
