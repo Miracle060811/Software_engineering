@@ -67,6 +67,56 @@ for (const file of requiredK8sFiles) {
   if (!kustomization.includes(`- ${file}`)) fail(`kustomization.yaml 未包含 ${file}`)
 }
 
+const microserviceK8sFiles = [
+  ["identity-service", 8081],
+  ["traffic-service", 8082],
+  ["local-service", 8083],
+  ["ai-service", 8084],
+]
+for (const [service, port] of microserviceK8sFiles) {
+  const relativePath = `deploy/k8s/${service}.yaml`
+  if (!fs.existsSync(path.join(root, relativePath))) {
+    fail(`缺少微服务 Kubernetes 清单：${relativePath}`)
+    continue
+  }
+  const manifest = read(relativePath)
+  if (!/kind:\s*Service\b/.test(manifest)) fail(`${service}.yaml 缺少 Service`)
+  if (!/kind:\s*Deployment\b/.test(manifest)) fail(`${service}.yaml 缺少 Deployment`)
+  if (!new RegExp(`\\bport:\\s*${port}\\b`).test(manifest)) fail(`${service}.yaml 未暴露端口 ${port}`)
+  if (!/\breadinessProbe\s*:/.test(manifest)) fail(`${service}.yaml 缺少 readinessProbe`)
+  if (!/\blivenessProbe\s*:/.test(manifest)) fail(`${service}.yaml 缺少 livenessProbe`)
+  if (!/\brequests\s*:[\s\S]*?\bcpu\s*:[\s\S]*?\bmemory\s*:/.test(manifest)) {
+    fail(`${service}.yaml 缺少 CPU/内存 requests`)
+  }
+  if (!/\blimits\s*:[\s\S]*?\bcpu\s*:[\s\S]*?\bmemory\s*:/.test(manifest)) {
+    fail(`${service}.yaml 缺少 CPU/内存 limits`)
+  }
+  if (!/\bconfigMapRef\s*:|\bconfigMapKeyRef\s*:/.test(manifest)) fail(`${service}.yaml 未引用 ConfigMap`)
+  if (!/\bsecretKeyRef\s*:/.test(manifest)) fail(`${service}.yaml 未引用 Secret`)
+}
+
+for (const file of ["microservices-configmap.yaml", "microservice-database-bootstrap.yaml"]) {
+  if (!fs.existsSync(path.join(k8sDir, file))) fail(`缺少微服务 Kubernetes 清单：deploy/k8s/${file}`)
+}
+
+const microserviceDeployScript = read("scripts/cd/Deploy-TravelMateMicroservices.ps1")
+for (const service of microserviceK8sFiles.map(([name]) => name)) {
+  if (!microserviceDeployScript.includes(`"${service}"`)) {
+    fail(`微服务部署脚本未包含 ${service}`)
+  }
+}
+if (!/ReleaseEvidencePath/.test(microserviceDeployScript) || !/sha256:/.test(microserviceDeployScript)) {
+  fail("微服务部署脚本未强制使用发布证据中的镜像 digest")
+}
+
+const ciWorkflow = read(".github/workflows/ci.yml")
+if (!/runs-on:[\s\S]*?travelmate-deploy[\s\S]*?timeout-minutes:\s*10/.test(ciWorkflow)) {
+  fail("部署流水线未设置 YFan_deploy Runner 的 10 分钟超时")
+}
+for (const port of [8081, 8082, 8083, 8084]) {
+  if (!ciWorkflow.includes(`ServicePort = ${port}`)) fail(`部署后健康检查未覆盖端口 ${port}`)
+}
+
 for (const service of ["backend", "frontend", "mysql", "redis"]) {
   const manifest = read(`deploy/k8s/${service}.yaml`)
   if (!/\breadinessProbe\s*:/.test(manifest)) fail(`${service}.yaml 缺少 readinessProbe`)
