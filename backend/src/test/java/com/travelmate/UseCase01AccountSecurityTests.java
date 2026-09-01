@@ -61,11 +61,11 @@ class UseCase01AccountSecurityTests {
     void unitTc101LoginRequiresMatchingPasswordAndIssuesJwt() {
         User user = user(7L, "traveler", "secret123");
         when(userMapper.selectOne(any(Wrapper.class))).thenReturn(user);
-        when(jwtUtil.generateToken(7L, "traveler", 0)).thenReturn("jwt-token");
+        when(jwtUtil.generateToken(7L, "traveler", 0, 0)).thenReturn("jwt-token");
 
         assertThat(service.login(" traveler ", "secret123")).isEqualTo("jwt-token");
         assertThat(service.login("traveler", "wrong-password")).isNull();
-        verify(jwtUtil).generateToken(7L, "traveler", 0);
+        verify(jwtUtil).generateToken(7L, "traveler", 0, 0);
     }
 
     @Test
@@ -79,6 +79,7 @@ class UseCase01AccountSecurityTests {
         assertThat(service.changePassword(7L, "old-secret", "new-secret")).isTrue();
         verify(userMapper).updateById(user);
         assertThat(encoder.matches("new-secret", user.getPassword())).isTrue();
+        assertThat(user.getTokenVersion()).isEqualTo(1);
     }
 
     @Test
@@ -107,6 +108,7 @@ class UseCase01AccountSecurityTests {
         user.setUsername(username);
         user.setPassword(encoder.encode(rawPassword));
         user.setRole(0);
+        user.setTokenVersion(0);
         user.setStatus(1);
         user.setDeleted(0);
         return user;

@@ -441,6 +441,7 @@ import {
   Download,
 } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import { getAccessToken } from "@/utils/authToken";
 
 const route = useRoute();
 const router = useRouter();
@@ -662,7 +663,7 @@ const generatePlan = async () => {
 };
 
 const fetchHistoryPlans = async () => {
-  if (!localStorage.getItem("token")) {
+  if (!getAccessToken()) {
     historyPlans.value = [];
     return;
   }

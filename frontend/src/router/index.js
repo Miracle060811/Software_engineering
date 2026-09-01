@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useUserStore } from "@/stores/user";
 
 const routes = [
   {
@@ -146,20 +147,20 @@ const router = createRouter({
   },
 });
 
-router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem("token");
-  if (to.meta.requiresAuth && !token) {
-    next({ path: "/login", query: { redirect: to.fullPath } });
-  } else if (to.meta.requiresAdmin) {
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
-    if (!userInfo || userInfo.role !== 1) {
-      next("/");
-    } else {
-      next();
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresAuth && !to.meta.requiresAdmin) return true;
+
+  const userStore = useUserStore();
+  if (!userStore.isLoggedIn) {
+    try {
+      await userStore.restoreSession();
+    } catch {
+      return { path: "/login", query: { redirect: to.fullPath } };
     }
-  } else {
-    next();
   }
+
+  if (to.meta.requiresAdmin && userStore.userInfo?.role !== 1) return "/";
+  return true;
 });
 
 export default router;

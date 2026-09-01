@@ -69,7 +69,13 @@ test("[E2E-TC-101] UC01 registers and logs in against the real backend", async (
     await page.getByRole("button", { name: "登 录" }).click();
 
     await expect(page).toHaveURL(/\/$/);
-    await expect.poll(() => page.evaluate(() => localStorage.getItem("token"))).not.toBeNull();
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("token"))).toBeNull();
+
+    await page.goto("/my-orders");
+    await expect(page).toHaveURL(/\/my-orders$/);
+    await page.reload();
+    await expect(page).toHaveURL(/\/my-orders$/);
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("token"))).toBeNull();
 
     const meBody = await (await request.get("/user/me", {
       headers: authenticatedHeaders(session),

@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: travelmate
+  labels:
+    app.kubernetes.io/name: travelmate
+    app.kubernetes.io/part-of: travelmate
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - travelmate.example.com
+      secretName: travelmate-tls
+  rules:
+    - host: travelmate.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: travelmate-frontend
+                port:
+                  number: 30080

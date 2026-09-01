@@ -33,6 +33,7 @@ public class UserService {
         user.setUsername(normalizedUsername);
         user.setPassword(encodedPassword);
         user.setRole(Integer.valueOf(1).equals(role) ? 1 : 0);
+        user.setTokenVersion(0);
         userMapper.insert(user);
         return true;
     }
@@ -47,7 +48,7 @@ public class UserService {
                 .eq("status", 1)
                 .eq("deleted", 0));
         if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-            return jwtUtil.generateToken(user.getId(), normalizedUsername, user.getRole());
+            return jwtUtil.generateToken(user.getId(), normalizedUsername, user.getRole(), tokenVersion(user));
         }
         return null;
     }
@@ -63,25 +64,18 @@ public class UserService {
         User user = userMapper.selectById(userId);
         if (user == null) return false;
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) return false;
+        if (newPassword == null || newPassword.length() < 6) return false;
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setTokenVersion(tokenVersion(user) + 1);
         userMapper.updateById(user);
         return true;
     }
 
-    public boolean resetPassword(String username, String newPassword) {
-        if (username == null || username.trim().isEmpty()
-                || newPassword == null || newPassword.length() < 6) {
-            return false;
-        }
-        User user = userMapper.selectOne(new QueryWrapper<User>()
-                .eq("username", username.trim())
+    public boolean hasAdministrator() {
+        return userMapper.selectCount(new QueryWrapper<User>()
+                .eq("role", 1)
                 .eq("status", 1)
-                .eq("deleted", 0));
-        if (user == null) return false;
-        if (Integer.valueOf(1).equals(user.getRole())) return false;
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userMapper.updateById(user);
-        return true;
+                .eq("deleted", 0)) > 0;
     }
 
     public boolean deleteAccount(Long userId, String password) {
@@ -99,8 +93,13 @@ public class UserService {
         user.setRole(0);
         user.setStatus(0);
         user.setDeleted(1);
+        user.setTokenVersion(tokenVersion(user) + 1);
         userMapper.updateById(user);
         return true;
+    }
+
+    private int tokenVersion(User user) {
+        return user.getTokenVersion() == null ? 0 : user.getTokenVersion();
     }
 
 }

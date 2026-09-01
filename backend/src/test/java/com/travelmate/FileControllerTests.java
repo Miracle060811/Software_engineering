@@ -2,17 +2,21 @@ package com.travelmate;
 
 import com.travelmate.common.Result;
 import com.travelmate.controller.FileController;
+import com.travelmate.storage.LocalFileStorageService;
+import com.travelmate.storage.StoredFile;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.io.IOException;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FileControllerTests {
 
@@ -92,10 +96,8 @@ class FileControllerTests {
 
         assertEquals(200, result.getCode());
         String url = result.getData().get("url");
-        assertTrue(url.matches("/uploads/[a-f0-9]{32}\\.jpg"));
-        try (var files = Files.list(uploadDirectory)) {
-            assertEquals(1, files.count());
-        }
+        assertTrue(url.matches("/uploads/\\d{4}/\\d{2}/[a-f0-9]{32}\\.jpg"));
+        assertEquals(1, countStoredFiles());
     }
 
     @Test
@@ -111,15 +113,39 @@ class FileControllerTests {
 
         assertEquals(200, result.getCode());
         String url = result.getData().get("url");
-        assertTrue(url.matches("/uploads/[a-f0-9]{32}\\.webp"));
-        try (var files = Files.list(uploadDirectory)) {
-            assertEquals(1, files.count());
-        }
+        assertTrue(url.matches("/uploads/\\d{4}/\\d{2}/[a-f0-9]{32}\\.webp"));
+        assertEquals(1, countStoredFiles());
+    }
+
+    @Test
+    void localStorageCanCheckAndDeleteObject() throws Exception {
+        LocalFileStorageService storage = new LocalFileStorageService(uploadDirectory.toString());
+        byte[] jpegHeader = new byte[] { (byte) 0xff, (byte) 0xd8, (byte) 0xff };
+        StoredFile stored = storage.store(new MockMultipartFile(
+                "file", "photo.jpg", "image/jpeg", jpegHeader), "jpg");
+
+        assertTrue(storage.exists(stored.objectKey()));
+        assertEquals("/" + stored.objectKey(), storage.publicUrl(stored.objectKey()));
+
+        storage.delete(stored.objectKey());
+        assertFalse(storage.exists(stored.objectKey()));
+    }
+
+    @Test
+    void localStorageRejectsPathTraversalKeys() {
+        LocalFileStorageService storage = new LocalFileStorageService(uploadDirectory.toString());
+
+        assertThrows(IllegalArgumentException.class, () -> storage.exists("uploads/../../secret.txt"));
+        assertThrows(IllegalArgumentException.class, () -> storage.publicUrl("other/file.jpg"));
     }
 
     private FileController controller() {
-        FileController controller = new FileController();
-        ReflectionTestUtils.setField(controller, "uploadDir", uploadDirectory.toString());
-        return controller;
+        return new FileController(new LocalFileStorageService(uploadDirectory.toString()));
+    }
+
+    private long countStoredFiles() throws IOException {
+        try (var files = Files.walk(uploadDirectory)) {
+            return files.filter(Files::isRegularFile).count();
+        }
     }
 }

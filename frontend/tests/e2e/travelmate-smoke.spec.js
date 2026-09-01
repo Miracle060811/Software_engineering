@@ -18,7 +18,21 @@ async function mockTravelMateApi(page) {
   await page.route("**/user/login**", async (route) => {
     await route.fulfill({
       contentType: "application/json",
+      headers: {
+        "Set-Cookie": "TRAVELMATE_REFRESH=mock-refresh; HttpOnly; Path=/user; SameSite=Lax",
+      },
       body: JSON.stringify(result("mock-token")),
+    });
+  });
+
+  await page.route("**/user/refresh**", async (route) => {
+    const hasRefreshCookie = route.request().headers().cookie?.includes("TRAVELMATE_REFRESH=mock-refresh");
+    await route.fulfill({
+      status: hasRefreshCookie ? 200 : 403,
+      contentType: "application/json",
+      body: JSON.stringify(hasRefreshCookie
+        ? result("mock-refreshed-token")
+        : { code: 500, msg: "登录状态已失效", data: null }),
     });
   });
 
@@ -219,22 +233,22 @@ test("auth-only routes redirect anonymous users to login", async ({ page }) => {
 });
 
 test("non-admin user is rejected by admin route guard", async ({ page }) => {
-  await page.goto("/");
-  await page.evaluate(() => {
-    localStorage.setItem("token", "mock-token");
-    localStorage.setItem("userInfo", JSON.stringify({ id: 1, username: "testuser", role: 0 }));
-  });
+  await page.goto("/login");
+  await page.getByPlaceholder("请输入用户名").fill("testuser");
+  await page.getByPlaceholder("请输入密码").fill("test123");
+  await page.getByRole("button", { name: "登 录" }).click();
+  await expect(page).toHaveURL(/\/$/);
 
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/$/);
 });
 
-test("login flow stores token and returns to home", async ({ page }) => {
+test("login flow keeps access token out of localStorage and returns to home", async ({ page }) => {
   await page.goto("/login");
   await page.getByPlaceholder("请输入用户名").fill("testuser");
   await page.getByPlaceholder("请输入密码").fill("test123");
   await page.getByRole("button", { name: "登 录" }).click();
 
   await expect(page).toHaveURL(/\/$/);
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("token"))).toBe("mock-token");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("token"))).toBeNull();
 });

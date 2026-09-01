@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(
@@ -115,12 +116,30 @@ class SecurityConfigTests {
     }
 
     @Test
-    void deployedFrontendOriginIsAllowedForUserApi() throws Exception {
+    void localFrontendOriginIsAllowedForUserApi() throws Exception {
         mockMvc.perform(options("/user/register")
-                .header("Origin", "http://82.156.91.79:42356")
+                .header("Origin", "http://localhost:3000")
                 .header("Access-Control-Request-Method", "POST"))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Access-Control-Allow-Origin", "http://82.156.91.79:42356"))
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:3000"))
                 .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+    }
+
+    @Test
+    void unauthenticatedPasswordResetIsRejected() throws Exception {
+        mockMvc.perform(post("/user/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void administratorBootstrapIsDisabledByDefault() throws Exception {
+        mockMvc.perform(post("/user/admin-register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"bootstrap-admin\",\"password\":\"secret123\",\"secret\":\"guess\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.msg").value("管理员初始化不可用"));
     }
 }

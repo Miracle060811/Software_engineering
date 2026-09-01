@@ -132,6 +132,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -InitDb -Res
 .\start.ps1 -DryRun
 ```
 
+首次使用或 `.env` 缺少 JWT/对象存储变量时执行：
+
+```powershell
+.\scripts\Initialize-TravelMateLocalEnv.ps1
+```
+
+脚本只补充缺失项，不覆盖已有本机配置，也不会打印生成的密钥。根目录 `.env` 始终只用于本机开发和 Docker Compose，并由 Git 忽略。
+
 手工启动时，后端主类是 `com.travelmate.TravelMateApplication`：
 
 ```powershell
@@ -145,13 +153,41 @@ npm install
 npm run dev
 ```
 
-前端开发服务器固定使用 3000 端口，并将 `/api`、`/user` 和 `/uploads` 代理到 `http://localhost:8080`。
+前端开发服务器默认使用 3000 端口，并将 `/api`、`/user` 和 `/uploads` 代理到 `http://localhost:8080`。需要调整时使用 `.env` 中的 `VITE_DEV_PORT` 和 `VITE_DEV_BACKEND_URL`。
+
+### Docker Compose 本地联调
+
+根目录 [`compose.yml`](compose.yml) 包含前端、后端、MySQL、Redis 和 MinIO。它复用本机 `.env`，图片进入 MinIO，MySQL 与 MinIO 数据分别保存在 named volume：
+
+```powershell
+.\scripts\Initialize-TravelMateLocalEnv.ps1
+docker compose config
+docker compose up -d --build
+docker compose ps
+```
+
+默认入口为 <http://localhost:3000>，MinIO API 为 <http://localhost:9000>，管理控制台只绑定本机 `127.0.0.1:19001`。端口可通过 `MINIO_API_PORT`、`MINIO_CONSOLE_PORT` 调整。`docker compose down` 保留数据；只有明确执行 `docker compose down -v` 才会删除本地数据卷。
+
+将旧本地 `uploads` 文件迁移到 S3/MinIO 前，先生成计划；确认映射后再执行上传与逐文件 SHA-256 回读校验：
+
+```powershell
+.\scripts\Migrate-TravelMateUploadsToS3.ps1
+.\scripts\Migrate-TravelMateUploadsToS3.ps1 -Execute
+```
+
+报告输出到已忽略的 `backups/storage-migrations/`。脚本不会自动改写数据库字段；`mapping.csv` 同时记录旧 URL 和稳定 object key，数据库引用必须在明确对应业务字段后单独迁移。
+
+服务器模板为 [`compose.server.yml`](compose.server.yml)，配置模板为 [`.env.server.example`](.env.server.example)。服务器必须使用实际 HTTPS 域名、外部 S3 兼容存储和前后端镜像 digest；数据库、Redis 与管理端口不得直接暴露公网。
 
 ## 账号与权限
 
 - 普通用户可直接在登录页注册，后端始终按普通用户角色创建账号。
-- 管理员需在登录页的管理员注册入口中提供 `.env` 配置的 `ADMIN_REGISTER_SECRET`。
+- 管理员初始化默认关闭。只有 `ADMIN_REGISTER_ENABLED=true`、`ADMIN_REGISTER_EXPIRES_AT` 尚未到期、系统中尚无有效管理员且密钥正确时，初始化入口才允许创建首个管理员。密钥只保存指纹、成功后只能使用一次，所有尝试都会写入审计表；完成后应立即关闭入口。
 - 管理端 `/admin` 同时受前端路由守卫与后端 `/api/admin/**` 的 `ROLE_ADMIN` 校验保护。
+- access token 默认有效 30 分钟，并携带 token 版本；改密、注销或管理员禁用账号后旧 token 失效，后端以数据库当前角色为准。
+- refresh token 默认有效 14 天，只通过 `HttpOnly`、`SameSite=Lax`、`Path=/user` Cookie 传输，数据库仅保存 SHA-256 指纹；每次刷新都会轮换，旧值重放和退出登录后的值都会失效。服务器 HTTPS 环境必须设置 `REFRESH_COOKIE_SECURE=true`，刷新和退出接口继续受 CSRF 校验保护。
+- 前端 access token 只保存在页面运行内存中，不写入 `localStorage`；页面刷新后由 refresh cookie 静默恢复，并重新从 `/user/me` 获取角色与账号状态。
+- 无身份核验的自助密码重置已关闭；用户仍可在登录后通过旧密码修改自己的密码。
 - 不要依赖 SQL 种子账号的注释密码作为稳定凭据；如果本地种子账号无法登录，请注册新的本地账号，不要在 README 中共享真实密码。
 
 ## 外部数据与降级行为
@@ -198,6 +234,8 @@ npm run check:traceability
 # 数据库迁移与 Kubernetes 部署配置门禁
 npm run check:deployment
 kubectl kustomize deploy/k8s | Out-Null
+kubectl kustomize deploy/k8s-overlays/local | Out-Null
+kubectl kustomize deploy/k8s-overlays/server | Out-Null
 ```
 
 正式 CI/CD 位于 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)：
@@ -408,6 +446,69 @@ kubectl -n travelmate rollout status deployment/travelmate-frontend
 
 处理故障时不要删除 PVC、Secret 或整个 `travelmate` namespace，除非已经确认数据可以丢失并明确执行重建。更完整的首次配置、回滚和部署脚本说明见 [`scripts/cd/README.md`](scripts/cd/README.md)。
 
+### Kubernetes 数据备份与集群重建
+
+Docker Desktop 的 `Reset cluster`、修改 Kind 节点数量、删除 `travelmate` Namespace 或删除 PVC，均可能永久删除 MySQL 与本地 MinIO 中的图片。Pod 重启和 Deployment 滚动更新通常不会删除 PVC，但不能把 PVC 当成唯一备份。
+
+当前持久化数据包括：
+
+| PVC | 用途 | 默认容量 | 风险 |
+| --- | --- | ---: | --- |
+| `mysql-data-travelmate-mysql-0` | MySQL 数据目录 | 5 GiB | 集群或 PV 被删除时可能丢失全部业务数据 |
+| `minio-data-travelmate-minio-0`（local overlay） | MinIO 图片对象 | 5 GiB | 集群或 PV 被删除时可能丢失用户上传内容 |
+
+基础清单中的 `travelmate-uploads` 只为旧部署兼容保留；local/server overlay 均已解除后端对该共享 PVC 的依赖。服务器环境应使用带版本控制、生命周期和独立备份策略的外部 S3，而不是跨节点共享 uploads 目录。
+
+仓库中的 `deploy/k8s/*.yaml`、初始化脚本和部署脚本是环境的“重建说明书”，不包含 PVC 中的真实数据。因此，修改节点数量或重置集群前必须执行宿主机备份：
+
+```powershell
+.\scripts\cd\Backup-TravelMateKubernetes.ps1
+```
+
+默认输出目录为 `backups/kubernetes/travelmate-<时间戳>/`，并已通过 `.gitignore` 排除，不会进入 Git。每次完整备份包含：
+
+- `mysql/travelmate.sql`：使用 `mysqldump` 生成的 MySQL 逻辑备份；
+- `uploads/`：仅旧 `STORAGE_TYPE=local` 部署的上传文件；
+- `objects/`：`STORAGE_TYPE=s3` 时通过 MinIO Client `mc mirror` 导出的 bucket 内容；
+- `manifests/repository/`：执行备份时仓库中的 Kubernetes YAML；
+- `manifests/live-resources-without-secrets.yaml`：不含 Secret 值的集群运行时资源快照；
+- `metadata.json`：备份时间、Context、Namespace 和来源 Pod；
+- `checksums.sha256`：全部备份文件的 SHA-256 完整性校验。
+
+备份不会导出 `travelmate-secrets`、GHCR Token 或其他凭据明文。重建集群后需要重新配置 GHCR 凭据；`Initialize-TravelMateKubernetes.ps1` 会创建新的 MySQL、JWT 和管理员注册密钥。若需要 DeepSeek 功能，应通过安全渠道重新提供 API Key，不要写入仓库或备份目录。
+
+新集群按以下顺序恢复：
+
+```powershell
+# 1. 重新配置私有 GHCR 镜像拉取凭据
+.\scripts\cd\Configure-TravelMateGhcrCredential.ps1
+
+# 2. 创建 Namespace、Secret，并应用对应环境 overlay
+.\scripts\cd\Initialize-TravelMateKubernetes.ps1 -Environment local
+
+# 3. 校验备份并恢复 MySQL 与对应文件存储
+.\scripts\cd\Restore-TravelMateKubernetes.ps1 `
+  -BackupDirectory .\backups\kubernetes\travelmate-<时间戳> `
+  -ConfirmDataOverwrite
+```
+
+`Restore-TravelMateKubernetes.ps1` 会先校验 `checksums.sha256`，然后恢复 `travelmate` 数据库和对应文件存储，最后滚动重启后端。S3 模式要求宿主机安装 MinIO Client `mc`；外部 S3 需要给备份和恢复脚本传入宿主机可访问的 `-ObjectStorageEndpoint`。`-ConfirmDataOverwrite` 是强制保护开关，且 S3 恢复会删除目标 bucket 中备份不存在的对象；执行前必须确认 Context、Namespace、备份目录和 bucket 均正确。
+
+恢复完成后执行：
+
+```powershell
+kubectl --context docker-desktop -n travelmate get pods
+kubectl --context docker-desktop -n travelmate get pvc
+
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:30080/healthz |
+  Select-Object StatusCode, Content
+
+kubectl --context docker-desktop get --raw `
+  "/api/v1/namespaces/travelmate/services/http:travelmate-backend:8080/proxy/actuator/health/readiness"
+```
+
+验收标准：所有 Pod 为 `Running`、MySQL 与本地 MinIO PVC 为 `Bound`、前端 `/healthz` 返回 HTTP 200、后端 readiness 返回 `UP`，并抽查数据库业务记录和图片对象能够正常访问。更完整的脚本参数和注意事项见 [`scripts/cd/README.md`](scripts/cd/README.md)。
+
 ### Kubernetes 运行配置与敏感信息更新
 
 > 本节只适用于 Docker Desktop Kubernetes 的 `travelmate` 命名空间。仓库根目录 `.env` 仅供 `start.ps1` 等本地开发脚本使用，**不会被已部署的 Kubernetes Pod 读取**。
@@ -416,10 +517,16 @@ kubectl -n travelmate rollout status deployment/travelmate-frontend
 
 | 配置位置 | 内容 | 修改方式 |
 | --- | --- | --- |
-| [`deploy/k8s/configmap.yaml`](deploy/k8s/configmap.yaml) → `travelmate-config` | 非敏感参数，如数据库地址、Redis 地址、上传目录和 CORS 来源 | 修改 YAML 后执行 `kubectl apply -k deploy/k8s`，再重启后端 |
+| [`deploy/k8s/configmap.yaml`](deploy/k8s/configmap.yaml) → `travelmate-config` | 非敏感参数，如数据库地址、Redis 地址、对象存储类型、登录时效和 CORS 来源 | 修改 overlay 后通过配置应用脚本滚动更新 |
 | Kubernetes Secret `travelmate-secrets` | `mysql-root-password`、`mysql-password`、`jwt-secret`、`admin-register-secret`、`deepseek-api-key` | 使用 `kubectl patch` 更新指定键，避免把值写入仓库 |
 
 `travelmate-config` 会整体注入后端容器环境变量；Secret 中的 `mysql-password` 被注入后端的 `SPRING_DATASOURCE_PASSWORD`，其余密钥分别注入 `JWT_SECRET`、`ADMIN_REGISTER_SECRET` 与 `DEEPSEEK_API_KEY`。可安全检查 Secret 是否存在（命令不会打印真实值）：
+
+Kubernetes 环境已分层：`deploy/k8s` 是兼容旧部署的基础清单，`deploy/k8s-overlays/local` 使用本地 MinIO 并解除后端对共享 uploads PVC 的挂载，`deploy/k8s-overlays/server` 使用外部 S3、ClusterIP、Ingress 和 PodDisruptionBudget。修改非敏感配置后使用以下脚本，脚本会计算配置 hash 并触发后端滚动更新：
+
+```powershell
+.\scripts\cd\Apply-TravelMateConfiguration.ps1 -Environment local
+```
 
 ```powershell
 kubectl describe secret travelmate-secrets -n travelmate
@@ -467,7 +574,27 @@ kubectl get pods -n travelmate
 
 修改管理员注册密钥或 JWT 密钥时复用同一流程，只把脚本中的 `deepseek-api-key` 分别改为 `admin-register-secret` 或 `jwt-secret`。修改 `jwt-secret` 会让所有现有登录 Token 失效，用户需要重新登录。
 
-> **数据库密码例外：** 不要仅更新 `mysql-password` 或 `mysql-root-password`。MySQL 数据卷中已保存 `travelmate` 和 `root` 用户的实际认证密码；只更新 Secret 会导致容器配置与数据库账号不一致，后端将无法连接数据库。必须先在 MySQL 内完成账号密码轮换，再更新对应 Secret，并重启后端；请在维护窗口内单独执行和验证。
+启用管理员初始化时，`ADMIN_REGISTER_EXPIRES_AT` 必须填写 ISO-8601 UTC 时间，例如 `2026-09-01T03:00:00Z`；不要设置长期有效窗口。创建成功、过期或失败结果可在 `admin_bootstrap_audit` 中审计，但表中不会记录原始密钥。
+
+> **数据库密码例外：** 不要仅更新 `mysql-password` 或 `mysql-root-password`。MySQL 数据卷中已保存 `travelmate` 和 `root` 用户的实际认证密码；只更新 Secret 会导致容器配置与数据库账号不一致，后端将无法连接数据库。
+
+应用数据库密码使用专用脚本轮换。脚本先核对数据库与 Secret 是否一致，再修改 MySQL 用户、验证新密码、更新 Secret 并滚动两个后端副本；任一步失败会尽可能恢复原状态，且不会打印密码：
+
+```powershell
+# 交互输入新密码
+.\scripts\cd\Rotate-TravelMateDatabasePassword.ps1
+
+# 或生成新的强随机密码
+.\scripts\cd\Rotate-TravelMateDatabasePassword.ps1 -Generate
+```
+
+应在维护窗口执行。完成后重启 MySQL Pod，使容器环境变量快照与 Secret 一致；该操作不会删除 PVC：
+
+```powershell
+kubectl delete pod travelmate-mysql-0 -n travelmate
+kubectl wait --for=condition=Ready pod/travelmate-mysql-0 -n travelmate --timeout=180s
+kubectl rollout status deployment/travelmate-backend -n travelmate
+```
 
 图片或种子数据有改动时，额外运行：
 

@@ -93,6 +93,7 @@ import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Present } from "@element-plus/icons-vue";
 import request from "@/utils/request";
+import { getAccessToken } from "@/utils/authToken";
 import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
@@ -132,7 +133,7 @@ const fetchAvailable = async () => {
 };
 
 const fetchMy = async () => {
-  if (!localStorage.getItem("token")) {
+  if (!getAccessToken()) {
     myCoupons.value = [];
     return;
   }

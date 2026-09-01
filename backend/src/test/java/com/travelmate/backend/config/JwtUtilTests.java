@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class JwtUtilTests {
@@ -21,11 +22,12 @@ class JwtUtilTests {
         JwtUtil issuer = new JwtUtil(SHARED_SECRET);
         JwtUtil verifier = new JwtUtil(SHARED_SECRET);
 
-        String token = issuer.generateToken(42L, "alice", 1);
+        String token = issuer.generateToken(42L, "alice", 1, 3);
 
         assertEquals("alice", verifier.extractUsername(token));
         assertEquals(42L, verifier.extractPrincipal(token).userId());
         assertEquals(1, verifier.extractPrincipal(token).role());
+        assertEquals(3, verifier.extractPrincipal(token).tokenVersion());
     }
 
     @Test
@@ -34,6 +36,16 @@ class JwtUtilTests {
         JwtUtil verifier = new JwtUtil(OTHER_SECRET);
 
         assertThrows(JwtException.class, () -> verifier.extractUsername(issuer.generateToken("alice")));
+    }
+
+    @Test
+    void tokensIssuedInTheSameSecondAreStillUnique() {
+        JwtUtil issuer = new JwtUtil(SHARED_SECRET);
+
+        String first = issuer.generateToken(42L, "alice", 0, 0);
+        String second = issuer.generateToken(42L, "alice", 0, 0);
+
+        assertNotEquals(first, second);
     }
 
     @Test

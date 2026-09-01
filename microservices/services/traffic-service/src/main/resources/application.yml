@@ -20,6 +20,8 @@ app:
     identity-connect-timeout-ms: ${IDENTITY_CONNECT_TIMEOUT_MS:1000}
     identity-read-timeout-ms: ${IDENTITY_READ_TIMEOUT_MS:2000}
     local-url: ${LOCAL_SERVICE_URL:http://127.0.0.1:8083}
+    local-connect-timeout-ms: ${LOCAL_CONNECT_TIMEOUT_MS:1000}
+    local-read-timeout-ms: ${LOCAL_READ_TIMEOUT_MS:2000}
     notification-url: ${AI_SERVICE_URL:http://127.0.0.1:8084}
   outbox.dispatcher:
     enabled: ${OUTBOX_DISPATCHER_ENABLED:false}

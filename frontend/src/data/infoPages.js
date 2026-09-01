@@ -56,7 +56,7 @@ export const infoPages = {
       {
         title: "本地存储",
         body:
-          "前端会把登录 token 和用户基础信息保存在 localStorage，用于维持登录状态和路由权限判断。用户退出登录后会清除相关登录信息。",
+          "前端只在内存中保存短期 access token，页面刷新后通过 HttpOnly refresh cookie 静默恢复登录；用户退出后服务端会撤销 refresh session。",
       },
       {
         title: "数据保护",

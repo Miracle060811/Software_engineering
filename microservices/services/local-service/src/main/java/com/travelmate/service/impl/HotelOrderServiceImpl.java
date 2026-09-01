@@ -1,0 +1,262 @@
+package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travelmate.dto.HotelOrderCreateDTO;
+import com.travelmate.entity.Hotel;
+import com.travelmate.entity.HotelOrder;
+import com.travelmate.entity.HotelRoom;
+import com.travelmate.mapper.HotelMapper;
+import com.travelmate.mapper.HotelOrderMapper;
+import com.travelmate.mapper.HotelRoomMapper;
+import com.travelmate.service.CouponService;
+import com.travelmate.service.HotelOrderService;
+import com.travelmate.service.HotelRoomStockService;
+import com.travelmate.integration.NotificationGateway;
+import com.travelmate.service.StockPreDeductResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class HotelOrderServiceImpl extends ServiceImpl<HotelOrderMapper, HotelOrder>
+        implements HotelOrderService {
+
+    @Autowired
+    private HotelRoomMapper hotelRoomMapper;
+
+    @Autowired
+    private HotelMapper hotelMapper;
+
+    @Autowired
+    private HotelRoomStockService hotelRoomStockService;
+
+    @Autowired
+    private NotificationGateway notificationGateway;
+
+    @Autowired
+    private CouponService couponService;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String createOrder(Long userId, HotelOrderCreateDTO dto) {
+        validateCreateRequest(dto);
+
+        // 1. 检查日期合法性
+        LocalDate checkIn = dto.getCheckInDate();
+        LocalDate checkOut = dto.getCheckOutDate();
+
+        Hotel hotel = hotelMapper.selectById(dto.getHotelId());
+        if (hotel == null || hotel.getStatus() == null || hotel.getStatus() != 1) {
+            throw new RuntimeException("酒店不存在或已停业");
+        }
+
+        // 2. 查询房型信息
+        HotelRoom room = hotelRoomMapper.selectById(dto.getRoomId());
+        if (room == null || room.getStatus() == null || room.getStatus() != 1) {
+            throw new RuntimeException("房型不存在或已下线");
+        }
+        if (!room.getHotelId().equals(dto.getHotelId())) {
+            throw new RuntimeException("房型与酒店不匹配");
+        }
+
+        int roomCount = normalizeRoomCount(dto.getRoomCount());
+        StockPreDeductResult preDeductResult = hotelRoomStockService.preDeductRoom(dto.getRoomId(),
+                room.getAvailableRooms(), roomCount);
+        if (preDeductResult == StockPreDeductResult.NO_STOCK) {
+            throw new RuntimeException("该房型暂无可用房间，预订失败");
+        }
+
+        try {
+            int updated = hotelRoomMapper.deductRoom(dto.getRoomId(), roomCount);
+            if (updated == 0) {
+                throw new RuntimeException("该房型暂无可用房间，预订失败");
+            }
+
+            long nights = checkOut.toEpochDay() - checkIn.toEpochDay();
+            if (room.getPrice() == null) {
+                throw new RuntimeException("房型价格缺失，暂不可预订");
+            }
+            BigDecimal amount = room.getPrice()
+                    .multiply(BigDecimal.valueOf(nights))
+                    .multiply(BigDecimal.valueOf(roomCount));
+            BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), amount, "hotel");
+
+            HotelOrder order = new HotelOrder();
+            String orderNo = "HT" + System.currentTimeMillis()
+                    + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+            order.setOrderNo(orderNo);
+            order.setUserId(userId);
+            order.setHotelId(dto.getHotelId());
+            order.setRoomId(dto.getRoomId());
+            order.setHotelName(hotel.getName());
+            order.setRoomType(room.getRoomType());
+            order.setRoomCount(roomCount);
+            order.setCheckInDate(checkIn);
+            order.setCheckOutDate(checkOut);
+            order.setNights((int) nights);
+            order.setGuestName(dto.getGuestName());
+            order.setGuestPhone(dto.getGuestPhone());
+            order.setAmount(payableAmount);
+            order.setStatus(0);
+            order.setCreateTime(LocalDateTime.now());
+
+            if (!save(order)) {
+                throw new RuntimeException("订单创建失败，请稍后重试");
+            }
+
+            notificationGateway.publish(
+                    userId,
+                    "hotel_order",
+                    "酒店订单已创建",
+                    String.format("您的酒店订单 %s 已创建，请在15分钟内完成支付。", orderNo),
+                    "/my-orders?tab=hotel");
+
+            return orderNo;
+        } catch (Exception e) {
+            if (preDeductResult == StockPreDeductResult.DEDUCTED_IN_REDIS) {
+                hotelRoomStockService.rollbackPreDeduct(dto.getRoomId(), roomCount);
+            }
+            throw e;
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean payOrder(Long userId, String orderNo) {
+        HotelOrder order = getOne(new LambdaQueryWrapper<HotelOrder>()
+                .eq(HotelOrder::getOrderNo, orderNo)
+                .eq(HotelOrder::getUserId, userId));
+
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (order.getStatus() != 0) {
+            throw new RuntimeException("订单状态异常，无法支付");
+        }
+
+        int updated = baseMapper.markPaid(userId, orderNo);
+        if (updated == 0) {
+            throw new RuntimeException("订单状态已变化，请刷新后重试");
+        }
+
+        notificationGateway.publish(
+                userId,
+                "hotel_order",
+                "酒店订单支付成功",
+                String.format("订单 %s 已支付成功，祝您旅途愉快。", orderNo),
+                "/my-orders?tab=hotel");
+
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean cancelOrder(Long userId, String orderNo) {
+        HotelOrder order = getOne(new LambdaQueryWrapper<HotelOrder>()
+                .eq(HotelOrder::getOrderNo, orderNo)
+                .eq(HotelOrder::getUserId, userId));
+
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (order.getStatus() != 0) {
+            throw new RuntimeException("只有待支付的订单才能取消");
+        }
+
+        // 1. 原子修改订单状态为已取消，防止重复取消多次归还库存。
+        int updated = baseMapper.markCancelledFromPending(userId, orderNo);
+        if (updated == 0) {
+            throw new RuntimeException("订单状态已变化，请刷新后重试");
+        }
+
+        // 2. 归还房间库存
+        hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());
+        hotelRoomStockService.syncWithDatabase(order.getRoomId());
+        notificationGateway.publish(
+                userId,
+                "hotel_order",
+                "酒店订单已取消",
+                String.format("订单 %s 已取消，库存已自动归还。", orderNo),
+                "/my-orders?tab=hotel");
+
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean requestRefund(Long userId, String orderNo) {
+        HotelOrder order = getOne(new LambdaQueryWrapper<HotelOrder>()
+                .eq(HotelOrder::getOrderNo, orderNo)
+                .eq(HotelOrder::getUserId, userId));
+
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (order.getStatus() != 1) {
+            throw new RuntimeException("只有已支付且未入住的酒店订单可以申请退款");
+        }
+
+        int updated = baseMapper.markRefundRequested(userId, orderNo);
+        if (updated == 0) {
+            throw new RuntimeException("订单状态已变化，请刷新后重试");
+        }
+
+        notificationGateway.publish(
+                userId,
+                "hotel_order",
+                "酒店退款申请已提交",
+                String.format("订单 %s 已提交退款申请，请等待管理员处理。", orderNo),
+                "/my-orders?tab=hotel");
+
+        return true;
+    }
+
+    @Override
+    public HotelOrder getOrderDetail(Long userId, String orderNo) {
+        return getOne(new LambdaQueryWrapper<HotelOrder>()
+                .eq(HotelOrder::getOrderNo, orderNo)
+                .eq(HotelOrder::getUserId, userId));
+    }
+
+    @Override
+    public List<HotelOrder> getUserOrders(Long userId) {
+        return list(new LambdaQueryWrapper<HotelOrder>()
+                .eq(HotelOrder::getUserId, userId)
+                .orderByDesc(HotelOrder::getCreateTime));
+    }
+
+    private void validateCreateRequest(HotelOrderCreateDTO dto) {
+        if (dto == null || dto.getHotelId() == null) {
+            throw new RuntimeException("请选择酒店");
+        }
+        if (dto.getRoomId() == null) {
+            throw new RuntimeException("请选择房型");
+        }
+        if (dto.getCheckInDate() == null || dto.getCheckOutDate() == null
+                || !dto.getCheckOutDate().isAfter(dto.getCheckInDate())) {
+            throw new RuntimeException("入住/退房日期不合法");
+        }
+        if (!StringUtils.hasText(dto.getGuestName())) {
+            throw new RuntimeException("入住人姓名不能为空");
+        }
+        if (!StringUtils.hasText(dto.getGuestPhone())) {
+            throw new RuntimeException("联系电话不能为空");
+        }
+    }
+
+    private int normalizeRoomCount(Integer roomCount) {
+        int count = roomCount == null ? 1 : roomCount;
+        if (count <= 0 || count > 10) {
+            throw new RuntimeException("预订房间数必须在1-10之间");
+        }
+        return count;
+    }
+}

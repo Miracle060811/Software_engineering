@@ -19,12 +19,27 @@ management:
           include: readinessState,db,redis
 
 app:
+  environment: ${APP_ENV:local}
   upload-dir: ${UPLOAD_DIR:uploads}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000,http://82.156.91.79:42356}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
   security:
     jwt-secret: ${JWT_SECRET:}
+    jwt-access-token-minutes: ${JWT_ACCESS_TOKEN_MINUTES:30}
+    refresh-token-days: ${REFRESH_TOKEN_DAYS:14}
+    refresh-cookie-secure: ${REFRESH_COOKIE_SECURE:false}
+    admin-register-enabled: ${ADMIN_REGISTER_ENABLED:false}
     admin-register-secret: ${ADMIN_REGISTER_SECRET:}
+    admin-register-expires-at: ${ADMIN_REGISTER_EXPIRES_AT:}
+  storage:
+    type: ${STORAGE_TYPE:local}
+    s3:
+      endpoint: ${S3_ENDPOINT:}
+      region: ${S3_REGION:us-east-1}
+      bucket: ${S3_BUCKET:travelmate}
+      access-key: ${S3_ACCESS_KEY:}
+      secret-key: ${S3_SECRET_KEY:}
+      public-base-url: ${S3_PUBLIC_BASE_URL:}
 
 spring:
   lifecycle:

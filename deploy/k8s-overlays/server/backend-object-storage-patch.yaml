@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: travelmate-backend
+spec:
+  template:
+    spec:
+      containers:
+        - name: backend
+          volumeMounts:
+            - $patch: delete
+              name: uploads
+      volumes:
+        - $patch: delete
+          name: uploads

@@ -5,6 +5,7 @@ describe("request.js", () => {
   let mockAxiosCreate;
   let mockInterceptorsRequest;
   let mockInterceptorsResponse;
+  let authToken;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -38,6 +39,7 @@ describe("request.js", () => {
     }));
 
     _request = (await import("@/utils/request")).default;
+    authToken = await import("@/utils/authToken");
   });
 
   describe("axios instance creation", () => {
@@ -55,7 +57,7 @@ describe("request.js", () => {
   describe("request interceptor", () => {
     it("adds Authorization header when token exists", () => {
       const setTokenInterceptor = mockInterceptorsRequest.use.mock.calls[0][0];
-      localStorage.setItem("token", "test-token-123");
+      authToken.setAccessToken("test-token-123");
 
       const config = { headers: {} };
       const result = setTokenInterceptor(config);
@@ -65,7 +67,7 @@ describe("request.js", () => {
 
     it("does not add Authorization header when no token", () => {
       const setTokenInterceptor = mockInterceptorsRequest.use.mock.calls[0][0];
-      localStorage.removeItem("token");
+      authToken.clearAccessToken();
 
       const config = { headers: {} };
       const result = setTokenInterceptor(config);
@@ -119,15 +121,16 @@ describe("request.js", () => {
     });
 
     it("handles 401 status by clearing auth and redirecting", async () => {
+      authToken.setAccessToken("expired-token");
       const error = { response: { status: 401 } };
       await expect(errorInterceptor(error)).rejects.toBeDefined();
-      expect(localStorage.getItem("token")).toBeNull();
+      expect(authToken.getAccessToken()).toBe("");
     });
 
     it("handles 403 status similarly to 401", async () => {
       const error = { response: { status: 403 } };
       await expect(errorInterceptor(error)).rejects.toBeDefined();
-      expect(localStorage.getItem("token")).toBeNull();
+      expect(authToken.getAccessToken()).toBe("");
     });
 
     it("handles network timeout gracefully", async () => {
