@@ -70,6 +70,17 @@ class RateLimiterInterceptorTests {
     }
 
     @Test
+    void bypassesRateLimitWhenDisabledForControlledAcceptanceEnvironment() throws Exception {
+        ReflectionTestUtils.setField(interceptor, "rateLimitEnabled", false);
+
+        HandlerMethod handler = handlerWithRateLimiter(3, 1);
+        boolean result = interceptor.preHandle(request, response, handler);
+
+        assertThat(result).isTrue();
+        verify(redisTemplate, never()).opsForValue();
+    }
+
+    @Test
     void blocksRequestWhenRateLimitExceeded() throws Exception {
         when(valueOperations.increment(anyString())).thenReturn(6L);
 

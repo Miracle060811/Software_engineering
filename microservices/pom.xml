@@ -18,6 +18,8 @@
         <module>services/traffic-service</module>
         <module>services/local-service</module>
         <module>services/ai-service</module>
+        <module>services/community-service</module>
+        <module>services/ops-service</module>
     </modules>
     <properties>
         <java.version>21</java.version>

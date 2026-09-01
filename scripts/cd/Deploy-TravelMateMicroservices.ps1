@@ -78,6 +78,14 @@ $serviceSpecs = [ordered]@{
         Image = "ghcr.io/miracle060811/travelmate-ai-service"
         Manifest = "ai-service.yaml"
     }
+    "community-service" = [ordered]@{
+        Image = "ghcr.io/miracle060811/travelmate-community-service"
+        Manifest = "community-service.yaml"
+    }
+    "ops-service" = [ordered]@{
+        Image = "ghcr.io/miracle060811/travelmate-ops-service"
+        Manifest = "ops-service.yaml"
+    }
 }
 
 $release = Get-Content -LiteralPath $ReleaseEvidencePath -Raw | ConvertFrom-Json
@@ -94,7 +102,7 @@ if ([string]$release.tag -ne "sha-$releaseCommit") {
 
 $records = @($release.images)
 if ($records.Count -ne $serviceSpecs.Count) {
-    throw "Release evidence must contain exactly four service images"
+    throw "Release evidence must contain exactly six service images"
 }
 $imageRecords = @{}
 foreach ($record in $records) {
@@ -144,7 +152,7 @@ if ($secretKeys -notcontains "internal-service-token") {
 }
 
 $schemaArguments = @("create", "configmap", "travelmate-microservice-schemas", "-n", $Namespace)
-foreach ($service in @("identity", "traffic", "local", "ai")) {
+foreach ($service in @("identity", "traffic", "local", "ai", "community", "ops")) {
     foreach ($kind in @("schema", "seed")) {
         $fileName = "$service-$kind.sql"
         $filePath = Join-Path $schemaDirectory $fileName
@@ -240,7 +248,7 @@ $renderedPath = Join-Path $EvidenceDirectory "microservices-rendered.yaml"
 $rendered | Set-Content -LiteralPath $renderedPath -Encoding utf8
 $rendered | & kubectl --context $KubeContext apply -f -
 if ($LASTEXITCODE -ne 0) {
-    throw "Unable to apply the four microservice Kubernetes resources"
+    throw "Unable to apply the six microservice Kubernetes resources"
 }
 
 $imageSummary = [System.Collections.Generic.List[string]]::new()
@@ -261,4 +269,4 @@ foreach ($service in $serviceSpecs.Keys) {
 $imageSummary | Set-Content -LiteralPath (Join-Path $EvidenceDirectory "microservice-images.txt") -Encoding utf8
 Copy-Item -LiteralPath $ReleaseEvidencePath -Destination (Join-Path $EvidenceDirectory "microservice-release.json") -Force
 
-Write-Output "Deployed four microservices for commit $releaseCommit from immutable GHCR digests."
+Write-Output "Deployed six microservices for commit $releaseCommit from immutable GHCR digests."

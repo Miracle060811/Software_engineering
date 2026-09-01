@@ -12,6 +12,7 @@ app:
   security.jwt-secret: ${JWT_SECRET:}
   integration.mode: http
   internal-service-token: ${INTERNAL_SERVICE_TOKEN}
+  services.identity-url: ${IDENTITY_SERVICE_URL:http://127.0.0.1:8081}
 management:
   endpoints.web.exposure.include: health,info
   endpoint.health.probes.enabled: true

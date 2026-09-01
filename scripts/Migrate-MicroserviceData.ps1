@@ -11,10 +11,14 @@ param(
     [int]$TrafficPort = 3308,
     [int]$LocalPort = 3309,
     [int]$AiPort = 3310,
+    [int]$CommunityPort = 3311,
+    [int]$OpsPort = 3312,
     [string]$IdentityPassword = $env:IDENTITY_DB_PASSWORD,
     [string]$TrafficPassword = $env:TRAFFIC_DB_PASSWORD,
     [string]$LocalPassword = $env:LOCAL_DB_PASSWORD,
     [string]$AiPassword = $env:AI_DB_PASSWORD,
+    [string]$CommunityPassword = $env:COMMUNITY_DB_PASSWORD,
+    [string]$OpsPassword = $env:OPS_DB_PASSWORD,
 
     [switch]$Execute,
     [string]$ConfirmationToken
@@ -56,6 +60,20 @@ $services = [ordered]@{
         Port = $AiPort
         Password = $AiPassword
         Tables = @('tm_ai_plan', 'tm_ai_chat', 'tm_notification', 'tm_private_message', 'tm_private_contact')
+    }
+    community = [ordered]@{
+        Database = 'travelmate_community'
+        User = 'travelmate_community_app'
+        Port = $CommunityPort
+        Password = $CommunityPassword
+        Tables = @('tm_post', 'tm_comment', 'tm_like')
+    }
+    ops = [ordered]@{
+        Database = 'travelmate_ops'
+        User = 'travelmate_ops_app'
+        Port = $OpsPort
+        Password = $OpsPassword
+        Tables = @('sys_log', 'sys_sensitive_word')
     }
 }
 

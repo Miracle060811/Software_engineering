@@ -57,6 +57,8 @@ $services = [ordered]@{
         'tm_ai_plan', 'tm_ai_chat', 'tm_notification',
         'tm_private_message', 'tm_private_contact', 'tm_ai_consumed_event'
     )
+    community = @('tm_post', 'tm_comment', 'tm_like')
+    ops       = @('sys_log', 'sys_sensitive_word')
 }
 
 $databases = @{
@@ -64,6 +66,8 @@ $databases = @{
     traffic  = 'travelmate_traffic'
     local    = 'travelmate_local'
     ai       = 'travelmate_ai'
+    community = 'travelmate_community'
+    ops       = 'travelmate_ops'
 }
 
 # Extract only self-contained lookup data required by real E2E scenarios.
@@ -73,6 +77,8 @@ $seedTables = @{
     traffic  = @('tm_flight', 'tm_train', 'tm_price_history')
     local    = @('tm_hotel', 'tm_hotel_room', 'tm_attraction', 'tm_tour_product', 'tm_tour_product_step', 'tm_coupon')
     ai       = @()
+    community = @('tm_post')
+    ops       = @('sys_sensitive_word')
 }
 
 $owners = @{}

@@ -1,6 +1,6 @@
 # TravelMate（伴游）出行旅游平台
 
-TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划—资源预订—行中服务—行后分享”提供一体化旅行体验。当前仓库以可本地运行、可自动化验证的前后端单体作为回归基线，并已开始并行建设四个独立微服务；它不是接入真实支付、出票或商用库存的生产 OTA。
+TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划—资源预订—行中服务—行后分享”提供一体化旅行体验。当前仓库以可本地运行、可自动化验证的前后端单体作为回归基线，并已建立六个独立微服务；它不是接入真实支付、出票或商用库存的生产 OTA。
 
 ## 当前能力
 
@@ -17,9 +17,9 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 
 ## 微服务迁移状态
 
-第一批 `identity-service`、`traffic-service`、`local-service`、`ai-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。交通服务跨域读取旅客和优惠券时已改用内部 HTTP 接口，不再直接打包对应 Mapper；AI 服务已实现通知事件的幂等消费；单体 `backend` 继续保留，便于迁移期间做功能回归。
+`identity-service`、`traffic-service`、`local-service`、`ai-service`、`community-service`、`ops-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。跨域读取改用内部 HTTP 接口，AI 服务覆盖通知、行程、对话和私信；单体 `backend` 继续保留，便于迁移期间做功能回归。
 
-本阶段仍属于渐进式迁移：服务暂时选择性复用单体源码，四服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；真实数据切换验收、AI 其余业务、API Gateway 与生产部署编排尚未完成。中期设计基线见 [`document/TravelMate中期验收基线.md`](document/TravelMate中期验收基线.md)。
+本阶段仍属于渐进式迁移：六服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；六服务 Kubernetes/PVC/HPA 清单与本地部署、扩缩容实验脚本已经加入。真实数据切换验收、Docker Desktop Kubernetes 实机扩缩容证据、API Gateway 与生产级编排仍是后续工作。中期设计基线见 [`document/TravelMate中期验收基线.md`](document/TravelMate中期验收基线.md)。
 
 ## 技术栈
 
@@ -64,9 +64,10 @@ ADMIN_REGISTER_SECRET="请替换为本地强随机值"
 
 - `DEEPSEEK_API_KEY` 可留空；行程规划和客服会使用本地降级结果。需要真实 AI 响应时再填入有效密钥。
 - `JWT_SECRET` 在不同实例间必须保持一致，否则登录令牌会随机失效；模板包含 PowerShell 生成命令。
+- `RATE_LIMIT_ENABLED` 正式环境必须保持 `true`；仅可在隔离的自动化验收环境临时设为 `false`，避免整套 E2E 共用单一 Runner IP 时互相限流。
+- Flyway V7 会禁用仍使用公开默认密码哈希的历史 `admin` 种子账号；已修改密码的管理员不受影响。没有有效管理员时，通过限时、一次性的管理员初始化入口创建首个管理员。
 - `ADMIN_REGISTER_SECRET` 仅用于创建管理员账号；留空会关闭管理员注册入口。
 - 已提交模板不提供 `S3_SECRET_KEY` 示例值；本地运行 `Initialize-TravelMateLocalEnv.ps1` 自动生成，服务器必须通过安全渠道填写实际值。
-- `RATE_LIMIT_ENABLED` 默认必须为 `true`；仅隔离的自动化测试环境可临时设为 `false`，不要在公网部署中关闭限流。
 - `.env` 已被 Git 忽略，不要把密码、Token 或 API Key 写进源码、README 或提交记录。
 
 DeepSeek 的网关、模型和推理选项可继续使用 [`.env.example`](.env.example) 中的默认配置。

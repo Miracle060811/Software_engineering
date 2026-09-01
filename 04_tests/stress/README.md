@@ -12,6 +12,14 @@
 
 三个场景对应任务书「2 到 3 个主要接口」的单体 vs 微服务性能对比要求，也是 HPA 自动扩缩容实验的负载源。
 
+HPA 自动实验入口：
+
+```powershell
+.\scripts\experiments\Invoke-MicroserviceHpaExperiment.ps1
+```
+
+该脚本要求微服务已通过 `scripts/cd/Deploy-Microservices.ps1` 部署，并且 Metrics Server 与 k6 可用。它会保存扩容前、中、后状态；正式结论填写 `HPA实验记录模板.md`，未实际触发扩缩容前不能标记通过。
+
 ## 2. 环境
 
 - k6 >= 0.50（安装：`winget install grafana.k6` 或 https://k6.io/docs/get-started/installation/）
