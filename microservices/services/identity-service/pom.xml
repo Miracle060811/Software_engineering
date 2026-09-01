@@ -17,17 +17,6 @@
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
     </dependencies>
     <build><plugins>
-        <plugin><groupId>org.codehaus.mojo</groupId><artifactId>build-helper-maven-plugin</artifactId><version>3.6.1</version><executions><execution><id>legacy-identity-source</id><phase>generate-sources</phase><goals><goal>add-source</goal></goals><configuration><sources><source>${project.basedir}/../../../backend/src/main/java</source></sources></configuration></execution></executions></plugin>
-        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><configuration><includes>
-            <include>com/travelmate/microservices/identity/**</include>
-            <include>com/travelmate/backend/controller/UserController.java</include><include>com/travelmate/backend/service/UserService.java</include><include>com/travelmate/backend/entity/User.java</include><include>com/travelmate/backend/mapper/UserMapper.java</include>
-            <include>com/travelmate/backend/config/JwtUtil.java</include><include>com/travelmate/backend/config/JwtFilter.java</include><include>com/travelmate/backend/config/SecurityConfig.java</include><include>com/travelmate/backend/config/CorsConfig.java</include>
-            <include>com/travelmate/controller/PassengerController.java</include><include>com/travelmate/controller/FollowController.java</include>
-            <include>com/travelmate/entity/Passenger.java</include><include>com/travelmate/entity/Follow.java</include><include>com/travelmate/mapper/PassengerMapper.java</include><include>com/travelmate/mapper/FollowMapper.java</include>
-            <include>com/travelmate/integration/PassengerGateway.java</include>
-            <include>com/travelmate/service/PassengerService.java</include><include>com/travelmate/service/FollowService.java</include><include>com/travelmate/service/impl/PassengerServiceImpl.java</include><include>com/travelmate/service/impl/FollowServiceImpl.java</include>
-            <include>com/travelmate/common/UserContext.java</include><include>com/travelmate/common/GlobalExceptionHandler.java</include><include>com/travelmate/config/MybatisPlusConfig.java</include>
-        </includes></configuration></plugin>
         <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId><configuration><mainClass>com.travelmate.microservices.identity.IdentityServiceApplication</mainClass></configuration></plugin>
     </plugins></build>
 </project>

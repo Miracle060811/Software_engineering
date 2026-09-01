@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.InetSocketAddress;
+import java.math.BigDecimal;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,7 +71,9 @@ class TrafficIdentityIntegrationTests {
                     "http://local.test",
                     "internal-test-token",
                     100,
-                    50);
+                    50,
+                    100,
+                    200);
 
             org.assertj.core.api.Assertions.assertThatThrownBy(
                             () -> timeoutGateway.findOwnedPassenger(9L, 7L))
@@ -86,6 +89,44 @@ class TrafficIdentityIntegrationTests {
     }
 
     @Test
+    void mapsLocalReadTimeoutToServiceUnavailable() throws Exception {
+        HttpServer delayedLocal = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        delayedLocal.createContext("/internal/local/coupons/redeem", exchange -> {
+            try {
+                Thread.sleep(300);
+                exchange.sendResponseHeaders(200, 0);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                exchange.close();
+            }
+        });
+        delayedLocal.start();
+        try {
+            TrafficIntegrationGateway timeoutGateway = new TrafficIntegrationGateway(
+                    RestClient.builder(),
+                    "http://identity.test",
+                    "http://127.0.0.1:" + delayedLocal.getAddress().getPort(),
+                    "internal-test-token",
+                    100,
+                    200,
+                    100,
+                    50);
+
+            org.assertj.core.api.Assertions.assertThatThrownBy(
+                            () -> timeoutGateway.redeem(7L, 3L, new BigDecimal("100.00"), "flight"))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .satisfies(error -> {
+                        ResponseStatusException response = (ResponseStatusException) error;
+                        assertThat(response.getStatusCode().value()).isEqualTo(503);
+                        assertThat(response.getReason()).isEqualTo("本地生活服务暂不可用，请稍后重试");
+                    });
+        } finally {
+            delayedLocal.stop(0);
+        }
+    }
+
+    @Test
     void springContextUsesTheProductionConstructor() {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
             context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("test", Map.of(
@@ -93,7 +134,9 @@ class TrafficIdentityIntegrationTests {
                     "app.services.local-url", "http://local.test",
                     "app.internal-service-token", "internal-test-token",
                     "app.services.identity-connect-timeout-ms", "100",
-                    "app.services.identity-read-timeout-ms", "200")));
+                    "app.services.identity-read-timeout-ms", "200",
+                    "app.services.local-connect-timeout-ms", "100",
+                    "app.services.local-read-timeout-ms", "200")));
             context.registerBean(RestClient.Builder.class, () -> RestClient.builder());
             context.register(TrafficIntegrationGateway.class);
 

@@ -15,26 +15,66 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.ExpectedCount.once;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 class LocalOutboxDispatcherTests {
 
     @Test
     @SuppressWarnings("unchecked")
+    void aiUnavailableKeepsEventPendingForRetry() {
+        LocalOutboxEventMapper mapper = mock(LocalOutboxEventMapper.class);
+        LocalOutboxEvent event = pendingEvent("event-local-retry", 0);
+        when(mapper.selectList(any(Wrapper.class))).thenReturn(List.of(event));
+        when(mapper.claim(event.getEventId())).thenReturn(1);
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(once(), requestTo("http://notify/internal/notifications/events"))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+        LocalOutboxDispatcher dispatcher = new LocalOutboxDispatcher(
+                mapper, new ObjectMapper(), builder, "http://notify", "service-token", 10, 3, 1, 60);
+
+        dispatcher.dispatchPending();
+
+        verify(mapper).markFailed(eq(event.getEventId()), eq(0), eq(1), any(LocalDateTime.class), anyString());
+        verify(mapper, never()).markPublished(anyString(), any(LocalDateTime.class));
+        server.verify();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void recoveredAiPublishesRetriedEventWithStableIdempotencyKey() {
+        LocalOutboxEventMapper mapper = mock(LocalOutboxEventMapper.class);
+        LocalOutboxEvent event = pendingEvent("event-local-recovery", 1);
+        when(mapper.selectList(any(Wrapper.class))).thenReturn(List.of(event));
+        when(mapper.claim(event.getEventId())).thenReturn(1);
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(once(), requestTo("http://notify/internal/notifications/events"))
+                .andExpect(header("Idempotency-Key", event.getEventId()))
+                .andRespond(withSuccess());
+        LocalOutboxDispatcher dispatcher = new LocalOutboxDispatcher(
+                mapper, new ObjectMapper(), builder, "http://notify", "service-token", 10, 3, 1, 60);
+
+        dispatcher.dispatchPending();
+
+        verify(mapper).markPublished(eq(event.getEventId()), any(LocalDateTime.class));
+        verify(mapper, never()).markFailed(anyString(), any(Integer.class), any(Integer.class),
+                any(LocalDateTime.class), anyString());
+        server.verify();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void movesEventToDeadLetterAfterMaximumRetries() {
         LocalOutboxEventMapper mapper = mock(LocalOutboxEventMapper.class);
-        LocalOutboxEvent event = new LocalOutboxEvent();
-        event.setId(1L);
-        event.setEventId("event-local-1");
-        event.setEventType("NotificationRequested");
-        event.setPayload("{\"userId\":9}");
-        event.setStatus(0);
-        event.setRetryCount(2);
-        event.setNextRetryTime(LocalDateTime.now().minusSeconds(1));
+        LocalOutboxEvent event = pendingEvent("event-local-1", 2);
         when(mapper.selectList(any(Wrapper.class))).thenReturn(List.of(event));
         when(mapper.claim(event.getEventId())).thenReturn(1);
         RestClient.Builder builder = RestClient.builder();
@@ -48,5 +88,17 @@ class LocalOutboxDispatcherTests {
 
         verify(mapper).markFailed(eq(event.getEventId()), eq(2), eq(3), any(LocalDateTime.class), anyString());
         server.verify();
+    }
+
+    private LocalOutboxEvent pendingEvent(String eventId, int retryCount) {
+        LocalOutboxEvent event = new LocalOutboxEvent();
+        event.setId(1L);
+        event.setEventId(eventId);
+        event.setEventType("NotificationRequested");
+        event.setPayload("{\"userId\":9}");
+        event.setStatus(0);
+        event.setRetryCount(retryCount);
+        event.setNextRetryTime(LocalDateTime.now().minusSeconds(1));
+        return event;
     }
 }

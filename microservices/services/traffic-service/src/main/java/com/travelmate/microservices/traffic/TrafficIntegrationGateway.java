@@ -8,9 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -28,9 +27,12 @@ public class TrafficIntegrationGateway implements PassengerGateway, CouponGatewa
                                      @Value("${app.services.local-url}") String localUrl,
                                      @Value("${app.internal-service-token}") String serviceToken,
                                      @Value("${app.services.identity-connect-timeout-ms:1000}") int connectTimeoutMs,
-                                     @Value("${app.services.identity-read-timeout-ms:2000}") int readTimeoutMs) {
-        this(buildIdentityClient(builder, identityUrl, connectTimeoutMs, readTimeoutMs),
-                builder.clone().baseUrl(localUrl).build(), serviceToken);
+                                     @Value("${app.services.identity-read-timeout-ms:2000}") int readTimeoutMs,
+                                     @Value("${app.services.local-connect-timeout-ms:1000}") int localConnectTimeoutMs,
+                                     @Value("${app.services.local-read-timeout-ms:2000}") int localReadTimeoutMs) {
+        this(buildClient(builder, identityUrl, connectTimeoutMs, readTimeoutMs, "身份"),
+                buildClient(builder, localUrl, localConnectTimeoutMs, localReadTimeoutMs, "本地生活"),
+                serviceToken);
     }
 
     TrafficIntegrationGateway(RestClient identityClient, RestClient localClient, String serviceToken) {
@@ -50,7 +52,9 @@ public class TrafficIntegrationGateway implements PassengerGateway, CouponGatewa
                     .body(PassengerSnapshot.class);
         } catch (HttpClientErrorException.NotFound e) {
             return null;
-        } catch (ResourceAccessException | HttpServerErrorException e) {
+        } catch (HttpClientErrorException e) {
+            throw e;
+        } catch (RestClientException e) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "身份服务暂不可用，请稍后重试", e);
         }
@@ -61,32 +65,41 @@ public class TrafficIntegrationGateway implements PassengerGateway, CouponGatewa
         if (userCouponId == null) {
             return amount;
         }
-        BigDecimal payable = localClient.post()
-                .uri("/internal/local/coupons/redeem")
-                .header("X-Internal-Token", serviceToken)
-                .body(new CouponRedemption(userId, userCouponId, amount, businessType))
-                .retrieve()
-                .body(BigDecimal.class);
-        if (payable == null) {
-            throw new IllegalStateException("优惠券服务未返回应付金额");
+        try {
+            BigDecimal payable = localClient.post()
+                    .uri("/internal/local/coupons/redeem")
+                    .header("X-Internal-Token", serviceToken)
+                    .body(new CouponRedemption(userId, userCouponId, amount, businessType))
+                    .retrieve()
+                    .body(BigDecimal.class);
+            if (payable == null) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                        "本地生活服务暂不可用，请稍后重试");
+            }
+            return payable;
+        } catch (HttpClientErrorException e) {
+            throw e;
+        } catch (RestClientException e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "本地生活服务暂不可用，请稍后重试", e);
         }
-        return payable;
     }
 
     private record CouponRedemption(Long userId, Long userCouponId, BigDecimal amount, String businessType) {
     }
 
-    private static RestClient buildIdentityClient(RestClient.Builder builder, String identityUrl,
-                                                  int connectTimeoutMs, int readTimeoutMs) {
+    private static RestClient buildClient(RestClient.Builder builder, String baseUrl,
+                                          int connectTimeoutMs, int readTimeoutMs,
+                                          String serviceName) {
         if (connectTimeoutMs <= 0 || readTimeoutMs <= 0) {
-            throw new IllegalArgumentException("身份服务超时时间必须大于 0");
+            throw new IllegalArgumentException(serviceName + "服务超时时间必须大于 0");
         }
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(connectTimeoutMs);
         requestFactory.setReadTimeout(readTimeoutMs);
         return builder.clone()
                 .requestFactory(requestFactory)
-                .baseUrl(identityUrl)
+                .baseUrl(baseUrl)
                 .build();
     }
 }
