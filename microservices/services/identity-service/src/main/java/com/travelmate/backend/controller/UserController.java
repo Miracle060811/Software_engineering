@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @CrossOrigin
 @RestController
 @RequestMapping("/user")
@@ -33,9 +35,15 @@ public class UserController {
 
     @PostMapping("/admin-register")
     public Result<String> adminRegister(
-            @RequestParam String username,
-            @RequestParam String password,
-            @RequestParam String secret) {
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String password,
+            @RequestParam(required = false) String secret,
+            @RequestBody(required = false) Map<String, String> body) {
+        if (body != null) {
+            if (!StringUtils.hasText(username)) username = body.get("username");
+            if (!StringUtils.hasText(password)) password = body.get("password");
+            if (!StringUtils.hasText(secret)) secret = body.get("secret");
+        }
         if (!StringUtils.hasText(adminRegisterSecret)) {
             return Result.error("管理员注册未启用");
         }

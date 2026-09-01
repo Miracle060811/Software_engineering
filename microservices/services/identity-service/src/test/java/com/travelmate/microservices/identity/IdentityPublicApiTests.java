@@ -20,13 +20,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class IdentityPublicApiTests {
     private UserService userService;
     private JwtUtil jwtUtil;
+    private UserController controller;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         userService = mock(UserService.class);
         jwtUtil = mock(JwtUtil.class);
-        UserController controller = new UserController();
+        controller = new UserController();
         ReflectionTestUtils.setField(controller, "userService", userService);
         ReflectionTestUtils.setField(controller, "jwtUtil", jwtUtil);
         ReflectionTestUtils.setField(controller, "adminRegisterSecret", "");
@@ -66,5 +67,17 @@ class IdentityPublicApiTests {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.username").value("api-user"))
                 .andExpect(jsonPath("$.data.password").doesNotExist());
+    }
+
+    @Test
+    void adminRegisterAcceptsJsonAndChecksConfiguredSecret() throws Exception {
+        ReflectionTestUtils.setField(controller, "adminRegisterSecret", "test-admin-secret");
+        when(userService.register("admin-user", "Password123!", 1)).thenReturn(true);
+
+        mockMvc.perform(post("/user/admin-register")
+                        .contentType("application/json")
+                        .content("{\"username\":\"admin-user\",\"password\":\"Password123!\",\"secret\":\"test-admin-secret\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
     }
 }
