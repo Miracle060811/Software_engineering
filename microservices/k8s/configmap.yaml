@@ -10,6 +10,8 @@ data:
   TRAFFIC_SERVICE_URL: http://traffic-service:8082
   LOCAL_SERVICE_URL: http://local-service:8083
   AI_SERVICE_URL: http://ai-service:8084
+  COMMUNITY_SERVICE_URL: http://community-service:8085
+  OPS_SERVICE_URL: http://ops-service:8086
   IDENTITY_CONNECT_TIMEOUT_MS: "1000"
   IDENTITY_READ_TIMEOUT_MS: "2000"
   OUTBOX_DISPATCHER_ENABLED: "true"

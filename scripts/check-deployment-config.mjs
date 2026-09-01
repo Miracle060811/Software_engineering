@@ -73,6 +73,8 @@ const microserviceK8sFiles = [
   ["traffic-service", 8082],
   ["local-service", 8083],
   ["ai-service", 8084],
+  ["community-service", 8085],
+  ["ops-service", 8086],
 ]
 for (const [service, port] of microserviceK8sFiles) {
   const relativePath = `deploy/k8s/${service}.yaml`
@@ -114,7 +116,7 @@ const ciWorkflow = read(".github/workflows/ci.yml")
 if (!/runs-on:[\s\S]*?travelmate-deploy[\s\S]*?timeout-minutes:\s*10/.test(ciWorkflow)) {
   fail("部署流水线未设置 YFan_deploy Runner 的 10 分钟超时")
 }
-for (const port of [8081, 8082, 8083, 8084]) {
+for (const port of [8081, 8082, 8083, 8084, 8085, 8086]) {
   if (!ciWorkflow.includes(`ServicePort = ${port}`)) fail(`部署后健康检查未覆盖端口 ${port}`)
 }
 
@@ -133,6 +135,8 @@ const requiredMicroserviceK8sFiles = [
   "traffic-service.yaml",
   "local-service.yaml",
   "ai-service.yaml",
+  "community-service.yaml",
+  "ops-service.yaml",
   "hpa.yaml",
 ]
 if (!fs.existsSync(microserviceK8sDir)) {
@@ -148,7 +152,7 @@ if (!fs.existsSync(microserviceK8sDir)) {
     }
   }
 
-  for (const service of ["identity", "traffic", "local", "ai"]) {
+  for (const service of ["identity", "traffic", "local", "ai", "community", "ops"]) {
     const manifest = read(`microservices/k8s/${service}-service.yaml`)
     if (!/\bkind:\s*Deployment\b/.test(manifest)) fail(`${service}-service.yaml 缺少 Deployment`)
     if (!/\bstartupProbe\s*:/.test(manifest)) fail(`${service}-service.yaml 缺少 startupProbe`)
@@ -162,18 +166,18 @@ if (!fs.existsSync(microserviceK8sDir)) {
   const databases = read("microservices/k8s/databases.yaml")
   const redis = read("microservices/k8s/redis.yaml")
   const hpa = read("microservices/k8s/hpa.yaml")
-  if ((databases.match(/\bvolumeClaimTemplates\s*:/g) || []).length !== 4) {
-    fail("databases.yaml 必须为四套 MySQL 分别声明 PVC 模板")
+  if ((databases.match(/\bvolumeClaimTemplates\s*:/g) || []).length !== 6) {
+    fail("databases.yaml 必须为六套 MySQL 分别声明 PVC 模板")
   }
   if ((redis.match(/\bvolumeClaimTemplates\s*:/g) || []).length !== 1) {
     fail("redis.yaml 必须声明持久化 PVC 模板")
   }
-  if ((hpa.match(/\bkind:\s*HorizontalPodAutoscaler\b/g) || []).length !== 4) {
-    fail("hpa.yaml 必须包含四个业务服务的 HPA")
+  if ((hpa.match(/\bkind:\s*HorizontalPodAutoscaler\b/g) || []).length !== 6) {
+    fail("hpa.yaml 必须包含六个业务服务的 HPA")
   }
   for (const [field, expected] of [["minReplicas", "2"], ["maxReplicas", "6"], ["averageUtilization", "60"]]) {
     const matches = hpa.match(new RegExp(`\\b${field}:\\s*${expected}\\b`, "g")) || []
-    if (matches.length !== 4) fail(`hpa.yaml 中 ${field}: ${expected} 应出现 4 次`)
+    if (matches.length !== 6) fail(`hpa.yaml 中 ${field}: ${expected} 应出现 6 次`)
   }
 }
 

@@ -1,6 +1,6 @@
 # TravelMate（伴游）出行旅游平台
 
-TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划—资源预订—行中服务—行后分享”提供一体化旅行体验。当前仓库以可本地运行、可自动化验证的前后端单体作为回归基线，并已开始并行建设四个独立微服务；它不是接入真实支付、出票或商用库存的生产 OTA。
+TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划—资源预订—行中服务—行后分享”提供一体化旅行体验。当前仓库以可本地运行、可自动化验证的前后端单体作为回归基线，并已建立六个独立微服务；它不是接入真实支付、出票或商用库存的生产 OTA。
 
 ## 当前能力
 
@@ -17,9 +17,9 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 
 ## 微服务迁移状态
 
-第一批 `identity-service`、`traffic-service`、`local-service`、`ai-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。交通服务跨域读取旅客和优惠券时已改用内部 HTTP 接口，不再直接打包对应 Mapper；AI 服务已实现通知事件的幂等消费；单体 `backend` 继续保留，便于迁移期间做功能回归。
+`identity-service`、`traffic-service`、`local-service`、`ai-service`、`community-service`、`ops-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。跨域读取改用内部 HTTP 接口，AI 服务覆盖通知、行程、对话和私信；单体 `backend` 继续保留，便于迁移期间做功能回归。
 
-本阶段仍属于渐进式迁移：服务暂时选择性复用单体源码，四服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；四服务 Kubernetes/PVC/HPA 清单与本地部署、扩缩容实验脚本已经加入并通过静态门禁，但尚未形成 Docker Desktop Kubernetes 实机运行证据；真实数据切换验收、AI 其余业务、API Gateway 与生产部署编排仍未完成。中期设计基线见 [`document/TravelMate中期验收基线.md`](document/TravelMate中期验收基线.md)。
+本阶段仍属于渐进式迁移：六服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；六服务 Kubernetes/PVC/HPA 清单与本地部署、扩缩容实验脚本已经加入。真实数据切换验收、Docker Desktop Kubernetes 实机扩缩容证据、API Gateway 与生产级编排仍是后续工作。中期设计基线见 [`document/TravelMate中期验收基线.md`](document/TravelMate中期验收基线.md)。
 
 ## 技术栈
 

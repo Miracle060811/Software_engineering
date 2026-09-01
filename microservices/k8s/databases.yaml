@@ -365,3 +365,187 @@ spec:
         resources:
           requests:
             storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: community-db
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: community-db
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: community-db
+spec:
+  serviceName: community-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: community-db
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: community-db
+        app.kubernetes.io/part-of: travelmate
+    spec:
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: mysql
+          image: mysql:8.4
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: travelmate_community
+            - name: MYSQL_USER
+              value: travelmate_community_app
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-microservices-secrets
+                  key: mysql-root-password
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-microservices-secrets
+                  key: community-db-password
+          startupProbe: &communityMysqlProbe
+            exec:
+              command: ["sh", "-ec", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\" --silent"]
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          readinessProbe: *communityMysqlProbe
+          livenessProbe:
+            <<: *communityMysqlProbe
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 750m
+              memory: 768Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+      volumes:
+        - name: init
+          configMap:
+            name: community-db-init
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ops-db
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: ops-db
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ops-db
+spec:
+  serviceName: ops-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ops-db
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ops-db
+        app.kubernetes.io/part-of: travelmate
+    spec:
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: mysql
+          image: mysql:8.4
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: travelmate_ops
+            - name: MYSQL_USER
+              value: travelmate_ops_app
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-microservices-secrets
+                  key: mysql-root-password
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-microservices-secrets
+                  key: ops-db-password
+          startupProbe: &opsMysqlProbe
+            exec:
+              command: ["sh", "-ec", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\" --silent"]
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          readinessProbe: *opsMysqlProbe
+          livenessProbe:
+            <<: *opsMysqlProbe
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 750m
+              memory: 768Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+      volumes:
+        - name: init
+          configMap:
+            name: ops-db-init
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

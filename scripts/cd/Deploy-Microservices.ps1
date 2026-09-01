@@ -64,6 +64,8 @@ $requiredSettings = @(
     "TRAFFIC_DB_PASSWORD",
     "LOCAL_DB_PASSWORD",
     "AI_DB_PASSWORD",
+    "COMMUNITY_DB_PASSWORD",
+    "OPS_DB_PASSWORD",
     "JWT_SECRET",
     "INTERNAL_SERVICE_TOKEN"
 )
@@ -90,6 +92,8 @@ $images = [ordered]@{
     "traffic-service" = "travelmate/traffic-service:$ImageTag"
     "local-service" = "travelmate/local-service:$ImageTag"
     "ai-service" = "travelmate/ai-service:$ImageTag"
+    "community-service" = "travelmate/community-service:$ImageTag"
+    "ops-service" = "travelmate/ops-service:$ImageTag"
 }
 
 if (-not $SkipBuild) {
@@ -114,6 +118,8 @@ $secretData = [ordered]@{
     "traffic-db-password" = ConvertTo-Base64 $settings["TRAFFIC_DB_PASSWORD"]
     "local-db-password" = ConvertTo-Base64 $settings["LOCAL_DB_PASSWORD"]
     "ai-db-password" = ConvertTo-Base64 $settings["AI_DB_PASSWORD"]
+    "community-db-password" = ConvertTo-Base64 $settings["COMMUNITY_DB_PASSWORD"]
+    "ops-db-password" = ConvertTo-Base64 $settings["OPS_DB_PASSWORD"]
     "jwt-secret" = ConvertTo-Base64 $settings["JWT_SECRET"]
     "internal-service-token" = ConvertTo-Base64 $settings["INTERNAL_SERVICE_TOKEN"]
     "admin-register-secret" = ConvertTo-Base64 $settings["ADMIN_REGISTER_SECRET"]
@@ -131,6 +137,8 @@ $databaseInit = [ordered]@{
     "traffic-db-init" = @("traffic-schema.sql", "traffic-seed.sql")
     "local-db-init" = @("local-schema.sql", "local-seed.sql")
     "ai-db-init" = @("ai-schema.sql", "ai-seed.sql")
+    "community-db-init" = @("community-schema.sql", "community-seed.sql")
+    "ops-db-init" = @("ops-schema.sql", "ops-seed.sql")
 }
 foreach ($configMapName in $databaseInit.Keys) {
     $files = $databaseInit[$configMapName]
@@ -156,7 +164,7 @@ foreach ($service in $images.Keys) {
     )
 }
 
-foreach ($statefulSet in @("identity-db", "traffic-db", "local-db", "ai-db", "redis")) {
+foreach ($statefulSet in @("identity-db", "traffic-db", "local-db", "ai-db", "community-db", "ops-db", "redis")) {
     Invoke-Checked "kubectl" @(
         "--context", $KubeContext, "rollout", "status", "statefulset/$statefulSet",
         "--namespace", $Namespace, "--timeout=10m"

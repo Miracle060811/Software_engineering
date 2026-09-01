@@ -10,6 +10,8 @@ resources:
   - traffic-service.yaml
   - local-service.yaml
   - ai-service.yaml
+  - community-service.yaml
+  - ops-service.yaml
   - hpa.yaml
 labels:
   - pairs:

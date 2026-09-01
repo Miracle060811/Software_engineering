@@ -12,6 +12,8 @@ data:
   IDENTITY_SERVICE_URL: http://identity-service:8081
   LOCAL_SERVICE_URL: http://local-service:8083
   AI_SERVICE_URL: http://ai-service:8084
+  COMMUNITY_SERVICE_URL: http://community-service:8085
+  OPS_SERVICE_URL: http://ops-service:8086
   OUTBOX_DISPATCHER_ENABLED: "true"
   MYBATIS_LOG_IMPL: org.apache.ibatis.logging.nologging.NoLoggingImpl
   JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70.0 -XX:+ExitOnOutOfMemoryError
@@ -23,3 +25,7 @@ data:
   LOCAL_DATASOURCE_USERNAME: travelmate_local_app
   AI_DATASOURCE_URL: jdbc:mysql://travelmate-mysql:3306/travelmate_ai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
   AI_DATASOURCE_USERNAME: travelmate_ai_app
+  COMMUNITY_DATASOURCE_URL: jdbc:mysql://travelmate-mysql:3306/travelmate_community?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+  COMMUNITY_DATASOURCE_USERNAME: travelmate_community_app
+  OPS_DATASOURCE_URL: jdbc:mysql://travelmate-mysql:3306/travelmate_ops?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+  OPS_DATASOURCE_USERNAME: travelmate_ops_app

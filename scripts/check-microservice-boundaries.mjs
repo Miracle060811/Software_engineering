@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const microservicesRoot = path.join(root, 'microservices');
-const services = ['identity', 'traffic', 'local', 'ai'];
+const services = ['identity', 'traffic', 'local', 'ai', 'community', 'ops'];
 const failures = [];
 
 const read = (relative) => fs.readFileSync(path.join(root, relative), 'utf8');
@@ -99,7 +99,12 @@ const requiredBoundaryFiles = [
   'microservices/services/traffic-service/src/main/java/com/travelmate/microservices/traffic/TrafficIntegrationGateway.java',
   'microservices/services/traffic-service/src/main/java/com/travelmate/microservices/traffic/TrafficOutboxNotificationGateway.java',
   'microservices/services/local-service/src/main/java/com/travelmate/microservices/local/LocalOutboxNotificationGateway.java',
-  'microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/InternalNotificationEventController.java'
+  'microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/InternalNotificationEventController.java',
+  'microservices/services/identity-service/src/main/java/com/travelmate/microservices/identity/InternalCommunityIdentityController.java',
+  'microservices/services/community-service/src/main/java/com/travelmate/microservices/community/InternalAdminCommunityController.java',
+  'microservices/services/local-service/src/main/java/com/travelmate/microservices/local/InternalAdminLocalController.java',
+  'microservices/services/traffic-service/src/main/java/com/travelmate/microservices/traffic/InternalAdminTrafficController.java',
+  'microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/InternalContentSafetyController.java'
 ];
 for (const required of requiredBoundaryFiles) {
   if (!exists(required)) failures.push(`缺少跨服务边界实现 ${required}`);

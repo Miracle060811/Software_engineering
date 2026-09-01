@@ -264,6 +264,8 @@ jobs:
           - traffic-service
           - local-service
           - ai-service
+          - community-service
+          - ops-service
 
     steps:
       - name: Checkout repository
@@ -707,6 +709,10 @@ jobs:
             image: ghcr.io/miracle060811/travelmate-local-service
           - service: ai-service
             image: ghcr.io/miracle060811/travelmate-ai-service
+          - service: community-service
+            image: ghcr.io/miracle060811/travelmate-community-service
+          - service: ops-service
+            image: ghcr.io/miracle060811/travelmate-ops-service
 
     env:
       SERVICE: ${{ matrix.service }}
@@ -815,7 +821,7 @@ jobs:
           retention-days: 30
 
   microservice-release-evidence:
-    name: Aggregate four-service release evidence
+    name: Aggregate six-service release evidence
     needs:
       - changes
       - microservice-publish
@@ -838,7 +844,7 @@ jobs:
           path: microservice-release-evidence
           merge-multiple: true
 
-      - name: Validate and aggregate four image digests
+      - name: Validate and aggregate six image digests
         shell: bash
         env:
           RELEASE_SHA: ${{ github.sha }}
@@ -846,7 +852,7 @@ jobs:
         run: |
           set -euo pipefail
           mapfile -t records < <(find microservice-release-evidence -type f -name '*-image-release.json' | sort)
-          [[ "${#records[@]}" -eq 4 ]]
+          [[ "${#records[@]}" -eq 6 ]]
           jq -s \
             --arg commit "$RELEASE_SHA" \
             --arg tag "sha-$RELEASE_SHA" \
@@ -856,9 +862,9 @@ jobs:
           jq -e \
             --arg commit "$RELEASE_SHA" \
             --arg tag "sha-$RELEASE_SHA" '
-              (.images | length) == 4 and
+              (.images | length) == 6 and
               (all(.images[]; .commit == $commit and .tag == $tag and (.digest | test("^sha256:[0-9a-f]{64}$")))) and
-              ([.images[].service] | sort) == ["ai-service","identity-service","local-service","traffic-service"]
+              ([.images[].service] | sort) == ["ai-service","community-service","identity-service","local-service","ops-service","traffic-service"]
             ' "microservice-release-$RELEASE_SHA.json"
           [[ "$PUBLISH_RESULT" == "success" ]]
 
@@ -1148,7 +1154,7 @@ jobs:
             [System.Text.UTF8Encoding]::new($false)
           )
 
-      - name: Download four-service release evidence
+      - name: Download six-service release evidence
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: microservice-release-${{ github.sha }}
@@ -1252,7 +1258,9 @@ jobs:
             @{ Name = "identity-service"; ServicePort = 8081; LocalPort = 18081 },
             @{ Name = "traffic-service"; ServicePort = 8082; LocalPort = 18082 },
             @{ Name = "local-service"; ServicePort = 8083; LocalPort = 18083 },
-            @{ Name = "ai-service"; ServicePort = 8084; LocalPort = 18084 }
+            @{ Name = "ai-service"; ServicePort = 8084; LocalPort = 18084 },
+            @{ Name = "community-service"; ServicePort = 8085; LocalPort = 18085 },
+            @{ Name = "ops-service"; ServicePort = 8086; LocalPort = 18086 }
           )
           $microserviceSummary = [System.Collections.Generic.List[string]]::new()
           foreach ($service in $microservices) {
@@ -1276,8 +1284,8 @@ jobs:
 
           $podState = kubectl get pods -n travelmate -l app.kubernetes.io/component=microservice -o json | ConvertFrom-Json
           $activePods = @($podState.items | Where-Object { $null -eq $_.metadata.deletionTimestamp })
-          if ($activePods.Count -ne 4) {
-            throw "Expected four active microservice Pods, found $($activePods.Count)"
+          if ($activePods.Count -ne 6) {
+            throw "Expected six active microservice Pods, found $($activePods.Count)"
           }
           foreach ($pod in $activePods) {
             $readyCondition = @($pod.status.conditions | Where-Object { $_.type -eq "Ready" -and $_.status -eq "True" })

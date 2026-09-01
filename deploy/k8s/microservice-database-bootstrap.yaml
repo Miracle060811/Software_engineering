@@ -32,7 +32,7 @@ spec:
             - -ec
           args:
             - |
-              for service in identity traffic local ai; do
+              for service in identity traffic local ai community ops; do
                 database="travelmate_${service}"
                 existing_database="$(mysql --host=travelmate-mysql --user=root --batch --skip-column-names --execute="SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${database}'")"
                 mysql --host=travelmate-mysql --user=root < "/schemas/${service}-schema.sql"
@@ -45,18 +45,26 @@ spec:
               CREATE USER IF NOT EXISTS 'travelmate_traffic_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
               CREATE USER IF NOT EXISTS 'travelmate_local_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
               CREATE USER IF NOT EXISTS 'travelmate_ai_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              CREATE USER IF NOT EXISTS 'travelmate_community_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              CREATE USER IF NOT EXISTS 'travelmate_ops_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
               ALTER USER 'travelmate_identity_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
               ALTER USER 'travelmate_traffic_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
               ALTER USER 'travelmate_local_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
               ALTER USER 'travelmate_ai_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              ALTER USER 'travelmate_community_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              ALTER USER 'travelmate_ops_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
               REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_identity_app'@'%';
               REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_traffic_app'@'%';
               REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_local_app'@'%';
               REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_ai_app'@'%';
+              REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_community_app'@'%';
+              REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_ops_app'@'%';
               GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_identity.* TO 'travelmate_identity_app'@'%';
               GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_traffic.* TO 'travelmate_traffic_app'@'%';
               GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_local.* TO 'travelmate_local_app'@'%';
               GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_ai.* TO 'travelmate_ai_app'@'%';
+              GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_community.* TO 'travelmate_community_app'@'%';
+              GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_ops.* TO 'travelmate_ops_app'@'%';
               FLUSH PRIVILEGES;
               SQL
           env:
