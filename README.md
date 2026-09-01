@@ -19,7 +19,7 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 
 第一批 `identity-service`、`traffic-service`、`local-service`、`ai-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。交通服务跨域读取旅客和优惠券时已改用内部 HTTP 接口，不再直接打包对应 Mapper；AI 服务已实现通知事件的幂等消费；单体 `backend` 继续保留，便于迁移期间做功能回归。
 
-本阶段仍属于渐进式迁移：服务暂时选择性复用单体源码，四服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；真实数据切换验收、AI 其余业务、API Gateway 与生产部署编排尚未完成。中期设计基线见 [`document/TravelMate中期验收基线.md`](document/TravelMate中期验收基线.md)。
+本阶段仍属于渐进式迁移：服务暂时选择性复用单体源码，四服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；四服务 Kubernetes/PVC/HPA 清单与本地部署、扩缩容实验脚本已经加入并通过静态门禁，但尚未形成 Docker Desktop Kubernetes 实机运行证据；真实数据切换验收、AI 其余业务、API Gateway 与生产部署编排仍未完成。中期设计基线见 [`document/TravelMate中期验收基线.md`](document/TravelMate中期验收基线.md)。
 
 ## 技术栈
 

@@ -92,7 +92,9 @@ jobs:
         run: npm run check:deployment
 
       - name: Render Kubernetes manifests
-        run: kubectl kustomize deploy/k8s > /tmp/travelmate-k8s.yaml
+        run: |
+          kubectl kustomize deploy/k8s > /tmp/travelmate-k8s.yaml
+          kubectl kustomize microservices/k8s > /tmp/travelmate-microservices-k8s.yaml
 
       - name: Validate deployment PowerShell syntax
         shell: pwsh

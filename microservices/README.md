@@ -112,3 +112,15 @@ Compose 会创建四套独立 MySQL 数据卷、四个独立应用账号和一�
 | 3 | 投递中 | 超过认领超时会自动恢复为待投递 |
 
 独立 JAR 默认关闭投递器，避免未初始化 Outbox 表时误轮询；Compose 通过 `OUTBOX_DISPATCHER_ENABLED=true` 启用。AI 服务未启动时投递会退避重试，订单主事务不受影响。
+
+## Kubernetes、PVC 与 HPA
+
+四个业务服务的 Kubernetes 清单位于 `microservices/k8s/`，与现有单体 `deploy/k8s/` 使用不同命名空间。配置包括：
+
+- 四个业务服务的 Deployment、Service、启动/就绪/存活探针和 CPU/内存 requests/limits；
+- 四套 MySQL StatefulSet，每套使用独立 5Gi PVC；
+- Redis StatefulSet 与 1Gi PVC；
+- 四个 `autoscaling/v2` HPA：`minReplicas=2`、`maxReplicas=6`、CPU 平均利用率 60%；
+- 不落盘真实密钥的本地部署脚本和 HPA 实验脚本。
+
+部署、验证和实验步骤见 `microservices/k8s/README.md`。

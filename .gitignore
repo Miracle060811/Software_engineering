@@ -24,6 +24,7 @@ coverage/
 blob-report/
 /04_tests/reports/ci/
 /04_tests/stress/results/*.json
+/04_tests/stress/results/hpa-*
 /frontend/playwright-report-real/
 /frontend/test-results-real/
 /frontend/playwright-report-microservices/

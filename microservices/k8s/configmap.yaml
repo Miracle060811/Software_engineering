@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: travelmate-microservices-config
+data:
+  CORS_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  IDENTITY_SERVICE_URL: http://identity-service:8081
+  TRAFFIC_SERVICE_URL: http://traffic-service:8082
+  LOCAL_SERVICE_URL: http://local-service:8083
+  AI_SERVICE_URL: http://ai-service:8084
+  IDENTITY_CONNECT_TIMEOUT_MS: "1000"
+  IDENTITY_READ_TIMEOUT_MS: "2000"
+  OUTBOX_DISPATCHER_ENABLED: "true"
+  TRAIN_LIVE_SYNC_ENABLED: "false"

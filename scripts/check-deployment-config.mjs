@@ -6,6 +6,7 @@ const root = process.cwd()
 const migrationDir = path.join(root, "backend", "src", "main", "resources", "db", "migration")
 const k8sDir = path.join(root, "deploy", "k8s")
 const overlayDir = path.join(root, "deploy", "k8s-overlays")
+const microserviceK8sDir = path.join(root, "microservices", "k8s")
 const failures = []
 
 function fail(message) {
@@ -123,15 +124,70 @@ for (const service of ["backend", "frontend", "mysql", "redis"]) {
   if (!/\blivenessProbe\s*:/.test(manifest)) fail(`${service}.yaml 缺少 livenessProbe`)
 }
 
+const requiredMicroserviceK8sFiles = [
+  "namespace.yaml",
+  "configmap.yaml",
+  "databases.yaml",
+  "redis.yaml",
+  "identity-service.yaml",
+  "traffic-service.yaml",
+  "local-service.yaml",
+  "ai-service.yaml",
+  "hpa.yaml",
+]
+if (!fs.existsSync(microserviceK8sDir)) {
+  fail("缺少微服务 Kubernetes 目录：microservices/k8s")
+} else {
+  const microserviceKustomization = read("microservices/k8s/kustomization.yaml")
+  for (const file of requiredMicroserviceK8sFiles) {
+    if (!fs.existsSync(path.join(microserviceK8sDir, file))) {
+      fail(`缺少微服务 Kubernetes 清单：microservices/k8s/${file}`)
+    }
+    if (!microserviceKustomization.includes(`- ${file}`)) {
+      fail(`microservices/k8s/kustomization.yaml 未包含 ${file}`)
+    }
+  }
+
+  for (const service of ["identity", "traffic", "local", "ai"]) {
+    const manifest = read(`microservices/k8s/${service}-service.yaml`)
+    if (!/\bkind:\s*Deployment\b/.test(manifest)) fail(`${service}-service.yaml 缺少 Deployment`)
+    if (!/\bstartupProbe\s*:/.test(manifest)) fail(`${service}-service.yaml 缺少 startupProbe`)
+    if (!/\breadinessProbe\s*:/.test(manifest)) fail(`${service}-service.yaml 缺少 readinessProbe`)
+    if (!/\blivenessProbe\s*:/.test(manifest)) fail(`${service}-service.yaml 缺少 livenessProbe`)
+    if (!/\brequests\s*:/.test(manifest) || !/\blimits\s*:/.test(manifest)) {
+      fail(`${service}-service.yaml 缺少 HPA 所需的资源 requests/limits`)
+    }
+  }
+
+  const databases = read("microservices/k8s/databases.yaml")
+  const redis = read("microservices/k8s/redis.yaml")
+  const hpa = read("microservices/k8s/hpa.yaml")
+  if ((databases.match(/\bvolumeClaimTemplates\s*:/g) || []).length !== 4) {
+    fail("databases.yaml 必须为四套 MySQL 分别声明 PVC 模板")
+  }
+  if ((redis.match(/\bvolumeClaimTemplates\s*:/g) || []).length !== 1) {
+    fail("redis.yaml 必须声明持久化 PVC 模板")
+  }
+  if ((hpa.match(/\bkind:\s*HorizontalPodAutoscaler\b/g) || []).length !== 4) {
+    fail("hpa.yaml 必须包含四个业务服务的 HPA")
+  }
+  for (const [field, expected] of [["minReplicas", "2"], ["maxReplicas", "6"], ["averageUtilization", "60"]]) {
+    const matches = hpa.match(new RegExp(`\\b${field}:\\s*${expected}\\b`, "g")) || []
+    if (matches.length !== 4) fail(`hpa.yaml 中 ${field}: ${expected} 应出现 4 次`)
+  }
+}
+
 const configMap = read("deploy/k8s/configmap.yaml")
 if (/^\s{2,}(?:[^#\n]*(?:PASSWORD|SECRET|TOKEN|API_KEY))\s*:/gim.test(configMap)) {
   fail("ConfigMap 中发现疑似敏感配置键，请改用 Kubernetes Secret")
 }
 
-for (const file of fs.readdirSync(k8sDir).filter((name) => name.endsWith(".yaml"))) {
-  const manifest = fs.readFileSync(path.join(k8sDir, file), "utf8")
-  for (const match of manifest.matchAll(/^\s*image:\s*([^\s#]+)/gim)) {
-    if (/:latest$/i.test(match[1])) fail(`${file} 使用了不可追踪的 latest 镜像标签：${match[1]}`)
+for (const directory of [k8sDir, microserviceK8sDir].filter((candidate) => fs.existsSync(candidate))) {
+  for (const file of fs.readdirSync(directory).filter((name) => name.endsWith(".yaml"))) {
+    const manifest = fs.readFileSync(path.join(directory, file), "utf8")
+    for (const match of manifest.matchAll(/^\s*image:\s*([^\s#]+)/gim)) {
+      if (/:latest$/i.test(match[1])) fail(`${path.relative(root, path.join(directory, file))} 使用了不可追踪的 latest 镜像标签：${match[1]}`)
+    }
   }
 }
 
