@@ -31,7 +31,7 @@ async function registerAdminAndLogin(request) {
   const username = `ciadmin${Date.now()}${randomUUID().replaceAll("-", "").slice(0, 8)}`;
   const password = `pw${randomUUID().replaceAll("-", "").slice(0, 16)}`;
   const registerResponse = await request.post("/user/admin-register", {
-    form: { username, password, secret },
+    data: { username, password, secret },
   });
   expect(registerResponse.ok()).toBeTruthy();
   expect((await registerResponse.json()).code).toBe(200);

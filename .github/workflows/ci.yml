@@ -464,7 +464,9 @@ jobs:
       CI: "true"
       SPRING_DATASOURCE_PASSWORD: travelmate-ci
       JWT_SECRET: YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=
+      ADMIN_REGISTER_ENABLED: "true"
       ADMIN_REGISTER_SECRET: travelmate-ci-admin-register
+      ADMIN_REGISTER_EXPIRES_AT: "2099-01-01T00:00:00Z"
       RATE_LIMIT_ENABLED: "false"
       DEEPSEEK_API_KEY: ""
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
@@ -1081,6 +1083,7 @@ jobs:
       - travelmate-deploy
     timeout-minutes: 10
     permissions:
+      actions: read
       contents: read
 
     steps:
@@ -1133,6 +1136,12 @@ jobs:
             [System.Text.UTF8Encoding]::new($false)
           )
 
+      - name: Download four-service release evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: microservice-release-${{ github.sha }}
+          path: ${{ runner.temp }}/travelmate-microservice-release
+
       - name: Verify deployment host
         shell: powershell
         run: |
@@ -1143,10 +1152,20 @@ jobs:
           docker info --format "Docker Server {{.ServerVersion}}" | Write-Output
           kubectl get nodes
 
-      - name: Deploy immutable image pair with rollback
+      - name: Deploy immutable application images
         shell: powershell
+        env:
+          RELEASE_SHA: ${{ github.sha }}
         run: |
           $ErrorActionPreference = "Stop"
+          $evidenceDirectory = Join-Path $env:RUNNER_TEMP "travelmate-deployment-evidence"
+          [IO.Directory]::CreateDirectory($evidenceDirectory) | Out-Null
+          $releaseEvidence = Join-Path $env:RUNNER_TEMP "travelmate-microservice-release\microservice-release-$env:RELEASE_SHA.json"
+          & (Join-Path $env:TRAVELMATE_SOURCE "scripts\cd\Deploy-TravelMateMicroservices.ps1") `
+            -ReleaseEvidencePath $releaseEvidence `
+            -ExpectedCommit $env:RELEASE_SHA `
+            -KubeContext docker-desktop `
+            -EvidenceDirectory $evidenceDirectory
           & (Join-Path $env:TRAVELMATE_SOURCE "scripts\cd\Deploy-TravelMate.ps1") -KubeContext docker-desktop
 
       - name: Verify deployed digests and health
@@ -1158,6 +1177,44 @@ jobs:
           $ErrorActionPreference = "Stop"
           $evidenceDirectory = Join-Path $env:RUNNER_TEMP "travelmate-deployment-evidence"
           [IO.Directory]::CreateDirectory($evidenceDirectory) | Out-Null
+
+          function Test-ProxiedHealth {
+            param(
+              [string]$Name,
+              [string]$Service,
+              [int]$ServicePort,
+              [int]$LocalPort,
+              [string]$Path
+            )
+
+            $forwardOut = Join-Path $evidenceDirectory "$Name-port-forward.out.log"
+            $forwardErr = Join-Path $evidenceDirectory "$Name-port-forward.err.log"
+            $portForward = Start-Process -FilePath "kubectl" `
+              -ArgumentList @("port-forward", "service/$Service", "${LocalPort}:${ServicePort}", "-n", "travelmate") `
+              -WindowStyle Hidden `
+              -RedirectStandardOutput $forwardOut `
+              -RedirectStandardError $forwardErr `
+              -PassThru
+            try {
+              for ($attempt = 0; $attempt -lt 20; $attempt++) {
+                try {
+                  $response = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:${LocalPort}${Path}" -TimeoutSec 5
+                  if ($response.StatusCode -eq 200) {
+                    return $response.StatusCode
+                  }
+                }
+                catch {
+                  Start-Sleep -Seconds 2
+                }
+              }
+              throw "$Name health endpoint did not return HTTP 200"
+            }
+            finally {
+              if (-not $portForward.HasExited) {
+                Stop-Process -Id $portForward.Id -Force
+              }
+            }
+          }
 
           $backendImage = (& kubectl get deployment travelmate-backend -n travelmate -o "jsonpath={.spec.template.spec.containers[0].image}").Trim()
           $frontendImage = (& kubectl get deployment travelmate-frontend -n travelmate -o "jsonpath={.spec.template.spec.containers[0].image}").Trim()
@@ -1173,45 +1230,71 @@ jobs:
             throw "Frontend health check failed with HTTP $($frontendHealth.StatusCode)"
           }
 
-          $forwardOut = Join-Path $evidenceDirectory "backend-port-forward.out.log"
-          $forwardErr = Join-Path $evidenceDirectory "backend-port-forward.err.log"
-          $portForward = Start-Process -FilePath "kubectl" `
-            -ArgumentList @("port-forward", "service/travelmate-backend", "18080:8080", "-n", "travelmate") `
-            -WindowStyle Hidden `
-            -RedirectStandardOutput $forwardOut `
-            -RedirectStandardError $forwardErr `
-            -PassThru
-          try {
-            $backendHealth = $null
-            for ($attempt = 0; $attempt -lt 20; $attempt++) {
-              try {
-                $backendHealth = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:18080/actuator/health/readiness" -TimeoutSec 5
-                if ($backendHealth.StatusCode -eq 200) { break }
-              }
-              catch {
-                Start-Sleep -Seconds 2
-              }
+          $backendHealth = Test-ProxiedHealth `
+            -Name "backend" -Service "travelmate-backend" -ServicePort 8080 -LocalPort 18080 `
+            -Path "/actuator/health/readiness"
+
+          $releasePath = Join-Path $env:RUNNER_TEMP "travelmate-microservice-release\microservice-release-${{ github.sha }}.json"
+          $microserviceRelease = Get-Content -LiteralPath $releasePath -Raw | ConvertFrom-Json
+          $microservices = @(
+            @{ Name = "identity-service"; ServicePort = 8081; LocalPort = 18081 },
+            @{ Name = "traffic-service"; ServicePort = 8082; LocalPort = 18082 },
+            @{ Name = "local-service"; ServicePort = 8083; LocalPort = 18083 },
+            @{ Name = "ai-service"; ServicePort = 8084; LocalPort = 18084 }
+          )
+          $microserviceSummary = [System.Collections.Generic.List[string]]::new()
+          foreach ($service in $microservices) {
+            $record = @($microserviceRelease.images | Where-Object { $_.service -eq $service.Name })
+            if ($record.Count -ne 1) {
+              throw "Release evidence does not contain one image for $($service.Name)"
             }
-            if ($null -eq $backendHealth -or $backendHealth.StatusCode -ne 200) {
-              throw "Backend readiness endpoint did not return HTTP 200"
+            $expectedImage = "$($record[0].image)@$($record[0].digest)"
+            $actualImage = (& kubectl get deployment $service.Name -n travelmate -o "jsonpath={.spec.template.spec.containers[0].image}").Trim()
+            if ($actualImage -ne $expectedImage) {
+              throw "$($service.Name) digest mismatch: expected $expectedImage, found $actualImage"
             }
+            $health = Test-ProxiedHealth `
+              -Name $service.Name -Service $service.Name `
+              -ServicePort $service.ServicePort -LocalPort $service.LocalPort `
+              -Path "/actuator/health"
+            $microserviceSummary.Add("$($service.Name)=$actualImage")
+            $microserviceSummary.Add("$($service.Name)_health_port=$($service.ServicePort)")
+            $microserviceSummary.Add("$($service.Name)_health=$health")
           }
-          finally {
-            if (-not $portForward.HasExited) {
-              Stop-Process -Id $portForward.Id -Force
+
+          $podState = kubectl get pods -n travelmate -l app.kubernetes.io/component=microservice -o json | ConvertFrom-Json
+          $activePods = @($podState.items | Where-Object { $null -eq $_.metadata.deletionTimestamp })
+          if ($activePods.Count -ne 4) {
+            throw "Expected four active microservice Pods, found $($activePods.Count)"
+          }
+          foreach ($pod in $activePods) {
+            $readyCondition = @($pod.status.conditions | Where-Object { $_.type -eq "Ready" -and $_.status -eq "True" })
+            if ($readyCondition.Count -ne 1) {
+              throw "Pod $($pod.metadata.name) is not Ready"
+            }
+            foreach ($container in @($pod.status.containerStatuses)) {
+              if (-not $container.ready) {
+                throw "Container $($container.name) in Pod $($pod.metadata.name) is not Ready"
+              }
+              if ([int]$container.restartCount -ne 0) {
+                throw "Container $($container.name) in Pod $($pod.metadata.name) restarted $($container.restartCount) time(s)"
+              }
             }
           }
 
           kubectl get pods,services,pvc -n travelmate -o wide | Set-Content -LiteralPath (Join-Path $evidenceDirectory "kubernetes-status.txt") -Encoding utf8
-          kubectl get deployment,statefulset -n travelmate -o json | Set-Content -LiteralPath (Join-Path $evidenceDirectory "workloads.json") -Encoding utf8
+          kubectl get deployment,statefulset,job -n travelmate -o json | Set-Content -LiteralPath (Join-Path $evidenceDirectory "workloads.json") -Encoding utf8
           kubectl get pods -n travelmate -o json | Set-Content -LiteralPath (Join-Path $evidenceDirectory "pods.json") -Encoding utf8
-          @(
+          $summary = @(
             "commit=${{ github.sha }}"
             "backend=$backendImage"
             "frontend=$frontendImage"
             "frontend_health=$($frontendHealth.StatusCode)"
-            "backend_health=$($backendHealth.StatusCode)"
-          ) | Set-Content -LiteralPath (Join-Path $evidenceDirectory "deployment-summary.txt") -Encoding utf8
+            "backend_health=$backendHealth"
+            "microservice_pods_ready=$($activePods.Count)"
+            "microservice_container_restarts=0"
+          )
+          $summary + $microserviceSummary | Set-Content -LiteralPath (Join-Path $evidenceDirectory "deployment-summary.txt") -Encoding utf8
 
       - name: Capture deployment state and logs
         if: always()
@@ -1221,6 +1304,12 @@ jobs:
           [IO.Directory]::CreateDirectory($evidenceDirectory) | Out-Null
           kubectl get pods,services,pvc -n travelmate -o wide 2>&1 | Set-Content -LiteralPath (Join-Path $evidenceDirectory "kubernetes-status-final.txt") -Encoding utf8
           kubectl get events -n travelmate --sort-by=.lastTimestamp 2>&1 | Set-Content -LiteralPath (Join-Path $evidenceDirectory "kubernetes-events.txt") -Encoding utf8
+          kubectl describe deployments -n travelmate -l app.kubernetes.io/component=microservice 2>&1 | Set-Content -LiteralPath (Join-Path $evidenceDirectory "microservice-deployments-describe.txt") -Encoding utf8
+          $microservicePods = @(kubectl get pods -n travelmate -l app.kubernetes.io/component=microservice -o name 2>$null)
+          foreach ($pod in $microservicePods) {
+            $fileName = ($pod -replace "[/\\]", "-") + ".log"
+            kubectl logs $pod -n travelmate --all-containers=true 2>&1 | Set-Content -LiteralPath (Join-Path $evidenceDirectory $fileName) -Encoding utf8
+          }
           $deployLog = Join-Path $env:USERPROFILE "TravelMateCD\deploy.log"
           if (Test-Path -LiteralPath $deployLog -PathType Leaf) {
             Copy-Item -LiteralPath $deployLog -Destination (Join-Path $evidenceDirectory "deploy.log") -Force
