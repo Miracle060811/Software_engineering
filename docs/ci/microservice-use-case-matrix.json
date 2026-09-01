@@ -1,4 +1,16 @@
 {
+  "_verification": {
+    "local": {
+      "date": "2026-09-01",
+      "command": "cd frontend && npm run test:e2e:microservices",
+      "result": "17/17 passed"
+    },
+    "ci": {
+      "job": "microservice-e2e",
+      "artifact": "microservice-e2e-evidence-<commit>",
+      "status": "configured_pending_run"
+    }
+  },
   "UC01": { "status": "runnable", "services": ["identity-service"], "routes": ["/user/register", "/user/login"] },
   "UC02": { "status": "runnable", "services": ["traffic-service", "identity-service", "local-service"], "routes": ["/api/flight/search", "/api/order/flight/create"] },
   "UC03": { "status": "runnable", "services": ["traffic-service", "identity-service"], "routes": ["/api/train/search", "/api/order/train/create", "/api/train/waitlist"] },

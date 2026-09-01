@@ -53,7 +53,16 @@ cd ..\frontend
 npm run test:e2e:microservices
 ```
 
-结构门禁 `npm run check:microservice-e2e` 会检查 19 个 UC、服务归属和路由均已登记。当前可执行状态以 `docs/ci/microservice-use-case-matrix.json` 为准；结构门禁通过不等于真实数据库 E2E 已通过，验收仍以 Playwright 实跑结果为准。
+本地完整复现应先在仓库根目录构建并启动隔离的六服务 Compose，再在另一个终端运行 Playwright：
+
+```powershell
+.\backend\mvnw.cmd -f .\microservices\pom.xml --batch-mode --no-transfer-progress package -DskipTests
+docker compose --env-file .\microservices\.env -f .\microservices\compose.yml up --build -d
+Set-Location .\frontend
+npm run test:e2e:microservices
+```
+
+2026-09-01 本地真实数据库结果为 17/17；CI 的 `Real microservice E2E` job 会下载同一提交中六个已测试 JAR，初始化六库与 Redis，保存 Playwright HTML、trace 和六服务日志到 `microservice-e2e-evidence-<commit>` Artifact。结构门禁 `npm run check:microservice-e2e` 同时检查 19 个 UC、服务归属、路由及 CI 接线；矩阵中的 CI 状态只有在远端 job 实跑后才能由 `configured_pending_run` 更新为通过。
 
 服务边界门禁用于检查 POM 单体源码依赖、共享契约内容、跨服务 Mapper/表引用、34 张表唯一归属和六套数据库配置：
 
