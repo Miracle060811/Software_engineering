@@ -1,11 +1,14 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "@/utils/csrf";
+import { clearAccessToken, getAccessToken, setAccessToken } from "@/utils/authToken";
 
 const AUTH_REDIRECT_FLAG = "travelmate-auth-redirecting";
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL?.trim() || "/";
 
 const clearAuthState = () => {
+  clearAccessToken();
+  // 清理旧版本遗留值；access token 不再持久化到 Web Storage。
   localStorage.removeItem("token");
   localStorage.removeItem("userInfo");
 };
@@ -35,8 +38,40 @@ const request = axios.create({
   xsrfHeaderName: CSRF_HEADER_NAME,
 });
 
+const refreshClient = axios.create({
+  baseURL: apiBaseURL,
+  timeout: 15000,
+  withCredentials: true,
+  withXSRFToken: true,
+  xsrfCookieName: CSRF_COOKIE_NAME,
+  xsrfHeaderName: CSRF_HEADER_NAME,
+});
+
+let refreshPromise = null;
+
+export const refreshAccessToken = async () => {
+  if (!refreshPromise) {
+    refreshPromise = refreshClient
+      .post("/user/refresh")
+      .then((response) => {
+        const body = response.data;
+        if (!body || body.code !== 200 || !body.data) {
+          throw new Error(body?.msg || "登录状态已失效");
+        }
+        setAccessToken(body.data);
+        return body.data;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+};
+
+export const ensureAccessToken = async () => getAccessToken() || refreshAccessToken();
+
 request.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getAccessToken();
   if (token) {
     config.headers["Authorization"] = `Bearer ${token}`;
   }
@@ -65,8 +100,27 @@ request.interceptors.response.use(
 
     return res;
   },
-  (error) => {
+  async (error) => {
     const status = error.response?.status;
+
+    const originalRequest = error.config;
+    const storedToken = getAccessToken();
+    const refreshEligible = (status === 401 || status === 403)
+      && storedToken
+      && originalRequest
+      && !originalRequest._refreshAttempted
+      && !String(originalRequest?.url || "").includes("/user/refresh");
+    if (refreshEligible) {
+      originalRequest._refreshAttempted = true;
+      try {
+        const accessToken = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return request(originalRequest);
+      } catch {
+        handleAuthExpired();
+        return Promise.reject(error);
+      }
+    }
 
     if (status === 401 || status === 403) {
       handleAuthExpired();

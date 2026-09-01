@@ -1,0 +1,117 @@
+name: travelmate
+
+services:
+  travelmate-mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      MYSQL_DATABASE: ${DB_NAME:-travelmate}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docs/sql/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  travelmate-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  travelmate-minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?S3_ACCESS_KEY is required}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?S3_SECRET_KEY is required}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-19001}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  travelmate-minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on:
+      travelmate-minio:
+        condition: service_healthy
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?S3_ACCESS_KEY is required}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?S3_SECRET_KEY is required}
+      S3_BUCKET: ${S3_BUCKET:-travelmate}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        mc alias set local http://travelmate-minio:9000 "$${S3_ACCESS_KEY}" "$${S3_SECRET_KEY}"
+        mc mb --ignore-existing "local/$${S3_BUCKET}"
+        mc anonymous set download "local/$${S3_BUCKET}"
+    restart: "no"
+
+  travelmate-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.compose
+    restart: unless-stopped
+    environment:
+      APP_ENV: docker
+      SERVER_PORT: 8080
+      DB_HOST: travelmate-mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-travelmate}
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      REDIS_HOST: travelmate-redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_ACCESS_TOKEN_MINUTES: ${JWT_ACCESS_TOKEN_MINUTES:-30}
+      REFRESH_TOKEN_DAYS: ${REFRESH_TOKEN_DAYS:-14}
+      REFRESH_COOKIE_SECURE: ${REFRESH_COOKIE_SECURE:-false}
+      ADMIN_REGISTER_ENABLED: ${ADMIN_REGISTER_ENABLED:-false}
+      ADMIN_REGISTER_SECRET: ${ADMIN_REGISTER_SECRET:-}
+      ADMIN_REGISTER_EXPIRES_AT: ${ADMIN_REGISTER_EXPIRES_AT:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      STORAGE_TYPE: s3
+      S3_ENDPOINT: http://travelmate-minio:9000
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-travelmate}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?S3_ACCESS_KEY is required}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?S3_SECRET_KEY is required}
+      S3_PUBLIC_BASE_URL: ${S3_PUBLIC_BASE_URL:-http://localhost:9000/travelmate}
+    depends_on:
+      travelmate-mysql:
+        condition: service_healthy
+      travelmate-redis:
+        condition: service_healthy
+      travelmate-minio-init:
+        condition: service_completed_successfully
+
+  travelmate-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.compose
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:8080"
+    depends_on:
+      travelmate-backend:
+        condition: service_healthy
+
+volumes:
+  mysql-data:
+  minio-data:

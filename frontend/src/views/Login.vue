@@ -119,65 +119,6 @@
     </div>
 
     <el-dialog
-      v-model="resetDialogVisible"
-      title="忘记密码"
-      width="420px"
-      class="reset-dialog"
-      :close-on-click-modal="false"
-    >
-      <el-form
-        ref="resetFormRef"
-        :model="resetForm"
-        :rules="resetRules"
-        label-width="0"
-        class="auth-form"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="resetForm.username"
-            placeholder="请输入用户名"
-            size="large"
-            :prefix-icon="User"
-            class="auth-input"
-          />
-        </el-form-item>
-        <el-form-item prop="newPassword">
-          <el-input
-            v-model="resetForm.newPassword"
-            type="password"
-            placeholder="请输入新密码（至少6位）"
-            size="large"
-            :prefix-icon="Lock"
-            show-password
-            class="auth-input"
-          />
-        </el-form-item>
-        <el-form-item prop="confirmPassword">
-          <el-input
-            v-model="resetForm.confirmPassword"
-            type="password"
-            placeholder="请再次输入新密码"
-            size="large"
-            :prefix-icon="Lock"
-            show-password
-            class="auth-input"
-            @keyup.enter="handleResetPassword"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="resetDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="resetLoading"
-          @click="handleResetPassword"
-        >
-          确认重置
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <el-dialog
       v-model="adminDialogVisible"
       title="管理员注册"
       width="420px"
@@ -262,20 +203,16 @@ const route = useRoute();
 const userStore = useUserStore();
 const activeTab = ref("login");
 const loading = ref(false);
-const resetLoading = ref(false);
-const resetDialogVisible = ref(false);
 const adminLoading = ref(false);
 const adminDialogVisible = ref(false);
 const blankRegisterClickCount = ref(0);
 
 const loginFormRef = ref(null);
 const registerFormRef = ref(null);
-const resetFormRef = ref(null);
 const adminFormRef = ref(null);
 
 const loginForm = ref({ username: "", password: "" });
 const registerForm = ref({ username: "", password: "", confirmPassword: "" });
-const resetForm = ref({ username: "", newPassword: "", confirmPassword: "" });
 const adminForm = ref({ username: "", password: "", confirmPassword: "", secret: "" });
 
 const loginRules = {
@@ -332,34 +269,8 @@ const adminRules = {
   secret: [{ required: true, message: "请输入管理员注册密钥", trigger: "blur" }],
 };
 
-const resetRules = {
-  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
-  newPassword: [
-    { required: true, message: "请输入新密码", trigger: "blur" },
-    { min: 6, message: "密码至少6位", trigger: "blur" },
-  ],
-  confirmPassword: [
-    { required: true, message: "请确认新密码", trigger: "blur" },
-    {
-      validator: (_rule, value, callback) => {
-        if (value !== resetForm.value.newPassword) {
-          callback(new Error("两次密码不一致"));
-        } else {
-          callback();
-        }
-      },
-      trigger: "blur",
-    },
-  ],
-};
-
 const openResetDialog = () => {
-  resetForm.value = {
-    username: loginForm.value.username,
-    newPassword: "",
-    confirmPassword: "",
-  };
-  resetDialogVisible.value = true;
+  ElMessage.warning("自助密码重置已关闭，请联系管理员核验身份后处理");
 };
 
 const handleLogin = async () => {
@@ -421,12 +332,10 @@ const handleAdminRegister = async () => {
   if (!valid) return;
   adminLoading.value = true;
   try {
-    await request.post("/user/admin-register", null, {
-      params: {
-        username: adminForm.value.username,
-        password: adminForm.value.password,
-        secret: adminForm.value.secret,
-      },
+    await request.post("/user/admin-register", {
+      username: adminForm.value.username,
+      password: adminForm.value.password,
+      secret: adminForm.value.secret,
     });
     ElMessage.success("管理员注册成功，请登录");
     loginForm.value.username = adminForm.value.username;
@@ -440,28 +349,6 @@ const handleAdminRegister = async () => {
   }
 };
 
-const handleResetPassword = async () => {
-  const valid = await resetFormRef.value?.validate().catch(() => false);
-  if (!valid) return;
-  resetLoading.value = true;
-  try {
-    await request.post("/user/reset-password", null, {
-      params: {
-        username: resetForm.value.username,
-        newPassword: resetForm.value.newPassword,
-      },
-    });
-    ElMessage.success("密码重置成功，请使用新密码登录");
-    loginForm.value.username = resetForm.value.username;
-    loginForm.value.password = "";
-    resetDialogVisible.value = false;
-    activeTab.value = "login";
-  } catch (e) {
-    // error handled in request.js
-  } finally {
-    resetLoading.value = false;
-  }
-};
 </script>
 
 <style scoped>

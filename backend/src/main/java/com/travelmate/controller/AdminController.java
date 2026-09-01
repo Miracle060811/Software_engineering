@@ -1037,7 +1037,10 @@ public class AdminController {
         if (Objects.equals(admin.getId(), id)) {
             throw new RuntimeException("不能禁用当前管理员账号");
         }
-        userMapper.update(null, new LambdaUpdateWrapper<User>().eq(User::getId, id).set(User::getStatus, 0));
+        userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .eq(User::getId, id)
+                .set(User::getStatus, 0)
+                .setSql("token_version = token_version + 1"));
         return Result.success();
     }
 

@@ -12,7 +12,7 @@ const readCookie = (name) => {
 
 export const buildUploadHeaders = () => {
   const headers = {};
-  const token = localStorage.getItem("token");
+  const token = getAccessToken();
   const csrfToken = readCookie(CSRF_COOKIE_NAME);
 
   if (token) {
@@ -25,3 +25,4 @@ export const buildUploadHeaders = () => {
 };
 
 export { CSRF_COOKIE_NAME, CSRF_HEADER_NAME };
+import { getAccessToken } from "@/utils/authToken";

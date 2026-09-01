@@ -9,6 +9,11 @@ data:
   SPRING_DATA_REDIS_HOST: travelmate-redis
   SPRING_DATA_REDIS_PORT: "6379"
   UPLOAD_DIR: /app/uploads
+  STORAGE_TYPE: local
+  ADMIN_REGISTER_ENABLED: "false"
+  ADMIN_REGISTER_EXPIRES_AT: ""
+  REFRESH_TOKEN_DAYS: "14"
+  REFRESH_COOKIE_SECURE: "false"
   CORS_ALLOWED_ORIGINS: http://localhost:30080,http://127.0.0.1:30080
   MYBATIS_LOG_IMPL: org.apache.ibatis.logging.nologging.NoLoggingImpl
   AI_PLACE_VERIFICATION_USER_AGENT: TravelMate/1.0 (https://github.com/Miracle060811/Software_engineering)

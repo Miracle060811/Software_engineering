@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 describe("csrf.js", () => {
   let csrf;
+  let authToken;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -9,6 +10,7 @@ describe("csrf.js", () => {
     localStorage.clear();
 
     csrf = await import("@/utils/csrf");
+    authToken = await import("@/utils/authToken");
   });
 
   describe("CSRF_COOKIE_NAME and CSRF_HEADER_NAME", () => {
@@ -23,7 +25,7 @@ describe("csrf.js", () => {
 
   describe("buildUploadHeaders", () => {
     it("builds headers with token and csrf token", () => {
-      localStorage.setItem("token", "test-token");
+      authToken.setAccessToken("test-token");
       document.cookie = "XSRF-TOKEN=csrf-token-value";
 
       const headers = csrf.buildUploadHeaders();
@@ -33,7 +35,7 @@ describe("csrf.js", () => {
     });
 
     it("builds headers without Authorization when no token", () => {
-      localStorage.clear();
+      authToken.clearAccessToken();
 
       const headers = csrf.buildUploadHeaders();
 
@@ -41,7 +43,7 @@ describe("csrf.js", () => {
     });
 
     it("includes Authorization header when token exists", () => {
-      localStorage.setItem("token", "test-token");
+      authToken.setAccessToken("test-token");
 
       const headers = csrf.buildUploadHeaders();
 

@@ -1,6 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const stub = { template: "<div></div>" };
+const mockUserStore = vi.hoisted(() => ({
+  isLoggedIn: false,
+  userInfo: null,
+  restoreSession: vi.fn(),
+}));
+
+vi.mock("@/stores/user", () => ({
+  useUserStore: () => mockUserStore,
+}));
 
 vi.mock("@/views/Login.vue", () => ({ default: stub }));
 vi.mock("@/views/Home.vue", () => ({ default: stub }));
@@ -31,6 +40,10 @@ describe("router/index.js", () => {
   beforeEach(async () => {
     localStorage.clear();
     sessionStorage.clear();
+    mockUserStore.isLoggedIn = false;
+    mockUserStore.userInfo = null;
+    mockUserStore.restoreSession.mockReset();
+    mockUserStore.restoreSession.mockRejectedValue(new Error("no session"));
     await router.replace("/");
     await router.isReady();
   });
@@ -75,8 +88,6 @@ describe("router/index.js", () => {
 
   describe("beforeEach guard", () => {
     it("redirects to login when auth required and no token", async () => {
-      localStorage.removeItem("token");
-
       await router.push("/my-orders");
       await router.isReady();
 
@@ -84,7 +95,7 @@ describe("router/index.js", () => {
     });
 
     it("allows access when auth required and token exists", async () => {
-      localStorage.setItem("token", "valid-token");
+      mockUserStore.isLoggedIn = true;
 
       await router.push("/my-orders");
       await router.isReady();
@@ -93,8 +104,8 @@ describe("router/index.js", () => {
     });
 
     it("redirects to home when admin required but user is not admin", async () => {
-      localStorage.setItem("token", "valid-token");
-      localStorage.setItem("userInfo", JSON.stringify({ role: 0 }));
+      mockUserStore.isLoggedIn = true;
+      mockUserStore.userInfo = { role: 0 };
 
       await router.push("/admin");
       await router.isReady();
@@ -103,8 +114,8 @@ describe("router/index.js", () => {
     });
 
     it("allows admin access when user is admin", async () => {
-      localStorage.setItem("token", "valid-token");
-      localStorage.setItem("userInfo", JSON.stringify({ role: 1 }));
+      mockUserStore.isLoggedIn = true;
+      mockUserStore.userInfo = { role: 1 };
 
       await router.push("/admin");
       await router.isReady();
@@ -113,8 +124,6 @@ describe("router/index.js", () => {
     });
 
     it("allows public routes without token", async () => {
-      localStorage.removeItem("token");
-
       await router.push("/about");
       await router.isReady();
 

@@ -7,7 +7,7 @@ import java.security.Principal;
  *
  * <p>业务服务只依赖稳定用户标识和角色，不直接读取身份服务的数据表。</p>
  */
-public record AuthenticatedUser(Long userId, String username, Integer role) implements Principal {
+public record AuthenticatedUser(Long userId, String username, Integer role, Integer tokenVersion) implements Principal {
 
     @Override
     public String getName() {

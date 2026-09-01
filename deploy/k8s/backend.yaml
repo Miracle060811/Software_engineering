@@ -75,6 +75,18 @@ spec:
                 secretKeyRef:
                   name: travelmate-secrets
                   key: deepseek-api-key
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-secrets
+                  key: s3-access-key
+                  optional: true
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-secrets
+                  key: s3-secret-key
+                  optional: true
           startupProbe:
             httpGet:
               path: /actuator/health/liveness

@@ -304,6 +304,10 @@ if ($DeepseekApiKey) {
     $env:DEEPSEEK_API_KEY = $DeepseekApiKey
 }
 
+if ($runBackend -and -not $env:JWT_SECRET) {
+    throw "JWT_SECRET is required. Run .\scripts\Initialize-TravelMateLocalEnv.ps1 or configure it in .env."
+}
+
 if ($runBackend) {
     if (-not (Test-Path $backendDir)) {
         throw "Backend directory not found: $backendDir"

@@ -1,11 +1,11 @@
 package com.travelmate.controller;
 
 import com.travelmate.common.Result;
-import org.springframework.beans.factory.annotation.Value;
+import com.travelmate.storage.FileStorageService;
+import com.travelmate.storage.StoredFile;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -19,8 +19,11 @@ public class FileController {
             "image/jpeg", "image/png", "image/gif", "image/webp");
     private static final long MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
-    @Value("${app.upload-dir:uploads}")
-    private String uploadDir;
+    private final FileStorageService fileStorageService;
+
+    public FileController(FileStorageService fileStorageService) {
+        this.fileStorageService = fileStorageService;
+    }
 
     @PostMapping("/upload")
     public Result<Map<String, String>> upload(@RequestParam("file") MultipartFile file) {
@@ -49,21 +52,16 @@ public class FileController {
             return Result.error("无法读取上传文件");
         }
 
-        String newName = UUID.randomUUID().toString().replace("-", "") + "." + ext;
+        StoredFile storedFile;
         try {
-            File dir = new File(uploadDir).getCanonicalFile();
-            if (!dir.exists() && !dir.mkdirs()) {
-                return Result.error("上传目录创建失败");
-            }
-            File dest = new File(dir, newName);
-            file.transferTo(dest);
+            storedFile = fileStorageService.store(file, ext);
         } catch (IOException e) {
-            return Result.error("上传失败: " + e.getMessage());
+            return Result.error("上传失败，请稍后重试");
         }
 
-        String url = "/uploads/" + newName;
         Map<String, String> data = new HashMap<>();
-        data.put("url", url);
+        data.put("key", storedFile.objectKey());
+        data.put("url", storedFile.url());
         data.put("name", originalName);
         return Result.success(data);
     }

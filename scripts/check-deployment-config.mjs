@@ -5,6 +5,7 @@ import process from "node:process"
 const root = process.cwd()
 const migrationDir = path.join(root, "backend", "src", "main", "resources", "db", "migration")
 const k8sDir = path.join(root, "deploy", "k8s")
+const overlayDir = path.join(root, "deploy", "k8s-overlays")
 const failures = []
 
 function fail(message) {
@@ -81,6 +82,33 @@ for (const file of fs.readdirSync(k8sDir).filter((name) => name.endsWith(".yaml"
   const manifest = fs.readFileSync(path.join(k8sDir, file), "utf8")
   for (const match of manifest.matchAll(/^\s*image:\s*([^\s#]+)/gim)) {
     if (/:latest$/i.test(match[1])) fail(`${file} 使用了不可追踪的 latest 镜像标签：${match[1]}`)
+  }
+}
+
+for (const file of [".env.example", ".env.server.example", "compose.yml", "compose.server.yml"]) {
+  if (!fs.existsSync(path.join(root, file))) fail(`缺少部署配置：${file}`)
+}
+
+for (const environment of ["local", "server"]) {
+  const directory = path.join(overlayDir, environment)
+  const overlay = path.join(directory, "kustomization.yaml")
+  if (!fs.existsSync(overlay)) {
+    fail(`缺少 Kubernetes ${environment} overlay：deploy/k8s-overlays/${environment}/kustomization.yaml`)
+    continue
+  }
+
+  const content = fs.readFileSync(overlay, "utf8")
+  if (!content.includes("../../k8s")) {
+    fail(`${environment} overlay 未引用 deploy/k8s 基础清单`)
+  }
+}
+
+if (fs.existsSync(path.join(root, ".env.server.example"))) {
+  const serverExample = read(".env.server.example")
+  for (const key of ["JWT_SECRET", "DB_PASSWORD", "S3_ENDPOINT", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY"]) {
+    if (!new RegExp(`^${key}=`, "m").test(serverExample)) {
+      fail(`.env.server.example 缺少 ${key}`)
+    }
   }
 }
 
