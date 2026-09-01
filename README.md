@@ -65,6 +65,8 @@ ADMIN_REGISTER_SECRET="请替换为本地强随机值"
 - `DEEPSEEK_API_KEY` 可留空；行程规划和客服会使用本地降级结果。需要真实 AI 响应时再填入有效密钥。
 - `JWT_SECRET` 在不同实例间必须保持一致，否则登录令牌会随机失效；模板包含 PowerShell 生成命令。
 - `ADMIN_REGISTER_SECRET` 仅用于创建管理员账号；留空会关闭管理员注册入口。
+- 已提交模板不提供 `S3_SECRET_KEY` 示例值；本地运行 `Initialize-TravelMateLocalEnv.ps1` 自动生成，服务器必须通过安全渠道填写实际值。
+- `RATE_LIMIT_ENABLED` 默认必须为 `true`；仅隔离的自动化测试环境可临时设为 `false`，不要在公网部署中关闭限流。
 - `.env` 已被 Git 忽略，不要把密码、Token 或 API Key 写进源码、README 或提交记录。
 
 DeepSeek 的网关、模型和推理选项可继续使用 [`.env.example`](.env.example) 中的默认配置。
