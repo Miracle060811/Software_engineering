@@ -6,6 +6,8 @@ import com.travelmate.entity.Notification;
 import com.travelmate.mapper.AiConsumedEventMapper;
 import com.travelmate.mapper.NotificationMapper;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.server.ResponseStatusException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,6 +17,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class InternalNotificationEventControllerTests {
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -61,6 +66,47 @@ class InternalNotificationEventControllerTests {
         assertThatThrownBy(() -> controller.consume(envelope("event-3"), "service-token", "event-3"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("通知写入失败");
+    }
+
+    @Test
+    void validNotificationEventIsAcceptedOverHttp() throws Exception {
+        AiConsumedEventMapper consumedMapper = mock(AiConsumedEventMapper.class);
+        NotificationMapper notificationMapper = mock(NotificationMapper.class);
+        when(consumedMapper.insertIfAbsent("event-http-1", "NotificationRequested")).thenReturn(1);
+        when(notificationMapper.insert(any(Notification.class))).thenReturn(1);
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(
+                new InternalNotificationEventController(consumedMapper, notificationMapper, "service-token")).build();
+        mvc.perform(post("/internal/notifications/events")
+                        .header("X-Internal-Token", "service-token")
+                        .header("Idempotency-Key", "event-http-1")
+                        .contentType("application/json")
+                        .content("{\"eventId\":\"event-http-1\",\"eventType\":\"NotificationRequested\",\"payload\":{\"userId\":7,\"type\":\"system\",\"title\":\"通知\",\"content\":\"内容\"}}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void invalidNotificationTokenIsRejectedOverHttp() throws Exception {
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(new InternalNotificationEventController(
+                mock(AiConsumedEventMapper.class), mock(NotificationMapper.class), "service-token")).build();
+        mvc.perform(post("/internal/notifications/events")
+                        .header("X-Internal-Token", "wrong-token")
+                        .header("Idempotency-Key", "event-http-2")
+                        .contentType("application/json").content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void malformedNotificationEventIsRejected() throws Exception {
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(new InternalNotificationEventController(
+                mock(AiConsumedEventMapper.class), mock(NotificationMapper.class), "service-token")).build();
+        mvc.perform(post("/internal/notifications/events")
+                        .header("X-Internal-Token", "service-token")
+                        .header("Idempotency-Key", "event-http-3"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/internal/notifications/events")
+                        .header("X-Internal-Token", "service-token")
+                        .contentType("application/json").content("{}"))
+                .andExpect(status().isBadRequest());
     }
 
     private InternalNotificationEventController.OutboxEnvelope envelope(String eventId) throws Exception {

@@ -40,11 +40,14 @@
 
 ## API 与 UC01—UC19 测试
 
-六个服务均有独立的 public API MockMvc 契约测试；运行完整 Reactor 会同时执行 API、跨服务 Outbox 和幂等消费测试：
+六个服务的 113 个 Controller 端点（94 个公开端点、19 个内部端点）均登记了正常、鉴权和参数边界 MockMvc 测试锚点；有跨服务依赖的端点另登记 503 失败测试。清单由代码自动发现并与测试源码互相校验，新增或删除路由后未同步测试会使门禁失败：
 
 ```powershell
-mvn --batch-mode --no-transfer-progress verify
+npm run check:microservice-api
+.\backend\mvnw.cmd -f .\microservices\pom.xml --batch-mode --no-transfer-progress clean verify
 ```
+
+覆盖清单位于 `docs/ci/microservice-api-coverage.json`。`normal`、`auth`、`validation` 和可选的 `dependencyFailure` 字段均保存 `ClassName#methodName` 锚点；CI 的 `Repository and use-case validation` job 会执行同一门禁。参数绑定、缺失请求头、类型转换和不可读 JSON 统一返回 HTTP 400，业务规则错误继续使用既有业务错误信封。
 
 微服务 E2E 复用真实数据库版 UC01—UC19 场景，但通过 Vite 按路由转发到 8081—8086 的对应服务，不会访问 8080 单体后端：
 
