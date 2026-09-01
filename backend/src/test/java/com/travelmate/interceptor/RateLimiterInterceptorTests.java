@@ -68,17 +68,6 @@ class RateLimiterInterceptorTests {
     }
 
     @Test
-    void bypassesRateLimitWhenExplicitlyDisabled() throws Exception {
-        ReflectionTestUtils.setField(interceptor, "rateLimitEnabled", false);
-
-        HandlerMethod handler = handlerWithRateLimiter(3, 1);
-        boolean result = interceptor.preHandle(request, response, handler);
-
-        assertThat(result).isTrue();
-        verify(valueOperations, never()).increment(anyString());
-    }
-
-    @Test
     void blocksRequestWhenRateLimitExceeded() throws Exception {
         when(valueOperations.increment(anyString())).thenReturn(6L);
 
@@ -107,6 +96,17 @@ class RateLimiterInterceptorTests {
     @Test
     void allowsRequestWhenNoRateLimiterAnnotation() throws Exception {
         HandlerMethod handler = handlerWithoutRateLimiter();
+        boolean result = interceptor.preHandle(request, response, handler);
+
+        assertThat(result).isTrue();
+        verify(valueOperations, never()).increment(anyString());
+    }
+
+    @Test
+    void bypassesRateLimitWhenDisabledByConfiguration() throws Exception {
+        ReflectionTestUtils.setField(interceptor, "rateLimitEnabled", false);
+
+        HandlerMethod handler = handlerWithRateLimiter(5, 1);
         boolean result = interceptor.preHandle(request, response, handler);
 
         assertThat(result).isTrue();

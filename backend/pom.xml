@@ -49,6 +49,7 @@
 			<artifactId>minio</artifactId>
 			<version>8.6.0</version>
 		</dependency>
+		<!-- MinIO 8.6.0 references OkHttp's JVM classes, while okhttp:5.1.0 is only the multiplatform facade. -->
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>okhttp-jvm</artifactId>

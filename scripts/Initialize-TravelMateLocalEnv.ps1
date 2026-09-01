@@ -8,12 +8,20 @@ $ErrorActionPreference = "Stop"
 
 function New-RandomBytes {
     param([int]$Length)
-    return [Security.Cryptography.RandomNumberGenerator]::GetBytes($Length)
+    $bytes = New-Object byte[] $Length
+    $generator = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try {
+        $generator.GetBytes($bytes)
+        return $bytes
+    }
+    finally {
+        $generator.Dispose()
+    }
 }
 
 function New-HexSecret {
     param([int]$Length)
-    return ([Convert]::ToHexString((New-RandomBytes -Length $Length))).ToLowerInvariant()
+    return ((New-RandomBytes -Length $Length) | ForEach-Object { $_.ToString("x2") }) -join ""
 }
 
 function Get-ConfiguredKeys {
