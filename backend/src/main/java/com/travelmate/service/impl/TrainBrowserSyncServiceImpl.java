@@ -15,7 +15,11 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,6 +29,8 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 @Service
 public class TrainBrowserSyncServiceImpl implements TrainBrowserSyncService {
@@ -56,7 +62,34 @@ public class TrainBrowserSyncServiceImpl implements TrainBrowserSyncService {
                 .cookieHandler(cookieManager)
                 .connectTimeout(Duration.ofSeconds(8))
                 .followRedirects(HttpClient.Redirect.NORMAL)
+                .sslContext(cfcaSslContext())
                 .build();
+    }
+
+    /**
+     * 12306 当前证书链使用 CFCA EV ROOT，而部分 JDK（包括 Oracle JDK 25）
+     * 未内置该根证书。这里只为访问 12306 的专用 HttpClient 增加该公开根证书，
+     * 仍保留完整的证书链和主机名校验，不允许跳过 TLS 验证。
+     */
+    private SSLContext cfcaSslContext() {
+        try (InputStream input = TrainBrowserSyncServiceImpl.class
+                .getResourceAsStream("/certificates/cfca-ev-root.pem")) {
+            if (input == null) {
+                throw new IllegalStateException("缺少 12306 CFCA 根证书资源");
+            }
+            Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(input);
+            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            trustStore.load(null, null);
+            trustStore.setCertificateEntry("cfca-ev-root", certificate);
+            TrustManagerFactory trustManagers = TrustManagerFactory.getInstance(
+                    TrustManagerFactory.getDefaultAlgorithm());
+            trustManagers.init(trustStore);
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustManagers.getTrustManagers(), null);
+            return sslContext;
+        } catch (Exception exception) {
+            throw new IllegalStateException("无法初始化 12306 HTTPS 信任链", exception);
+        }
     }
 
     @Override
