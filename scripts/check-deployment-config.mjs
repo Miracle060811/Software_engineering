@@ -119,6 +119,12 @@ if (!/runs-on:[\s\S]*?travelmate-deploy[\s\S]*?timeout-minutes:\s*10/.test(ciWor
 for (const port of [8081, 8082, 8083, 8084, 8085, 8086]) {
   if (!ciWorkflow.includes(`ServicePort = ${port}`)) fail(`部署后健康检查未覆盖端口 ${port}`)
 }
+if (/activePods\.Count\s+-ne\s+6/.test(ciWorkflow)) {
+  fail("部署后验收不能将微服务 Pod 总数固定为 6，HPA 会动态调整副本数")
+}
+for (const check of ["desiredReplicas", "readyReplicas", "availableReplicas", "expectedPodTotal"]) {
+  if (!ciWorkflow.includes(check)) fail(`部署后验收缺少 HPA 副本检查：${check}`)
+}
 
 for (const service of ["backend", "frontend", "mysql", "redis"]) {
   const manifest = read(`deploy/k8s/${service}.yaml`)

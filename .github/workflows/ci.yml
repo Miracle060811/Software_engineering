@@ -1479,11 +1479,73 @@ jobs:
             $microserviceSummary.Add("$($service.Name)_health=$health")
           }
 
-          $podState = kubectl get pods -n travelmate -l app.kubernetes.io/component=microservice -o json | ConvertFrom-Json
-          $activePods = @($podState.items | Where-Object { $null -eq $_.metadata.deletionTimestamp })
-          if ($activePods.Count -ne 6) {
-            throw "Expected six active microservice Pods, found $($activePods.Count)"
+          $microserviceNames = @($microservices | ForEach-Object { $_.Name })
+          $activePods = @()
+          $expectedPodTotal = 0
+          $replicaSummary = [System.Collections.Generic.List[string]]::new()
+          for ($attempt = 0; $attempt -lt 12; $attempt++) {
+            $deploymentState = kubectl get deployments -n travelmate -l app.kubernetes.io/component=microservice -o json | ConvertFrom-Json
+            $podState = kubectl get pods -n travelmate -l app.kubernetes.io/component=microservice -o json | ConvertFrom-Json
+            $activePods = @($podState.items | Where-Object { $null -eq $_.metadata.deletionTimestamp })
+            $validationErrors = [System.Collections.Generic.List[string]]::new()
+            $replicaSummary = [System.Collections.Generic.List[string]]::new()
+            $expectedPodTotal = 0
+
+            $deployedNames = @($deploymentState.items | ForEach-Object { $_.metadata.name })
+            foreach ($name in $microserviceNames) {
+              if ($name -notin $deployedNames) {
+                $validationErrors.Add("Missing microservice Deployment $name")
+              }
+            }
+            foreach ($name in $deployedNames) {
+              if ($name -notin $microserviceNames) {
+                $validationErrors.Add("Unexpected microservice Deployment $name")
+              }
+            }
+
+            foreach ($service in $microservices) {
+              $deployment = @($deploymentState.items | Where-Object { $_.metadata.name -eq $service.Name })
+              if ($deployment.Count -ne 1) {
+                continue
+              }
+
+              $desiredReplicas = [int]$deployment[0].spec.replicas
+              $readyReplicas = if ($null -eq $deployment[0].status.readyReplicas) { 0 } else { [int]$deployment[0].status.readyReplicas }
+              $availableReplicas = if ($null -eq $deployment[0].status.availableReplicas) { 0 } else { [int]$deployment[0].status.availableReplicas }
+              $servicePods = @($activePods | Where-Object { $_.metadata.labels.'app.kubernetes.io/name' -eq $service.Name })
+              $expectedPodTotal += $desiredReplicas
+              $replicaSummary.Add("$($service.Name)_replicas=$readyReplicas/$desiredReplicas")
+
+              if ($desiredReplicas -lt 1) {
+                $validationErrors.Add("$($service.Name) has no desired replicas")
+              }
+              if ($readyReplicas -ne $desiredReplicas -or $availableReplicas -ne $desiredReplicas) {
+                $validationErrors.Add("$($service.Name) replicas are not ready: desired=$desiredReplicas ready=$readyReplicas available=$availableReplicas")
+              }
+              if ($servicePods.Count -ne $desiredReplicas) {
+                $validationErrors.Add("$($service.Name) Pod count mismatch: desired=$desiredReplicas active=$($servicePods.Count)")
+              }
+            }
+
+            $unexpectedPods = @($activePods | Where-Object {
+              $_.metadata.labels.'app.kubernetes.io/name' -notin $microserviceNames
+            })
+            if ($unexpectedPods.Count -gt 0) {
+              $validationErrors.Add("Unexpected microservice Pods: $(@($unexpectedPods | ForEach-Object { $_.metadata.name }) -join ', ')")
+            }
+            if ($activePods.Count -ne $expectedPodTotal) {
+              $validationErrors.Add("Microservice Pod total mismatch: expected=$expectedPodTotal active=$($activePods.Count)")
+            }
+
+            if ($validationErrors.Count -eq 0) {
+              break
+            }
+            if ($attempt -eq 11) {
+              throw "Microservice replicas did not stabilize: $($validationErrors -join '; ')"
+            }
+            Start-Sleep -Seconds 5
           }
+
           foreach ($pod in $activePods) {
             $readyCondition = @($pod.status.conditions | Where-Object { $_.type -eq "Ready" -and $_.status -eq "True" })
             if ($readyCondition.Count -ne 1) {
@@ -1508,10 +1570,11 @@ jobs:
             "frontend=$frontendImage"
             "frontend_health=$($frontendHealth.StatusCode)"
             "backend_health=$backendHealth"
+            "microservice_deployments_ready=6/6"
             "microservice_pods_ready=$($activePods.Count)"
             "microservice_container_restarts=0"
           )
-          $summary + $microserviceSummary | Set-Content -LiteralPath (Join-Path $evidenceDirectory "deployment-summary.txt") -Encoding utf8
+          $summary + $microserviceSummary + $replicaSummary | Set-Content -LiteralPath (Join-Path $evidenceDirectory "deployment-summary.txt") -Encoding utf8
 
       - name: Capture deployment state and logs
         if: always()
