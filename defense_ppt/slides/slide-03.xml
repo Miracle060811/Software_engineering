@@ -1,0 +1,143 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgb(242,244,248)"/>
+    </fill>
+  </style>
+  <data>
+    <shape type="text" topLeftX="56" topLeftY="26" width="500" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(37,99,235,1)" wrap="false">
+        <p>02 / ROADMAP</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="848" topLeftY="26" width="56" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(140,150,166,1)" textAlign="right" wrap="false">
+        <p>03 / 17</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="56" topLeftY="46" width="848" height="36">
+      <content textType="title" fontSize="22" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>十天两阶段：先复活单体打牢基线，再物理拆分六服务上云</p>
+      </content>
+    </shape>
+    <line startX="56" startY="92" endX="904" endY="92">
+      <border color="rgb(217,222,231)" width="1"/>
+    </line>
+    <shape type="rect" topLeftX="56" topLeftY="110" width="414" height="34">
+      <fill><fillColor color="rgba(13,19,38,1)"/></fill>
+    </shape>
+    <shape type="text" topLeftX="70" topLeftY="110" width="386" height="34">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" bold="true" color="rgba(255,255,255,1)" verticalAlign="middle" wrap="false">
+        <p>阶段一 · 单体复活与工程化（40 分，08-22 → 08-27）</p>
+      </content>
+    </shape>
+    <shape type="rect" topLeftX="56" topLeftY="144" width="414" height="150">
+      <fill><fillColor color="rgba(255,255,255,1)"/></fill>
+      <border color="rgb(217,222,231)" width="1"/>
+    </shape>
+    <shape type="text" topLeftX="72" topLeftY="154" width="386" height="132">
+      <content textType="body" fontSize="11" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.7">
+        <ul>
+          <li><p>恢复上学期前后端单体，19 个用例本地可运行</p></li>
+          <li><p>补齐需求规格、设计说明、测试用例与追溯矩阵</p></li>
+          <li><p>前后端 Dockerfile 与 docker-compose 一键启动</p></li>
+          <li><p>GitHub Actions 流水线：测试门禁、自动构建</p></li>
+          <li><p>冻结回归基线，打标签 monolith-start</p></li>
+        </ul>
+      </content>
+    </shape>
+    <shape type="rect" topLeftX="490" topLeftY="110" width="414" height="34">
+      <fill><fillColor color="rgba(37,99,235,1)"/></fill>
+    </shape>
+    <shape type="text" topLeftX="504" topLeftY="110" width="386" height="34">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" bold="true" color="rgba(255,255,255,1)" verticalAlign="middle" wrap="false">
+        <p>阶段二 · 微服务与云原生（30 分，08-28 → 09-01）</p>
+      </content>
+    </shape>
+    <shape type="rect" topLeftX="490" topLeftY="144" width="414" height="150">
+      <fill><fillColor color="rgba(255,255,255,1)"/></fill>
+      <border color="rgb(217,222,231)" width="1"/>
+    </shape>
+    <shape type="text" topLeftX="506" topLeftY="154" width="386" height="132">
+      <content textType="body" fontSize="11" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.7">
+        <ul>
+          <li><p>后端物理拆分为 6 个业务微服务（要求 ≥ 3）</p></li>
+          <li><p>6 套独立 MySQL 与 Redis，内部接口令牌鉴权</p></li>
+          <li><p>Kubernetes：Deployment、StatefulSet、Service</p></li>
+          <li><p>HPA 自动扩缩容、故障注入、k6 性能对比实验</p></li>
+          <li><p>17 项微服务 E2E 全绿，打标签 microservices-phase1</p></li>
+        </ul>
+      </content>
+    </shape>
+    <line startX="96" startY="356" endX="872" endY="356">
+      <border color="rgb(191,215,255)" width="2"/>
+    </line>
+    <shape type="ellipse" topLeftX="90" topLeftY="350" width="12" height="12">
+      <fill><fillColor color="rgba(37,99,235,1)"/></fill>
+    </shape>
+    <shape type="ellipse" topLeftX="250" topLeftY="350" width="12" height="12">
+      <fill><fillColor color="rgba(37,99,235,1)"/></fill>
+    </shape>
+    <shape type="ellipse" topLeftX="410" topLeftY="350" width="12" height="12">
+      <fill><fillColor color="rgba(13,19,38,1)"/></fill>
+    </shape>
+    <shape type="ellipse" topLeftX="570" topLeftY="350" width="12" height="12">
+      <fill><fillColor color="rgba(37,99,235,1)"/></fill>
+    </shape>
+    <shape type="ellipse" topLeftX="730" topLeftY="350" width="12" height="12">
+      <fill><fillColor color="rgba(37,99,235,1)"/></fill>
+    </shape>
+    <shape type="ellipse" topLeftX="866" topLeftY="350" width="12" height="12">
+      <fill><fillColor color="rgba(201,48,44,1)"/></fill>
+    </shape>
+    <shape type="text" topLeftX="30" topLeftY="318" width="132" height="20">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(37,99,235,1)" textAlign="center" wrap="false"><p>08-22</p></content>
+    </shape>
+    <shape type="text" topLeftX="30" topLeftY="370" width="132" height="34">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(83,97,116,1)" textAlign="center" lineSpacing="multiple:1.4"><p>项目启动</p><p>需求冻结</p></content>
+    </shape>
+    <shape type="text" topLeftX="190" topLeftY="318" width="132" height="20">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(37,99,235,1)" textAlign="center" wrap="false"><p>08-25</p></content>
+    </shape>
+    <shape type="text" topLeftX="190" topLeftY="370" width="132" height="34">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(83,97,116,1)" textAlign="center" lineSpacing="multiple:1.4"><p>单体测试</p><p>全量转绿</p></content>
+    </shape>
+    <shape type="text" topLeftX="350" topLeftY="318" width="132" height="20">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(13,19,38,1)" textAlign="center" wrap="false"><p>08-27</p></content>
+    </shape>
+    <shape type="text" topLeftX="350" topLeftY="370" width="132" height="34">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(83,97,116,1)" textAlign="center" lineSpacing="multiple:1.4"><p>中期验收</p><p>基线冻结</p></content>
+    </shape>
+    <shape type="text" topLeftX="510" topLeftY="318" width="132" height="20">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(37,99,235,1)" textAlign="center" wrap="false"><p>08-31</p></content>
+    </shape>
+    <shape type="text" topLeftX="510" topLeftY="370" width="132" height="34">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(83,97,116,1)" textAlign="center" lineSpacing="multiple:1.4"><p>六服务上线</p><p>17 项 E2E 通过</p></content>
+    </shape>
+    <shape type="text" topLeftX="670" topLeftY="318" width="132" height="20">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(37,99,235,1)" textAlign="center" wrap="false"><p>09-01</p></content>
+    </shape>
+    <shape type="text" topLeftX="670" topLeftY="370" width="132" height="34">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(83,97,116,1)" textAlign="center" lineSpacing="multiple:1.4"><p>拆分边界</p><p>物理验证</p></content>
+    </shape>
+    <shape type="text" topLeftX="806" topLeftY="318" width="132" height="20">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(201,48,44,1)" textAlign="center" wrap="false"><p>09-04</p></content>
+    </shape>
+    <shape type="text" topLeftX="806" topLeftY="370" width="132" height="34">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" textAlign="center" lineSpacing="multiple:1.4"><p>最终答辩</p><p>现场演示</p></content>
+    </shape>
+    <line startX="56" startY="436" endX="904" endY="436">
+      <border color="rgb(217,222,231)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="56" topLeftY="448" width="848" height="48">
+      <content textType="body" fontSize="11" fontFamily="思源黑体" color="rgba(83,97,116,1)" lineSpacing="multiple:1.6">
+        <p>交付物按 01 需求 / 02 设计 / 03 代码 / 04 测试 / 05 管理 / 06 交付 六个目录归档；每日站会、看板流转、PR 评审与 AI 使用记录全程留痕，综合过程分（20 分）对应可查。</p>
+      </content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>任务书把十天实践切成两段：前五天复活单体、补齐文档测试、容器化和 CI，冻结 monolith-start 基线；后五天在不改动单体仓库的前提下，把后端物理拆成六个微服务，部署到 Kubernetes，完成扩缩容、故障和性能实验，9 月 1 日通过拆分边界验证。下方时间轴是我们的真实里程碑，所有交付物按六个目录归档，过程管理证据齐全。</p>
+    </content>
+  </note>
+</slide>

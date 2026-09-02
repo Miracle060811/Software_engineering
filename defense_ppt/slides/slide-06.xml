@@ -1,0 +1,71 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgb(242,244,248)"/>
+    </fill>
+  </style>
+  <data>
+    <shape type="text" topLeftX="56" topLeftY="26" width="500" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(37,99,235,1)" wrap="false">
+        <p>05 / DECOMPOSITION</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="848" topLeftY="26" width="56" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(140,150,166,1)" textAlign="right" wrap="false">
+        <p>06 / 17</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="56" topLeftY="46" width="848" height="36">
+      <content textType="title" fontSize="22" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>按业务能力拆成六个独立服务，单体仓库保持不动作为对照基线</p>
+      </content>
+    </shape>
+    <line startX="56" startY="92" endX="904" endY="92">
+      <border color="rgb(217,222,231)" width="1"/>
+    </line>
+    <img src="OPXzbcGoNo6XzVxECcNcdyOmnIf" topLeftX="56" topLeftY="102" width="600" height="400">
+      <border color="rgb(217,222,231)" width="1"/>
+    </img>
+    <shape type="text" topLeftX="56" topLeftY="506" width="600" height="16">
+      <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(140,150,166,1)" wrap="false">
+        <p>图 2　TravelMate 目标服务划分（源自《详细设计说明》图 26）</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="680" topLeftY="104" width="224" height="22">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>四条拆分依据</p>
+      </content>
+    </shape>
+    <line startX="680" startY="132" endX="904" endY="132">
+      <border color="rgb(37,99,235)" width="2"/>
+    </line>
+    <shape type="text" topLeftX="680" topLeftY="142" width="224" height="220">
+      <content textType="body" fontSize="11" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.7">
+        <p><strong>1　业务能力边界</strong></p>
+        <p>按业务域拆，不按技术分层拆</p>
+        <p> </p>
+        <p><strong>2　数据所有权</strong></p>
+        <p>每服务独占自己的表与库</p>
+        <p> </p>
+        <p><strong>3　独立部署</strong></p>
+        <p>独立进程、镜像与副本伸缩</p>
+        <p> </p>
+        <p><strong>4　显式协作</strong></p>
+        <p>内部 HTTP 接口加消息表</p>
+      </content>
+    </shape>
+    <line startX="680" startY="380" endX="904" endY="380">
+      <border color="rgb(217,222,231)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="680" topLeftY="392" width="224" height="110">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(83,97,116,1)" lineSpacing="multiple:1.6">
+        <p>单体 backend/ 全程不改，作为性能对比的对照组；六个服务位于 microservices/services，共享平台库 travelmate-platform，端口 8081–8086。</p>
+      </content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>这张图是我们的目标服务划分全景。拆分不是按 controller、service 这种技术层切，而是按业务能力：身份、交通、当地、AI、社区、运维六个服务，各自独立进程、独立数据库、独立镜像和副本。四条拆分依据列在右侧。特别强调：原来的单体代码全程没有改动，它保留下来作为性能对比的对照组，这也是任务书要求的对照实验基础。</p>
+    </content>
+  </note>
+</slide>

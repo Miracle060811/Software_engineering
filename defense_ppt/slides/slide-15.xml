@@ -1,0 +1,148 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgb(242,244,248)"/>
+    </fill>
+  </style>
+  <data>
+    <shape type="text" topLeftX="56" topLeftY="26" width="500" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(37,99,235,1)" wrap="false">
+        <p>12 / FAULT TOLERANCE</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="848" topLeftY="26" width="56" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(140,150,166,1)" textAlign="right" wrap="false">
+        <p>15 / 17</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="56" topLeftY="46" width="848" height="36">
+      <content textType="title" fontSize="22" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>故障实证：停掉身份服务，下单快速失败且零脏数据、查询不受影响</p>
+      </content>
+    </shape>
+    <line startX="56" startY="92" endX="904" endY="92">
+      <border color="rgb(217,222,231)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="56" topLeftY="106" width="400" height="22">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>实验时间线（2026-08-31，真实执行留档）</p>
+      </content>
+    </shape>
+    <line startX="56" startY="134" endX="456" endY="134">
+      <border color="rgb(37,99,235)" width="2"/>
+    </line>
+    <shape type="ellipse" topLeftX="60" topLeftY="152" width="10" height="10">
+      <fill><fillColor color="rgba(37,99,235,1)"/></fill>
+    </shape>
+    <shape type="text" topLeftX="82" topLeftY="146" width="100" height="20">
+      <content textType="caption" fontSize="9" fontFamily="Roboto Mono" bold="true" color="rgba(37,99,235,1)" wrap="false"><p>10:15:51</p></content>
+    </shape>
+    <shape type="text" topLeftX="180" topLeftY="146" width="276" height="20">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" wrap="false"><p>采集基线：订单 0、机票库存 317</p></content>
+    </shape>
+    <line startX="65" startY="166" endX="65" endY="206">
+      <border color="rgb(191,215,255)" width="2"/>
+    </line>
+    <shape type="ellipse" topLeftX="60" topLeftY="210" width="10" height="10">
+      <fill><fillColor color="rgba(201,48,44,1)"/></fill>
+    </shape>
+    <shape type="text" topLeftX="82" topLeftY="204" width="100" height="20">
+      <content textType="caption" fontSize="9" fontFamily="Roboto Mono" bold="true" color="rgba(201,48,44,1)" wrap="false"><p>10:16:04</p></content>
+    </shape>
+    <shape type="text" topLeftX="180" topLeftY="204" width="276" height="20">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" wrap="false"><p>主动停止 identity-service（注入故障）</p></content>
+    </shape>
+    <line startX="65" startY="224" endX="65" endY="330">
+      <border color="rgb(191,215,255)" width="2"/>
+    </line>
+    <shape type="rect" topLeftX="82" topLeftY="232" width="374" height="92">
+      <fill><fillColor color="rgba(255,255,255,1)"/></fill>
+      <border color="rgb(217,222,231)" width="1"/>
+    </shape>
+    <shape type="text" topLeftX="96" topLeftY="240" width="346" height="78">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.7">
+        <p><strong>故障期间观测：</strong></p>
+        <p>下单接口 503「身份服务暂不可用，请稍后重试」</p>
+        <p>航班查询仍返回 200；traffic 健康检查保持 UP</p>
+      </content>
+    </shape>
+    <shape type="ellipse" topLeftX="60" topLeftY="338" width="10" height="10">
+      <fill><fillColor color="rgba(30,126,69,1)"/></fill>
+    </shape>
+    <shape type="text" topLeftX="82" topLeftY="332" width="100" height="20">
+      <content textType="caption" fontSize="9" fontFamily="Roboto Mono" bold="true" color="rgba(30,126,69,1)" wrap="false"><p>10:16:32</p></content>
+    </shape>
+    <shape type="text" topLeftX="180" topLeftY="332" width="276" height="20">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" wrap="false"><p>重启完成（中断约 28s），自动恢复</p></content>
+    </shape>
+    <shape type="text" topLeftX="56" topLeftY="372" width="400" height="110">
+      <content textType="body" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.7">
+        <p><strong>四道防线共同生效</strong></p>
+        <p>连接 1s / 读取 2s 超时；依赖失败统一 503；</p>
+        <p>校验不过则事务不进入库存扣减阶段；</p>
+        <p>优雅停机保证在途请求处理完再退出。</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="480" topLeftY="106" width="424" height="22">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>故障前 / 故障中 / 恢复后对比</p>
+      </content>
+    </shape>
+    <line startX="480" startY="134" endX="904" endY="134">
+      <border color="rgb(37,99,235)" width="2"/>
+    </line>
+    <table topLeftX="480" topLeftY="146" width="424" height="290">
+      <colgroup><col width="150"/><col width="92"/><col width="90"/><col width="92"/></colgroup>
+      <tr height="34">
+        <td><fill><fillColor color="rgba(13,19,38,1)"/></fill><content textType="caption" fontSize="9" bold="true" color="rgba(255,255,255,1)" textAlign="left"><p>　观测指标</p></content></td>
+        <td><fill><fillColor color="rgba(13,19,38,1)"/></fill><content textType="caption" fontSize="9" bold="true" color="rgba(255,255,255,1)" textAlign="center"><p>故障前</p></content></td>
+        <td><fill><fillColor color="rgba(13,19,38,1)"/></fill><content textType="caption" fontSize="9" bold="true" color="rgba(255,255,255,1)" textAlign="center"><p>故障中</p></content></td>
+        <td><fill><fillColor color="rgba(13,19,38,1)"/></fill><content textType="caption" fontSize="9" bold="true" color="rgba(255,255,255,1)" textAlign="center"><p>恢复后</p></content></td>
+      </tr>
+      <tr height="51">
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="9" color="rgba(83,97,116,1)" textAlign="left"><p>　订单总数</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="center"><p>0</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(30,126,69,1)" textAlign="center"><p>0 未新增</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="center"><p>0</p></content></td>
+      </tr>
+      <tr height="51">
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="9" color="rgba(83,97,116,1)" textAlign="left"><p>　机票库存</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="center"><p>317</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(30,126,69,1)" textAlign="center"><p>317 未扣减</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="center"><p>317</p></content></td>
+      </tr>
+      <tr height="51">
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="9" color="rgba(83,97,116,1)" textAlign="left"><p>　下单接口</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="center"><p>200</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(201,48,44,1)" textAlign="center"><p>503 固定提示</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="center"><p>200</p></content></td>
+      </tr>
+      <tr height="51">
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="9" color="rgba(83,97,116,1)" textAlign="left"><p>　航班查询</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="center"><p>200</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(30,126,69,1)" textAlign="center"><p>200 不受影响</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="center"><p>200</p></content></td>
+      </tr>
+      <tr height="51">
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="9" color="rgba(83,97,116,1)" textAlign="left"><p>　traffic 健康</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="center"><p>UP</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(30,126,69,1)" textAlign="center"><p>UP 未被拖垮</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="center"><p>UP</p></content></td>
+      </tr>
+    </table>
+    <shape type="rect" topLeftX="480" topLeftY="448" width="424" height="54">
+      <fill><fillColor color="rgba(13,19,38,1)"/></fill>
+    </shape>
+    <shape type="text" topLeftX="496" topLeftY="456" width="392" height="38">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(255,255,255,1)" verticalAlign="middle" lineSpacing="multiple:1.5">
+        <p>结论：故障被封闭在单条依赖链路，不级联、零脏数据，</p>
+        <p>重启后自动恢复，实验判定 passed = true。</p>
+      </content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>故障处理我们做了真实实验而不是口头描述：8 月 31 日主动停掉身份服务。左侧时间线显示，故障期间交通服务的下单请求在超时控制下快速返回 503 和固定中文提示，但不依赖身份的航班查询依然 200，自身健康检查保持 UP；身份服务约 28 秒后重启完成，系统自动恢复。右侧对比表是关键：订单数 0 比 0、库存 317 比 317，没有产生任何脏数据。这说明超时、固定错误码、事务前置校验和优雅停机这四道防线确实生效。</p>
+    </content>
+  </note>
+</slide>
