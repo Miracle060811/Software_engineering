@@ -1,0 +1,13 @@
+{
+  "scenario": "hotel-search",
+  "run": 3,
+  "baseUrl": "http://127.0.0.1:8083",
+  "metricSource": "Docker",
+  "metricTarget": "travelmate-perf-ms-local-service-1",
+  "sampleCount": 42,
+  "averageCpuPercent": 4.426,
+  "maximumCpuPercent": 12.33,
+  "averageMemoryMiB": 350.624,
+  "maximumMemoryMiB": 355.7,
+  "k6ExitCode": 0
+}

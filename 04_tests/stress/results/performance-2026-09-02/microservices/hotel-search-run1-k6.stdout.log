@@ -1,0 +1,458 @@
+
+         /\      Grafana   /‾‾/
+    /\  /  \     |\  __   /  /
+   /  \/    \    | |/ /  /   ‾‾\
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/
+
+
+     execution: local
+        script: D:\Campus\grade2\26Spring\Software_engineering\04_tests\stress\hotel-search.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 50 max VUs, 2m25s max duration (incl. graceful stop):
+              * hotel_search: Up to 50 looping VUs for 2m15s over 5 stages (gracefulRampDown: 10s, gracefulStop: 30s)
+
+
+running (0m01.0s), 01/50 VUs, 1 complete and 0 interrupted iterations
+hotel_search   [   1% ] 01/50 VUs  0m01.0s/2m15.0s
+
+running (0m02.0s), 01/50 VUs, 3 complete and 0 interrupted iterations
+hotel_search   [   1% ] 01/50 VUs  0m02.0s/2m15.0s
+
+running (0m03.0s), 01/50 VUs, 5 complete and 0 interrupted iterations
+hotel_search   [   2% ] 01/50 VUs  0m03.0s/2m15.0s
+
+running (0m04.0s), 01/50 VUs, 7 complete and 0 interrupted iterations
+hotel_search   [   3% ] 01/50 VUs  0m04.0s/2m15.0s
+
+running (0m05.0s), 01/50 VUs, 9 complete and 0 interrupted iterations
+hotel_search   [   4% ] 01/50 VUs  0m05.0s/2m15.0s
+
+running (0m06.0s), 01/50 VUs, 11 complete and 0 interrupted iterations
+hotel_search   [   4% ] 01/50 VUs  0m06.0s/2m15.0s
+
+running (0m07.0s), 01/50 VUs, 13 complete and 0 interrupted iterations
+hotel_search   [   5% ] 01/50 VUs  0m07.0s/2m15.0s
+
+running (0m08.0s), 02/50 VUs, 15 complete and 0 interrupted iterations
+hotel_search   [   6% ] 02/50 VUs  0m08.0s/2m15.0s
+
+running (0m09.0s), 02/50 VUs, 19 complete and 0 interrupted iterations
+hotel_search   [   7% ] 02/50 VUs  0m09.0s/2m15.0s
+
+running (0m10.0s), 02/50 VUs, 23 complete and 0 interrupted iterations
+hotel_search   [   7% ] 02/50 VUs  0m10.0s/2m15.0s
+
+running (0m11.0s), 02/50 VUs, 27 complete and 0 interrupted iterations
+hotel_search   [   8% ] 02/50 VUs  0m11.0s/2m15.0s
+
+running (0m12.0s), 02/50 VUs, 31 complete and 0 interrupted iterations
+hotel_search   [   9% ] 02/50 VUs  0m12.0s/2m15.0s
+
+running (0m13.0s), 02/50 VUs, 35 complete and 0 interrupted iterations
+hotel_search   [  10% ] 02/50 VUs  0m13.0s/2m15.0s
+
+running (0m14.0s), 02/50 VUs, 39 complete and 0 interrupted iterations
+hotel_search   [  10% ] 02/50 VUs  0m14.0s/2m15.0s
+
+running (0m15.0s), 02/50 VUs, 43 complete and 0 interrupted iterations
+hotel_search   [  11% ] 02/50 VUs  0m15.0s/2m15.0s
+
+running (0m16.0s), 03/50 VUs, 48 complete and 0 interrupted iterations
+hotel_search   [  12% ] 03/50 VUs  0m16.0s/2m15.0s
+
+running (0m17.0s), 03/50 VUs, 54 complete and 0 interrupted iterations
+hotel_search   [  13% ] 03/50 VUs  0m17.0s/2m15.0s
+
+running (0m18.0s), 03/50 VUs, 60 complete and 0 interrupted iterations
+hotel_search   [  13% ] 03/50 VUs  0m18.0s/2m15.0s
+
+running (0m19.0s), 03/50 VUs, 66 complete and 0 interrupted iterations
+hotel_search   [  14% ] 03/50 VUs  0m19.0s/2m15.0s
+
+running (0m20.0s), 03/50 VUs, 72 complete and 0 interrupted iterations
+hotel_search   [  15% ] 03/50 VUs  0m20.0s/2m15.0s
+
+running (0m21.0s), 03/50 VUs, 78 complete and 0 interrupted iterations
+hotel_search   [  16% ] 03/50 VUs  0m21.0s/2m15.0s
+
+running (0m22.0s), 03/50 VUs, 84 complete and 0 interrupted iterations
+hotel_search   [  16% ] 03/50 VUs  0m22.0s/2m15.0s
+
+running (0m23.0s), 04/50 VUs, 90 complete and 0 interrupted iterations
+hotel_search   [  17% ] 04/50 VUs  0m23.0s/2m15.0s
+
+running (0m24.0s), 04/50 VUs, 98 complete and 0 interrupted iterations
+hotel_search   [  18% ] 04/50 VUs  0m24.0s/2m15.0s
+
+running (0m25.0s), 04/50 VUs, 106 complete and 0 interrupted iterations
+hotel_search   [  19% ] 04/50 VUs  0m25.0s/2m15.0s
+
+running (0m26.0s), 04/50 VUs, 114 complete and 0 interrupted iterations
+hotel_search   [  19% ] 04/50 VUs  0m26.0s/2m15.0s
+
+running (0m27.0s), 04/50 VUs, 122 complete and 0 interrupted iterations
+hotel_search   [  20% ] 04/50 VUs  0m27.0s/2m15.0s
+
+running (0m28.0s), 04/50 VUs, 130 complete and 0 interrupted iterations
+hotel_search   [  21% ] 04/50 VUs  0m28.0s/2m15.0s
+
+running (0m29.0s), 04/50 VUs, 137 complete and 0 interrupted iterations
+hotel_search   [  21% ] 04/50 VUs  0m29.0s/2m15.0s
+
+running (0m30.0s), 04/50 VUs, 145 complete and 0 interrupted iterations
+hotel_search   [  22% ] 04/50 VUs  0m30.0s/2m15.0s
+
+running (0m31.0s), 05/50 VUs, 154 complete and 0 interrupted iterations
+hotel_search   [  23% ] 05/50 VUs  0m31.0s/2m15.0s
+
+running (0m32.0s), 05/50 VUs, 164 complete and 0 interrupted iterations
+hotel_search   [  24% ] 05/50 VUs  0m32.0s/2m15.0s
+
+running (0m33.0s), 05/50 VUs, 174 complete and 0 interrupted iterations
+hotel_search   [  24% ] 05/50 VUs  0m33.0s/2m15.0s
+
+running (0m34.0s), 05/50 VUs, 184 complete and 0 interrupted iterations
+hotel_search   [  25% ] 05/50 VUs  0m34.0s/2m15.0s
+
+running (0m35.0s), 05/50 VUs, 194 complete and 0 interrupted iterations
+hotel_search   [  26% ] 05/50 VUs  0m35.0s/2m15.0s
+
+running (0m36.0s), 05/50 VUs, 204 complete and 0 interrupted iterations
+hotel_search   [  27% ] 05/50 VUs  0m36.0s/2m15.0s
+
+running (0m37.0s), 06/50 VUs, 215 complete and 0 interrupted iterations
+hotel_search   [  27% ] 06/50 VUs  0m37.0s/2m15.0s
+
+running (0m38.0s), 06/50 VUs, 227 complete and 0 interrupted iterations
+hotel_search   [  28% ] 06/50 VUs  0m38.0s/2m15.0s
+
+running (0m39.0s), 06/50 VUs, 239 complete and 0 interrupted iterations
+hotel_search   [  29% ] 06/50 VUs  0m39.0s/2m15.0s
+
+running (0m40.0s), 06/50 VUs, 251 complete and 0 interrupted iterations
+hotel_search   [  30% ] 06/50 VUs  0m40.0s/2m15.0s
+
+running (0m41.0s), 06/50 VUs, 262 complete and 0 interrupted iterations
+hotel_search   [  30% ] 06/50 VUs  0m41.0s/2m15.0s
+
+running (0m42.0s), 06/50 VUs, 274 complete and 0 interrupted iterations
+hotel_search   [  31% ] 06/50 VUs  0m42.0s/2m15.0s
+
+running (0m43.0s), 07/50 VUs, 287 complete and 0 interrupted iterations
+hotel_search   [  32% ] 07/50 VUs  0m43.0s/2m15.0s
+
+running (0m44.0s), 07/50 VUs, 301 complete and 0 interrupted iterations
+hotel_search   [  33% ] 07/50 VUs  0m44.0s/2m15.0s
+
+running (0m45.0s), 07/50 VUs, 315 complete and 0 interrupted iterations
+hotel_search   [  33% ] 07/50 VUs  0m45.0s/2m15.0s
+
+running (0m46.0s), 07/50 VUs, 329 complete and 0 interrupted iterations
+hotel_search   [  34% ] 07/50 VUs  0m46.0s/2m15.0s
+
+running (0m47.0s), 07/50 VUs, 343 complete and 0 interrupted iterations
+hotel_search   [  35% ] 07/50 VUs  0m47.0s/2m15.0s
+
+running (0m48.0s), 07/50 VUs, 357 complete and 0 interrupted iterations
+hotel_search   [  36% ] 07/50 VUs  0m48.0s/2m15.0s
+
+running (0m49.0s), 08/50 VUs, 372 complete and 0 interrupted iterations
+hotel_search   [  36% ] 08/50 VUs  0m49.0s/2m15.0s
+
+running (0m50.0s), 08/50 VUs, 387 complete and 0 interrupted iterations
+hotel_search   [  37% ] 08/50 VUs  0m50.0s/2m15.0s
+
+running (0m51.0s), 08/50 VUs, 403 complete and 0 interrupted iterations
+hotel_search   [  38% ] 08/50 VUs  0m51.0s/2m15.0s
+
+running (0m52.0s), 08/50 VUs, 419 complete and 0 interrupted iterations
+hotel_search   [  39% ] 08/50 VUs  0m52.0s/2m15.0s
+
+running (0m53.0s), 08/50 VUs, 435 complete and 0 interrupted iterations
+hotel_search   [  39% ] 08/50 VUs  0m53.0s/2m15.0s
+
+running (0m54.0s), 08/50 VUs, 451 complete and 0 interrupted iterations
+hotel_search   [  40% ] 08/50 VUs  0m54.0s/2m15.0s
+
+running (0m55.0s), 09/50 VUs, 468 complete and 0 interrupted iterations
+hotel_search   [  41% ] 09/50 VUs  0m55.0s/2m15.0s
+
+running (0m56.0s), 09/50 VUs, 486 complete and 0 interrupted iterations
+hotel_search   [  41% ] 09/50 VUs  0m56.0s/2m15.0s
+
+running (0m57.0s), 09/50 VUs, 504 complete and 0 interrupted iterations
+hotel_search   [  42% ] 09/50 VUs  0m57.0s/2m15.0s
+
+running (0m58.0s), 09/50 VUs, 522 complete and 0 interrupted iterations
+hotel_search   [  43% ] 09/50 VUs  0m58.0s/2m15.0s
+
+running (0m59.0s), 09/50 VUs, 540 complete and 0 interrupted iterations
+hotel_search   [  44% ] 09/50 VUs  0m59.0s/2m15.0s
+
+running (1m00.0s), 09/50 VUs, 558 complete and 0 interrupted iterations
+hotel_search   [  44% ] 09/50 VUs  1m00.0s/2m15.0s
+
+running (1m01.0s), 10/50 VUs, 577 complete and 0 interrupted iterations
+hotel_search   [  45% ] 10/50 VUs  1m01.0s/2m15.0s
+
+running (1m02.0s), 10/50 VUs, 596 complete and 0 interrupted iterations
+hotel_search   [  46% ] 10/50 VUs  1m02.0s/2m15.0s
+
+running (1m03.0s), 10/50 VUs, 616 complete and 0 interrupted iterations
+hotel_search   [  47% ] 10/50 VUs  1m03.0s/2m15.0s
+
+running (1m04.0s), 11/50 VUs, 637 complete and 0 interrupted iterations
+hotel_search   [  47% ] 11/50 VUs  1m04.0s/2m15.0s
+
+running (1m05.0s), 11/50 VUs, 659 complete and 0 interrupted iterations
+hotel_search   [  48% ] 11/50 VUs  1m05.0s/2m15.0s
+
+running (1m06.0s), 11/50 VUs, 681 complete and 0 interrupted iterations
+hotel_search   [  49% ] 11/50 VUs  1m06.0s/2m15.0s
+
+running (1m07.0s), 12/50 VUs, 704 complete and 0 interrupted iterations
+hotel_search   [  50% ] 12/50 VUs  1m07.0s/2m15.0s
+
+running (1m08.0s), 12/50 VUs, 728 complete and 0 interrupted iterations
+hotel_search   [  50% ] 12/50 VUs  1m08.0s/2m15.0s
+
+running (1m09.0s), 12/50 VUs, 752 complete and 0 interrupted iterations
+hotel_search   [  51% ] 12/50 VUs  1m09.0s/2m15.0s
+
+running (1m10.0s), 13/50 VUs, 777 complete and 0 interrupted iterations
+hotel_search   [  52% ] 13/50 VUs  1m10.0s/2m15.0s
+
+running (1m11.0s), 13/50 VUs, 803 complete and 0 interrupted iterations
+hotel_search   [  53% ] 13/50 VUs  1m11.0s/2m15.0s
+
+running (1m12.0s), 13/50 VUs, 829 complete and 0 interrupted iterations
+hotel_search   [  53% ] 13/50 VUs  1m12.0s/2m15.0s
+
+running (1m13.0s), 14/50 VUs, 856 complete and 0 interrupted iterations
+hotel_search   [  54% ] 14/50 VUs  1m13.0s/2m15.0s
+
+running (1m14.0s), 14/50 VUs, 884 complete and 0 interrupted iterations
+hotel_search   [  55% ] 14/50 VUs  1m14.0s/2m15.0s
+
+running (1m15.0s), 14/50 VUs, 910 complete and 0 interrupted iterations
+hotel_search   [  56% ] 14/50 VUs  1m15.0s/2m15.0s
+
+running (1m16.0s), 15/50 VUs, 939 complete and 0 interrupted iterations
+hotel_search   [  56% ] 15/50 VUs  1m16.0s/2m15.0s
+
+running (1m17.0s), 15/50 VUs, 969 complete and 0 interrupted iterations
+hotel_search   [  57% ] 15/50 VUs  1m17.0s/2m15.0s
+
+running (1m18.0s), 15/50 VUs, 999 complete and 0 interrupted iterations
+hotel_search   [  58% ] 15/50 VUs  1m18.0s/2m15.0s
+
+running (1m19.0s), 16/50 VUs, 1030 complete and 0 interrupted iterations
+hotel_search   [  59% ] 16/50 VUs  1m19.0s/2m15.0s
+
+running (1m20.0s), 16/50 VUs, 1062 complete and 0 interrupted iterations
+hotel_search   [  59% ] 16/50 VUs  1m20.0s/2m15.0s
+
+running (1m21.0s), 16/50 VUs, 1094 complete and 0 interrupted iterations
+hotel_search   [  60% ] 16/50 VUs  1m21.0s/2m15.0s
+
+running (1m22.0s), 17/50 VUs, 1127 complete and 0 interrupted iterations
+hotel_search   [  61% ] 17/50 VUs  1m22.0s/2m15.0s
+
+running (1m23.0s), 17/50 VUs, 1160 complete and 0 interrupted iterations
+hotel_search   [  61% ] 17/50 VUs  1m23.0s/2m15.0s
+
+running (1m24.0s), 17/50 VUs, 1194 complete and 0 interrupted iterations
+hotel_search   [  62% ] 17/50 VUs  1m24.0s/2m15.0s
+
+running (1m25.0s), 18/50 VUs, 1229 complete and 0 interrupted iterations
+hotel_search   [  63% ] 18/50 VUs  1m25.0s/2m15.0s
+
+running (1m26.0s), 18/50 VUs, 1265 complete and 0 interrupted iterations
+hotel_search   [  64% ] 18/50 VUs  1m26.0s/2m15.0s
+
+running (1m27.0s), 18/50 VUs, 1301 complete and 0 interrupted iterations
+hotel_search   [  64% ] 18/50 VUs  1m27.0s/2m15.0s
+
+running (1m28.0s), 19/50 VUs, 1338 complete and 0 interrupted iterations
+hotel_search   [  65% ] 19/50 VUs  1m28.0s/2m15.0s
+
+running (1m29.0s), 19/50 VUs, 1376 complete and 0 interrupted iterations
+hotel_search   [  66% ] 19/50 VUs  1m29.0s/2m15.0s
+
+running (1m30.0s), 19/50 VUs, 1414 complete and 0 interrupted iterations
+hotel_search   [  67% ] 19/50 VUs  1m30.0s/2m15.0s
+
+running (1m31.0s), 20/50 VUs, 1453 complete and 0 interrupted iterations
+hotel_search   [  67% ] 20/50 VUs  1m31.0s/2m15.0s
+
+running (1m32.0s), 21/50 VUs, 1494 complete and 0 interrupted iterations
+hotel_search   [  68% ] 21/50 VUs  1m32.0s/2m15.0s
+
+running (1m33.0s), 22/50 VUs, 1535 complete and 0 interrupted iterations
+hotel_search   [  69% ] 22/50 VUs  1m33.0s/2m15.0s
+
+running (1m34.0s), 23/50 VUs, 1580 complete and 0 interrupted iterations
+hotel_search   [  70% ] 23/50 VUs  1m34.0s/2m15.0s
+
+running (1m35.0s), 24/50 VUs, 1627 complete and 0 interrupted iterations
+hotel_search   [  70% ] 24/50 VUs  1m35.0s/2m15.0s
+
+running (1m36.0s), 25/50 VUs, 1676 complete and 0 interrupted iterations
+hotel_search   [  71% ] 25/50 VUs  1m36.0s/2m15.0s
+
+running (1m37.0s), 26/50 VUs, 1727 complete and 0 interrupted iterations
+hotel_search   [  72% ] 26/50 VUs  1m37.0s/2m15.0s
+
+running (1m38.0s), 27/50 VUs, 1780 complete and 0 interrupted iterations
+hotel_search   [  73% ] 27/50 VUs  1m38.0s/2m15.0s
+
+running (1m39.0s), 28/50 VUs, 1835 complete and 0 interrupted iterations
+hotel_search   [  73% ] 28/50 VUs  1m39.0s/2m15.0s
+
+running (1m40.0s), 29/50 VUs, 1892 complete and 0 interrupted iterations
+hotel_search   [  74% ] 29/50 VUs  1m40.0s/2m15.0s
+
+running (1m41.0s), 30/50 VUs, 1951 complete and 0 interrupted iterations
+hotel_search   [  75% ] 30/50 VUs  1m41.0s/2m15.0s
+
+running (1m42.0s), 31/50 VUs, 2012 complete and 0 interrupted iterations
+hotel_search   [  76% ] 31/50 VUs  1m42.0s/2m15.0s
+
+running (1m43.0s), 32/50 VUs, 2075 complete and 0 interrupted iterations
+hotel_search   [  76% ] 32/50 VUs  1m43.0s/2m15.0s
+
+running (1m44.0s), 33/50 VUs, 2137 complete and 0 interrupted iterations
+hotel_search   [  77% ] 33/50 VUs  1m44.0s/2m15.0s
+
+running (1m45.0s), 34/50 VUs, 2204 complete and 0 interrupted iterations
+hotel_search   [  78% ] 34/50 VUs  1m45.0s/2m15.0s
+
+running (1m46.0s), 35/50 VUs, 2273 complete and 0 interrupted iterations
+hotel_search   [  79% ] 35/50 VUs  1m46.0s/2m15.0s
+
+running (1m47.0s), 36/50 VUs, 2344 complete and 0 interrupted iterations
+hotel_search   [  79% ] 36/50 VUs  1m47.0s/2m15.0s
+
+running (1m48.0s), 37/50 VUs, 2417 complete and 0 interrupted iterations
+hotel_search   [  80% ] 37/50 VUs  1m48.0s/2m15.0s
+
+running (1m49.0s), 38/50 VUs, 2492 complete and 0 interrupted iterations
+hotel_search   [  81% ] 38/50 VUs  1m49.0s/2m15.0s
+
+running (1m50.0s), 39/50 VUs, 2569 complete and 0 interrupted iterations
+hotel_search   [  81% ] 39/50 VUs  1m50.0s/2m15.0s
+
+running (1m51.0s), 40/50 VUs, 2648 complete and 0 interrupted iterations
+hotel_search   [  82% ] 40/50 VUs  1m51.0s/2m15.0s
+
+running (1m52.0s), 41/50 VUs, 2729 complete and 0 interrupted iterations
+hotel_search   [  83% ] 41/50 VUs  1m52.0s/2m15.0s
+
+running (1m53.0s), 42/50 VUs, 2812 complete and 0 interrupted iterations
+hotel_search   [  84% ] 42/50 VUs  1m53.0s/2m15.0s
+
+running (1m54.0s), 43/50 VUs, 2897 complete and 0 interrupted iterations
+hotel_search   [  84% ] 43/50 VUs  1m54.0s/2m15.0s
+
+running (1m55.0s), 44/50 VUs, 2984 complete and 0 interrupted iterations
+hotel_search   [  85% ] 44/50 VUs  1m55.0s/2m15.0s
+
+running (1m56.0s), 45/50 VUs, 3072 complete and 0 interrupted iterations
+hotel_search   [  86% ] 45/50 VUs  1m56.0s/2m15.0s
+
+running (1m57.0s), 46/50 VUs, 3163 complete and 0 interrupted iterations
+hotel_search   [  87% ] 46/50 VUs  1m57.0s/2m15.0s
+
+running (1m58.0s), 47/50 VUs, 3256 complete and 0 interrupted iterations
+hotel_search   [  87% ] 47/50 VUs  1m58.0s/2m15.0s
+
+running (1m59.0s), 48/50 VUs, 3351 complete and 0 interrupted iterations
+hotel_search   [  88% ] 48/50 VUs  1m59.0s/2m15.0s
+
+running (2m00.0s), 49/50 VUs, 3448 complete and 0 interrupted iterations
+hotel_search   [  89% ] 49/50 VUs  2m00.0s/2m15.0s
+
+running (2m01.0s), 49/50 VUs, 3547 complete and 0 interrupted iterations
+hotel_search   [  90% ] 49/50 VUs  2m01.0s/2m15.0s
+
+running (2m02.0s), 45/50 VUs, 3640 complete and 0 interrupted iterations
+hotel_search   [  90% ] 45/50 VUs  2m02.0s/2m15.0s
+
+running (2m03.0s), 42/50 VUs, 3729 complete and 0 interrupted iterations
+hotel_search   [  91% ] 42/50 VUs  2m03.0s/2m15.0s
+
+running (2m04.0s), 38/50 VUs, 3811 complete and 0 interrupted iterations
+hotel_search   [  92% ] 38/50 VUs  2m04.0s/2m15.0s
+
+running (2m05.0s), 35/50 VUs, 3886 complete and 0 interrupted iterations
+hotel_search   [  93% ] 35/50 VUs  2m05.0s/2m15.0s
+
+running (2m06.0s), 32/50 VUs, 3954 complete and 0 interrupted iterations
+hotel_search   [  93% ] 32/50 VUs  2m06.0s/2m15.0s
+
+running (2m07.0s), 28/50 VUs, 4016 complete and 0 interrupted iterations
+hotel_search   [  94% ] 28/50 VUs  2m07.0s/2m15.0s
+
+running (2m08.0s), 25/50 VUs, 4070 complete and 0 interrupted iterations
+hotel_search   [  95% ] 25/50 VUs  2m08.0s/2m15.0s
+
+running (2m09.0s), 21/50 VUs, 4118 complete and 0 interrupted iterations
+hotel_search   [  96% ] 21/50 VUs  2m09.0s/2m15.0s
+
+running (2m10.0s), 18/50 VUs, 4159 complete and 0 interrupted iterations
+hotel_search   [  96% ] 18/50 VUs  2m10.0s/2m15.0s
+
+running (2m11.0s), 14/50 VUs, 4191 complete and 0 interrupted iterations
+hotel_search   [  97% ] 14/50 VUs  2m11.0s/2m15.0s
+
+running (2m12.0s), 12/50 VUs, 4219 complete and 0 interrupted iterations
+hotel_search   [  98% ] 12/50 VUs  2m12.0s/2m15.0s
+
+running (2m13.0s), 08/50 VUs, 4241 complete and 0 interrupted iterations
+hotel_search   [  99% ] 08/50 VUs  2m13.0s/2m15.0s
+
+running (2m14.0s), 04/50 VUs, 4255 complete and 0 interrupted iterations
+hotel_search   [  99% ] 04/50 VUs  2m14.0s/2m15.0s
+
+running (2m15.0s), 01/50 VUs, 4263 complete and 0 interrupted iterations
+hotel_search   [ 100% ] 01/50 VUs  2m15.0s/2m15.0s
+
+
+  █ THRESHOLDS
+
+    http_req_failed
+    ✓ 'rate==0' rate=0.00%
+
+
+  █ TOTAL RESULTS
+
+    checks_total.......: 8528    62.952351/s
+    checks_succeeded...: 100.00% 8528 out of 8528
+    checks_failed......: 0.00%   0 out of 8528
+
+    ✓ status is 200
+    ✓ body is success
+
+    HTTP
+    http_req_duration..............: avg=3.78ms   min=559.9µs med=3.42ms   max=19.52ms  p(90)=5.38ms   p(95)=6.51ms
+      { expected_response:true }...: avg=3.78ms   min=559.9µs med=3.42ms   max=19.52ms  p(90)=5.38ms   p(95)=6.51ms
+    http_req_failed................: 0.00%  0 out of 4264
+    http_reqs......................: 4264   31.476175/s
+
+    EXECUTION
+    iteration_duration.............: avg=504.32ms min=500.9ms med=503.97ms max=519.59ms p(90)=506.02ms p(95)=506.99ms
+    iterations.....................: 4264   31.476175/s
+    vus............................: 1      min=1         max=49
+    vus_max........................: 50     min=50        max=50
+
+    NETWORK
+    data_received..................: 8.5 MB 63 kB/s
+    data_sent......................: 469 kB 3.5 kB/s
+
+
+
+
+running (2m15.5s), 00/50 VUs, 4264 complete and 0 interrupted iterations
+hotel_search ✓ [ 100% ] 00/50 VUs  2m15s

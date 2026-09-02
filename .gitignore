@@ -79,6 +79,10 @@ Desktop.ini
 # 通用日志与临时文件
 *.log
 !04_tests/fault/results/*.log
+!04_tests/stress/results/performance-*/**/*.log
+!04_tests/migration/results/**/*.log
+/deliverables/*.zip
+/deliverables/archive-manifest.txt
 *.tmp
 *.temp
 *.bak

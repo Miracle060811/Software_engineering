@@ -135,7 +135,7 @@ function Get-TableCount {
     $rows = Invoke-MySqlQuery -Executable $mysql -HostName $Connection.Host -Port $Connection.Port `
         -User $Connection.User -Password $Connection.Password -Database $Connection.Database `
         -Query "SELECT COUNT(*) FROM ``$Table``;"
-    return [long]$rows[-1]
+    return [long](@($rows)[-1])
 }
 
 $source = @{

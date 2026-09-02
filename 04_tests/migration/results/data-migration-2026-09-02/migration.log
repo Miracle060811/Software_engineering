@@ -1,0 +1,59 @@
+startedAt=2026-09-02T16:06:06.1475298+08:00
+finishedAt=2026-09-02T16:06:49.9291501+08:00
+source=127.0.0.1:35306/travelmate
+targets=127.0.0.1:35307-35312
+containersRemoved=7
+source=27c85527-a6a5-11f1-8214-c2fb27da94f3|travelmate|4
+identity=28dec896-a6a5-11f1-a001-deb95f148271|travelmate_identity|0
+traffic=29fd6e17-a6a5-11f1-a2f3-86deab0e7d60|travelmate_traffic|0
+local=2b21e67a-a6a5-11f1-afcb-16e3d2d92a69|travelmate_local|0
+ai=2c471848-a6a5-11f1-a265-e27a3674036f|travelmate_ai|0
+community=2e01ede4-a6a5-11f1-94e1-42dd313ec245|travelmate_community|0
+ops=2faf9dce-a6a5-11f1-b815-060eb660ae99|travelmate_ops|0
+
+TravelMate 单体数据迁移计划
+源库: 127.0.0.1:35306/travelmate
+identity: 127.0.0.1:35307/travelmate_identity, 3 tables
+  tm_user, tm_passenger, tm_follow
+traffic: 127.0.0.1:35308/travelmate_traffic, 5 tables
+  tm_flight, tm_train, tm_traffic_order, tm_train_waitlist, tm_price_history
+local: 127.0.0.1:35309/travelmate_local, 13 tables
+  tm_hotel, tm_hotel_room, tm_hotel_order, tm_attraction, tm_attraction_order, tm_destination, tm_review, tm_reply, tm_review_report, tm_tour_product, tm_tour_product_step, tm_coupon, tm_user_coupon
+ai: 127.0.0.1:35310/travelmate_ai, 5 tables
+  tm_ai_plan, tm_ai_chat, tm_notification, tm_private_message, tm_private_contact
+community: 127.0.0.1:35311/travelmate_community, 3 tables
+  tm_post, tm_comment, tm_like
+ops: 127.0.0.1:35312/travelmate_ops, 2 tables
+  sys_log, sys_sensitive_word
+verified identity.tm_user rows=4
+verified identity.tm_passenger rows=3
+verified identity.tm_follow rows=5
+verified traffic.tm_flight rows=50
+verified traffic.tm_train rows=43
+verified traffic.tm_traffic_order rows=0
+verified traffic.tm_train_waitlist rows=0
+verified traffic.tm_price_history rows=14
+verified local.tm_hotel rows=44
+verified local.tm_hotel_room rows=89
+verified local.tm_hotel_order rows=0
+verified local.tm_attraction rows=48
+verified local.tm_attraction_order rows=0
+verified local.tm_destination rows=0
+verified local.tm_review rows=6
+verified local.tm_reply rows=3
+verified local.tm_review_report rows=1
+verified local.tm_tour_product rows=10
+verified local.tm_tour_product_step rows=32
+verified local.tm_coupon rows=4
+verified local.tm_user_coupon rows=4
+verified ai.tm_ai_plan rows=0
+verified ai.tm_ai_chat rows=0
+verified ai.tm_notification rows=0
+verified ai.tm_private_message rows=0
+verified ai.tm_private_contact rows=0
+verified community.tm_post rows=15
+verified community.tm_comment rows=19
+verified community.tm_like rows=21
+verified ops.sys_log rows=0
+verified ops.sys_sensitive_word rows=7
+迁移完成：所有目标表行数与源库一致。源库未被修改。
