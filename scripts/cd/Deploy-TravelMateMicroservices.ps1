@@ -7,7 +7,8 @@ param(
     [string]$KubeContext = "docker-desktop",
     [string]$EvidenceDirectory = "",
     [int]$DatabaseBootstrapTimeoutSeconds = 180,
-    [int]$RolloutTimeoutSeconds = 300
+    [int]$RolloutTimeoutSeconds = 300,
+    [string]$Service = ""
 )
 
 Set-StrictMode -Version Latest
@@ -44,6 +45,68 @@ function Write-Utf8NoBom {
     )
 
     [IO.File]::WriteAllText($Path, $Content, [Text.UTF8Encoding]::new($false))
+}
+
+function Get-DeploymentState {
+    param([Parameter(Mandatory = $true)][string]$Deployment)
+
+    $raw = (Invoke-Kubectl -Arguments @("get", "deployment/$Deployment", "-n", $Namespace, "-o", "json")) -join "`n"
+    $resource = $raw | ConvertFrom-Json
+    $container = @($resource.spec.template.spec.containers | Where-Object { [string]$_.name -eq $Deployment })
+    if ($container.Count -ne 1) {
+        throw "Deployment $Deployment must contain exactly one container named $Deployment"
+    }
+    $annotations = $resource.metadata.annotations
+    $commitProperty = if ($null -ne $annotations) { $annotations.PSObject.Properties["travelmate.io/commit"] } else { $null }
+    $digestProperty = if ($null -ne $annotations) { $annotations.PSObject.Properties["travelmate.io/image-digest"] } else { $null }
+
+    return [pscustomobject]@{
+        Service = $Deployment
+        Image = [string]$container[0].image
+        CommitExists = $null -ne $commitProperty
+        Commit = if ($null -ne $commitProperty) { [string]$commitProperty.Value } else { "" }
+        DigestExists = $null -ne $digestProperty
+        Digest = if ($null -ne $digestProperty) { [string]$digestProperty.Value } else { "" }
+    }
+}
+
+function Restore-DeploymentAnnotation {
+    param(
+        [Parameter(Mandatory = $true)][string]$Deployment,
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][bool]$Exists,
+        [string]$Value = ""
+    )
+
+    $annotationArgument = if ($Exists) { "$Name=$Value" } else { "$Name-" }
+    Invoke-Kubectl -Arguments @(
+        "annotate", "deployment/$Deployment", "-n", $Namespace,
+        $annotationArgument, "--overwrite"
+    ) | Out-Null
+}
+
+function Invoke-RollbackStep {
+    param(
+        [Parameter(Mandatory = $true)][string]$Description,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][System.Collections.Generic.List[string]]$Failures,
+        [Parameter(Mandatory = $true)][scriptblock]$Action
+    )
+
+    try {
+        & $Action
+    }
+    catch {
+        $Failures.Add("${Description}: $($_.Exception.Message)")
+    }
+}
+
+function Write-DeploymentStateEvidence {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][object]$State
+    )
+
+    Write-Utf8NoBom -Path $Path -Content (($State | ConvertTo-Json -Depth 5) + "`n")
 }
 
 if (-not (Test-Path -LiteralPath $ReleaseEvidencePath -PathType Leaf)) {
@@ -88,6 +151,10 @@ $serviceSpecs = [ordered]@{
     }
 }
 
+if ($Service -and -not $serviceSpecs.Contains($Service)) {
+    throw "Unsupported service '$Service'. Expected one of: $($serviceSpecs.Keys -join ', ')"
+}
+
 $release = Get-Content -LiteralPath $ReleaseEvidencePath -Raw | ConvertFrom-Json
 $releaseCommit = [string]$release.commit
 if ($releaseCommit -notmatch '^[0-9a-f]{40}$') {
@@ -106,23 +173,104 @@ if ($records.Count -ne $serviceSpecs.Count) {
 }
 $imageRecords = @{}
 foreach ($record in $records) {
-    $service = [string]$record.service
-    if (-not $serviceSpecs.Contains($service)) {
-        throw "Release evidence contains an unexpected service: $service"
+    $recordService = [string]$record.service
+    if (-not $serviceSpecs.Contains($recordService)) {
+        throw "Release evidence contains an unexpected service: $recordService"
     }
-    if ($imageRecords.ContainsKey($service)) {
-        throw "Release evidence contains a duplicate service: $service"
+    if ($imageRecords.ContainsKey($recordService)) {
+        throw "Release evidence contains a duplicate service: $recordService"
     }
-    if ([string]$record.image -ne [string]$serviceSpecs[$service].Image) {
-        throw "Release evidence image mismatch for $service"
+    if ([string]$record.image -ne [string]$serviceSpecs[$recordService].Image) {
+        throw "Release evidence image mismatch for $recordService"
     }
     if ([string]$record.commit -ne $releaseCommit -or [string]$record.tag -ne "sha-$releaseCommit") {
-        throw "Release evidence version mismatch for $service"
+        throw "Release evidence version mismatch for $recordService"
     }
     if ([string]$record.digest -notmatch '^sha256:[0-9a-f]{64}$') {
-        throw "Release evidence digest is invalid for $service"
+        throw "Release evidence digest is invalid for $recordService"
     }
-    $imageRecords[$service] = $record
+    $imageRecords[$recordService] = $record
+}
+
+if ($Service) {
+    $record = $imageRecords[$Service]
+    $targetImage = "$([string]$record.image)@$([string]$record.digest)"
+    $previousState = Get-DeploymentState -Deployment $Service
+    Write-DeploymentStateEvidence -Path (Join-Path $EvidenceDirectory "$Service-before.json") -State $previousState
+
+    $filteredRelease = [ordered]@{
+        commit = $releaseCommit
+        tag = "sha-$releaseCommit"
+        images = @($record)
+    }
+    Write-Utf8NoBom -Path (Join-Path $EvidenceDirectory "$Service-release.json") `
+        -Content (($filteredRelease | ConvertTo-Json -Depth 8) + "`n")
+
+    try {
+        Invoke-Kubectl -Arguments @(
+            "set", "image", "deployment/$Service", "$Service=$targetImage", "-n", $Namespace
+        ) | Out-Null
+        Invoke-Kubectl -Arguments @(
+            "annotate", "deployment/$Service", "-n", $Namespace,
+            "travelmate.io/commit=$releaseCommit",
+            "travelmate.io/image-digest=$([string]$record.digest)",
+            "--overwrite"
+        ) | Out-Null
+        $rolloutOutput = Invoke-Kubectl -Arguments @(
+            "rollout", "status", "deployment/$Service", "-n", $Namespace,
+            "--timeout=${RolloutTimeoutSeconds}s"
+        )
+        $rolloutOutput | Set-Content -LiteralPath (Join-Path $EvidenceDirectory "$Service-rollout.log") -Encoding utf8
+
+        $currentState = Get-DeploymentState -Deployment $Service
+        if ($currentState.Image -ne $targetImage -or
+            $currentState.Commit -ne $releaseCommit -or
+            $currentState.Digest -ne [string]$record.digest) {
+            throw "Deployment $Service state does not match the requested immutable release after rollout"
+        }
+        Write-DeploymentStateEvidence -Path (Join-Path $EvidenceDirectory "$Service-after.json") -State $currentState
+        "$Service=$targetImage" | Set-Content -LiteralPath (Join-Path $EvidenceDirectory "microservice-images.txt") -Encoding utf8
+    }
+    catch {
+        $rolloutFailure = $_.Exception.Message
+        Write-Utf8NoBom -Path (Join-Path $EvidenceDirectory "$Service-failure.txt") -Content ($rolloutFailure + "`n")
+        $rollbackFailures = [System.Collections.Generic.List[string]]::new()
+
+        Invoke-RollbackStep -Description "restore $Service image" -Failures $rollbackFailures -Action {
+            Invoke-Kubectl -Arguments @(
+                "set", "image", "deployment/$Service", "$Service=$($previousState.Image)", "-n", $Namespace
+            ) | Out-Null
+        }
+        Invoke-RollbackStep -Description "restore $Service commit annotation" -Failures $rollbackFailures -Action {
+            Restore-DeploymentAnnotation -Deployment $Service -Name "travelmate.io/commit" `
+                -Exists $previousState.CommitExists -Value $previousState.Commit
+        }
+        Invoke-RollbackStep -Description "restore $Service digest annotation" -Failures $rollbackFailures -Action {
+            Restore-DeploymentAnnotation -Deployment $Service -Name "travelmate.io/image-digest" `
+                -Exists $previousState.DigestExists -Value $previousState.Digest
+        }
+        Invoke-RollbackStep -Description "wait for $Service rollback" -Failures $rollbackFailures -Action {
+            Invoke-Kubectl -Arguments @(
+                "rollout", "status", "deployment/$Service", "-n", $Namespace,
+                "--timeout=${RolloutTimeoutSeconds}s"
+            ) | Out-Null
+        }
+        try {
+            $rollbackState = Get-DeploymentState -Deployment $Service
+            Write-DeploymentStateEvidence -Path (Join-Path $EvidenceDirectory "$Service-rollback.json") -State $rollbackState
+        }
+        catch {
+            $rollbackFailures.Add("capture $Service rollback state: $($_.Exception.Message)")
+        }
+
+        if ($rollbackFailures.Count -gt 0) {
+            throw "Deployment rollout failed for ${Service}: $rolloutFailure Rollback also encountered: $($rollbackFailures -join ' | ')"
+        }
+        throw "Deployment rollout failed for $Service; previous image and annotations were restored. Original failure: $rolloutFailure"
+    }
+
+    Write-Output "Deployed $Service for commit $releaseCommit from immutable GHCR digest; no other service was updated."
+    return
 }
 
 $secretRaw = (Invoke-Kubectl -Arguments @("get", "secret", "travelmate-secrets", "-n", $Namespace, "-o", "json")) -join "`n"
