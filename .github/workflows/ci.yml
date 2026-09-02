@@ -1296,7 +1296,7 @@ jobs:
       - Windows
       - X64
       - travelmate-deploy
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       actions: read
       contents: read

@@ -113,8 +113,8 @@ if (!/ReleaseEvidencePath/.test(microserviceDeployScript) || !/sha256:/.test(mic
 }
 
 const ciWorkflow = read(".github/workflows/ci.yml")
-if (!/runs-on:[\s\S]*?travelmate-deploy[\s\S]*?timeout-minutes:\s*10/.test(ciWorkflow)) {
-  fail("部署流水线未设置 YFan_deploy Runner 的 10 分钟超时")
+if (!/runs-on:[\s\S]*?travelmate-deploy[\s\S]*?timeout-minutes:\s*20/.test(ciWorkflow)) {
+  fail("部署流水线未设置 YFan_deploy Runner 的 20 分钟超时")
 }
 for (const port of [8081, 8082, 8083, 8084, 8085, 8086]) {
   if (!ciWorkflow.includes(`ServicePort = ${port}`)) fail(`部署后健康检查未覆盖端口 ${port}`)

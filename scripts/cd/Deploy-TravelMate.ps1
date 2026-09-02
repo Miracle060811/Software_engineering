@@ -165,7 +165,9 @@ function Get-LocalImageIdentity {
         [string]$Repository
     )
 
+    Write-DeployLog "Pulling deployment image $Image." | Write-Host
     Invoke-Checked -Command docker -Arguments @("pull", $Image) | Out-Null
+    Write-DeployLog "Deployment image $Image is available locally." | Write-Host
     $inspect = (Invoke-Checked -Command docker -Arguments @("image", "inspect", $Image)) -join [Environment]::NewLine
     $imageInfo = @($inspect | ConvertFrom-Json)[0]
     $revision = [string]$imageInfo.Config.Labels."org.opencontainers.image.revision"
