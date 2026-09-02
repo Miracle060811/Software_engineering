@@ -47,6 +47,15 @@ public class UserController {
         return success ? Result.success("注册成功") : Result.error("用户名已存在");
     }
 
+    @PostMapping("/reset-password")
+    @RateLimiter(maxRequests = 5, timeWindowSeconds = 60)
+    public Result<String> resetPassword(
+            @RequestParam String username,
+            @RequestParam String newPassword) {
+        boolean ok = userService.resetPassword(username, newPassword);
+        return ok ? Result.success("密码重置成功") : Result.error("用户名不存在、新密码不合法或管理员账号不允许重置");
+    }
+
     @PostMapping("/admin-register")
     @RateLimiter(maxRequests = 5, timeWindowSeconds = 300)
     public Result<String> adminRegister(@RequestBody AdminRegisterRequest request, HttpServletRequest servletRequest) {

@@ -45,6 +45,9 @@
           <el-menu-item index="users"
             ><el-icon><User /></el-icon><span>用户画像</span></el-menu-item
           >
+          <el-menu-item index="secrets"
+            ><el-icon><Setting /></el-icon><span>系统密钥</span></el-menu-item
+          >
         </el-menu>
       </el-aside>
 
@@ -886,6 +889,88 @@
               </template>
             </el-table-column>
           </el-table>
+        </section>
+
+        <section v-else-if="activeMenu === 'secrets'" v-loading="secretsLoading">
+          <h2 class="section-title">系统密钥与开关</h2>
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-card class="panel-card">
+                <template #header>
+                  <div class="card-header">
+                    <span>DeepSeek API Key</span>
+                  </div>
+                </template>
+                <el-form label-width="120px">
+                  <el-form-item label="当前 Key">
+                    <el-input
+                      :model-value="secretsData.deepseekApiKey"
+                      type="password"
+                      show-password
+                      disabled
+                    />
+                  </el-form-item>
+                  <el-form-item label="新 Key">
+                    <el-input
+                      v-model="secretsForm.deepseekApiKey"
+                      type="password"
+                      show-password
+                      placeholder="输入新的 DeepSeek API Key"
+                    />
+                  </el-form-item>
+                  <el-form-item>
+                    <el-button
+                      type="primary"
+                      :loading="savingDeepseek"
+                      @click="saveDeepseekKey"
+                    >保存并重启后端</el-button>
+                  </el-form-item>
+                </el-form>
+              </el-card>
+            </el-col>
+            <el-col :span="12">
+              <el-card class="panel-card">
+                <template #header>
+                  <div class="card-header">
+                    <span>管理员注册密钥</span>
+                  </div>
+                </template>
+                <el-form label-width="120px">
+                  <el-form-item label="当前密钥">
+                    <el-input
+                      :model-value="secretsData.adminRegisterSecret"
+                      type="text"
+                      readonly
+                    >
+                      <template #append>
+                        <el-button @click="copyAdminRegisterSecret">复制</el-button>
+                      </template>
+                    </el-input>
+                  </el-form-item>
+                  <el-form-item label="启用注册入口">
+                    <el-switch v-model="secretsForm.adminRegisterEnabled" />
+                  </el-form-item>
+                  <el-form-item label="过期时间 (UTC)">
+                    <el-input
+                      v-model="secretsForm.adminRegisterExpiresAt"
+                      placeholder="例如 2099-12-31T23:59:59Z"
+                    />
+                  </el-form-item>
+                  <el-form-item>
+                    <el-button
+                      type="primary"
+                      :loading="savingAdminRegister"
+                      @click="saveAdminRegisterConfig"
+                    >保存并重启后端</el-button>
+                    <el-button
+                      :loading="resettingAdminRegister"
+                      @click="resetAdminRegisterSecret"
+                    >重置密钥</el-button>
+                  </el-form-item>
+                </el-form>
+              </el-card>
+            </el-col>
+          </el-row>
         </section>
       </el-main>
     </el-container>
@@ -1740,6 +1825,7 @@ import {
   User,
   Tickets,
   UploadFilled,
+  Setting,
 } from "@element-plus/icons-vue";
 import request from "@/utils/request";
 import { fallbackDestinations } from "@/utils/destinations";
@@ -1776,6 +1862,22 @@ const postMetricsForm = ref({
   title: "",
   likeCount: 0,
   collectCount: 0,
+});
+
+const secretsLoading = ref(false);
+const savingDeepseek = ref(false);
+const savingAdminRegister = ref(false);
+const resettingAdminRegister = ref(false);
+const secretsData = ref({
+  deepseekApiKey: "",
+  adminRegisterSecret: "",
+  adminRegisterEnabled: false,
+  adminRegisterExpiresAt: "",
+});
+const secretsForm = ref({
+  deepseekApiKey: "",
+  adminRegisterEnabled: false,
+  adminRegisterExpiresAt: "",
 });
 
 const flightLoading = ref(false);
@@ -3350,6 +3452,94 @@ const handleAuditTabChange = () => {
   }
 };
 
+const copyAdminRegisterSecret = async () => {
+  if (!secretsData.value.adminRegisterSecret) {
+    ElMessage.warning("当前没有可复制的密钥");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(secretsData.value.adminRegisterSecret);
+    ElMessage.success("密钥已复制到剪贴板");
+  } catch {
+    ElMessage.error("复制失败，请手动复制");
+  }
+};
+
+const fetchSecrets = async () => {
+  secretsLoading.value = true;
+  try {
+    const data = await request.get("/api/admin/secrets");
+    secretsData.value = data || {};
+    secretsForm.value = {
+      deepseekApiKey: "",
+      adminRegisterEnabled: data?.adminRegisterEnabled || false,
+      adminRegisterExpiresAt: data?.adminRegisterExpiresAt || "",
+    };
+  } catch (e) {
+    // error handled in request.js
+  } finally {
+    secretsLoading.value = false;
+  }
+};
+
+const saveDeepseekKey = async () => {
+  if (!secretsForm.value.deepseekApiKey) {
+    ElMessage.warning("请输入新的 DeepSeek API Key");
+    return;
+  }
+  savingDeepseek.value = true;
+  try {
+    await request.put("/api/admin/secrets/deepseek", {
+      apiKey: secretsForm.value.deepseekApiKey,
+    });
+    ElMessage.success("DeepSeek API Key 已更新，后端正在滚动重启");
+    secretsForm.value.deepseekApiKey = "";
+    await fetchSecrets();
+  } catch (e) {
+    // error handled in request.js
+  } finally {
+    savingDeepseek.value = false;
+  }
+};
+
+const saveAdminRegisterConfig = async () => {
+  savingAdminRegister.value = true;
+  try {
+    await request.put("/api/admin/secrets/admin-register", {
+      enabled: secretsForm.value.adminRegisterEnabled,
+      expiresAt: secretsForm.value.adminRegisterExpiresAt,
+    });
+    ElMessage.success("管理员注册配置已更新，后端正在滚动重启");
+    await fetchSecrets();
+  } catch (e) {
+    // error handled in request.js
+  } finally {
+    savingAdminRegister.value = false;
+  }
+};
+
+const resetAdminRegisterSecret = async () => {
+  try {
+    await ElMessageBox.confirm("重置后旧密钥将立即失效，是否继续？", "确认重置", {
+      confirmButtonText: "重置",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
+  } catch {
+    return;
+  }
+  resettingAdminRegister.value = true;
+  try {
+    await request.post("/api/admin/secrets/admin-register/reset");
+    ElMessage.success("管理员注册密钥已重置，后端正在滚动重启");
+    await fetchSecrets();
+  } catch (e) {
+    // error handled in request.js
+  } finally {
+    resettingAdminRegister.value = false;
+  }
+};
+
 const handleMenuSelect = (menu) => {
   activeMenu.value = menu;
   if (menu === "stats") {
@@ -3376,6 +3566,8 @@ const handleMenuSelect = (menu) => {
     fetchLogs();
   } else if (menu === "users") {
     fetchUsers();
+  } else if (menu === "secrets") {
+    fetchSecrets();
   }
 };
 
