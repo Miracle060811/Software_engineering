@@ -1,0 +1,99 @@
+<html style="margin:0;padding:0;">
+<div style="background-color:transparent;box-sizing:border-box;font-family:'PingFang SC','Segoe UI',Arial,sans-serif;">
+
+  <!-- 总标题 -->
+  <div style="font-size:15px;font-weight:600;color:#1A1B1C;margin-bottom:12px;">7分钟演示视频 · 分段录制时间轴</div>
+
+  <!-- 时间轴主体 -->
+  <div style="position:relative;padding-left:0;">
+
+    <!-- 进度条背景 -->
+    <div style="height:6px;background:#E4E3DD;border-radius:3px;margin-bottom:20px;position:relative;overflow:hidden;">
+      <div style="position:absolute;left:0;top:0;height:100%;width:14.3%;background:#9BBBF4;border-radius:3px 0 0 3px;"></div>
+      <div style="position:absolute;left:14.3%;top:0;height:100%;width:21.4%;background:#8BC8EA;"></div>
+      <div style="position:absolute;left:35.7%;top:0;height:100%;width:28.6%;background:#94D8C3;"></div>
+      <div style="position:absolute;left:64.3%;top:0;height:100%;width:14.3%;background:#F4B393;"></div>
+      <div style="position:absolute;left:78.6%;top:0;height:100%;width:21.4%;background:#EAA7B2;border-radius:0 3px 3px 0;"></div>
+    </div>
+
+    <!-- 五段内容卡片 -->
+    <div style="display:flex;flex-direction:column;gap:10px;">
+
+      <!-- 第1段 -->
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex-shrink:0;width:56px;text-align:right;">
+          <div style="font-size:12px;font-weight:600;color:#9BBBF4;">0:00</div>
+          <div style="font-size:10px;color:#6B7280;">- 1:00</div>
+        </div>
+        <div style="flex-shrink:0;width:3px;align-self:stretch;background:#9BBBF4;border-radius:2px;min-height:60px;"></div>
+        <div style="flex:1;min-width:0;padding:10px 12px;background:rgba(155,187,244,0.08);border-radius:10px;">
+          <div style="font-size:13px;font-weight:600;color:#1A1B1C;">① CI/CD 流水线触发演示 <span style="font-size:11px;color:#6B7280;font-weight:400;">约1分钟</span></div>
+          <div style="font-size:12px;color:#4B5563;margin-top:4px;line-height:1.5;">push 代码 → 自动构建 → 单元测试 → 集成测试 → 制作镜像 → 部署到 K8s → 健康检查。展示一次完整成功流水线，可快进等待环节。</div>
+        </div>
+      </div>
+
+      <!-- 第2段 -->
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex-shrink:0;width:56px;text-align:right;">
+          <div style="font-size:12px;font-weight:600;color:#8BC8EA;">1:00</div>
+          <div style="font-size:10px;color:#6B7280;">- 2:30</div>
+        </div>
+        <div style="flex-shrink:0;width:3px;align-self:stretch;background:#8BC8EA;border-radius:2px;min-height:60px;"></div>
+        <div style="flex:1;min-width:0;padding:10px 12px;background:rgba(139,200,234,0.08);border-radius:10px;">
+          <div style="font-size:13px;font-weight:600;color:#1A1B1C;">② Kubernetes 部署与微服务架构展示 <span style="font-size:11px;color:#6B7280;font-weight:400;">约1.5分钟</span></div>
+          <div style="font-size:12px;color:#4B5563;margin-top:4px;line-height:1.5;">kubectl 查看 Pod/Service/Deployment 运行状态；展示至少3个业务微服务各自独立部署；查看服务日志、健康检查和版本号；展示服务划分图与数据表归属。</div>
+        </div>
+      </div>
+
+      <!-- 第3段 -->
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex-shrink:0;width:56px;text-align:right;">
+          <div style="font-size:12px;font-weight:600;color:#94D8C3;">2:30</div>
+          <div style="font-size:10px;color:#6B7280;">- 4:30</div>
+        </div>
+        <div style="flex-shrink:0;width:3px;align-self:stretch;background:#94D8C3;border-radius:2px;min-height:80px;"></div>
+        <div style="flex:1;min-width:0;padding:10px 12px;background:rgba(148,216,195,0.08);border-radius:10px;">
+          <div style="font-size:13px;font-weight:600;color:#1A1B1C;">③ 3个代表性业务用例端到端演示 <span style="font-size:11px;color:#6B7280;font-weight:400;">约2分钟</span></div>
+          <div style="font-size:12px;color:#4B5563;margin-top:4px;line-height:1.5;">从前端页面或 API 入口完整走通3个选定用例的主成功流程，每个用例约40秒。展示：页面操作 → 后端接口响应 → 数据库结果变化 → 对应测试用例通过。可穿插展示追溯表中 REQ→UC→设计→代码→测试 的对应关系。</div>
+        </div>
+      </div>
+
+      <!-- 第4段 -->
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex-shrink:0;width:56px;text-align:right;">
+          <div style="font-size:12px;font-weight:600;color:#F4B393;">4:30</div>
+          <div style="font-size:10px;color:#6B7280;">- 5:30</div>
+        </div>
+        <div style="flex-shrink:0;width:3px;align-self:stretch;background:#F4B393;border-radius:2px;min-height:60px;"></div>
+        <div style="flex:1;min-width:0;padding:10px 12px;background:rgba(244,179,147,0.08);border-radius:10px;">
+          <div style="font-size:13px;font-weight:600;color:#1A1B1C;">④ 自动扩缩容实验 <span style="font-size:11px;color:#6B7280;font-weight:400;">约1分钟</span></div>
+          <div style="font-size:12px;color:#4B5563;margin-top:4px;line-height:1.5;">启动压力测试 → 观察 CPU/内存升高 → HPA 触发 Pod 数量增加（展示 kubectl get hpa -w 实时变化）→ 停止压力 → Pod 数量回落。同步展示吞吐量、P95响应时间、错误率数据。</div>
+        </div>
+      </div>
+
+      <!-- 第5段 -->
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex-shrink:0;width:56px;text-align:right;">
+          <div style="font-size:12px;font-weight:600;color:#EAA7B2;">5:30</div>
+          <div style="font-size:10px;color:#6B7280;">- 7:00</div>
+        </div>
+        <div style="flex-shrink:0;width:3px;align-self:stretch;background:#EAA7B2;border-radius:2px;min-height:70px;"></div>
+        <div style="flex:1;min-width:0;padding:10px 12px;background:rgba(234,167,178,0.08);border-radius:10px;">
+          <div style="font-size:13px;font-weight:600;color:#1A1B1C;">⑤ 故障处理 + 性能对比总结 <span style="font-size:11px;color:#6B7280;font-weight:400;">约1.5分钟</span></div>
+          <div style="font-size:12px;color:#4B5563;margin-top:4px;line-height:1.5;">主动停止一个依赖服务（kubectl delete pod 或 scale=0）→ 系统返回设计好的熔断/降级提示或备用结果 → 其他服务不崩溃 → 恢复服务。最后用30秒展示单体vs微服务性能对比表格（吞吐量、P95、错误率、CPU/内存），说明差异原因。</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 底部说明 -->
+    <div style="margin-top:16px;padding:10px 12px;background:rgba(0,0,0,0.025);border-radius:8px;border:0.5px solid rgba(0,0,0,0.08);">
+      <div style="font-size:11px;color:#6B7280;line-height:1.6;">
+        <span style="font-weight:600;color:#4B5563;">录制要点：</span>
+        全程录屏 + 语音解说；等待环节（如流水线构建、压力测试加载）可加速剪辑但保留关键节点画面；每个实验开始前用1句话说明"现在做什么、预期看到什么"；视频结尾留2秒黑屏方便衔接问答。
+      </div>
+    </div>
+
+  </div>
+</div>
+</html>
