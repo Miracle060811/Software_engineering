@@ -137,7 +137,6 @@ const requiredMicroserviceK8sFiles = [
   "ai-service.yaml",
   "community-service.yaml",
   "ops-service.yaml",
-  "hpa.yaml",
 ]
 if (!fs.existsSync(microserviceK8sDir)) {
   fail("缺少微服务 Kubernetes 目录：microservices/k8s")
@@ -165,7 +164,7 @@ if (!fs.existsSync(microserviceK8sDir)) {
 
   const databases = read("microservices/k8s/databases.yaml")
   const redis = read("microservices/k8s/redis.yaml")
-  const hpa = read("microservices/k8s/hpa.yaml")
+  const hpa = read("deploy/k8s/hpa.yaml")
   if ((databases.match(/\bvolumeClaimTemplates\s*:/g) || []).length !== 6) {
     fail("databases.yaml 必须为六套 MySQL 分别声明 PVC 模板")
   }
@@ -179,6 +178,14 @@ if (!fs.existsSync(microserviceK8sDir)) {
     const matches = hpa.match(new RegExp(`\\b${field}:\\s*${expected}\\b`, "g")) || []
     if (matches.length !== 6) fail(`hpa.yaml 中 ${field}: ${expected} 应出现 6 次`)
   }
+}
+
+const deploymentKustomization = read("deploy/k8s/kustomization.yaml")
+if (!deploymentKustomization.includes("- hpa.yaml")) {
+  fail("deploy/k8s/kustomization.yaml 未包含正式 HPA 清单")
+}
+if (!/Join-Path\s+\$kubernetesDirectory\s+"hpa\.yaml"/.test(microserviceDeployScript)) {
+  fail("微服务部署脚本未从 deploy/k8s 应用正式 HPA 清单")
 }
 
 const configMap = read("deploy/k8s/configmap.yaml")

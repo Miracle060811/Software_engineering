@@ -19,7 +19,7 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 
 `identity-service`、`traffic-service`、`local-service`、`ai-service`、`community-service`、`ops-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。跨域读取改用内部 HTTP 接口，AI 服务覆盖通知、行程、对话和私信；单体 `backend` 继续保留，便于迁移期间做功能回归。
 
-本阶段仍属于渐进式迁移：六服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；六服务 Kubernetes/PVC/HPA 清单与本地部署、扩缩容实验脚本已经加入。真实数据切换验收、Docker Desktop Kubernetes 实机扩缩容证据、API Gateway 与生产级编排仍是后续工作。中期设计基线见 [`document/TravelMate中期验收基线.md`](document/TravelMate中期验收基线.md)。
+本阶段仍属于渐进式迁移：六服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；正式 Kubernetes 部署统一使用 [`deploy/k8s`](deploy/k8s)，六服务已接入同一 `travelmate` 命名空间，HPA 清单与扩缩容实验也以该环境为准。`microservices/k8s` 仅保留六套独立 MySQL/PVC 的物理隔离实验方案。真实数据切换验收、API Gateway 与生产级编排仍是后续工作。中期设计基线见 [`document/TravelMate中期验收基线.md`](document/TravelMate中期验收基线.md)。
 
 ## 技术栈
 
@@ -263,7 +263,7 @@ kubectl kustomize deploy/k8s-overlays/server | Out-Null
 
 合并到 `main` 的代码在同一个 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) 中完成构建、测试、镜像制作、Kubernetes 部署和部署后健康检查。流水线使用 CI 已测试的 JAR 与前端 `dist` 构建镜像；镜像先发布为不可变的 `sha-<完整 commit>`，通过 Trivy 高危/严重漏洞扫描后，才推进 `main` 与 `deploy` 通道。自托管 Windows Runner 随后校验前后端 OCI commit 一致性，按仓库 digest 更新 Deployment，等待 rollout，并检查前端 `/healthz` 与后端 `/actuator/health/readiness`。失败时部署脚本恢复更新前镜像，流水线保留镜像扫描、digest、Kubernetes 状态和健康检查证据。
 
-演示机使用 Docker Desktop Kubernetes，并运行带有 `self-hosted`、`Windows`、`X64`、`travelmate-deploy` 标签的 GitHub Actions Runner。资源清单位于 [`deploy/k8s`](deploy/k8s)，本机部署脚本说明位于 [`scripts/cd/README.md`](scripts/cd/README.md)。首次启用：
+演示机使用 Docker Desktop Kubernetes，并运行带有 `self-hosted`、`Windows`、`X64`、`travelmate-deploy` 标签的 GitHub Actions Runner。正式资源清单（包括六个 HPA）统一位于 [`deploy/k8s`](deploy/k8s)，本机部署脚本说明位于 [`scripts/cd/README.md`](scripts/cd/README.md)。首次启用：
 
 ```powershell
 .\scripts\cd\Configure-TravelMateGhcrCredential.ps1

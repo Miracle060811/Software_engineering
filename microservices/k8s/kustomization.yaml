@@ -12,7 +12,6 @@ resources:
   - ai-service.yaml
   - community-service.yaml
   - ops-service.yaml
-  - hpa.yaml
 labels:
   - pairs:
       app.kubernetes.io/part-of: travelmate

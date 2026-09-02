@@ -9,3 +9,4 @@ resources:
   - redis.yaml
   - backend.yaml
   - frontend.yaml
+  - hpa.yaml

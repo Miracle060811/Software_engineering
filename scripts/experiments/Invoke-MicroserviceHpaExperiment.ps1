@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$KubeContext = "docker-desktop",
-    [string]$Namespace = "travelmate-microservices",
+    [string]$Namespace = "travelmate",
     [int]$LocalPort = 18082,
     [int]$SampleIntervalSeconds = 5,
     [int]$ScaleUpObservationSeconds = 120,

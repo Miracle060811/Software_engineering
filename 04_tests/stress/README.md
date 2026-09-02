@@ -18,7 +18,7 @@ HPA 自动实验入口：
 .\scripts\experiments\Invoke-MicroserviceHpaExperiment.ps1
 ```
 
-该脚本要求微服务已通过 `scripts/cd/Deploy-Microservices.ps1` 部署，并且 Metrics Server 与 k6 可用。它会保存扩容前、中、后状态；正式结论填写 `HPA实验记录模板.md`，未实际触发扩缩容前不能标记通过。
+该脚本默认针对正式部署命名空间 `travelmate`。六个 HPA 的事实源是 `deploy/k8s/hpa.yaml`，完整微服务发布由 `scripts/cd/Deploy-TravelMateMicroservices.ps1` 自动应用；同时要求 Metrics Server 与 k6 可用。脚本会保存扩容前、中、后状态；正式结论填写 `HPA实验记录模板.md`，未实际触发扩缩容前不能标记通过。
 
 ## 2. 环境
 

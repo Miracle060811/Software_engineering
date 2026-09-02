@@ -364,6 +364,7 @@ if (-not $databaseReady) {
 $renderDirectory = Join-Path $EvidenceDirectory "microservice-render"
 [IO.Directory]::CreateDirectory($renderDirectory) | Out-Null
 Copy-Item -LiteralPath (Join-Path $kubernetesDirectory "microservices-configmap.yaml") -Destination $renderDirectory -Force
+Copy-Item -LiteralPath (Join-Path $kubernetesDirectory "hpa.yaml") -Destination $renderDirectory -Force
 foreach ($service in $serviceSpecs.Keys) {
     $manifest = [string]$serviceSpecs[$service].Manifest
     Copy-Item -LiteralPath (Join-Path $kubernetesDirectory $manifest) -Destination $renderDirectory -Force
@@ -374,7 +375,8 @@ $kustomizationLines = @(
     "kind: Kustomization",
     "namespace: $Namespace",
     "resources:",
-    "  - microservices-configmap.yaml"
+    "  - microservices-configmap.yaml",
+    "  - hpa.yaml"
 )
 foreach ($service in $serviceSpecs.Keys) {
     $kustomizationLines += "  - $([string]$serviceSpecs[$service].Manifest)"
