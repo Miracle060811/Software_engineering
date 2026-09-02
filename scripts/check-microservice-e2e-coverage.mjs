@@ -35,13 +35,14 @@ if (!playwrightConfig.includes('VITE_BACKEND_MODE: "microservices"')) {
   failures.push("Playwright 微服务配置未启用 microservices 路由模式");
 }
 
+const microserviceE2EBlock = workflow.match(/\n  microservice-e2e:[\s\S]*?\n  ci-gate:/)?.[0] ?? "";
 for (const requiredWorkflowFragment of [
-  "microservice-e2e:",
   "name: Real microservice E2E",
   "npm run test:e2e:microservices",
   "microservice-e2e-evidence-${{ github.sha }}",
+  "CORS_ALLOWED_ORIGINS: http://127.0.0.1:3100",
 ]) {
-  if (!workflow.includes(requiredWorkflowFragment)) {
+  if (!microserviceE2EBlock.includes(requiredWorkflowFragment)) {
     failures.push(`CI 未接入微服务 E2E：缺少 ${requiredWorkflowFragment}`);
   }
 }
