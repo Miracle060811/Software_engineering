@@ -955,6 +955,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+
       - name: Build and push immutable service image
         id: build
         shell: bash
@@ -962,7 +965,7 @@ jobs:
           set -euo pipefail
           image_ref="$IMAGE:$IMAGE_TAG"
           build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          docker build --pull \
+          docker buildx build --pull --push \
             --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
             --label "org.opencontainers.image.revision=$RELEASE_SHA" \
             --label "org.opencontainers.image.created=$build_date" \
@@ -970,8 +973,6 @@ jobs:
             --tag "$image_ref" \
             "microservices/services/$SERVICE" \
             2>&1 | tee "$EVIDENCE_DIR/docker-build-push.log"
-          docker push "$image_ref" \
-            2>&1 | tee -a "$EVIDENCE_DIR/docker-build-push.log"
           echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Record immutable image digest
@@ -1181,6 +1182,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+
       - name: Build and push immutable commit images
         id: build
         shell: bash
@@ -1191,21 +1195,19 @@ jobs:
           image_tag="sha-$RELEASE_SHA"
           build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
-          docker build --pull \
+          docker buildx build --pull --push \
             --build-arg "GIT_SHA=$RELEASE_SHA" \
             --build-arg "BUILD_DATE=$build_date" \
             --build-arg "IMAGE_VERSION=$image_tag" \
             --tag "$BACKEND_IMAGE:$image_tag" \
             backend
-          docker build --pull \
+          docker buildx build --pull --push \
             --build-arg "GIT_SHA=$RELEASE_SHA" \
             --build-arg "BUILD_DATE=$build_date" \
             --build-arg "IMAGE_VERSION=$image_tag" \
             --tag "$FRONTEND_IMAGE:$image_tag" \
             frontend
 
-          docker push "$BACKEND_IMAGE:$image_tag"
-          docker push "$FRONTEND_IMAGE:$image_tag"
           echo "image_tag=$image_tag" >> "$GITHUB_OUTPUT"
 
       - name: Scan backend image
