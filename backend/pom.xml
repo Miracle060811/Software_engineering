@@ -49,11 +49,11 @@
 			<artifactId>minio</artifactId>
 			<version>8.6.0</version>
 		</dependency>
-		<!-- Override MinIO's vulnerable transitive version; CVE-2025-14813 is fixed in 1.81.1. -->
+		<!-- Override MinIO's vulnerable transitive version; CVE-2025-14813 is fixed in 1.81.1 and the LDAP injection advisory is fixed in 1.84. -->
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcprov-jdk18on</artifactId>
-			<version>1.81.1</version>
+			<version>1.84</version>
 		</dependency>
 		<!-- MinIO 8.6.0 references OkHttp's JVM classes, while okhttp:5.1.0 is only the multiplatform facade. -->
 		<dependency>
