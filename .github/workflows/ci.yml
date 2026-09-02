@@ -1244,18 +1244,16 @@ jobs:
           frontend_sha="$FRONTEND_IMAGE:$image_tag"
 
           for channel in main deploy; do
-            docker tag "$backend_sha" "$BACKEND_IMAGE:$channel"
-            docker tag "$frontend_sha" "$FRONTEND_IMAGE:$channel"
-            docker push "$BACKEND_IMAGE:$channel"
-            docker push "$FRONTEND_IMAGE:$channel"
+            docker buildx imagetools create \
+              "$backend_sha" --tag "$BACKEND_IMAGE:$channel"
+            docker buildx imagetools create \
+              "$frontend_sha" --tag "$FRONTEND_IMAGE:$channel"
           done
 
-          backend_digest="$(docker image inspect "$backend_sha" --format '{{json .RepoDigests}}' \
-            | jq -r --arg prefix "$BACKEND_IMAGE@sha256:" '.[] | select(startswith($prefix))' \
-            | head -n1)"
-          frontend_digest="$(docker image inspect "$frontend_sha" --format '{{json .RepoDigests}}' \
-            | jq -r --arg prefix "$FRONTEND_IMAGE@sha256:" '.[] | select(startswith($prefix))' \
-            | head -n1)"
+          backend_digest="$(docker buildx imagetools inspect "$backend_sha" --format '{{json .Manifest}}' \
+            | jq -r '.digest // empty')"
+          frontend_digest="$(docker buildx imagetools inspect "$frontend_sha" --format '{{json .Manifest}}' \
+            | jq -r '.digest // empty')"
           test -n "$backend_digest"
           test -n "$frontend_digest"
           echo "backend_digest=$backend_digest" >> "$GITHUB_OUTPUT"
