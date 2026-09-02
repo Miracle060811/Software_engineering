@@ -228,3 +228,4 @@ finally {
 }
 
 Write-Output "PASS: single-service deployment validates input, isolates traffic-service and restores it after a simulated rollout failure."
+exit 0
