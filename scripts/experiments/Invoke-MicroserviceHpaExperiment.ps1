@@ -4,6 +4,7 @@ param(
     [string]$Namespace = "travelmate-microservices",
     [int]$LocalPort = 18082,
     [int]$SampleIntervalSeconds = 5,
+    [int]$ScaleUpObservationSeconds = 120,
     [int]$ScaleDownTimeoutSeconds = 600
 )
 
@@ -20,7 +21,7 @@ $forwardErr = Join-Path $resultDirectory "hpa-$timestamp-port-forward.err.log"
 $k6Out = Join-Path $resultDirectory "hpa-$timestamp-k6.out.log"
 $k6Err = Join-Path $resultDirectory "hpa-$timestamp-k6.err.log"
 $portForward = $null
-$k6Process = $null
+$k6Job = $null
 
 [IO.Directory]::CreateDirectory($resultDirectory) | Out-Null
 
@@ -44,9 +45,11 @@ function Add-Sample([string]$Phase) {
         Add-Content -LiteralPath $samplePath -Encoding utf8
 }
 
-if (-not (Get-Command k6 -ErrorAction SilentlyContinue)) {
+$k6Command = Get-Command k6 -ErrorAction SilentlyContinue
+if (-not $k6Command) {
     throw "未安装 k6；请先执行 winget install GrafanaLabs.k6"
 }
+$k6Executable = $k6Command.Source
 $contexts = & kubectl config get-contexts $KubeContext -o name 2>$null
 if ($LASTEXITCODE -ne 0 -or -not $contexts) {
     throw "Kubernetes context '$KubeContext' 不存在"
@@ -78,29 +81,59 @@ try {
     }
     if (-not $ready) { throw "traffic-service 端口转发后未就绪" }
 
-    $k6Process = Start-Process -FilePath "k6" `
-        -ArgumentList @(
-            "run", "-e", "BASE_URL=http://127.0.0.1:$LocalPort", "-e", "RUN=hpa-$timestamp",
-            "--summary-export", $summaryPath, $stressScript
-        ) `
-        -WindowStyle Hidden -RedirectStandardOutput $k6Out -RedirectStandardError $k6Err -PassThru
+    $k6Arguments = @(
+        "run", "-e", "BASE_URL=http://127.0.0.1:$LocalPort", "-e", "RUN=hpa-$timestamp",
+        "--summary-export", $summaryPath, $stressScript
+    )
+    # 某些 Windows PowerShell 环境不会稳定填充 Start-Process 返回对象的 ExitCode。
+    # 后台任务直接返回原生命令的 $LASTEXITCODE，避免将成功压测误判为失败。
+    $k6Job = Start-Job -ScriptBlock {
+        param($Executable, $Arguments, $StandardOutputPath, $StandardErrorPath)
+        & $Executable @Arguments 1> $StandardOutputPath 2> $StandardErrorPath
+        $nativeExitCode = $LASTEXITCODE
+        if ($null -eq $nativeExitCode) {
+            throw "k6 未返回原生退出码"
+        }
+        [int]$nativeExitCode
+    } -ArgumentList $k6Executable, (,$k6Arguments), $k6Out, $k6Err
 
-    while (-not $k6Process.HasExited) {
+    while ($k6Job.State -in @("NotStarted", "Running")) {
         Add-Sample "load"
         $replicas = Get-ReplicaCount
         if ($replicas -gt $maximumReplicas) { $maximumReplicas = $replicas }
         Start-Sleep -Seconds $SampleIntervalSeconds
-        $k6Process.Refresh()
     }
-    if ($k6Process.ExitCode -ne 0) {
-        throw "k6 压测失败，退出码 $($k6Process.ExitCode)"
+    $k6Job | Wait-Job | Out-Null
+    $k6JobState = $k6Job.State
+    $k6JobReason = $k6Job.ChildJobs[0].JobStateInfo.Reason
+    $k6JobOutput = @($k6Job | Receive-Job -ErrorAction SilentlyContinue)
+    $k6Job | Remove-Job -ErrorAction SilentlyContinue
+    $k6Job = $null
+    if ($k6JobState -ne "Completed" -or $k6JobOutput.Count -eq 0) {
+        throw "无法读取 k6 退出码：后台任务状态为 $k6JobState，原因：$k6JobReason；请查看 $k6Out 和 $k6Err"
+    }
+    $k6ExitCode = [int]$k6JobOutput[-1]
+    if ($k6ExitCode -ne 0) {
+        throw "k6 压测失败，退出码 $k6ExitCode"
     }
 
     Add-Sample "load-finished"
+    # Metrics Server 与 HPA 控制器存在采样/决策延迟。即使 k6 已结束，
+    # 也要继续观察一段时间，避免漏掉随后发生的真实扩容。
+    $scaleUpDeadline = (Get-Date).AddSeconds($ScaleUpObservationSeconds)
+    $observedReplicas = Get-ReplicaCount
+    while ($observedReplicas -le $initialReplicas -and (Get-Date) -lt $scaleUpDeadline) {
+        Add-Sample "scale-up-observation"
+        Start-Sleep -Seconds $SampleIntervalSeconds
+        $observedReplicas = Get-ReplicaCount
+        if ($observedReplicas -gt $maximumReplicas) { $maximumReplicas = $observedReplicas }
+    }
+
     $scaleDownDeadline = (Get-Date).AddSeconds($ScaleDownTimeoutSeconds)
-    $finalReplicas = Get-ReplicaCount
+    $finalReplicas = $observedReplicas
     while ($finalReplicas -gt $initialReplicas -and (Get-Date) -lt $scaleDownDeadline) {
         Add-Sample "scale-down"
+        if ($finalReplicas -gt $maximumReplicas) { $maximumReplicas = $finalReplicas }
         Start-Sleep -Seconds $SampleIntervalSeconds
         $finalReplicas = Get-ReplicaCount
     }
@@ -111,13 +144,14 @@ try {
         executedAt = (Get-Date).ToString("o")
         context = $KubeContext
         namespace = $Namespace
+        scaleUpObservationSeconds = $ScaleUpObservationSeconds
         initialReplicas = $initialReplicas
         maximumReplicas = $maximumReplicas
         finalReplicas = $finalReplicas
         scaledUp = $maximumReplicas -gt $initialReplicas
-        scaledDown = $finalReplicas -le $initialReplicas
-        k6ExitCode = $k6Process.ExitCode
-        passed = ($maximumReplicas -gt $initialReplicas) -and ($finalReplicas -le $initialReplicas) -and ($k6Process.ExitCode -eq 0)
+        scaledDown = ($maximumReplicas -gt $initialReplicas) -and ($finalReplicas -le $initialReplicas)
+        k6ExitCode = $k6ExitCode
+        passed = ($maximumReplicas -gt $initialReplicas) -and ($finalReplicas -le $initialReplicas) -and ($k6ExitCode -eq 0)
         sampleLog = [IO.Path]::GetFileName($samplePath)
         k6Summary = [IO.Path]::GetFileName($summaryPath)
     }
@@ -126,6 +160,9 @@ try {
     if (-not $evidence.passed) { exit 1 }
 }
 finally {
-    if ($k6Process -and -not $k6Process.HasExited) { Stop-Process -Id $k6Process.Id -Force }
+    if ($k6Job) {
+        if ($k6Job.State -in @("NotStarted", "Running")) { $k6Job | Stop-Job }
+        $k6Job | Remove-Job -Force -ErrorAction SilentlyContinue
+    }
     if ($portForward -and -not $portForward.HasExited) { Stop-Process -Id $portForward.Id -Force }
 }
