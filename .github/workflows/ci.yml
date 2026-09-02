@@ -1433,11 +1433,13 @@ jobs:
 
           $backendImage = (& kubectl get deployment travelmate-backend -n travelmate -o "jsonpath={.spec.template.spec.containers[0].image}").Trim()
           $frontendImage = (& kubectl get deployment travelmate-frontend -n travelmate -o "jsonpath={.spec.template.spec.containers[0].image}").Trim()
-          if ($backendImage -ne $env:EXPECTED_BACKEND_IMAGE) {
-            throw "Backend digest mismatch: expected $env:EXPECTED_BACKEND_IMAGE, found $backendImage"
+          $backendDigest = $backendImage -replace '^.*@',''
+          $frontendDigest = $frontendImage -replace '^.*@',''
+          if ($backendDigest -ne $env:EXPECTED_BACKEND_IMAGE) {
+            throw "Backend digest mismatch: expected $env:EXPECTED_BACKEND_IMAGE, found $backendDigest (image: $backendImage)"
           }
-          if ($frontendImage -ne $env:EXPECTED_FRONTEND_IMAGE) {
-            throw "Frontend digest mismatch: expected $env:EXPECTED_FRONTEND_IMAGE, found $frontendImage"
+          if ($frontendDigest -ne $env:EXPECTED_FRONTEND_IMAGE) {
+            throw "Frontend digest mismatch: expected $env:EXPECTED_FRONTEND_IMAGE, found $frontendDigest (image: $frontendImage)"
           }
 
           $frontendHealth = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:30080/healthz" -TimeoutSec 15
