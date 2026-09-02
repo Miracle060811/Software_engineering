@@ -8,7 +8,8 @@ public class TravelMateApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(TravelMateApplication.class, args);
-        System.out.println("====== TravelMate Backend Started ======");
+        System.out.println("====== TravelMate Backend Started Successfully======");
+        
     }
 
 }
