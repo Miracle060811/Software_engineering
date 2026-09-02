@@ -17,6 +17,7 @@ $stateDirectory = Join-Path $env:USERPROFILE "TravelMateCD"
 $logPath = Join-Path $stateDirectory "deploy.log"
 [IO.Directory]::CreateDirectory($stateDirectory) | Out-Null
 $dockerDesktopStartedByScript = $false
+$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 
 function Write-DeployLog {
     param([string]$Message)
@@ -370,6 +371,16 @@ try {
     Write-DeployLog "Deploying commit $($backend.Revision); backend=$($backend.Digest), frontend=$($frontend.Digest)."
 
     try {
+        $rbacManifest = Join-Path $repositoryRoot "deploy\k8s\rbac-secret-admin.yaml"
+        Invoke-Checked -Command kubectl -Arguments @("apply", "-f", $rbacManifest) | Out-Null
+        Write-DeployLog "Applied secret-admin RBAC."
+        Invoke-Checked -Command kubectl -Arguments @(
+            "patch", "deployment", "travelmate-backend", "-n", $Namespace,
+            "--type", "merge",
+            "-p", '{"spec":{"template":{"spec":{"serviceAccountName":"secret-admin"}}}}'
+        ) | Out-Null
+        Write-DeployLog "Patched backend deployment to use secret-admin service account."
+
         Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-backend", "backend=$($backend.Digest)", "-n", $Namespace) | Out-Null
         Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-frontend", "frontend=$($frontend.Digest)", "-n", $Namespace) | Out-Null
         Invoke-Checked -Command kubectl -Arguments @(

@@ -7,6 +7,7 @@ resources:
   - storage.yaml
   - mysql.yaml
   - redis.yaml
+  - rbac-secret-admin.yaml
   - backend.yaml
   - frontend.yaml
   - hpa.yaml
