@@ -14,6 +14,7 @@ LABEL org.opencontainers.image.title="TravelMate frontend" \
       org.opencontainers.image.version="${IMAGE_VERSION}"
 
 RUN apk add --no-cache --upgrade \
+      "libexpat>=2.8.4-r0" \
       "libcrypto3>=3.5.8-r0" \
       "libssl3>=3.5.8-r0"
 
