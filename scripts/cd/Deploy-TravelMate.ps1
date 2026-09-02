@@ -374,11 +374,18 @@ try {
         $rbacManifest = Join-Path $repositoryRoot "deploy\k8s\rbac-secret-admin.yaml"
         Invoke-Checked -Command kubectl -Arguments @("apply", "-f", $rbacManifest) | Out-Null
         Write-DeployLog "Applied secret-admin RBAC."
-        Invoke-Checked -Command kubectl -Arguments @(
-            "patch", "deployment", "travelmate-backend", "-n", $Namespace,
-            "--type", "merge",
-            "-p", '{"spec":{"template":{"spec":{"serviceAccountName":"secret-admin"}}}}'
-        ) | Out-Null
+        $serviceAccountPatch = '{"spec":{"template":{"spec":{"serviceAccountName":"secret-admin"}}}}'
+        $serviceAccountPatchPath = Join-Path ([IO.Path]::GetTempPath()) ("travelmate-service-account-" + [guid]::NewGuid() + ".json")
+        try {
+            [IO.File]::WriteAllText($serviceAccountPatchPath, $serviceAccountPatch, [Text.UTF8Encoding]::new($false))
+            Invoke-Checked -Command kubectl -Arguments @(
+                "patch", "deployment", "travelmate-backend", "-n", $Namespace,
+                "--type", "merge", "--patch-file=$serviceAccountPatchPath"
+            ) | Out-Null
+        }
+        finally {
+            Remove-Item -LiteralPath $serviceAccountPatchPath -Force -ErrorAction SilentlyContinue
+        }
         Write-DeployLog "Patched backend deployment to use secret-admin service account."
 
         Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-backend", "backend=$($backend.Digest)", "-n", $Namespace) | Out-Null

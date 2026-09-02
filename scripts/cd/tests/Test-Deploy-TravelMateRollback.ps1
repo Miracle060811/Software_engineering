@@ -131,6 +131,22 @@ if ($Arguments[0] -eq "config" -and $Arguments[1] -eq "use-context") { Write-Out
 if ($Arguments[0] -eq "get" -and $Arguments[1] -eq "nodes") { Write-Output "fake-node"; exit 0 }
 if ($Arguments[0] -eq "wait") { Write-Output "ready"; exit 0 }
 
+if ($Arguments[0] -eq "apply") { Write-Output "applied"; exit 0 }
+if ($Arguments[0] -eq "patch") {
+    $patchFileArgument = @($Arguments | Where-Object { $_ -like "--patch-file=*" } | Select-Object -First 1)
+    if ($null -eq $patchFileArgument) {
+        Write-Error "patch must pass its JSON payload through --patch-file"
+        exit 44
+    }
+    $patchJson = Get-Content -LiteralPath $patchFileArgument.Substring("--patch-file=".Length) -Raw | ConvertFrom-Json
+    if ($patchJson.spec.template.spec.serviceAccountName -ne "secret-admin") {
+        Write-Error "unexpected service account patch content"
+        exit 45
+    }
+    Write-Output "patched"
+    exit 0
+}
+
 if ($Arguments[0] -eq "get" -and $Arguments[1] -eq "deployment") {
     $name = Get-DeploymentName $Arguments[2]
     $deployment = $state.deployments.PSObject.Properties[$name].Value
