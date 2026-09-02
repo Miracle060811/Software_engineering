@@ -88,6 +88,9 @@ jobs:
       - name: Validate microservice UC01-UC19 E2E structure
         run: npm run check:microservice-e2e
 
+      - name: Validate all microservice API test coverage
+        run: npm run check:microservice-api
+
       - name: Validate database migrations and Kubernetes manifests
         run: npm run check:deployment
 

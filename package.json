@@ -4,6 +4,8 @@
     "check:images": "node scripts/check-image-links.mjs",
     "check:images:remote": "node scripts/check-image-links.mjs --remote",
     "check:traceability": "node scripts/check-use-case-traceability.mjs",
+    "inventory:microservice-api": "node scripts/check-microservice-api-coverage.mjs --inventory",
+    "check:microservice-api": "node scripts/check-microservice-api-coverage.mjs",
     "check:microservice-e2e": "node scripts/check-microservice-e2e-coverage.mjs",
     "check:microservice-boundaries": "node scripts/check-microservice-boundaries.mjs",
     "check:deployment": "node scripts/check-deployment-config.mjs"
