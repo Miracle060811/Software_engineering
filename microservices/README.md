@@ -40,11 +40,14 @@
 
 ## API 与 UC01—UC19 测试
 
-六个服务均有独立的 public API MockMvc 契约测试；运行完整 Reactor 会同时执行 API、跨服务 Outbox 和幂等消费测试：
+六个服务的 113 个 Controller 端点（94 个公开端点、19 个内部端点）均登记了正常、鉴权和参数边界 MockMvc 测试锚点；有跨服务依赖的端点另登记 503 失败测试。清单由代码自动发现并与测试源码互相校验，新增或删除路由后未同步测试会使门禁失败：
 
 ```powershell
-mvn --batch-mode --no-transfer-progress verify
+npm run check:microservice-api
+.\backend\mvnw.cmd -f .\microservices\pom.xml --batch-mode --no-transfer-progress clean verify
 ```
+
+覆盖清单位于 `docs/ci/microservice-api-coverage.json`。`normal`、`auth`、`validation` 和可选的 `dependencyFailure` 字段均保存 `ClassName#methodName` 锚点；CI 的 `Repository and use-case validation` job 会执行同一门禁。参数绑定、缺失请求头、类型转换和不可读 JSON 统一返回 HTTP 400，业务规则错误继续使用既有业务错误信封。
 
 微服务 E2E 复用真实数据库版 UC01—UC19 场景，但通过 Vite 按路由转发到 8081—8086 的对应服务，不会访问 8080 单体后端：
 
@@ -53,7 +56,16 @@ cd ..\frontend
 npm run test:e2e:microservices
 ```
 
-结构门禁 `npm run check:microservice-e2e` 会检查 19 个 UC、服务归属和路由均已登记。当前可执行状态以 `docs/ci/microservice-use-case-matrix.json` 为准；结构门禁通过不等于真实数据库 E2E 已通过，验收仍以 Playwright 实跑结果为准。
+本地完整复现应先在仓库根目录构建并启动隔离的六服务 Compose，再在另一个终端运行 Playwright：
+
+```powershell
+.\backend\mvnw.cmd -f .\microservices\pom.xml --batch-mode --no-transfer-progress package -DskipTests
+docker compose --env-file .\microservices\.env -f .\microservices\compose.yml up --build -d
+Set-Location .\frontend
+npm run test:e2e:microservices
+```
+
+2026-09-01 本地真实数据库结果为 17/17；CI 的 `Real microservice E2E` job 会下载同一提交中六个已测试 JAR，初始化六库与 Redis，保存 Playwright HTML、trace 和六服务日志到 `microservice-e2e-evidence-<commit>` Artifact。结构门禁 `npm run check:microservice-e2e` 同时检查 19 个 UC、服务归属、路由及 CI 接线；矩阵中的 CI 状态只有在远端 job 实跑后才能由 `configured_pending_run` 更新为通过。
 
 服务边界门禁用于检查 POM 单体源码依赖、共享契约内容、跨服务 Mapper/表引用、34 张表唯一归属和六套数据库配置：
 

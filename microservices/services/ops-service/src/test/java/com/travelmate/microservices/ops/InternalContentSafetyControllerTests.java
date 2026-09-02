@@ -25,4 +25,14 @@ class InternalContentSafetyControllerTests {
                         .contentType("application/json").content("{\"content\":\"风险词内容\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.sensitive").value(true));
     }
+
+    @Test
+    void malformedContentSafetyRequestIsRejected() throws Exception {
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(
+                new InternalContentSafetyController(mock(OpsLocalService.class), "shared-token")).build();
+        mvc.perform(post("/internal/ops/content/check").header("X-Internal-Token", "shared-token"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/internal/ops/content/check").contentType("application/json").content("{}"))
+                .andExpect(status().isBadRequest());
+    }
 }

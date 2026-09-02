@@ -88,6 +88,9 @@ jobs:
       - name: Validate microservice UC01-UC19 E2E structure
         run: npm run check:microservice-e2e
 
+      - name: Validate all microservice API test coverage
+        run: npm run check:microservice-api
+
       - name: Validate database migrations and Kubernetes manifests
         run: npm run check:deployment
 
@@ -110,6 +113,10 @@ jobs:
             }
           }
           if ($hasErrors) { exit 1 }
+
+      - name: Validate isolated microservice deployment and rollback
+        shell: pwsh
+        run: ./scripts/cd/tests/Test-Deploy-TravelMateMicroserviceService.ps1
 
       - name: Upload traceability report
         if: always()
@@ -565,6 +572,192 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+  microservice-e2e:
+    name: Real microservice E2E
+    needs:
+      - changes
+      - validation
+      - microservices
+      - frontend
+    if: >-
+      always() &&
+      needs.changes.result == 'success' &&
+      needs.changes.outputs.code == 'true' &&
+      needs.validation.result == 'success' &&
+      needs.microservices.result == 'success' &&
+      needs.frontend.result == 'success' &&
+      (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      mysql:
+        image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+        env:
+          MYSQL_ROOT_PASSWORD: travelmate-ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptravelmate-ci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      CI: "true"
+      JWT_SECRET: YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=
+      INTERNAL_SERVICE_TOKEN: travelmate-ci-internal-token
+      ADMIN_REGISTER_SECRET: travelmate-ci-admin-register
+      RATE_LIMIT_ENABLED: "false"
+      DEEPSEEK_API_KEY: ""
+      CORS_ALLOWED_ORIGINS: http://127.0.0.1:3100
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Java 21
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Download tested service packages
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: microservice-package-*-${{ github.sha }}
+          path: ci-artifacts/microservices
+
+      - name: Initialize six microservice databases
+        shell: bash
+        run: |
+          set -euo pipefail
+          for service in identity traffic local ai community ops; do
+            docker exec -i ${{ job.services.mysql.id }} mysql -uroot -ptravelmate-ci \
+              < "microservices/sql/$service-schema.sql"
+            docker exec -i ${{ job.services.mysql.id }} mysql -uroot -ptravelmate-ci \
+              < "microservices/sql/$service-seed.sql"
+          done
+
+      - name: Start six tested service packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p microservice-e2e-logs
+
+          service_jar() {
+            local service="$1"
+            local jar
+            jar="$(find ci-artifacts/microservices -type f -name "$service-*.jar" -print -quit)"
+            test -n "$jar"
+            printf '%s' "$jar"
+          }
+
+          env SPRING_DATASOURCE_URL="jdbc:mysql://127.0.0.1:3306/travelmate_identity?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false" \
+            SPRING_DATASOURCE_USERNAME=root SPRING_DATASOURCE_PASSWORD=travelmate-ci \
+            SPRING_DATA_REDIS_HOST=127.0.0.1 SPRING_DATA_REDIS_PORT=6379 \
+            java -jar "$(service_jar identity-service)" > microservice-e2e-logs/identity-service.log 2>&1 &
+
+          env SPRING_DATASOURCE_URL="jdbc:mysql://127.0.0.1:3306/travelmate_traffic?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false" \
+            SPRING_DATASOURCE_USERNAME=root SPRING_DATASOURCE_PASSWORD=travelmate-ci \
+            SPRING_DATA_REDIS_HOST=127.0.0.1 SPRING_DATA_REDIS_PORT=6379 \
+            IDENTITY_SERVICE_URL=http://127.0.0.1:8081 LOCAL_SERVICE_URL=http://127.0.0.1:8083 \
+            AI_SERVICE_URL=http://127.0.0.1:8084 OUTBOX_DISPATCHER_ENABLED=true \
+            java -jar "$(service_jar traffic-service)" > microservice-e2e-logs/traffic-service.log 2>&1 &
+
+          env SPRING_DATASOURCE_URL="jdbc:mysql://127.0.0.1:3306/travelmate_local?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false" \
+            SPRING_DATASOURCE_USERNAME=root SPRING_DATASOURCE_PASSWORD=travelmate-ci \
+            SPRING_DATA_REDIS_HOST=127.0.0.1 SPRING_DATA_REDIS_PORT=6379 \
+            AI_SERVICE_URL=http://127.0.0.1:8084 OUTBOX_DISPATCHER_ENABLED=true \
+            java -jar "$(service_jar local-service)" > microservice-e2e-logs/local-service.log 2>&1 &
+
+          env SPRING_DATASOURCE_URL="jdbc:mysql://127.0.0.1:3306/travelmate_ai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false" \
+            SPRING_DATASOURCE_USERNAME=root SPRING_DATASOURCE_PASSWORD=travelmate-ci \
+            IDENTITY_SERVICE_URL=http://127.0.0.1:8081 \
+            java -jar "$(service_jar ai-service)" > microservice-e2e-logs/ai-service.log 2>&1 &
+
+          env SPRING_DATASOURCE_URL="jdbc:mysql://127.0.0.1:3306/travelmate_community?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false" \
+            SPRING_DATASOURCE_USERNAME=root SPRING_DATASOURCE_PASSWORD=travelmate-ci \
+            SPRING_DATA_REDIS_HOST=127.0.0.1 SPRING_DATA_REDIS_PORT=6379 \
+            IDENTITY_SERVICE_URL=http://127.0.0.1:8081 OPS_SERVICE_URL=http://127.0.0.1:8086 \
+            java -jar "$(service_jar community-service)" > microservice-e2e-logs/community-service.log 2>&1 &
+
+          env SPRING_DATASOURCE_URL="jdbc:mysql://127.0.0.1:3306/travelmate_ops?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false" \
+            SPRING_DATASOURCE_USERNAME=root SPRING_DATASOURCE_PASSWORD=travelmate-ci \
+            IDENTITY_SERVICE_URL=http://127.0.0.1:8081 TRAFFIC_SERVICE_URL=http://127.0.0.1:8082 \
+            LOCAL_SERVICE_URL=http://127.0.0.1:8083 COMMUNITY_SERVICE_URL=http://127.0.0.1:8085 \
+            java -jar "$(service_jar ops-service)" > microservice-e2e-logs/ops-service.log 2>&1 &
+
+      - name: Wait for all microservices
+        shell: bash
+        run: |
+          set -euo pipefail
+          services=(identity traffic local ai community ops)
+          ports=(8081 8082 8083 8084 8085 8086)
+          for index in "${!services[@]}"; do
+            service="${services[$index]}"
+            port="${ports[$index]}"
+            ready=false
+            for attempt in {1..60}; do
+              if curl --fail --silent "http://127.0.0.1:$port/actuator/health/readiness" > /dev/null; then
+                ready=true
+                break
+              fi
+              sleep 2
+            done
+            if [[ "$ready" != "true" ]]; then
+              echo "$service-service did not become ready on port $port"
+              cat microservice-e2e-logs/*.log
+              exit 1
+            fi
+          done
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Cache Playwright Chromium
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run real microservice E2E tests
+        working-directory: frontend
+        run: npm run test:e2e:microservices
+
+      - name: Upload microservice E2E report and service logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-e2e-evidence-${{ github.sha }}
+          path: |
+            frontend/playwright-report-microservices/
+            frontend/test-results-microservices/
+            microservice-e2e-logs/
+          if-no-files-found: warn
+          retention-days: 30
+
   ci-gate:
     name: CI quality gate
     if: always()
@@ -575,6 +768,7 @@ jobs:
       - microservices
       - frontend
       - real-e2e
+      - microservice-e2e
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -588,6 +782,7 @@ jobs:
           echo "microservices=${{ needs.microservices.result }}"
           echo "frontend=${{ needs.frontend.result }}"
           echo "real-e2e=${{ needs.real-e2e.result }}"
+          echo "microservice-e2e=${{ needs.microservice-e2e.result }}"
           [[ "${{ needs.changes.result }}" == "success" ]]
           [[ "${{ needs.validation.result }}" == "success" ]]
 
@@ -608,8 +803,10 @@ jobs:
           fi
           if [[ "$real_required" == "true" ]]; then
             [[ "${{ needs.real-e2e.result }}" == "success" ]]
+            [[ "${{ needs.microservice-e2e.result }}" == "success" ]]
           else
             [[ "${{ needs.real-e2e.result }}" == "skipped" ]]
+            [[ "${{ needs.microservice-e2e.result }}" == "skipped" ]]
           fi
 
   microservice-release-gate:
@@ -1352,6 +1549,7 @@ jobs:
       - images
       - deploy
       - microservice-release-evidence
+      - microservice-e2e
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -1369,10 +1567,12 @@ jobs:
           echo "images=${{ needs.images.result }}"
           echo "deploy=${{ needs.deploy.result }}"
           echo "microservice_release_evidence=${{ needs.microservice-release-evidence.result }}"
+          echo "microservice_e2e=${{ needs.microservice-e2e.result }}"
           if [[ "$delivery_required" == "true" ]]; then
             [[ "${{ needs.images.result }}" == "success" ]]
             [[ "${{ needs.deploy.result }}" == "success" ]]
             [[ "${{ needs.microservice-release-evidence.result }}" == "success" ]]
+            [[ "${{ needs.microservice-e2e.result }}" == "success" ]]
           else
             [[ "${{ needs.images.result }}" == "skipped" ]]
             [[ "${{ needs.deploy.result }}" == "skipped" ]]

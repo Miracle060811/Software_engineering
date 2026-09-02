@@ -65,4 +65,15 @@ class InternalIdentityControllerTests {
                         .header("X-Internal-Token", "internal-test-token"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void rejectsMissingOrMalformedOwnershipParameters() throws Exception {
+        mockMvc.perform(get("/internal/identity/passengers/9/ownership")
+                        .header("X-Internal-Token", "internal-test-token"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/internal/identity/passengers/not-a-number/ownership")
+                        .param("userId", "7")
+                        .header("X-Internal-Token", "internal-test-token"))
+                .andExpect(status().isBadRequest());
+    }
 }

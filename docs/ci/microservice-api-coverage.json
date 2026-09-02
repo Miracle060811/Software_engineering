@@ -1,0 +1,1968 @@
+{
+  "generatedFrom": "microservices/services/*/src/main/java/**/*Controller.java",
+  "endpoints": {
+    "DELETE /api/admin/sensitive-words/{id}": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "DELETE /api/comment/{id}": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "CommentController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/CommentController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "DELETE /api/notification/{id}": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "NotificationQueryController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/NotificationQueryController.java",
+      "tests": {
+        "normal": [
+          "NotificationPublicApiTests#notificationMutationsAreExposedAsApiOperations"
+        ],
+        "auth": [
+          "NotificationPublicApiTests#notificationEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "NotificationPublicApiTests#notificationEndpointsRejectMalformedIdentifiers"
+        ]
+      }
+    },
+    "DELETE /api/notification/clear-all": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "NotificationQueryController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/NotificationQueryController.java",
+      "tests": {
+        "normal": [
+          "NotificationPublicApiTests#notificationMutationsAreExposedAsApiOperations"
+        ],
+        "auth": [
+          "NotificationPublicApiTests#notificationEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "NotificationPublicApiTests#notificationEndpointsRejectMalformedIdentifiers"
+        ]
+      }
+    },
+    "DELETE /api/passenger/{id}": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "PassengerController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/controller/PassengerController.java",
+      "tests": {
+        "normal": [
+          "IdentityDomainApiTests#passengerFollowAndProfileEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityDomainApiTests#identityDomainEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "IdentityDomainApiTests#identityDomainEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "DELETE /api/post/{id}": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "PostController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/PostController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "DELETE /user/account": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "UserController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "tests": {
+        "normal": [
+          "IdentityPublicApiTests#accountLifecycleEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityPublicApiTests#protectedAccountEndpointsRejectMissingAuthorization"
+        ],
+        "validation": [
+          "IdentityPublicApiTests#accountEndpointsRejectMissingOrMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/admin/flights": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "OpsEndpointContractTests#downstreamOutageReturnsServiceUnavailableForAdminAggregation"
+        ]
+      }
+    },
+    "GET /api/admin/logs": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/admin/orders": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "OpsEndpointContractTests#downstreamOutageReturnsServiceUnavailableForAdminAggregation"
+        ]
+      }
+    },
+    "GET /api/admin/posts": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "OpsEndpointContractTests#downstreamOutageReturnsServiceUnavailableForAdminAggregation"
+        ]
+      }
+    },
+    "GET /api/admin/review-reports": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "OpsEndpointContractTests#downstreamOutageReturnsServiceUnavailableForAdminAggregation"
+        ]
+      }
+    },
+    "GET /api/admin/sensitive-words": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/admin/stats": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "OpsEndpointContractTests#downstreamOutageReturnsServiceUnavailableForAdminAggregation"
+        ]
+      }
+    },
+    "GET /api/admin/users": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "OpsEndpointContractTests#downstreamOutageReturnsServiceUnavailableForAdminAggregation"
+        ]
+      }
+    },
+    "GET /api/ai/plan/{id}": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "AiPlanChatController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/AiPlanChatController.java",
+      "tests": {
+        "normal": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "GET /api/ai/plan/list": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "AiPlanChatController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/AiPlanChatController.java",
+      "tests": {
+        "normal": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "GET /api/attraction/{id}": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "AttractionController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/AttractionController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/attraction/order/{orderNo}/receipt": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "AttractionController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/AttractionController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/attraction/orders": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "AttractionController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/AttractionController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/attraction/search": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "AttractionController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/AttractionController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/comment/list": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "CommentController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/CommentController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/coupon/list": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "CouponController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/CouponController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/coupon/my": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "CouponController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/CouponController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/destinations": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "DestinationController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/DestinationController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/destinations/{slug}": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "DestinationController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/DestinationController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/flight/{id}": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "FlightController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/FlightController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/flight/search": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "FlightController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/FlightController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#flightSearchReturnsServiceOwnedData"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/follow/fans/{userId}": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "FollowController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/controller/FollowController.java",
+      "tests": {
+        "normal": [
+          "IdentityDomainApiTests#passengerFollowAndProfileEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityDomainApiTests#identityDomainEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "IdentityDomainApiTests#identityDomainEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "GET /api/follow/following/{userId}": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "FollowController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/controller/FollowController.java",
+      "tests": {
+        "normal": [
+          "IdentityDomainApiTests#passengerFollowAndProfileEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityDomainApiTests#identityDomainEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "IdentityDomainApiTests#identityDomainEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "GET /api/follow/status/{userId}": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "FollowController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/controller/FollowController.java",
+      "tests": {
+        "normal": [
+          "IdentityDomainApiTests#passengerFollowAndProfileEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityDomainApiTests#identityDomainEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "IdentityDomainApiTests#identityDomainEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "GET /api/hotel/{id}": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "HotelController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/HotelController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/hotel/{id}/rooms": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "HotelController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/HotelController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/hotel/order/{orderNo}/receipt": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "HotelController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/HotelController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/hotel/orders": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "HotelController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/HotelController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/hotel/search": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "HotelController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/HotelController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/like/my/collects": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "LikeController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/LikeController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/like/status": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "LikeController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/LikeController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/notification/list": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "NotificationQueryController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/NotificationQueryController.java",
+      "tests": {
+        "normal": [
+          "NotificationPublicApiTests#notificationQueriesReturnCurrentUsersData"
+        ],
+        "auth": [
+          "NotificationPublicApiTests#notificationEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "NotificationPublicApiTests#notificationEndpointsRejectMalformedIdentifiers"
+        ]
+      }
+    },
+    "GET /api/notification/unread-count": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "NotificationQueryController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/NotificationQueryController.java",
+      "tests": {
+        "normal": [
+          "NotificationPublicApiTests#notificationQueriesReturnCurrentUsersData"
+        ],
+        "auth": [
+          "NotificationPublicApiTests#notificationEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "NotificationPublicApiTests#notificationEndpointsRejectMalformedIdentifiers"
+        ]
+      }
+    },
+    "GET /api/order/{orderNo}/receipt": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrafficOrderController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/order/list": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrafficOrderController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#authenticatedUserCanCreateAndListTrafficOrders"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/passenger/list": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "PassengerController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/controller/PassengerController.java",
+      "tests": {
+        "normal": [
+          "IdentityDomainApiTests#passengerFollowAndProfileEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityDomainApiTests#identityDomainEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "IdentityDomainApiTests#identityDomainEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "GET /api/post/{id}": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "PostController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/PostController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/post/following": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "PostController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/PostController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/post/list": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "PostController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/PostController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/post/my": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "PostController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/PostController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/price/trend": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "PriceHistoryController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/PriceHistoryController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/private-message/conversation/{userId}": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "AiPrivateMessageController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/AiPrivateMessageController.java",
+      "tests": {
+        "normal": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRejectMalformedInput"
+        ],
+        "dependencyFailure": [
+          "AiEndpointContractTests#identityOutageReturnsServiceUnavailableForPrivateMessages"
+        ]
+      }
+    },
+    "GET /api/private-message/unread-count": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "AiPrivateMessageController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/AiPrivateMessageController.java",
+      "tests": {
+        "normal": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "GET /api/reply/list": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "ReplyController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/ReplyController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/review/list": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "ReviewController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/ReviewController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/tour/list": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "TourProductController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/TourProductController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/train/{id}": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrainController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrainController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/train/live-sync-status": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrainController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrainController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/train/search": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrainController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrainController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trainSearchReturnsServiceOwnedData"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/train/transfer": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrainController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrainController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/user/profile/{username}": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "IdentityUserProfileController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/microservices/identity/IdentityUserProfileController.java",
+      "tests": {
+        "normal": [
+          "IdentityDomainApiTests#passengerFollowAndProfileEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityDomainApiTests#identityDomainEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "IdentityDomainApiTests#identityDomainEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "GET /internal/community/admin/pending-post-count": {
+      "service": "community-service",
+      "visibility": "internal",
+      "controller": "InternalAdminCommunityController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/microservices/community/InternalAdminCommunityController.java",
+      "tests": {
+        "normal": [
+          "InternalAdminCommunityControllerTests#adminCommunityEndpointsReturnPostsApprovalAndCount"
+        ],
+        "auth": [
+          "InternalAdminCommunityControllerTests#adminCommunityEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalAdminCommunityControllerTests#adminCommunityEndpointsRejectMalformedRequests"
+        ]
+      }
+    },
+    "GET /internal/community/admin/posts": {
+      "service": "community-service",
+      "visibility": "internal",
+      "controller": "InternalAdminCommunityController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/microservices/community/InternalAdminCommunityController.java",
+      "tests": {
+        "normal": [
+          "InternalAdminCommunityControllerTests#adminCommunityEndpointsReturnPostsApprovalAndCount"
+        ],
+        "auth": [
+          "InternalAdminCommunityControllerTests#adminCommunityEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalAdminCommunityControllerTests#adminCommunityEndpointsRejectMalformedRequests"
+        ]
+      }
+    },
+    "GET /internal/identity/admin/count": {
+      "service": "identity-service",
+      "visibility": "internal",
+      "controller": "InternalAdminIdentityController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/microservices/identity/InternalAdminIdentityController.java",
+      "tests": {
+        "normal": [
+          "InternalAdminIdentityControllerTests#adminIdentityEndpointsReturnUsersAndCount"
+        ],
+        "auth": [
+          "InternalAdminIdentityControllerTests#adminIdentityEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalAdminIdentityControllerTests#adminIdentityEndpointsRequireInternalTokenHeader"
+        ]
+      }
+    },
+    "GET /internal/identity/admin/users": {
+      "service": "identity-service",
+      "visibility": "internal",
+      "controller": "InternalAdminIdentityController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/microservices/identity/InternalAdminIdentityController.java",
+      "tests": {
+        "normal": [
+          "InternalAdminIdentityControllerTests#adminIdentityEndpointsReturnUsersAndCount"
+        ],
+        "auth": [
+          "InternalAdminIdentityControllerTests#adminIdentityEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalAdminIdentityControllerTests#adminIdentityEndpointsRequireInternalTokenHeader"
+        ]
+      }
+    },
+    "GET /internal/identity/community/following/{userId}": {
+      "service": "identity-service",
+      "visibility": "internal",
+      "controller": "InternalCommunityIdentityController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/microservices/identity/InternalCommunityIdentityController.java",
+      "tests": {
+        "normal": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsReturnOwnedData"
+        ],
+        "auth": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /internal/identity/community/follows/status": {
+      "service": "identity-service",
+      "visibility": "internal",
+      "controller": "InternalCommunityIdentityController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/microservices/identity/InternalCommunityIdentityController.java",
+      "tests": {
+        "normal": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsReturnOwnedData"
+        ],
+        "auth": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /internal/identity/community/users": {
+      "service": "identity-service",
+      "visibility": "internal",
+      "controller": "InternalCommunityIdentityController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/microservices/identity/InternalCommunityIdentityController.java",
+      "tests": {
+        "normal": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsReturnOwnedData"
+        ],
+        "auth": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /internal/identity/community/users/{id}": {
+      "service": "identity-service",
+      "visibility": "internal",
+      "controller": "InternalCommunityIdentityController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/microservices/identity/InternalCommunityIdentityController.java",
+      "tests": {
+        "normal": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsReturnOwnedData"
+        ],
+        "auth": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalCommunityIdentityControllerTests#communityIdentityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /internal/identity/passengers/{passengerId}/ownership": {
+      "service": "identity-service",
+      "visibility": "internal",
+      "controller": "InternalIdentityController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/microservices/identity/InternalIdentityController.java",
+      "tests": {
+        "normal": [
+          "InternalIdentityControllerTests#returnsOwnedPassengerSnapshotForTrafficService"
+        ],
+        "auth": [
+          "InternalIdentityControllerTests#rejectsInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalIdentityControllerTests#rejectsMissingOrMalformedOwnershipParameters"
+        ]
+      }
+    },
+    "GET /internal/local/admin/pending-report-count": {
+      "service": "local-service",
+      "visibility": "internal",
+      "controller": "InternalAdminLocalController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/microservices/local/InternalAdminLocalController.java",
+      "tests": {
+        "normal": [
+          "InternalAdminLocalControllerTests#adminLocalEndpointsReturnReportsResolutionAndCount"
+        ],
+        "auth": [
+          "InternalAdminLocalControllerTests#adminLocalEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalAdminLocalControllerTests#adminLocalEndpointsRejectMalformedRequests"
+        ]
+      }
+    },
+    "GET /internal/local/admin/review-reports": {
+      "service": "local-service",
+      "visibility": "internal",
+      "controller": "InternalAdminLocalController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/microservices/local/InternalAdminLocalController.java",
+      "tests": {
+        "normal": [
+          "InternalAdminLocalControllerTests#adminLocalEndpointsReturnReportsResolutionAndCount"
+        ],
+        "auth": [
+          "InternalAdminLocalControllerTests#adminLocalEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalAdminLocalControllerTests#adminLocalEndpointsRejectMalformedRequests"
+        ]
+      }
+    },
+    "GET /internal/traffic/admin/flights": {
+      "service": "traffic-service",
+      "visibility": "internal",
+      "controller": "InternalAdminTrafficController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/microservices/traffic/InternalAdminTrafficController.java",
+      "tests": {
+        "normal": [
+          "InternalAdminTrafficControllerTests#adminTrafficEndpointsReturnFlightsOrdersAndCount"
+        ],
+        "auth": [
+          "InternalAdminTrafficControllerTests#adminTrafficEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalAdminTrafficControllerTests#adminTrafficEndpointsRequireInternalTokenHeader"
+        ]
+      }
+    },
+    "GET /internal/traffic/admin/order-count": {
+      "service": "traffic-service",
+      "visibility": "internal",
+      "controller": "InternalAdminTrafficController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/microservices/traffic/InternalAdminTrafficController.java",
+      "tests": {
+        "normal": [
+          "InternalAdminTrafficControllerTests#adminTrafficEndpointsReturnFlightsOrdersAndCount"
+        ],
+        "auth": [
+          "InternalAdminTrafficControllerTests#adminTrafficEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalAdminTrafficControllerTests#adminTrafficEndpointsRequireInternalTokenHeader"
+        ]
+      }
+    },
+    "GET /internal/traffic/admin/orders": {
+      "service": "traffic-service",
+      "visibility": "internal",
+      "controller": "InternalAdminTrafficController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/microservices/traffic/InternalAdminTrafficController.java",
+      "tests": {
+        "normal": [
+          "InternalAdminTrafficControllerTests#adminTrafficEndpointsReturnFlightsOrdersAndCount"
+        ],
+        "auth": [
+          "InternalAdminTrafficControllerTests#adminTrafficEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalAdminTrafficControllerTests#adminTrafficEndpointsRequireInternalTokenHeader"
+        ]
+      }
+    },
+    "GET /user/me": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "UserController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "tests": {
+        "normal": [
+          "IdentityPublicApiTests#meNeverReturnsPassword"
+        ],
+        "auth": [
+          "IdentityPublicApiTests#protectedAccountEndpointsRejectMissingAuthorization"
+        ],
+        "validation": [
+          "IdentityPublicApiTests#accountEndpointsRejectMissingOrMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/admin/posts/{id}/approve": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "OpsEndpointContractTests#downstreamOutageReturnsServiceUnavailableForAdminAggregation"
+        ]
+      }
+    },
+    "POST /api/admin/review-reports/{id}/resolve": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "OpsEndpointContractTests#downstreamOutageReturnsServiceUnavailableForAdminAggregation"
+        ]
+      }
+    },
+    "POST /api/admin/sensitive-words": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/ai/chat": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "AiPlanChatController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/AiPlanChatController.java",
+      "tests": {
+        "normal": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "POST /api/ai/plan/generate": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "AiPlanChatController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/AiPlanChatController.java",
+      "tests": {
+        "normal": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "POST /api/attraction/{id}/ticket": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "AttractionController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/AttractionController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/comment/add": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "CommentController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/CommentController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/coupon/claim/{id}": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "CouponController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/CouponController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/follow/{userId}": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "FollowController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/controller/FollowController.java",
+      "tests": {
+        "normal": [
+          "IdentityDomainApiTests#passengerFollowAndProfileEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityDomainApiTests#identityDomainEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "IdentityDomainApiTests#identityDomainEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "POST /api/hotel/order/{orderNo}/cancel": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "HotelController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/HotelController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/hotel/order/{orderNo}/pay": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "HotelController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/HotelController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/hotel/order/{orderNo}/refund": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "HotelController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/HotelController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/hotel/order/create": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "HotelController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/HotelController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/like/toggle": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "LikeController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/LikeController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/notification/read/{id}": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "NotificationQueryController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/NotificationQueryController.java",
+      "tests": {
+        "normal": [
+          "NotificationPublicApiTests#notificationMutationsAreExposedAsApiOperations"
+        ],
+        "auth": [
+          "NotificationPublicApiTests#notificationEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "NotificationPublicApiTests#notificationEndpointsRejectMalformedIdentifiers"
+        ]
+      }
+    },
+    "POST /api/order/{orderNo}/cancel": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrafficOrderController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/order/{orderNo}/pay": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrafficOrderController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/order/{orderNo}/refund": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrafficOrderController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/order/cancel/{orderNo}": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrafficOrderController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/order/flight/create": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrafficOrderController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "TrafficPublicApiTests#identityOutageReturnsDesignedServiceUnavailableResponse"
+        ]
+      }
+    },
+    "POST /api/order/pay/{orderNo}": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrafficOrderController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/order/train/create": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrafficOrderController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrafficOrderController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#authenticatedUserCanCreateAndListTrafficOrders"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "TrafficPublicApiTests#identityOutageReturnsDesignedServiceUnavailableResponse"
+        ]
+      }
+    },
+    "POST /api/passenger/add": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "PassengerController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/controller/PassengerController.java",
+      "tests": {
+        "normal": [
+          "IdentityDomainApiTests#passengerFollowAndProfileEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityDomainApiTests#identityDomainEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "IdentityDomainApiTests#identityDomainEndpointsRejectMalformedInput"
+        ]
+      }
+    },
+    "POST /api/post/create": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "PostController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/PostController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "CommunityEndpointContractTests#opsOutageReturnsServiceUnavailableForPostMutations"
+        ]
+      }
+    },
+    "POST /api/private-message/send": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "AiPrivateMessageController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/AiPrivateMessageController.java",
+      "tests": {
+        "normal": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRequireAuthentication"
+        ],
+        "validation": [
+          "AiEndpointContractTests#aiPlanChatAndMessageEndpointsRejectMalformedInput"
+        ],
+        "dependencyFailure": [
+          "AiEndpointContractTests#identityOutageReturnsServiceUnavailableForPrivateMessages"
+        ]
+      }
+    },
+    "POST /api/reply/add": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "ReplyController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/ReplyController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/review/add": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "ReviewController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/ReviewController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/review/report": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "ReviewReportController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/ReviewReportController.java",
+      "tests": {
+        "normal": [
+          "LocalEndpointContractTests#localEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "LocalEndpointContractTests#localEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/train/waitlist": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrainController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrainController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /internal/community/admin/posts/{id}/approve": {
+      "service": "community-service",
+      "visibility": "internal",
+      "controller": "InternalAdminCommunityController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/microservices/community/InternalAdminCommunityController.java",
+      "tests": {
+        "normal": [
+          "InternalAdminCommunityControllerTests#adminCommunityEndpointsReturnPostsApprovalAndCount"
+        ],
+        "auth": [
+          "InternalAdminCommunityControllerTests#adminCommunityEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalAdminCommunityControllerTests#adminCommunityEndpointsRejectMalformedRequests"
+        ]
+      }
+    },
+    "POST /internal/local/admin/review-reports/{id}/resolve": {
+      "service": "local-service",
+      "visibility": "internal",
+      "controller": "InternalAdminLocalController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/microservices/local/InternalAdminLocalController.java",
+      "tests": {
+        "normal": [
+          "InternalAdminLocalControllerTests#adminLocalEndpointsReturnReportsResolutionAndCount"
+        ],
+        "auth": [
+          "InternalAdminLocalControllerTests#adminLocalEndpointsRejectInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalAdminLocalControllerTests#adminLocalEndpointsRejectMalformedRequests"
+        ]
+      }
+    },
+    "POST /internal/local/coupons/redeem": {
+      "service": "local-service",
+      "visibility": "internal",
+      "controller": "InternalCouponController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/microservices/local/InternalCouponController.java",
+      "tests": {
+        "normal": [
+          "InternalCouponControllerTests#validInternalCouponRedemptionReturnsDiscount"
+        ],
+        "auth": [
+          "InternalCouponControllerTests#invalidInternalCredentialIsRejectedOverHttp"
+        ],
+        "validation": [
+          "InternalCouponControllerTests#malformedInternalCouponRequestIsRejected"
+        ]
+      }
+    },
+    "POST /internal/notifications/events": {
+      "service": "ai-service",
+      "visibility": "internal",
+      "controller": "InternalNotificationEventController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/InternalNotificationEventController.java",
+      "tests": {
+        "normal": [
+          "InternalNotificationEventControllerTests#validNotificationEventIsAcceptedOverHttp"
+        ],
+        "auth": [
+          "InternalNotificationEventControllerTests#invalidNotificationTokenIsRejectedOverHttp"
+        ],
+        "validation": [
+          "InternalNotificationEventControllerTests#malformedNotificationEventIsRejected"
+        ]
+      }
+    },
+    "POST /internal/ops/content/check": {
+      "service": "ops-service",
+      "visibility": "internal",
+      "controller": "InternalContentSafetyController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/InternalContentSafetyController.java",
+      "tests": {
+        "normal": [
+          "InternalContentSafetyControllerTests#internalTokenAndSensitiveResultAreEnforced"
+        ],
+        "auth": [
+          "InternalContentSafetyControllerTests#internalTokenAndSensitiveResultAreEnforced"
+        ],
+        "validation": [
+          "InternalContentSafetyControllerTests#malformedContentSafetyRequestIsRejected"
+        ]
+      }
+    },
+    "POST /user/admin-register": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "UserController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "tests": {
+        "normal": [
+          "IdentityPublicApiTests#adminRegisterAcceptsJsonAndChecksConfiguredSecret"
+        ],
+        "auth": [
+          "IdentityPublicApiTests#protectedAccountEndpointsRejectMissingAuthorization"
+        ],
+        "validation": [
+          "IdentityPublicApiTests#accountEndpointsRejectMissingOrMalformedParameters"
+        ]
+      }
+    },
+    "POST /user/login": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "UserController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "tests": {
+        "normal": [
+          "IdentityPublicApiTests#registerAndLoginExposeStableResultContract"
+        ],
+        "auth": [
+          "IdentityPublicApiTests#registerAndLoginExposeStableResultContract"
+        ],
+        "validation": [
+          "IdentityPublicApiTests#accountEndpointsRejectMissingOrMalformedParameters"
+        ]
+      }
+    },
+    "POST /user/password": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "UserController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "tests": {
+        "normal": [
+          "IdentityPublicApiTests#accountLifecycleEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityPublicApiTests#protectedAccountEndpointsRejectMissingAuthorization"
+        ],
+        "validation": [
+          "IdentityPublicApiTests#accountEndpointsRejectMissingOrMalformedParameters"
+        ]
+      }
+    },
+    "POST /user/register": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "UserController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "tests": {
+        "normal": [
+          "IdentityPublicApiTests#registerAndLoginExposeStableResultContract"
+        ],
+        "auth": [
+          "IdentityPublicApiTests#registerAndLoginExposeStableResultContract"
+        ],
+        "validation": [
+          "IdentityPublicApiTests#accountEndpointsRejectMissingOrMalformedParameters"
+        ]
+      }
+    },
+    "POST /user/reset-password": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "UserController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "tests": {
+        "normal": [
+          "IdentityPublicApiTests#accountLifecycleEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityPublicApiTests#accountLifecycleEndpointsExposeNormalContracts"
+        ],
+        "validation": [
+          "IdentityPublicApiTests#accountEndpointsRejectMissingOrMalformedParameters"
+        ]
+      }
+    },
+    "PUT /api/post/{id}": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "PostController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/PostController.java",
+      "tests": {
+        "normal": [
+          "CommunityEndpointContractTests#communityEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "CommunityEndpointContractTests#communityEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "CommunityEndpointContractTests#communityEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "CommunityEndpointContractTests#opsOutageReturnsServiceUnavailableForPostMutations"
+        ]
+      }
+    }
+  }
+}

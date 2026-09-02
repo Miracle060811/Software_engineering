@@ -3,6 +3,7 @@ package com.travelmate.microservices.ai;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.travelmate.common.UserContext;
+import com.travelmate.common.GlobalExceptionHandler;
 import com.travelmate.entity.Notification;
 import com.travelmate.mapper.NotificationMapper;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
@@ -25,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class NotificationPublicApiTests {
     private NotificationMapper notificationMapper;
+    private UserContext userContext;
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -33,10 +35,11 @@ class NotificationPublicApiTests {
                 new MapperBuilderAssistant(new MybatisConfiguration(), "notification-api-test"),
                 Notification.class);
         notificationMapper = mock(NotificationMapper.class);
-        UserContext userContext = mock(UserContext.class);
+        userContext = mock(UserContext.class);
         when(userContext.getCurrentUserId()).thenReturn(7L);
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new NotificationQueryController(notificationMapper, userContext))
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 
@@ -71,5 +74,24 @@ class NotificationPublicApiTests {
 
         verify(notificationMapper).update(any(), any());
         verify(notificationMapper, org.mockito.Mockito.times(2)).delete(any());
+    }
+
+    @Test
+    void notificationEndpointsRequireAuthentication() throws Exception {
+        when(userContext.getCurrentUserId()).thenThrow(new RuntimeException("用户未登录或Token无效"));
+        mockMvc.perform(get("/api/notification/list")).andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
+        mockMvc.perform(get("/api/notification/unread-count")).andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
+        mockMvc.perform(post("/api/notification/read/31")).andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
+        mockMvc.perform(delete("/api/notification/31")).andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
+        mockMvc.perform(delete("/api/notification/clear-all")).andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
+    }
+
+    @Test
+    void notificationEndpointsRejectMalformedIdentifiers() throws Exception {
+        mockMvc.perform(post("/api/notification/read/not-a-number")).andExpect(status().isBadRequest());
+        mockMvc.perform(delete("/api/notification/not-a-number")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/notification/list").param("unexpected", "ignored")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/notification/unread-count").param("unexpected", "ignored")).andExpect(status().isOk());
+        mockMvc.perform(delete("/api/notification/clear-all").param("unexpected", "ignored")).andExpect(status().isOk());
     }
 }

@@ -6,10 +6,12 @@ const specPath = path.join(root, "frontend", "tests", "e2e-real", "travelmate-re
 const matrixPath = path.join(root, "docs", "ci", "microservice-use-case-matrix.json");
 const vitePath = path.join(root, "frontend", "vite.config.js");
 const configPath = path.join(root, "frontend", "playwright.microservices.config.js");
+const workflowPath = path.join(root, ".github", "workflows", "ci.yml");
 
 const spec = fs.readFileSync(specPath, "utf8");
 const vite = fs.readFileSync(vitePath, "utf8");
 const playwrightConfig = fs.readFileSync(configPath, "utf8");
+const workflow = fs.readFileSync(workflowPath, "utf8");
 const matrix = JSON.parse(fs.readFileSync(matrixPath, "utf8"));
 const expected = Array.from({ length: 19 }, (_, index) => `UC${String(index + 1).padStart(2, "0")}`);
 const failures = [];
@@ -32,6 +34,23 @@ for (const service of ["IDENTITY", "TRAFFIC", "LOCAL", "AI", "COMMUNITY", "OPS"]
 if (!playwrightConfig.includes('VITE_BACKEND_MODE: "microservices"')) {
   failures.push("Playwright 微服务配置未启用 microservices 路由模式");
 }
+
+const microserviceE2EBlock = workflow.match(/\n  microservice-e2e:[\s\S]*?\n  ci-gate:/)?.[0] ?? "";
+for (const requiredWorkflowFragment of [
+  "name: Real microservice E2E",
+  "npm run test:e2e:microservices",
+  "microservice-e2e-evidence-${{ github.sha }}",
+  "CORS_ALLOWED_ORIGINS: http://127.0.0.1:3100",
+]) {
+  if (!microserviceE2EBlock.includes(requiredWorkflowFragment)) {
+    failures.push(`CI 未接入微服务 E2E：缺少 ${requiredWorkflowFragment}`);
+  }
+}
+
+const ciGateBlock = workflow.match(/\n  ci-gate:[\s\S]*?\n  microservice-release-gate:/)?.[0] ?? "";
+const deliveryGateBlock = workflow.match(/\n  delivery-gate:[\s\S]*$/)?.[0] ?? "";
+if (!ciGateBlock.includes("needs.microservice-e2e.result")) failures.push("ci-gate 未校验微服务 E2E 结果");
+if (!deliveryGateBlock.includes("needs.microservice-e2e.result")) failures.push("delivery-gate 未校验微服务 E2E 结果");
 
 if (failures.length > 0) {
   console.error("Microservice E2E coverage check failed:");
