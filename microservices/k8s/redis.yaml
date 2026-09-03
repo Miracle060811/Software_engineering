@@ -27,12 +27,6 @@ spec:
         app.kubernetes.io/name: redis
         app.kubernetes.io/part-of: travelmate
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 999
-        runAsGroup: 1000
-        fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: redis
           image: redis:7.4-alpine
