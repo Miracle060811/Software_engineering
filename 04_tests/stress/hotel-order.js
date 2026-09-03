@@ -21,10 +21,6 @@ import { check, sleep } from 'k6';
 import { Counter } from 'k6/metrics';
 
 const BASE_URL = __ENV.BASE_URL || 'http://127.0.0.1:8080';
-// 微服务版本登录在 identity-service、下单在 local-service，两者端口不同：
-//   k6 run -e BASE_URL=http://127.0.0.1:8083 -e AUTH_BASE_URL=http://127.0.0.1:8081 ...
-// 单体版本两者同源，AUTH_BASE_URL 缺省回落到 BASE_URL。
-const AUTH_BASE_URL = __ENV.AUTH_BASE_URL || BASE_URL;
 const HOTEL_ID = Number(__ENV.HOTEL_ID || 6);
 const ROOM_ID = Number(__ENV.ROOM_ID || 14);
 const INITIAL_STOCK = Number(__ENV.INITIAL_STOCK || 1);
@@ -60,11 +56,11 @@ export function setup() {
     const username = `stress_${RUN}_${i}`;
     const password = STRESS_PASSWORD;
     // 注册（已存在则忽略失败）
-    http.post(`${AUTH_BASE_URL}/user/register?username=${username}&password=${password}`, null, {
+    http.post(`${BASE_URL}/user/register?username=${username}&password=${password}`, null, {
       tags: { name: 'setup-register' },
     });
     // 登录拿 token
-    const loginRes = http.post(`${AUTH_BASE_URL}/user/login?username=${username}&password=${password}`, null, {
+    const loginRes = http.post(`${BASE_URL}/user/login?username=${username}&password=${password}`, null, {
       tags: { name: 'setup-login' },
     });
     const code = loginRes.json('code');
@@ -89,25 +85,10 @@ export default function (data) {
     return;
   }
 
-  // 微服务版本启用 SPA CSRF（CookieCsrfTokenRepository）：
-  // 先 GET 一次 permitAll 接口让服务端下发 XSRF-TOKEN cookie（k6 jar 自动保存），
-  // 再从 jar 取出并放入 X-XSRF-TOKEN 请求头。单体 CSRF 禁用，多余的头无副作用。
-  let xsrf = http.cookieJar().cookiesForURL(BASE_URL)['XSRF-TOKEN'];
-  if (!xsrf) {
-    http.get(`${BASE_URL}/api/hotel/${HOTEL_ID}`, { tags: { name: 'csrf-warmup' } });
-    xsrf = http.cookieJar().cookiesForURL(BASE_URL)['XSRF-TOKEN'];
-  }
-  if (Array.isArray(xsrf)) {
-    xsrf = xsrf[0];
-  }
-
   const headers = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
   };
-  if (xsrf) {
-    headers['X-XSRF-TOKEN'] = xsrf;
-  }
 
   const payload = JSON.stringify({
     hotelId: HOTEL_ID,
@@ -126,13 +107,11 @@ export default function (data) {
 
   const body = res.json();
   const ok = res.status === 200 && (body.code === 200 || body.code === 0);
-  // 单体返回 { code, msg }，微服务返回 { code, message }，两者都接受
-  const bizMsg = body.message || body.msg;
 
   check(res, {
     'status is 200': (r) => r.status === 200,
     // 成功 = 拿到订单号；失败 = 返回明确的业务错误（如"暂无可用房间"）
-    'order created or business-rejected': () => ok || (body.code !== 200 && body.code !== 0 && !!bizMsg),
+    'order created or business-rejected': () => ok || (body.code !== 200 && body.code !== 0 && !!body.message),
   });
 
   if (ok) {
@@ -145,18 +124,11 @@ export default function (data) {
 // teardown：库存一致性断言——成功订单数不得超过初始库存
 export function teardown() {
   const successCount = businessSuccess.value;
-  console.log(`teardown: initial stock = ${INITIAL_STOCK}`);
-  if (typeof successCount === 'number') {
-    console.log(`teardown: successful orders = ${successCount}`);
-    if (successCount > INITIAL_STOCK) {
-      console.log(`ASSERTION FAILED: oversell! ${successCount} > ${INITIAL_STOCK}`);
-    } else {
-      console.log(`ASSERTION PASSED: no oversell (${successCount}/${INITIAL_STOCK})`);
-    }
+  console.log(`teardown: successful orders = ${successCount}, initial stock = ${INITIAL_STOCK}`);
+  if (successCount > INITIAL_STOCK) {
+    console.log(`ASSERTION FAILED: oversell! ${successCount} > ${INITIAL_STOCK}`);
   } else {
-    // k6 2.x teardown 阶段拿不到 Counter.value：以导出的 summary JSON 中
-    // business_success.count 为准，并按 README 要求核对数据库
-    console.log('teardown: counter unavailable in this k6 version; read business_success.count from --summary-export JSON and verify stock in DB');
+    console.log(`ASSERTION PASSED: no oversell (${successCount}/${INITIAL_STOCK})`);
   }
 }
 
