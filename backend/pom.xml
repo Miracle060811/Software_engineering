@@ -16,6 +16,8 @@
 	<properties>
 		<java.version>21</java.version>
 		<netty.version>4.1.136.Final</netty.version>
+		<!-- fabric8 kubernetes-client 6.13.5 与 Jackson >= 2.19 不兼容（fabric8io/kubernetes-client#7036），锁定 2.18.x -->
+		<jackson-bom.version>2.18.4</jackson-bom.version>
 	</properties>
 	<dependencies>
 		<dependency>
