@@ -1,0 +1,13 @@
+﻿{
+    "scenario":  "hotel-order",
+    "run":  1,
+    "baseUrl":  "http://127.0.0.1:18080",
+    "metricSource":  "Process",
+    "metricTarget":  "4568",
+    "sampleCount":  62,
+    "averageCpuPercent":  2.064,
+    "maximumCpuPercent":  21.399,
+    "averageMemoryMiB":  461.902,
+    "maximumMemoryMiB":  469.102,
+    "k6ExitCode":  0
+}

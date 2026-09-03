@@ -1,0 +1,71 @@
+﻿
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: hotel-order.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 50 max VUs, 2m30s max duration (incl. graceful stop):
+              * hotel_order: 1 iterations for each of 50 VUs (maxDuration: 2m0s, gracefulStop: 30s)
+
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+
+  █ THRESHOLDS 
+
+    http_req_failed
+    ✓ 'rate==0' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 100     17.144876/s
+    checks_succeeded...: 100.00% 100 out of 100
+    checks_failed......: 0.00%   0 out of 100
+
+    ✓ status is 200
+    ✓ order created or business-rejected
+
+    CUSTOM
+    business_success...............: 1      0.171449/s
+
+    HTTP
+    http_req_duration..............: avg=70.25ms min=4.45ms   med=77.62ms  max=157.75ms p(90)=130.21ms p(95)=139.67ms
+      { expected_response:true }...: avg=70.25ms min=4.45ms   med=77.62ms  max=157.75ms p(90)=130.21ms p(95)=139.67ms
+    http_req_failed................: 0.00%  0 out of 200
+    http_reqs......................: 200    34.289753/s
+
+    EXECUTION
+    iteration_duration.............: avg=385.7ms min=341.77ms med=384.19ms max=424.98ms p(90)=419.61ms p(95)=421.93ms
+    iterations.....................: 50     8.572438/s
+    vus............................: 0      min=0        max=0 
+    vus_max........................: 50     min=50       max=50
+
+    NETWORK
+    data_received..................: 136 kB 23 kB/s
+    data_sent......................: 53 kB  9.1 kB/s
+
+
+
+
+running (0m05.8s), 00/50 VUs, 50 complete and 0 interrupted iterations
+hotel_order ✓ [ 100% ] 50 VUs  0m00.4s/2m0s  50/50 iters, 1 per VU

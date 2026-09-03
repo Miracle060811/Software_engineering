@@ -46,7 +46,14 @@ k6 run -e BASE_URL=http://127.0.0.1:8080 -e RUN=3 --summary-export=results/fligh
 k6 run -e BASE_URL=http://127.0.0.1:8080 -e HOTEL_ID=6 -e ROOM_ID=14 `
       -e INITIAL_STOCK=1 -e VU_COUNT=50 -e RUN=1 `
       --summary-export=results/hotel-order-run1.json hotel-order.js
-# 重复 RUN=2/3；每次压测前将库存重置回 INITIAL_STOCK 并清理压测账号产生的订单
+# 微服务版本：登录在 identity-service、下单在 local-service，需额外指定 AUTH_BASE_URL：
+#   k6 run -e BASE_URL=http://127.0.0.1:8083 -e AUTH_BASE_URL=http://127.0.0.1:8081 ...
+# 脚本会自动处理微服务的 SPA CSRF（先 GET 预取 XSRF-TOKEN cookie，再带 X-XSRF-TOKEN 头）。
+# 重复 RUN=2/3；每次压测前重置三处状态（缺一不可，Redis 预扣键不会随 DB 重置自动恢复）：
+#   1) MySQL：UPDATE tm_hotel_room SET available_rooms = <INITIAL_STOCK> WHERE id = <ROOM_ID>;
+#               DELETE FROM tm_hotel_order WHERE room_id = <ROOM_ID>;（清理压测订单）
+#   2) Redis：DEL hotel:room:stock:<ROOM_ID>
+#   3) 压测账号可复用（注册失败会被忽略，登录即可）
 ```
 
 ## 4. 下单场景的库存一致性核对
