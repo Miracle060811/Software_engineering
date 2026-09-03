@@ -1,0 +1,10 @@
+﻿k6 : time="2026-09-03T11:47:18+08:00" level=info msg="setup: 50/50 users ready" source=console
+At line:15 char:2153
++ ... ts\stress"; k6 run -e BASE_URL=http://127.0.0.1:18080 -e HOTEL_ID=6 - ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (time="2026-09-0... source=console:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+time="2026-09-03T11:47:19+08:00" level=info msg="teardown: initial stock = 1" source=console
+time="2026-09-03T11:47:19+08:00" level=info msg="teardown: counter unavailable in this k6 version; read business_succes
+s.count from --summary-export JSON and verify stock in DB" source=console

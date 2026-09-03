@@ -1,0 +1,80 @@
+﻿
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: hotel-order.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 50 max VUs, 2m30s max duration (incl. graceful stop):
+              * hotel_order: 1 iterations for each of 50 VUs (maxDuration: 2m0s, gracefulStop: 30s)
+
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+Run           [ 100% ] setup()
+hotel_order   [   0% ]
+
+
+  █ THRESHOLDS 
+
+    http_req_failed
+    ✓ 'rate==0' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 100     11.812777/s
+    checks_succeeded...: 100.00% 100 out of 100
+    checks_failed......: 0.00%   0 out of 100
+
+    ✓ status is 200
+    ✓ order created or business-rejected
+
+    CUSTOM
+    business_success...............: 1      0.118128/s
+
+    HTTP
+    http_req_duration..............: avg=92.62ms  min=44.15ms  med=82.58ms  max=204.41ms p(90)=145.11ms p(95)=163.86ms
+      { expected_response:true }...: avg=92.62ms  min=44.15ms  med=82.58ms  max=204.41ms p(90)=145.11ms p(95)=163.86ms
+    http_req_failed................: 0.00%  0 out of 200
+    http_reqs......................: 200    23.625555/s
+
+    EXECUTION
+    iteration_duration.............: avg=417.72ms min=377.32ms med=421.17ms max=459.88ms p(90)=446.68ms p(95)=450.54ms
+    iterations.....................: 50     5.906389/s
+    vus............................: 0      min=0        max=0 
+    vus_max........................: 50     min=50       max=50
+
+    NETWORK
+    data_received..................: 136 kB 16 kB/s
+    data_sent......................: 53 kB  6.3 kB/s
+
+
+
+
+running (0m08.5s), 00/50 VUs, 50 complete and 0 interrupted iterations
+hotel_order ✓ [ 100% ] 50 VUs  0m00.5s/2m0s  50/50 iters, 1 per VU
