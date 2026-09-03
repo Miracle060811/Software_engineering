@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TravelPlaceService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">TravelPlaceService.java</span></div><h1>TravelPlaceService.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.travelmate.common.LogSanitizer;
+import com.travelmate.entity.Destination;
+import com.travelmate.mapper.DestinationMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Validates user supplied travel cities before AI generation. The model is never
+ * treated as a source of truth for whether a place exists.
+ */
+@Service
+<span class="fc" id="L40">public class TravelPlaceService {</span>
+
+<span class="fc" id="L42">    private static final Logger log = LoggerFactory.getLogger(TravelPlaceService.class);</span>
+<span class="fc" id="L43">    private static final Object NOMINATIM_RATE_LOCK = new Object();</span>
+    private static final long NOMINATIM_MIN_INTERVAL_MS = 1100L;
+    private static volatile long lastNominatimRequestAt;
+
+<span class="fc" id="L47">    private static final Set&lt;String&gt; ACCEPTED_CITY_TYPES = Set.of(&quot;city&quot;, &quot;town&quot;, &quot;municipality&quot;);</span>
+<span class="fc" id="L48">    private static final Set&lt;String&gt; LOCAL_TRAVEL_CITIES = Set.of(</span>
+            &quot;北京&quot;, &quot;上海&quot;, &quot;天津&quot;, &quot;重庆&quot;, &quot;广州&quot;, &quot;深圳&quot;, &quot;杭州&quot;, &quot;南京&quot;, &quot;苏州&quot;, &quot;无锡&quot;, &quot;常州&quot;,
+            &quot;成都&quot;, &quot;西安&quot;, &quot;武汉&quot;, &quot;长沙&quot;, &quot;郑州&quot;, &quot;济南&quot;, &quot;青岛&quot;, &quot;厦门&quot;, &quot;泉州&quot;, &quot;福州&quot;, &quot;合肥&quot;,
+            &quot;南昌&quot;, &quot;昆明&quot;, &quot;大理&quot;, &quot;云南大理&quot;, &quot;丽江&quot;, &quot;三亚&quot;, &quot;海口&quot;, &quot;桂林&quot;, &quot;南宁&quot;, &quot;贵阳&quot;,
+            &quot;兰州&quot;, &quot;西宁&quot;, &quot;银川&quot;, &quot;乌鲁木齐&quot;, &quot;拉萨&quot;, &quot;哈尔滨&quot;, &quot;长春&quot;, &quot;沈阳&quot;, &quot;大连&quot;, &quot;石家庄&quot;,
+            &quot;太原&quot;, &quot;呼和浩特&quot;, &quot;宁波&quot;, &quot;温州&quot;, &quot;徐州&quot;, &quot;张家界&quot;, &quot;珠海&quot;, &quot;佛山&quot;, &quot;东莞&quot;, &quot;香港&quot;,
+            &quot;澳门&quot;, &quot;台北&quot;, &quot;东京&quot;, &quot;大阪&quot;, &quot;首尔&quot;, &quot;新加坡&quot;, &quot;曼谷&quot;, &quot;巴黎&quot;, &quot;伦敦&quot;, &quot;纽约&quot;, &quot;洛杉矶&quot;);
+
+<span class="fc" id="L56">    private static final Pattern INVALID_PLACE_CHARACTERS = Pattern.compile(&quot;[\\p{Cntrl}{}&lt;&gt;\\[\\]`$\\\\]&quot;);</span>
+<span class="fc" id="L57">    private static final Pattern INSTRUCTION_LIKE_PLACE = Pattern.compile(</span>
+            &quot;(?i)(忽略|系统提示|developer|assistant|prompt|指令|输出json|工具调用|执行命令)&quot;);
+<span class="fc" id="L59">    private static final Pattern AFTER_TRAVEL_VERB = Pattern.compile(</span>
+            &quot;(?:想|计划|准备|打算|准备好)?(?:去|到|前往|目的地(?:是|为|：|:)?)[\\s]*([\\p{L}][\\p{L}\\p{N}·.'’\\-，, ]{0,28}?)(?=旅游|旅行|游玩|玩|度假|出差|的?天气|的?酒店|的?景点|的?路线|的?行程|怎么|[。！？?!]|$)&quot;);
+<span class="fc" id="L61">    private static final Pattern BEFORE_TRAVEL_TOPIC = Pattern.compile(</span>
+            &quot;([\\p{L}][\\p{L}\\p{N}·.'’\\- ]{1,23}?)(?:有(?:哪些)?|哪里有|的)?(?:天气|酒店|景点|路线|行程|怎么玩)&quot;);
+<span class="fc" id="L63">    private static final Pattern PLACE_ROUTE_QUESTION = Pattern.compile(</span>
+            &quot;^([\\p{L}][\\p{L}\\p{N}·.'’\\- ]{1,29}?)(?:怎么去|如何前往|怎么走|能去吗|可以去吗|值得去吗|好玩吗)[？?。！!\\s]*$&quot;);
+
+<span class="fc" id="L66">    private final ObjectMapper objectMapper = new ObjectMapper();</span>
+<span class="fc" id="L67">    private final Map&lt;String, CacheEntry&gt; cache = new ConcurrentHashMap&lt;&gt;();</span>
+
+    @Autowired(required = false)
+    private DestinationMapper destinationMapper;
+
+    @Value(&quot;${ai.place-verification.enabled:true}&quot;)
+    private boolean onlineVerificationEnabled;
+
+    @Value(&quot;${ai.place-verification.base-url:https://nominatim.openstreetmap.org/search}&quot;)
+    private String verificationBaseUrl;
+
+    @Value(&quot;${ai.place-verification.cache-hours:168}&quot;)
+    private long cacheHours;
+
+    @Value(&quot;${ai.place-verification.user-agent:TravelMate/1.0 (https://github.com/Miracle060811/Software_engineering)}&quot;)
+    private String userAgent;
+
+    public VerifiedPlace verifyCity(String rawInput, String fieldLabel) {
+<span class="fc" id="L85">        String input = normalizePlaceInput(rawInput, fieldLabel);</span>
+<span class="fc" id="L86">        String key = comparisonKey(input);</span>
+<span class="fc" id="L87">        VerifiedPlace local = findLocalCity(input, key);</span>
+
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">        if (!onlineVerificationEnabled) {</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">            if (local != null) {</span>
+<span class="fc" id="L91">                return local;</span>
+            }
+<span class="fc" id="L93">            throw new TravelPlaceException(&quot;暂时无法核验“&quot; + input + &quot;”是否为可前往城市，请稍后重试&quot;);</span>
+        }
+
+<span class="nc" id="L96">        CacheEntry cached = cache.get(key);</span>
+<span class="nc bnc" id="L97" title="All 4 branches missed.">        if (cached != null &amp;&amp; cached.expiresAt().isAfter(Instant.now())) {</span>
+<span class="nc" id="L98">            return resolveLookup(input, local, cached.lookup());</span>
+        }
+
+        try {
+<span class="nc" id="L102">            PlaceLookup lookup = queryNominatim(input);</span>
+<span class="nc" id="L103">            cache.put(key, new CacheEntry(lookup, Instant.now().plus(Duration.ofHours(Math.max(cacheHours, 1)))));</span>
+<span class="nc" id="L104">            return resolveLookup(input, local, lookup);</span>
+<span class="nc" id="L105">        } catch (TravelPlaceException ex) {</span>
+<span class="nc" id="L106">            throw ex;</span>
+<span class="nc" id="L107">        } catch (Exception ex) {</span>
+<span class="nc" id="L108">            log.warn(&quot;联网核验城市失败 [{}]: {}&quot;,</span>
+<span class="nc" id="L109">                    LogSanitizer.singleLine(input), LogSanitizer.singleLine(ex.getMessage()));</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">            if (local != null) {</span>
+<span class="nc" id="L111">                return local;</span>
+            }
+<span class="nc" id="L113">            throw new TravelPlaceException(&quot;暂时无法核验“&quot; + input + &quot;”是否为可前往城市，请稍后重试&quot;);</span>
+        }
+    }
+
+    public void requireDifferentCities(VerifiedPlace origin, VerifiedPlace destination) {
+<span class="nc bnc" id="L118" title="All 4 branches missed.">        if (origin == null || destination == null) {</span>
+<span class="nc" id="L119">            return;</span>
+        }
+<span class="nc bnc" id="L121" title="All 2 branches missed.">        if (comparisonKey(origin.canonicalName()).equals(comparisonKey(destination.canonicalName()))) {</span>
+<span class="nc" id="L122">            throw new TravelPlaceException(&quot;出发地和目的地不能是同一个城市&quot;);</span>
+        }
+<span class="nc" id="L124">    }</span>
+
+    public String findExplicitTravelCity(String message) {
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">        if (!StringUtils.hasText(message)) {</span>
+<span class="nc" id="L128">            return null;</span>
+        }
+<span class="fc bfc" id="L130" title="All 2 branches covered.">        for (Pattern pattern : List.of(AFTER_TRAVEL_VERB, BEFORE_TRAVEL_TOPIC, PLACE_ROUTE_QUESTION)) {</span>
+<span class="fc" id="L131">            Matcher matcher = pattern.matcher(message.trim());</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">            if (matcher.find()) {</span>
+<span class="fc" id="L133">                String candidate = stripConversationalPrefix(matcher.group(1));</span>
+<span class="pc bpc" id="L134" title="2 of 4 branches missed.">                if (candidate.length() &gt;= 2 &amp;&amp; candidate.length() &lt;= 30) {</span>
+<span class="fc" id="L135">                    return candidate;</span>
+                }
+            }
+<span class="fc" id="L138">        }</span>
+<span class="fc" id="L139">        return null;</span>
+    }
+
+    PlaceLookup parseNominatimResponse(String input, String responseBody) throws Exception {
+<span class="fc" id="L143">        JsonNode root = objectMapper.readTree(responseBody);</span>
+<span class="pc bpc" id="L144" title="1 of 4 branches missed.">        if (!root.isArray() || root.isEmpty()) {</span>
+<span class="fc" id="L145">            return PlaceLookup.notFound();</span>
+        }
+
+<span class="fc" id="L148">        boolean sawNonCity = false;</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        for (JsonNode result : root) {</span>
+<span class="fc" id="L150">            String type = result.path(&quot;addresstype&quot;).asText(result.path(&quot;type&quot;).asText(&quot;&quot;)).toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">            if (!ACCEPTED_CITY_TYPES.contains(type)) {</span>
+<span class="fc" id="L152">                sawNonCity = true;</span>
+<span class="fc" id="L153">                continue;</span>
+            }
+
+<span class="fc" id="L156">            List&lt;String&gt; names = candidateNames(result);</span>
+<span class="fc" id="L157">            String matchedName = names.stream()</span>
+<span class="fc" id="L158">                    .filter(name -&gt; placeNamesMatch(input, name))</span>
+<span class="fc" id="L159">                    .findFirst()</span>
+<span class="fc" id="L160">                    .orElse(null);</span>
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">            if (matchedName == null) {</span>
+<span class="nc" id="L162">                continue;</span>
+            }
+
+<span class="fc" id="L165">            String canonical = result.path(&quot;name&quot;).asText(matchedName);</span>
+<span class="fc" id="L166">            String displayName = result.path(&quot;display_name&quot;).asText(canonical);</span>
+<span class="fc" id="L167">            String countryCode = result.path(&quot;address&quot;).path(&quot;country_code&quot;).asText(&quot;&quot;).toUpperCase(Locale.ROOT);</span>
+<span class="fc" id="L168">            double latitude = parseCoordinate(result.path(&quot;lat&quot;).asText(&quot;&quot;));</span>
+<span class="fc" id="L169">            double longitude = parseCoordinate(result.path(&quot;lon&quot;).asText(&quot;&quot;));</span>
+<span class="fc" id="L170">            return PlaceLookup.found(new VerifiedPlace(input, canonical, displayName, countryCode,</span>
+                    latitude, longitude, &quot;OpenStreetMap Nominatim&quot;));
+        }
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">        return sawNonCity ? PlaceLookup.nonCity() : PlaceLookup.notFound();</span>
+    }
+
+    private PlaceLookup queryNominatim(String input) throws Exception {
+<span class="nc" id="L177">        String url = normalizedVerificationBaseUrl()</span>
+                + &quot;?format=jsonv2&amp;addressdetails=1&amp;namedetails=1&amp;limit=5&amp;layer=address&amp;featureType=city&amp;q=&quot;
+<span class="nc" id="L179">                + URLEncoder.encode(input, StandardCharsets.UTF_8);</span>
+
+<span class="nc" id="L181">        synchronized (NOMINATIM_RATE_LOCK) {</span>
+<span class="nc" id="L182">            long waitMs = NOMINATIM_MIN_INTERVAL_MS - (System.currentTimeMillis() - lastNominatimRequestAt);</span>
+<span class="nc bnc" id="L183" title="All 2 branches missed.">            if (waitMs &gt; 0) {</span>
+<span class="nc" id="L184">                Thread.sleep(waitMs);</span>
+            }
+<span class="nc" id="L186">            URI target = URI.create(url);</span>
+<span class="nc" id="L187">            HttpRequest request = HttpRequest.newBuilder()</span>
+<span class="nc" id="L188">                    .uri(target)</span>
+<span class="nc" id="L189">                    .header(&quot;User-Agent&quot;, userAgent)</span>
+<span class="nc" id="L190">                    .header(&quot;Accept&quot;, &quot;application/json&quot;)</span>
+<span class="nc" id="L191">                    .header(&quot;Accept-Language&quot;, &quot;zh-CN,zh;q=0.9,en;q=0.5&quot;)</span>
+<span class="nc" id="L192">                    .timeout(Duration.ofSeconds(10))</span>
+<span class="nc" id="L193">                    .GET()</span>
+<span class="nc" id="L194">                    .build();</span>
+<span class="nc" id="L195">            HttpResponse&lt;String&gt; response = ExternalHttpClientFactory.create(target, Duration.ofSeconds(6))</span>
+<span class="nc" id="L196">                    .send(request, HttpResponse.BodyHandlers.ofString());</span>
+<span class="nc" id="L197">            lastNominatimRequestAt = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">            if (response.statusCode() != 200) {</span>
+<span class="nc" id="L199">                throw new IllegalStateException(&quot;地点服务 HTTP &quot; + response.statusCode());</span>
+            }
+<span class="nc" id="L201">            return parseNominatimResponse(input, response.body());</span>
+        }
+    }
+
+    private VerifiedPlace resolveLookup(String input, VerifiedPlace local, PlaceLookup lookup) {
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        if (lookup.status() == LookupStatus.FOUND) {</span>
+<span class="nc" id="L207">            return lookup.place();</span>
+        }
+<span class="nc bnc" id="L209" title="All 2 branches missed.">        if (local != null) {</span>
+<span class="nc" id="L210">            return local;</span>
+        }
+<span class="nc bnc" id="L212" title="All 2 branches missed.">        if (lookup.status() == LookupStatus.NON_CITY) {</span>
+<span class="nc" id="L213">            throw new TravelPlaceException(&quot;“&quot; + input + &quot;”不是可用于行程规划的城市，无法生成路线&quot;);</span>
+        }
+<span class="nc" id="L215">        throw new TravelPlaceException(&quot;未找到“&quot; + input + &quot;”对应的城市，请检查名称后重试&quot;);</span>
+    }
+
+    private VerifiedPlace findLocalCity(String input, String key) {
+<span class="fc" id="L219">        boolean known = LOCAL_TRAVEL_CITIES.stream().map(TravelPlaceService::comparisonKey).anyMatch(key::equals);</span>
+<span class="pc bpc" id="L220" title="1 of 4 branches missed.">        if (!known &amp;&amp; destinationMapper != null) {</span>
+            try {
+<span class="nc" id="L222">                Long count = destinationMapper.selectCount(new LambdaQueryWrapper&lt;Destination&gt;()</span>
+<span class="nc" id="L223">                        .eq(Destination::getStatus, 1)</span>
+<span class="nc" id="L224">                        .and(wrapper -&gt; wrapper.eq(Destination::getName, input)</span>
+<span class="nc" id="L225">                                .or().eq(Destination::getSlug, input)));</span>
+<span class="nc bnc" id="L226" title="All 4 branches missed.">                known = count != null &amp;&amp; count &gt; 0;</span>
+<span class="nc" id="L227">            } catch (Exception ex) {</span>
+<span class="nc" id="L228">                log.debug(&quot;读取本地目的地库失败: {}&quot;, ex.getMessage());</span>
+<span class="nc" id="L229">            }</span>
+        }
+<span class="fc bfc" id="L231" title="All 2 branches covered.">        return known ? new VerifiedPlace(input, canonicalLocalName(input), input, &quot;&quot;, Double.NaN, Double.NaN,</span>
+<span class="fc" id="L232">                &quot;TravelMate 本地目的地库&quot;) : null;</span>
+    }
+
+    private String normalizePlaceInput(String rawInput, String fieldLabel) {
+<span class="pc bpc" id="L236" title="1 of 2 branches missed.">        String label = StringUtils.hasText(fieldLabel) ? fieldLabel : &quot;地点&quot;;</span>
+<span class="pc bpc" id="L237" title="1 of 2 branches missed.">        String input = rawInput == null ? &quot;&quot; : Normalizer.normalize(rawInput, Normalizer.Form.NFKC).trim();</span>
+<span class="fc" id="L238">        input = input.replaceAll(&quot;\\s+&quot;, &quot; &quot;);</span>
+<span class="pc bpc" id="L239" title="1 of 2 branches missed.">        if (input.isBlank()) {</span>
+<span class="nc" id="L240">            throw new TravelPlaceException(&quot;请输入&quot; + label);</span>
+        }
+<span class="pc bpc" id="L242" title="2 of 4 branches missed.">        if (input.length() &lt; 2 || input.length() &gt; 60) {</span>
+<span class="nc" id="L243">            throw new TravelPlaceException(label + &quot;名称长度应在 2-60 个字符之间&quot;);</span>
+        }
+<span class="pc bpc" id="L245" title="2 of 4 branches missed.">        if (INVALID_PLACE_CHARACTERS.matcher(input).find() || INSTRUCTION_LIKE_PLACE.matcher(input).find()</span>
+<span class="pc bpc" id="L246" title="2 of 4 branches missed.">                || input.startsWith(&quot;http://&quot;) || input.startsWith(&quot;https://&quot;)) {</span>
+<span class="nc" id="L247">            throw new TravelPlaceException(label + &quot;格式不正确，请输入真实城市名称&quot;);</span>
+        }
+<span class="fc" id="L249">        return input;</span>
+    }
+
+    private List&lt;String&gt; candidateNames(JsonNode result) {
+<span class="fc" id="L253">        LinkedHashSet&lt;String&gt; names = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc" id="L254">        addName(names, result.path(&quot;name&quot;).asText(&quot;&quot;));</span>
+<span class="fc" id="L255">        JsonNode address = result.path(&quot;address&quot;);</span>
+<span class="fc bfc" id="L256" title="All 2 branches covered.">        for (String field : List.of(&quot;city&quot;, &quot;town&quot;, &quot;municipality&quot;, &quot;county&quot;)) {</span>
+<span class="fc" id="L257">            addName(names, address.path(field).asText(&quot;&quot;));</span>
+<span class="fc" id="L258">        }</span>
+<span class="fc" id="L259">        JsonNode namedetails = result.path(&quot;namedetails&quot;);</span>
+<span class="pc bpc" id="L260" title="1 of 2 branches missed.">        if (namedetails.isObject()) {</span>
+<span class="fc" id="L261">            namedetails.fields().forEachRemaining(entry -&gt; addName(names, entry.getValue().asText(&quot;&quot;)));</span>
+        }
+<span class="fc" id="L263">        return new ArrayList&lt;&gt;(names);</span>
+    }
+
+    private static void addName(Set&lt;String&gt; names, String name) {
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        if (StringUtils.hasText(name)) {</span>
+<span class="fc" id="L268">            names.add(name.trim());</span>
+        }
+<span class="fc" id="L270">    }</span>
+
+    private static boolean placeNamesMatch(String input, String candidate) {
+<span class="fc" id="L273">        String inputKey = comparisonKey(input);</span>
+<span class="fc" id="L274">        String candidateKey = comparisonKey(candidate);</span>
+<span class="pc bpc" id="L275" title="1 of 2 branches missed.">        if (inputKey.equals(candidateKey)) {</span>
+<span class="nc" id="L276">            return true;</span>
+        }
+<span class="fc" id="L278">        String strippedInput = stripAdministrativeWords(inputKey);</span>
+<span class="fc" id="L279">        String strippedCandidate = stripAdministrativeWords(candidateKey);</span>
+<span class="pc bpc" id="L280" title="1 of 2 branches missed.">        return strippedCandidate.length() &gt;= 2</span>
+<span class="pc bpc" id="L281" title="1 of 2 branches missed.">                &amp;&amp; (strippedInput.equals(strippedCandidate)</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">                || strippedInput.endsWith(strippedCandidate)</span>
+<span class="pc bnc" id="L283" title="All 2 branches missed.">                || strippedCandidate.endsWith(strippedInput));</span>
+    }
+
+    private static String stripAdministrativeWords(String value) {
+<span class="fc" id="L287">        String stripped = value.replaceAll(&quot;^(中国|中华人民共和国)&quot;, &quot;&quot;)</span>
+<span class="fc" id="L288">                .replaceAll(&quot;^(北京市|上海市|天津市|重庆市)&quot;, &quot;&quot;)</span>
+<span class="fc" id="L289">                .replaceAll(&quot;^(云南|浙江|江苏|四川|广东|福建|山东|陕西|湖南|湖北|河南|河北|海南|贵州|广西|安徽|江西|甘肃|青海|辽宁|吉林|黑龙江|山西)省?&quot;, &quot;&quot;);</span>
+<span class="fc" id="L290">        return stripped.replaceAll(&quot;(特别行政区|自治州|自治县|地区|市|镇)$&quot;, &quot;&quot;);</span>
+    }
+
+    private static String comparisonKey(String value) {
+<span class="pc bpc" id="L294" title="1 of 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L295">            return &quot;&quot;;</span>
+        }
+<span class="fc" id="L297">        return Normalizer.normalize(value, Normalizer.Form.NFKC)</span>
+<span class="fc" id="L298">                .toLowerCase(Locale.ROOT)</span>
+<span class="fc" id="L299">                .replaceAll(&quot;[\\s,，.。·'’\\-]&quot;, &quot;&quot;);</span>
+    }
+
+    private static String canonicalLocalName(String input) {
+<span class="fc" id="L303">        String stripped = stripAdministrativeWords(comparisonKey(input));</span>
+<span class="pc bpc" id="L304" title="1 of 2 branches missed.">        return stripped.isBlank() ? input : stripped;</span>
+    }
+
+    private static String stripConversationalPrefix(String value) {
+<span class="pc bpc" id="L308" title="1 of 2 branches missed.">        return value == null ? &quot;&quot; : value.trim()</span>
+<span class="fc" id="L309">                .replaceFirst(&quot;^(我想问|我想知道|帮我查一下|帮我查|请问|推荐|介绍|查询|查一下)&quot;, &quot;&quot;)</span>
+<span class="fc" id="L310">                .replaceFirst(&quot;^(我|我们|一家人|一个人|最近|下周|明天|后天|今年|暑假|寒假)+&quot;, &quot;&quot;)</span>
+<span class="fc" id="L311">                .replaceFirst(&quot;^(想|计划|准备|打算)+&quot;, &quot;&quot;)</span>
+<span class="fc" id="L312">                .trim();</span>
+    }
+
+    private String normalizedVerificationBaseUrl() {
+<span class="nc bnc" id="L316" title="All 2 branches missed.">        String value = StringUtils.hasText(verificationBaseUrl)</span>
+<span class="nc" id="L317">                ? verificationBaseUrl.trim()</span>
+<span class="nc" id="L318">                : &quot;https://nominatim.openstreetmap.org/search&quot;;</span>
+<span class="nc bnc" id="L319" title="All 2 branches missed.">        while (value.endsWith(&quot;/&quot;)) {</span>
+<span class="nc" id="L320">            value = value.substring(0, value.length() - 1);</span>
+        }
+<span class="nc" id="L322">        return value;</span>
+    }
+
+    private double parseCoordinate(String value) {
+        try {
+<span class="fc" id="L327">            return Double.parseDouble(value);</span>
+<span class="nc" id="L328">        } catch (Exception ex) {</span>
+<span class="nc" id="L329">            return Double.NaN;</span>
+        }
+    }
+
+<span class="fc" id="L333">    public record VerifiedPlace(String input, String canonicalName, String displayName, String countryCode,</span>
+                                double latitude, double longitude, String source) {
+        public boolean hasCoordinates() {
+<span class="pc bpc" id="L336" title="2 of 4 branches missed.">            return Double.isFinite(latitude) &amp;&amp; Double.isFinite(longitude);</span>
+        }
+    }
+
+<span class="fc" id="L340">    enum LookupStatus { FOUND, NOT_FOUND, NON_CITY }</span>
+
+<span class="fc" id="L342">    record PlaceLookup(LookupStatus status, VerifiedPlace place) {</span>
+<span class="fc" id="L343">        static PlaceLookup found(VerifiedPlace place) { return new PlaceLookup(LookupStatus.FOUND, place); }</span>
+<span class="fc" id="L344">        static PlaceLookup notFound() { return new PlaceLookup(LookupStatus.NOT_FOUND, null); }</span>
+<span class="fc" id="L345">        static PlaceLookup nonCity() { return new PlaceLookup(LookupStatus.NON_CITY, null); }</span>
+    }
+
+<span class="nc" id="L348">    private record CacheEntry(PlaceLookup lookup, Instant expiresAt) {</span>
+    }
+
+    public static class TravelPlaceException extends RuntimeException {
+        public TravelPlaceException(String message) {
+<span class="fc" id="L353">            super(message);</span>
+<span class="fc" id="L354">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

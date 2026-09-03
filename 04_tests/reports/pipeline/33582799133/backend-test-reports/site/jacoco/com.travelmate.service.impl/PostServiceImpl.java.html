@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PostServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">PostServiceImpl.java</span></div><h1>PostServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.travelmate.backend.entity.User;
+import com.travelmate.backend.mapper.UserMapper;
+import com.travelmate.common.PaginationSupport;
+import com.travelmate.entity.Follow;
+import com.travelmate.entity.Post;
+import com.travelmate.mapper.FollowMapper;
+import com.travelmate.mapper.PostMapper;
+import com.travelmate.service.PostService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Service
+<span class="fc" id="L20">public class PostServiceImpl implements PostService {</span>
+
+    private static final int MAX_PAGE_SIZE = 100;
+
+    @Autowired
+    private PostMapper postMapper;
+
+    @Autowired
+    private FollowMapper followMapper;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Override
+    public List&lt;Map&lt;String, Object&gt;&gt; listPosts(int page, int size, String keyword) {
+<span class="nc" id="L35">        PaginationSupport.Page pagination = PaginationSupport.normalize(page, size, MAX_PAGE_SIZE);</span>
+        // 只返回已发布且公开的帖子
+<span class="nc" id="L37">        return postMapper.selectPostsWithUser(</span>
+<span class="nc" id="L38">                pagination.offset(), pagination.size(), normalizeKeyword(keyword));</span>
+    }
+
+    @Override
+    public Post getPostDetail(Long id, Long currentUserId) {
+<span class="nc" id="L43">        Post post = postMapper.selectById(id);</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        if (post == null) {</span>
+<span class="nc" id="L45">            throw new RuntimeException(&quot;游记不存在&quot;);</span>
+        }
+<span class="nc bnc" id="L47" title="All 4 branches missed.">        boolean isAuthor = currentUserId != null &amp;&amp; Objects.equals(post.getUserId(), currentUserId);</span>
+<span class="nc bnc" id="L48" title="All 4 branches missed.">        if (!isAuthor &amp;&amp; !Objects.equals(post.getStatus(), 1)) {</span>
+<span class="nc" id="L49">            throw new RuntimeException(&quot;游记正在审核或已下架&quot;);</span>
+        }
+<span class="nc bnc" id="L51" title="All 4 branches missed.">        if (!isAuthor &amp;&amp; Objects.equals(post.getVisibility(), 2)) {</span>
+<span class="nc" id="L52">            throw new RuntimeException(&quot;该游记为私密内容&quot;);</span>
+        }
+<span class="nc bnc" id="L54" title="All 6 branches missed.">        if (!isAuthor &amp;&amp; Objects.equals(post.getVisibility(), 1) &amp;&amp; !isFollowing(currentUserId, post.getUserId())) {</span>
+<span class="nc" id="L55">            throw new RuntimeException(&quot;关注作者后可查看该游记&quot;);</span>
+        }
+<span class="nc" id="L57">        LambdaUpdateWrapper&lt;Post&gt; upd = new LambdaUpdateWrapper&lt;&gt;();</span>
+<span class="nc" id="L58">        upd.eq(Post::getId, id).setSql(&quot;view_count = view_count + 1&quot;);</span>
+<span class="nc" id="L59">        postMapper.update(null, upd);</span>
+<span class="nc" id="L60">        fillAuthor(post);</span>
+<span class="nc" id="L61">        return post;</span>
+    }
+
+    private void fillAuthor(Post post) {
+<span class="pc bpc" id="L65" title="2 of 4 branches missed.">        if (post == null || post.getUserId() == null) {</span>
+<span class="nc" id="L66">            return;</span>
+        }
+<span class="fc" id="L68">        User author = userMapper.selectById(post.getUserId());</span>
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        if (author == null) {</span>
+<span class="nc" id="L70">            return;</span>
+        }
+<span class="fc" id="L72">        post.setAuthorUsername(author.getUsername());</span>
+<span class="fc" id="L73">        post.setAuthorNickname(author.getNickname());</span>
+<span class="fc" id="L74">        post.setAuthorAvatar(author.getAvatar());</span>
+<span class="fc" id="L75">    }</span>
+
+    private boolean isFollowing(Long followerId, Long followeeId) {
+<span class="nc bnc" id="L78" title="All 4 branches missed.">        if (followerId == null || followeeId == null) {</span>
+<span class="nc" id="L79">            return false;</span>
+        }
+<span class="nc" id="L81">        LambdaQueryWrapper&lt;Follow&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L82">        wrapper.eq(Follow::getFollowerId, followerId).eq(Follow::getFolloweeId, followeeId);</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        return followMapper.selectCount(wrapper) &gt; 0;</span>
+    }
+
+    @Override
+    public Post createPost(Map&lt;String, Object&gt; body, Long userId) {
+<span class="fc" id="L88">        boolean draft = isDraft(body);</span>
+<span class="fc" id="L89">        String title = normalizePostText(body.get(&quot;title&quot;), draft, &quot;未命名草稿&quot;, &quot;标题不能为空&quot;, 100, &quot;标题不能超过100个字符&quot;);</span>
+<span class="fc" id="L90">        String content = normalizePostText(body.get(&quot;content&quot;), draft, &quot;&quot;, &quot;内容不能为空&quot;, 10000, &quot;内容不能超过10000个字符&quot;);</span>
+<span class="fc" id="L91">        String images = limitString(body.get(&quot;images&quot;), 2000, &quot;图片地址过长&quot;);</span>
+<span class="fc" id="L92">        String destination = limitString(body.get(&quot;destination&quot;), 100, &quot;目的地不能超过100个字符&quot;);</span>
+<span class="fc" id="L93">        String tags = limitString(body.get(&quot;tags&quot;), 500, &quot;标签不能超过500个字符&quot;);</span>
+
+<span class="fc" id="L95">        Post post = new Post();</span>
+<span class="fc" id="L96">        post.setUserId(userId);</span>
+<span class="fc" id="L97">        post.setTitle(title);</span>
+<span class="fc" id="L98">        post.setContent(content);</span>
+<span class="fc" id="L99">        post.setImages(images);</span>
+<span class="fc" id="L100">        post.setDestination(destination);</span>
+<span class="fc" id="L101">        post.setTags(tags);</span>
+        // 非草稿进入 AI 审核队列，由定时任务按限流窗口处理。
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        post.setStatus(draft ? 3 : 0);</span>
+<span class="fc" id="L104">        post.setRejectReason(null);</span>
+        // 可见范围: 0=公开, 1=仅关注者, 2=私密 (默认公开)
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        Integer visibility = body.get(&quot;visibility&quot;) != null ? Integer.parseInt(body.get(&quot;visibility&quot;).toString()) : 0;</span>
+<span class="fc" id="L107">        post.setVisibility(visibility);</span>
+<span class="fc" id="L108">        post.setLikeCount(0);</span>
+<span class="fc" id="L109">        post.setCommentCount(0);</span>
+<span class="fc" id="L110">        post.setCollectCount(0);</span>
+<span class="fc" id="L111">        post.setViewCount(0);</span>
+<span class="fc" id="L112">        post.setDeleted(0);</span>
+<span class="fc" id="L113">        post.setCreateTime(LocalDateTime.now());</span>
+<span class="fc" id="L114">        post.setUpdateTime(LocalDateTime.now());</span>
+
+<span class="fc" id="L116">        postMapper.insert(post);</span>
+<span class="fc" id="L117">        return post;</span>
+    }
+
+    @Override
+    public Post updatePost(Long id, Map&lt;String, Object&gt; body, Long userId) {
+<span class="fc" id="L122">        Post post = postMapper.selectById(id);</span>
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">        if (post == null) {</span>
+<span class="nc" id="L124">            throw new RuntimeException(&quot;游记不存在&quot;);</span>
+        }
+<span class="fc bfc" id="L126" title="All 2 branches covered.">        if (!post.getUserId().equals(userId)) {</span>
+<span class="fc" id="L127">            throw new RuntimeException(&quot;无权编辑他人游记&quot;);</span>
+        }
+
+<span class="fc" id="L130">        boolean draft = isDraft(body);</span>
+<span class="fc" id="L131">        String title = normalizePostText(body.get(&quot;title&quot;), draft, &quot;未命名草稿&quot;, &quot;标题不能为空&quot;, 100, &quot;标题不能超过100个字符&quot;);</span>
+<span class="fc" id="L132">        String content = normalizePostText(body.get(&quot;content&quot;), draft, &quot;&quot;, &quot;内容不能为空&quot;, 10000, &quot;内容不能超过10000个字符&quot;);</span>
+<span class="fc" id="L133">        String images = limitString(body.get(&quot;images&quot;), 2000, &quot;图片地址过长&quot;);</span>
+<span class="fc" id="L134">        String destination = limitString(body.get(&quot;destination&quot;), 100, &quot;目的地不能超过100个字符&quot;);</span>
+<span class="fc" id="L135">        String tags = limitString(body.get(&quot;tags&quot;), 500, &quot;标签不能超过500个字符&quot;);</span>
+
+<span class="fc" id="L137">        post.setTitle(title);</span>
+<span class="fc" id="L138">        post.setContent(content);</span>
+<span class="fc" id="L139">        post.setImages(images);</span>
+<span class="fc" id="L140">        post.setDestination(destination);</span>
+<span class="fc" id="L141">        post.setTags(tags);</span>
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">        post.setStatus(draft ? 3 : 0);</span>
+<span class="pc bpc" id="L143" title="1 of 2 branches missed.">        Integer visibility = body.get(&quot;visibility&quot;) != null ? Integer.parseInt(body.get(&quot;visibility&quot;).toString()) : 0;</span>
+<span class="fc" id="L144">        post.setVisibility(visibility);</span>
+<span class="fc" id="L145">        post.setRejectReason(null);</span>
+<span class="fc" id="L146">        post.setUpdateTime(LocalDateTime.now());</span>
+<span class="fc" id="L147">        postMapper.updateById(post);</span>
+<span class="fc" id="L148">        fillAuthor(post);</span>
+<span class="fc" id="L149">        return post;</span>
+    }
+
+    @Override
+    public void deletePost(Long id, Long userId) {
+<span class="fc" id="L154">        Post post = postMapper.selectById(id);</span>
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">        if (post == null) {</span>
+<span class="nc" id="L156">            throw new RuntimeException(&quot;游记不存在&quot;);</span>
+        }
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">        if (!post.getUserId().equals(userId)) {</span>
+<span class="fc" id="L159">            throw new RuntimeException(&quot;无权删除他人游记&quot;);</span>
+        }
+<span class="nc" id="L161">        postMapper.deleteById(id);</span>
+<span class="nc" id="L162">    }</span>
+
+    @Override
+    public List&lt;Post&gt; myPosts(Long userId) {
+<span class="nc" id="L166">        LambdaQueryWrapper&lt;Post&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L167">        wrapper.eq(Post::getUserId, userId)</span>
+<span class="nc" id="L168">                .orderByDesc(Post::getCreateTime);</span>
+<span class="nc" id="L169">        List&lt;Post&gt; posts = postMapper.selectList(wrapper);</span>
+<span class="nc" id="L170">        posts.forEach(this::fillAuthor);</span>
+<span class="nc" id="L171">        return posts;</span>
+    }
+
+    @Override
+    public List&lt;Map&lt;String, Object&gt;&gt; getFollowingPosts(Long userId, int page, int size, String keyword) {
+        // 获取用户关注的人列表
+<span class="nc" id="L177">        LambdaQueryWrapper&lt;Follow&gt; followWrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L178">        followWrapper.eq(Follow::getFollowerId, userId);</span>
+<span class="nc" id="L179">        List&lt;Follow&gt; follows = followMapper.selectList(followWrapper);</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        if (follows.isEmpty()) return Collections.emptyList();</span>
+
+<span class="nc" id="L182">        List&lt;Long&gt; followeeIds = follows.stream().map(Follow::getFolloweeId).toList();</span>
+
+<span class="nc" id="L184">        PaginationSupport.Page pagination = PaginationSupport.normalize(page, size, MAX_PAGE_SIZE);</span>
+<span class="nc" id="L185">        return postMapper.selectPostsByUserIds(</span>
+<span class="nc" id="L186">                followeeIds, pagination.offset(), pagination.size(), normalizeKeyword(keyword));</span>
+    }
+
+    private String normalizeKeyword(String keyword) {
+<span class="nc bnc" id="L190" title="All 4 branches missed.">        if (keyword == null || keyword.trim().isEmpty()) {</span>
+<span class="nc" id="L191">            return null;</span>
+        }
+<span class="nc" id="L193">        return &quot;%&quot; + keyword.trim() + &quot;%&quot;;</span>
+    }
+
+    private String limitString(Object value, int maxLength, String errorMessage) {
+<span class="fc bfc" id="L197" title="All 2 branches covered.">        if (value == null) {</span>
+<span class="fc" id="L198">            return null;</span>
+        }
+<span class="fc" id="L200">        String text = value.toString().trim();</span>
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        if (text.length() &gt; maxLength) {</span>
+<span class="nc" id="L202">            throw new RuntimeException(errorMessage);</span>
+        }
+<span class="fc" id="L204">        return text;</span>
+    }
+
+    private boolean isDraft(Map&lt;String, Object&gt; body) {
+<span class="fc bfc" id="L208" title="All 4 branches covered.">        return body.get(&quot;status&quot;) != null &amp;&amp; Integer.parseInt(body.get(&quot;status&quot;).toString()) == 3;</span>
+    }
+
+    private String normalizePostText(Object value, boolean draft, String draftDefault, String emptyMessage, int maxLength, String lengthMessage) {
+<span class="fc bfc" id="L212" title="All 2 branches covered.">        String text = value == null ? &quot;&quot; : value.toString().trim();</span>
+<span class="fc bfc" id="L213" title="All 2 branches covered.">        if (text.isEmpty()) {</span>
+<span class="fc bfc" id="L214" title="All 2 branches covered.">            if (draft) {</span>
+<span class="fc" id="L215">                return draftDefault;</span>
+            }
+<span class="fc" id="L217">            throw new RuntimeException(emptyMessage);</span>
+        }
+<span class="pc bpc" id="L219" title="1 of 2 branches missed.">        if (text.length() &gt; maxLength) {</span>
+<span class="nc" id="L220">            throw new RuntimeException(lengthMessage);</span>
+        }
+<span class="fc" id="L222">        return text;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

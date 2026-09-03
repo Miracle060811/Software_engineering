@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PostAuditScheduler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.scheduler</a> &gt; <span class="el_source">PostAuditScheduler.java</span></div><h1>PostAuditScheduler.java</h1><pre class="source lang-java linenums">package com.travelmate.scheduler;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.travelmate.dto.PostAuditResult;
+import com.travelmate.entity.Post;
+import com.travelmate.mapper.PostMapper;
+import com.travelmate.service.AiService;
+import com.travelmate.service.NotificationCenterService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+@Component
+<span class="fc" id="L21">public class PostAuditScheduler {</span>
+
+<span class="fc" id="L23">    private static final Logger log = LoggerFactory.getLogger(PostAuditScheduler.class);</span>
+    private static final int MAX_AUDIT_PER_MINUTE = 50;
+<span class="fc" id="L25">    private static final AtomicBoolean RUNNING = new AtomicBoolean(false);</span>
+
+    @Autowired
+    private PostMapper postMapper;
+
+    @Autowired
+    private AiService aiService;
+
+    @Autowired
+    private NotificationCenterService notificationCenterService;
+
+    @Scheduled(fixedRate = 60 * 1000)
+    public void auditPendingPosts() {
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        if (!RUNNING.compareAndSet(false, true)) {</span>
+<span class="nc" id="L39">            log.info(&quot;上一轮游记 AI 审核仍在执行，本轮跳过&quot;);</span>
+<span class="nc" id="L40">            return;</span>
+        }
+        try {
+<span class="nc" id="L43">            List&lt;Post&gt; pendingPosts = postMapper.selectList(new LambdaQueryWrapper&lt;Post&gt;()</span>
+<span class="nc" id="L44">                    .eq(Post::getStatus, 0)</span>
+<span class="nc" id="L45">                    .orderByAsc(Post::getCreateTime)</span>
+<span class="nc" id="L46">                    .last(&quot;LIMIT &quot; + MAX_AUDIT_PER_MINUTE));</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">            if (pendingPosts.isEmpty()) {</span>
+<span class="nc" id="L48">                return;</span>
+            }
+<span class="nc" id="L50">            log.info(&quot;开始处理游记 AI 审核队列，本轮最多 {} 条，实际 {} 条&quot;,</span>
+<span class="nc" id="L51">                    MAX_AUDIT_PER_MINUTE, pendingPosts.size());</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">            for (Post post : pendingPosts) {</span>
+<span class="nc" id="L53">                auditOne(post);</span>
+<span class="nc" id="L54">            }</span>
+        } finally {
+<span class="nc" id="L56">            RUNNING.set(false);</span>
+        }
+<span class="nc" id="L58">    }</span>
+
+    private void auditOne(Post post) {
+        try {
+<span class="nc" id="L62">            PostAuditResult auditResult = aiService.auditPost(</span>
+<span class="nc" id="L63">                    post.getTitle(),</span>
+<span class="nc" id="L64">                    post.getContent(),</span>
+<span class="nc" id="L65">                    post.getTags(),</span>
+<span class="nc" id="L66">                    post.getDestination());</span>
+<span class="nc bnc" id="L67" title="All 4 branches missed.">            boolean approved = auditResult == null || auditResult.isApproved();</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">            String reason = approved ? null : auditResult.getReason();</span>
+<span class="nc" id="L69">            int updated = postMapper.update(null, new LambdaUpdateWrapper&lt;Post&gt;()</span>
+<span class="nc" id="L70">                    .eq(Post::getId, post.getId())</span>
+<span class="nc" id="L71">                    .eq(Post::getStatus, 0)</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">                    .set(Post::getStatus, approved ? 1 : 2)</span>
+<span class="nc" id="L73">                    .set(Post::getRejectReason, reason)</span>
+<span class="nc" id="L74">                    .set(Post::getUpdateTime, LocalDateTime.now()));</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">            if (updated &gt; 0) {</span>
+<span class="nc" id="L76">                notificationCenterService.createNotification(</span>
+<span class="nc" id="L77">                        post.getUserId(),</span>
+                        &quot;post_audit&quot;,
+<span class="nc bnc" id="L79" title="All 2 branches missed.">                        approved ? &quot;游记审核通过&quot; : &quot;游记审核未通过&quot;,</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">                        approved</span>
+<span class="nc" id="L81">                                ? String.format(&quot;《%s》已通过 AI 审核并发布。&quot;, post.getTitle())</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">                                : String.format(&quot;《%s》未通过 AI 审核，原因：%s&quot;, post.getTitle(), reason == null ? &quot;内容不符合社区规范&quot; : reason),</span>
+<span class="nc" id="L83">                        &quot;/post/&quot; + post.getId());</span>
+            }
+<span class="nc" id="L85">        } catch (Exception e) {</span>
+<span class="nc" id="L86">            log.warn(&quot;游记 AI 审核失败，保留在队列等待下次处理。postId={}, error={}&quot;, post.getId(), e.getMessage());</span>
+<span class="nc" id="L87">        }</span>
+<span class="nc" id="L88">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

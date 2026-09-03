@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HotelRoomStockServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">HotelRoomStockServiceImpl.java</span></div><h1>HotelRoomStockServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.travelmate.entity.HotelRoom;
+import com.travelmate.mapper.HotelRoomMapper;
+import com.travelmate.common.RedisKeyConstants;
+import com.travelmate.service.HotelRoomStockService;
+import com.travelmate.service.StockPreDeductResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.lang.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+@Service
+<span class="fc" id="L22">public class HotelRoomStockServiceImpl implements HotelRoomStockService {</span>
+
+<span class="fc" id="L24">    private static final Logger log = LoggerFactory.getLogger(HotelRoomStockServiceImpl.class);</span>
+
+    private static final long STOCK_NOT_INITIALIZED = -2L;
+
+<span class="fc" id="L28">    private static final @NonNull DefaultRedisScript&lt;Long&gt; PRE_DEDUCT_SCRIPT = new DefaultRedisScript&lt;&gt;(</span>
+            &quot;&quot;&quot;
+                    local current = redis.call('GET', KEYS[1])
+                    if not current then
+                        return -2
+                    end
+                    current = tonumber(current)
+                    local count = tonumber(ARGV[1])
+                    if current &lt; count then
+                        return -1
+                    end
+                    redis.call('DECRBY', KEYS[1], count)
+                    return current - count
+                    &quot;&quot;&quot;,
+            Long.class);
+
+    @Autowired
+    private RedisTemplate&lt;String, String&gt; redisTemplate;
+
+    @Autowired
+    private HotelRoomMapper hotelRoomMapper;
+
+    @Override
+    public StockPreDeductResult preDeductRoom(Long roomId, Integer dbAvailableRooms, Integer count) {
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        int deductCount = count == null ? 1 : count;</span>
+<span class="nc bnc" id="L53" title="All 4 branches missed.">        if (dbAvailableRooms == null || dbAvailableRooms &lt; deductCount) {</span>
+<span class="nc" id="L54">            return StockPreDeductResult.NO_STOCK;</span>
+        }
+
+<span class="nc" id="L57">        String stockKey = Objects.requireNonNull(buildStockKey(roomId));</span>
+        try {
+<span class="nc" id="L59">            initializeStockIfAbsent(stockKey, dbAvailableRooms);</span>
+
+<span class="nc" id="L61">            Long result = executePreDeduct(stockKey, deductCount);</span>
+<span class="nc bnc" id="L62" title="All 4 branches missed.">            if (result != null &amp;&amp; result == STOCK_NOT_INITIALIZED) {</span>
+<span class="nc" id="L63">                initializeStockIfAbsent(stockKey, dbAvailableRooms);</span>
+<span class="nc" id="L64">                result = executePreDeduct(stockKey, deductCount);</span>
+            }
+
+<span class="nc bnc" id="L67" title="All 2 branches missed.">            if (result == null) {</span>
+<span class="nc" id="L68">                throw new RuntimeException(&quot;Redis库存服务异常&quot;);</span>
+            }
+
+<span class="nc bnc" id="L71" title="All 2 branches missed.">            return result &gt;= 0 ? StockPreDeductResult.DEDUCTED_IN_REDIS : StockPreDeductResult.NO_STOCK;</span>
+<span class="nc" id="L72">        } catch (RedisConnectionFailureException e) {</span>
+<span class="nc" id="L73">            log.warn(&quot;Redis unavailable, falling back to database stock deduction for room {}&quot;, roomId);</span>
+<span class="nc" id="L74">            return StockPreDeductResult.FALLBACK_TO_DB;</span>
+        }
+    }
+
+    @Override
+    public void rollbackPreDeduct(Long roomId, Integer count) {
+<span class="nc" id="L80">        String stockKey = Objects.requireNonNull(buildStockKey(roomId));</span>
+        try {
+<span class="nc bnc" id="L82" title="All 2 branches missed.">            redisTemplate.opsForValue().increment(stockKey, count == null ? 1 : count);</span>
+<span class="nc" id="L83">        } catch (RedisConnectionFailureException e) {</span>
+<span class="nc" id="L84">            log.warn(&quot;Redis unavailable, skip rollback stock cache for room {}&quot;, roomId);</span>
+<span class="nc" id="L85">        }</span>
+<span class="nc" id="L86">    }</span>
+
+    @Override
+    public void syncWithDatabase(Long roomId) {
+<span class="nc" id="L90">        HotelRoom room = hotelRoomMapper.selectById(roomId);</span>
+<span class="nc" id="L91">        String stockKey = Objects.requireNonNull(buildStockKey(roomId));</span>
+        try {
+<span class="nc bnc" id="L93" title="All 2 branches missed.">            if (room == null) {</span>
+<span class="nc" id="L94">                redisTemplate.delete(stockKey);</span>
+<span class="nc" id="L95">                return;</span>
+            }
+
+<span class="nc bnc" id="L98" title="All 2 branches missed.">            int availableRooms = room.getAvailableRooms() == null ? 0 : Math.max(room.getAvailableRooms(), 0);</span>
+<span class="nc" id="L99">            String stockValue = Objects.requireNonNull(String.valueOf(availableRooms));</span>
+<span class="nc" id="L100">            redisTemplate.opsForValue().set(stockKey, stockValue);</span>
+<span class="nc" id="L101">        } catch (RedisConnectionFailureException e) {</span>
+<span class="nc" id="L102">            log.warn(&quot;Redis unavailable, skip syncing stock cache for room {}&quot;, roomId);</span>
+<span class="nc" id="L103">        }</span>
+<span class="nc" id="L104">    }</span>
+
+    @SuppressWarnings(&quot;null&quot;)
+    private void initializeStockIfAbsent(String stockKey, Integer dbAvailableRooms) {
+<span class="nc" id="L108">        int initialStock = Math.max(dbAvailableRooms, 0);</span>
+<span class="nc" id="L109">        String stockValue = Objects.requireNonNull(String.valueOf(initialStock));</span>
+<span class="nc" id="L110">        redisTemplate.opsForValue().setIfAbsent(stockKey, stockValue);</span>
+<span class="nc" id="L111">    }</span>
+
+    @SuppressWarnings(&quot;null&quot;)
+    private Long executePreDeduct(@NonNull String stockKey, Integer count) {
+<span class="nc" id="L115">        List&lt;String&gt; keys = Collections.singletonList(Objects.requireNonNull(stockKey));</span>
+<span class="nc" id="L116">        return redisTemplate.execute(PRE_DEDUCT_SCRIPT, keys, String.valueOf(count));</span>
+    }
+
+    private @NonNull String buildStockKey(Long roomId) {
+<span class="nc" id="L120">        return RedisKeyConstants.HOTEL_ROOM_STOCK_PREFIX + roomId;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RefreshTokenService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.backend.service</a> &gt; <span class="el_source">RefreshTokenService.java</span></div><h1>RefreshTokenService.java</h1><pre class="source lang-java linenums">package com.travelmate.backend.service;
+
+import com.travelmate.backend.config.JwtUtil;
+import com.travelmate.backend.entity.RefreshSession;
+import com.travelmate.backend.entity.User;
+import com.travelmate.backend.mapper.RefreshSessionMapper;
+import com.travelmate.backend.mapper.UserMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Base64;
+import java.util.HexFormat;
+import java.util.UUID;
+
+@Service
+public class RefreshTokenService {
+    private final RefreshSessionMapper sessionMapper;
+    private final UserMapper userMapper;
+    private final JwtUtil jwtUtil;
+<span class="fc" id="L26">    private final SecureRandom secureRandom = new SecureRandom();</span>
+    private final int refreshDays;
+
+    public RefreshTokenService(RefreshSessionMapper sessionMapper, UserMapper userMapper, JwtUtil jwtUtil,
+<span class="fc" id="L30">                               @Value(&quot;${app.security.refresh-token-days:14}&quot;) int refreshDays) {</span>
+<span class="pc bpc" id="L31" title="2 of 4 branches missed.">        if (refreshDays &lt; 1 || refreshDays &gt; 90) {</span>
+<span class="nc" id="L32">            throw new IllegalStateException(&quot;REFRESH_TOKEN_DAYS must be between 1 and 90&quot;);</span>
+        }
+<span class="fc" id="L34">        this.sessionMapper = sessionMapper;</span>
+<span class="fc" id="L35">        this.userMapper = userMapper;</span>
+<span class="fc" id="L36">        this.jwtUtil = jwtUtil;</span>
+<span class="fc" id="L37">        this.refreshDays = refreshDays;</span>
+<span class="fc" id="L38">    }</span>
+
+    @Transactional
+    public RefreshGrant create(User user, String sourceIp, String userAgent) {
+<span class="fc" id="L42">        String rawToken = newRawToken();</span>
+<span class="fc" id="L43">        RefreshSession session = new RefreshSession();</span>
+<span class="fc" id="L44">        session.setId(UUID.randomUUID().toString());</span>
+<span class="fc" id="L45">        session.setUserId(user.getId());</span>
+<span class="fc" id="L46">        session.setTokenHash(hash(rawToken));</span>
+<span class="fc" id="L47">        session.setTokenVersion(tokenVersion(user));</span>
+<span class="fc" id="L48">        session.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusDays(refreshDays));</span>
+<span class="fc" id="L49">        session.setSourceIp(limit(sourceIp, 64));</span>
+<span class="fc" id="L50">        session.setUserAgent(limit(userAgent, 255));</span>
+<span class="fc" id="L51">        sessionMapper.insert(session);</span>
+<span class="fc" id="L52">        return grant(user, rawToken);</span>
+    }
+
+    @Transactional
+    public RefreshGrant rotate(String rawToken, String sourceIp, String userAgent) {
+<span class="pc bpc" id="L57" title="2 of 4 branches missed.">        if (rawToken == null || rawToken.isBlank()) return null;</span>
+<span class="fc" id="L58">        RefreshSession current = sessionMapper.selectForUpdate(hash(rawToken));</span>
+<span class="fc" id="L59">        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);</span>
+<span class="pc bpc" id="L60" title="2 of 6 branches missed.">        if (current == null || current.getRevokedAt() != null || !now.isBefore(current.getExpiresAt())) return null;</span>
+<span class="fc" id="L61">        User user = userMapper.selectById(current.getUserId());</span>
+<span class="pc bpc" id="L62" title="2 of 4 branches missed.">        if (user == null || !Integer.valueOf(1).equals(user.getStatus())</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">                || Integer.valueOf(1).equals(user.getDeleted())</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">                || tokenVersion(user) != current.getTokenVersion()) {</span>
+<span class="nc" id="L65">            sessionMapper.revoke(current.getId(), now);</span>
+<span class="nc" id="L66">            return null;</span>
+        }
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        if (sessionMapper.revoke(current.getId(), now) != 1) return null;</span>
+<span class="fc" id="L69">        return create(user, sourceIp, userAgent);</span>
+    }
+
+    @Transactional
+    public void revoke(String rawToken) {
+<span class="nc bnc" id="L74" title="All 4 branches missed.">        if (rawToken == null || rawToken.isBlank()) return;</span>
+<span class="nc" id="L75">        RefreshSession session = sessionMapper.selectForUpdate(hash(rawToken));</span>
+<span class="nc bnc" id="L76" title="All 4 branches missed.">        if (session != null &amp;&amp; session.getRevokedAt() == null) {</span>
+<span class="nc" id="L77">            sessionMapper.revoke(session.getId(), LocalDateTime.now(ZoneOffset.UTC));</span>
+        }
+<span class="nc" id="L79">    }</span>
+
+    public int getRefreshDays() {
+<span class="nc" id="L82">        return refreshDays;</span>
+    }
+
+    private RefreshGrant grant(User user, String refreshToken) {
+<span class="fc" id="L86">        String accessToken = jwtUtil.generateToken(</span>
+<span class="fc" id="L87">                user.getId(), user.getUsername(), user.getRole(), tokenVersion(user));</span>
+<span class="fc" id="L88">        return new RefreshGrant(accessToken, refreshToken);</span>
+    }
+
+    private String newRawToken() {
+<span class="fc" id="L92">        byte[] bytes = new byte[32];</span>
+<span class="fc" id="L93">        secureRandom.nextBytes(bytes);</span>
+<span class="fc" id="L94">        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);</span>
+    }
+
+    private String hash(String value) {
+        try {
+<span class="fc" id="L99">            return HexFormat.of().formatHex(MessageDigest.getInstance(&quot;SHA-256&quot;)</span>
+<span class="fc" id="L100">                    .digest(value.getBytes(StandardCharsets.UTF_8)));</span>
+<span class="nc" id="L101">        } catch (Exception e) {</span>
+<span class="nc" id="L102">            throw new IllegalStateException(&quot;无法计算 refresh token 指纹&quot;, e);</span>
+        }
+    }
+
+    private int tokenVersion(User user) {
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        return user.getTokenVersion() == null ? 0 : user.getTokenVersion();</span>
+    }
+
+    private String limit(String value, int length) {
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        if (value == null) return null;</span>
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        return value.length() &lt;= length ? value : value.substring(0, length);</span>
+    }
+
+<span class="fc" id="L115">    public record RefreshGrant(String accessToken, String refreshToken) {</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

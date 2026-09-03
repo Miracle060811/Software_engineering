@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TourProductController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.controller</a> &gt; <span class="el_source">TourProductController.java</span></div><h1>TourProductController.java</h1><pre class="source lang-java linenums">package com.travelmate.controller;
+
+import com.travelmate.common.Result;
+import com.travelmate.entity.TourProduct;
+import com.travelmate.service.TourProductService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/tour&quot;)
+<span class="fc" id="L12">public class TourProductController {</span>
+
+    @Autowired
+    private TourProductService tourProductService;
+
+    @GetMapping(&quot;/list&quot;)
+    public Result&lt;List&lt;TourProduct&gt;&gt; list(@RequestParam(defaultValue = &quot;0&quot;) Integer type) {
+<span class="pc bpc" id="L19" title="1 of 6 branches missed.">        if (type == null || (type != 0 &amp;&amp; type != 1)) {</span>
+<span class="fc" id="L20">            return Result.error(&quot;游览产品类型必须为0或1&quot;);</span>
+        }
+<span class="fc" id="L22">        return Result.success(tourProductService.listByType(type));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

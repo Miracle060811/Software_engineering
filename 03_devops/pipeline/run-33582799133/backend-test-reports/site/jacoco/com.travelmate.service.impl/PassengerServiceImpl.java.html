@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PassengerServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">PassengerServiceImpl.java</span></div><h1>PassengerServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travelmate.entity.Passenger;
+import com.travelmate.mapper.PassengerMapper;
+import com.travelmate.service.PassengerService;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+<span class="fc" id="L14">public class PassengerServiceImpl extends ServiceImpl&lt;PassengerMapper, Passenger&gt; implements PassengerService {</span>
+
+    @Override
+    public List&lt;Passenger&gt; getPassengerList(Long userId) {
+<span class="nc" id="L18">        LambdaQueryWrapper&lt;Passenger&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L19">        wrapper.eq(Passenger::getUserId, userId);</span>
+<span class="nc" id="L20">        wrapper.orderByDesc(Passenger::getCreateTime);</span>
+<span class="nc" id="L21">        return list(wrapper);</span>
+    }
+
+    @Override
+    public boolean addPassenger(Passenger passenger) {
+<span class="pc bpc" id="L26" title="2 of 4 branches missed.">        if (passenger == null || passenger.getUserId() == null) {</span>
+<span class="nc" id="L27">            throw new RuntimeException(&quot;用户信息无效&quot;);</span>
+        }
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">        String name = passenger.getName() == null ? &quot;&quot; : passenger.getName().trim();</span>
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">        String idCard = passenger.getIdCard() == null ? &quot;&quot; : passenger.getIdCard().trim().toUpperCase();</span>
+<span class="pc bpc" id="L31" title="1 of 2 branches missed.">        String phone = passenger.getPhone() == null ? &quot;&quot; : passenger.getPhone().trim();</span>
+<span class="pc bpc" id="L32" title="2 of 4 branches missed.">        if (name.isEmpty() || name.length() &gt; 50) {</span>
+<span class="nc" id="L33">            throw new RuntimeException(&quot;旅客姓名格式无效&quot;);</span>
+        }
+<span class="fc bfc" id="L35" title="All 2 branches covered.">        if (!idCard.matches(&quot;(?:\\d{17}[0-9X]|[A-Z][A-Z0-9]{5,19})&quot;)) {</span>
+<span class="fc" id="L36">            throw new RuntimeException(&quot;证件号格式无效&quot;);</span>
+        }
+<span class="fc bfc" id="L38" title="All 2 branches covered.">        if (!phone.matches(&quot;1\\d{10}&quot;)) {</span>
+<span class="fc" id="L39">            throw new RuntimeException(&quot;手机号格式无效&quot;);</span>
+        }
+<span class="pc bpc" id="L41" title="5 of 6 branches missed.">        if (passenger.getType() != null &amp;&amp; passenger.getType() != 0 &amp;&amp; passenger.getType() != 1) {</span>
+<span class="nc" id="L42">            throw new RuntimeException(&quot;旅客类型无效&quot;);</span>
+        }
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (count(new LambdaQueryWrapper&lt;Passenger&gt;()</span>
+<span class="fc" id="L45">                .eq(Passenger::getUserId, passenger.getUserId())</span>
+<span class="fc" id="L46">                .eq(Passenger::getIdCard, idCard)) &gt; 0) {</span>
+<span class="fc" id="L47">            throw new RuntimeException(&quot;该证件旅客已存在&quot;);</span>
+        }
+<span class="fc" id="L49">        passenger.setName(name);</span>
+<span class="fc" id="L50">        passenger.setIdCard(idCard);</span>
+<span class="fc" id="L51">        passenger.setPhone(phone);</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">        passenger.setType(passenger.getType() == null ? 0 : passenger.getType());</span>
+<span class="fc" id="L53">        passenger.setCreateTime(LocalDateTime.now());</span>
+<span class="fc" id="L54">        return save(passenger);</span>
+    }
+
+    @Override
+    public boolean deletePassenger(Long id, Long userId) {
+<span class="fc" id="L59">        LambdaQueryWrapper&lt;Passenger&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="fc" id="L60">        wrapper.eq(Passenger::getId, id)</span>
+<span class="fc" id="L61">                .eq(Passenger::getUserId, userId);</span>
+
+        // Mybatis-Plus 会将此操作替换为 logic delete
+<span class="fc" id="L64">        return remove(wrapper);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

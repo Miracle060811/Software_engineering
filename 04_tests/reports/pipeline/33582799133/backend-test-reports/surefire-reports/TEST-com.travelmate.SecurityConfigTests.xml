@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.travelmate.SecurityConfigTests" time="2.911" tests="14" errors="0" skipped="0" failures="0" flakes="0">
+  <properties>
+    <property name="java.specification.version" value="21"/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.class.path" value="/home/runner/work/Software_engineering/Software_engineering/backend/target/test-classes:/home/runner/work/Software_engineering/Software_engineering/backend/target/classes:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-web/3.5.15/spring-boot-starter-web-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter/3.5.15/spring-boot-starter-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot/3.5.15/spring-boot-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-logging/3.5.15/spring-boot-starter-logging-3.5.15.jar:/home/runner/.m2/repository/ch/qos/logback/logback-classic/1.5.34/logback-classic-1.5.34.jar:/home/runner/.m2/repository/ch/qos/logback/logback-core/1.5.34/logback-core-1.5.34.jar:/home/runner/.m2/repository/org/apache/logging/log4j/log4j-to-slf4j/2.24.3/log4j-to-slf4j-2.24.3.jar:/home/runner/.m2/repository/org/apache/logging/log4j/log4j-api/2.24.3/log4j-api-2.24.3.jar:/home/runner/.m2/repository/org/slf4j/jul-to-slf4j/2.0.18/jul-to-slf4j-2.0.18.jar:/home/runner/.m2/repository/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar:/home/runner/.m2/repository/org/yaml/snakeyaml/2.4/snakeyaml-2.4.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-json/3.5.15/spring-boot-starter-json-3.5.15.jar:/home/runner/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.21.4/jackson-datatype-jdk8-2.21.4.jar:/home/runner/.m2/repository/com/fasterxml/jackson/module/jackson-module-parameter-names/2.21.4/jackson-module-parameter-names-2.21.4.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-tomcat/3.5.15/spring-boot-starter-tomcat-3.5.15.jar:/home/runner/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/10.1.55/tomcat-embed-core-10.1.55.jar:/home/runner/.m2/repository/org/apache/tomcat/embed/tomcat-embed-el/10.1.55/tomcat-embed-el-10.1.55.jar:/home/runner/.m2/repository/org/apache/tomcat/embed/tomcat-embed-websocket/10.1.55/tomcat-embed-websocket-10.1.55.jar:/home/runner/.m2/repository/org/springframework/spring-web/6.2.19/spring-web-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-beans/6.2.19/spring-beans-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-webmvc/6.2.19/spring-webmvc-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-context/6.2.19/spring-context-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-expression/6.2.19/spring-expression-6.2.19.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus-spring-boot3-starter/3.5.7/mybatis-plus-spring-boot3-starter-3.5.7.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus/3.5.7/mybatis-plus-3.5.7.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus-core/3.5.7/mybatis-plus-core-3.5.7.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus-annotation/3.5.7/mybatis-plus-annotation-3.5.7.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus-extension/3.5.7/mybatis-plus-extension-3.5.7.jar:/home/runner/.m2/repository/org/mybatis/mybatis/3.5.16/mybatis-3.5.16.jar:/home/runner/.m2/repository/com/github/jsqlparser/jsqlparser/4.9/jsqlparser-4.9.jar:/home/runner/.m2/repository/org/mybatis/mybatis-spring/3.0.3/mybatis-spring-3.0.3.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus-spring-boot-autoconfigure/3.5.7/mybatis-plus-spring-boot-autoconfigure-3.5.7.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.5.15/spring-boot-autoconfigure-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-jdbc/3.5.15/spring-boot-starter-jdbc-3.5.15.jar:/home/runner/.m2/repository/com/zaxxer/HikariCP/6.3.3/HikariCP-6.3.3.jar:/home/runner/.m2/repository/org/springframework/spring-jdbc/6.2.19/spring-jdbc-6.2.19.jar:/home/runner/.m2/repository/com/mysql/mysql-connector-j/9.7.0/mysql-connector-j-9.7.0.jar:/home/runner/.m2/repository/org/flywaydb/flyway-core/11.7.2/flyway-core-11.7.2.jar:/home/runner/.m2/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2.21.4/jackson-dataformat-toml-2.21.4.jar:/home/runner/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.21.4/jackson-datatype-jsr310-2.21.4.jar:/home/runner/.m2/repository/org/flywaydb/flyway-mysql/11.7.2/flyway-mysql-11.7.2.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-data-redis/3.5.15/spring-boot-starter-data-redis-3.5.15.jar:/home/runner/.m2/repository/io/lettuce/lettuce-core/6.6.0.RELEASE/lettuce-core-6.6.0.RELEASE.jar:/home/runner/.m2/repository/redis/clients/authentication/redis-authx-core/0.1.1-beta2/redis-authx-core-0.1.1-beta2.jar:/home/runner/.m2/repository/io/netty/netty-common/4.1.136.Final/netty-common-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-handler/4.1.136.Final/netty-handler-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-resolver/4.1.136.Final/netty-resolver-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-buffer/4.1.136.Final/netty-buffer-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.136.Final/netty-transport-native-unix-common-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-codec/4.1.136.Final/netty-codec-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-transport/4.1.136.Final/netty-transport-4.1.136.Final.jar:/home/runner/.m2/repository/io/projectreactor/reactor-core/3.7.19/reactor-core-3.7.19.jar:/home/runner/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar:/home/runner/.m2/repository/org/springframework/data/spring-data-redis/3.5.12/spring-data-redis-3.5.12.jar:/home/runner/.m2/repository/org/springframework/data/spring-data-keyvalue/3.5.12/spring-data-keyvalue-3.5.12.jar:/home/runner/.m2/repository/org/springframework/data/spring-data-commons/3.5.12/spring-data-commons-3.5.12.jar:/home/runner/.m2/repository/org/springframework/spring-tx/6.2.19/spring-tx-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-oxm/6.2.19/spring-oxm-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-context-support/6.2.19/spring-context-support-6.2.19.jar:/home/runner/.m2/repository/org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18.jar:/home/runner/.m2/repository/io/minio/minio/8.6.0/minio-8.6.0.jar:/home/runner/.m2/repository/com/carrotsearch/thirdparty/simple-xml-safe/2.7.1/simple-xml-safe-2.7.1.jar:/home/runner/.m2/repository/com/google/guava/guava/33.4.8-jre/guava-33.4.8-jre.jar:/home/runner/.m2/repository/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar:/home/runner/.m2/repository/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/home/runner/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/home/runner/.m2/repository/com/google/errorprone/error_prone_annotations/2.36.0/error_prone_annotations-2.36.0.jar:/home/runner/.m2/repository/com/google/j2objc/j2objc-annotations/3.0.0/j2objc-annotations-3.0.0.jar:/home/runner/.m2/repository/com/squareup/okhttp3/okhttp/5.1.0/okhttp-5.1.0.jar:/home/runner/.m2/repository/com/squareup/okio/okio/3.15.0/okio-3.15.0.jar:/home/runner/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21.jar:/home/runner/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.21.4/jackson-core-2.21.4.jar:/home/runner/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.21.4/jackson-databind-2.21.4.jar:/home/runner/.m2/repository/org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0.jar:/home/runner/.m2/repository/org/apache/commons/commons-lang3/3.17.0/commons-lang3-3.17.0.jar:/home/runner/.m2/repository/commons-codec/commons-codec/1.18.0/commons-codec-1.18.0.jar:/home/runner/.m2/repository/org/xerial/snappy/snappy-java/1.1.10.7/snappy-java-1.1.10.7.jar:/home/runner/.m2/repository/org/bouncycastle/bcprov-jdk18on/1.81.1/bcprov-jdk18on-1.81.1.jar:/home/runner/.m2/repository/com/squareup/okhttp3/okhttp-jvm/5.1.0/okhttp-jvm-5.1.0.jar:/home/runner/.m2/repository/com/squareup/okio/okio-jvm/3.15.0/okio-jvm-3.15.0.jar:/home/runner/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.9.25/kotlin-stdlib-1.9.25.jar:/home/runner/.m2/repository/org/jetbrains/annotations/13.0/annotations-13.0.jar:/home/runner/.m2/repository/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-test/3.5.15/spring-boot-starter-test-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-test/3.5.15/spring-boot-test-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-test-autoconfigure/3.5.15/spring-boot-test-autoconfigure-3.5.15.jar:/home/runner/.m2/repository/com/jayway/jsonpath/json-path/2.9.0/json-path-2.9.0.jar:/home/runner/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/4.0.5/jakarta.xml.bind-api-4.0.5.jar:/home/runner/.m2/repository/jakarta/activation/jakarta.activation-api/2.1.4/jakarta.activation-api-2.1.4.jar:/home/runner/.m2/repository/net/minidev/json-smart/2.5.2/json-smart-2.5.2.jar:/home/runner/.m2/repository/net/minidev/accessors-smart/2.5.2/accessors-smart-2.5.2.jar:/home/runner/.m2/repository/org/ow2/asm/asm/9.7.1/asm-9.7.1.jar:/home/runner/.m2/repository/org/assertj/assertj-core/3.27.7/assertj-core-3.27.7.jar:/home/runner/.m2/repository/net/bytebuddy/byte-buddy/1.17.8/byte-buddy-1.17.8.jar:/home/runner/.m2/repository/org/awaitility/awaitility/4.2.2/awaitility-4.2.2.jar:/home/runner/.m2/repository/org/hamcrest/hamcrest/3.0/hamcrest-3.0.jar:/home/runner/.m2/repository/org/junit/jupiter/junit-jupiter/5.12.2/junit-jupiter-5.12.2.jar:/home/runner/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.12.2/junit-jupiter-api-5.12.2.jar:/home/runner/.m2/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/home/runner/.m2/repository/org/junit/platform/junit-platform-commons/1.12.2/junit-platform-commons-1.12.2.jar:/home/runner/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/home/runner/.m2/repository/org/junit/jupiter/junit-jupiter-params/5.12.2/junit-jupiter-params-5.12.2.jar:/home/runner/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.12.2/junit-jupiter-engine-5.12.2.jar:/home/runner/.m2/repository/org/junit/platform/junit-platform-engine/1.12.2/junit-platform-engine-1.12.2.jar:/home/runner/.m2/repository/org/mockito/mockito-core/5.17.0/mockito-core-5.17.0.jar:/home/runner/.m2/repository/net/bytebuddy/byte-buddy-agent/1.17.8/byte-buddy-agent-1.17.8.jar:/home/runner/.m2/repository/org/objenesis/objenesis/3.3/objenesis-3.3.jar:/home/runner/.m2/repository/org/mockito/mockito-junit-jupiter/5.17.0/mockito-junit-jupiter-5.17.0.jar:/home/runner/.m2/repository/org/skyscreamer/jsonassert/1.5.3/jsonassert-1.5.3.jar:/home/runner/.m2/repository/com/vaadin/external/google/android-json/0.0.20131108.vaadin1/android-json-0.0.20131108.vaadin1.jar:/home/runner/.m2/repository/org/springframework/spring-core/6.2.19/spring-core-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-jcl/6.2.19/spring-jcl-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-test/6.2.19/spring-test-6.2.19.jar:/home/runner/.m2/repository/org/xmlunit/xmlunit-core/2.10.4/xmlunit-core-2.10.4.jar:/home/runner/.m2/repository/com/h2database/h2/2.3.232/h2-2.3.232.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-security/3.5.15/spring-boot-starter-security-3.5.15.jar:/home/runner/.m2/repository/org/springframework/spring-aop/6.2.19/spring-aop-6.2.19.jar:/home/runner/.m2/repository/org/springframework/security/spring-security-config/6.5.11/spring-security-config-6.5.11.jar:/home/runner/.m2/repository/org/springframework/security/spring-security-core/6.5.11/spring-security-core-6.5.11.jar:/home/runner/.m2/repository/org/springframework/security/spring-security-crypto/6.5.11/spring-security-crypto-6.5.11.jar:/home/runner/.m2/repository/org/springframework/security/spring-security-web/6.5.11/spring-security-web-6.5.11.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-aop/3.5.15/spring-boot-starter-aop-3.5.15.jar:/home/runner/.m2/repository/org/aspectj/aspectjweaver/1.9.25.1/aspectjweaver-1.9.25.1.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-actuator/3.5.15/spring-boot-starter-actuator-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-actuator-autoconfigure/3.5.15/spring-boot-actuator-autoconfigure-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-actuator/3.5.15/spring-boot-actuator-3.5.15.jar:/home/runner/.m2/repository/io/micrometer/micrometer-observation/1.15.12/micrometer-observation-1.15.12.jar:/home/runner/.m2/repository/io/micrometer/micrometer-commons/1.15.12/micrometer-commons-1.15.12.jar:/home/runner/.m2/repository/io/micrometer/micrometer-jakarta9/1.15.12/micrometer-jakarta9-1.15.12.jar:/home/runner/.m2/repository/io/micrometer/micrometer-core/1.15.12/micrometer-core-1.15.12.jar:/home/runner/.m2/repository/org/hdrhistogram/HdrHistogram/2.2.2/HdrHistogram-2.2.2.jar:/home/runner/.m2/repository/org/latencyutils/LatencyUtils/2.0.3/LatencyUtils-2.0.3.jar:/home/runner/.m2/repository/org/apache/commons/commons-csv/1.11.0/commons-csv-1.11.0.jar:/home/runner/.m2/repository/commons-io/commons-io/2.16.1/commons-io-2.16.1.jar:/home/runner/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.5/jjwt-api-0.11.5.jar:/home/runner/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.5/jjwt-impl-0.11.5.jar:/home/runner/.m2/repository/org/springdoc/springdoc-openapi-starter-webmvc-ui/2.8.0/springdoc-openapi-starter-webmvc-ui-2.8.0.jar:/home/runner/.m2/repository/org/springdoc/springdoc-openapi-starter-webmvc-api/2.8.0/springdoc-openapi-starter-webmvc-api-2.8.0.jar:/home/runner/.m2/repository/org/springdoc/springdoc-openapi-starter-common/2.8.0/springdoc-openapi-starter-common-2.8.0.jar:/home/runner/.m2/repository/io/swagger/core/v3/swagger-core-jakarta/2.2.27/swagger-core-jakarta-2.2.27.jar:/home/runner/.m2/repository/io/swagger/core/v3/swagger-annotations-jakarta/2.2.27/swagger-annotations-jakarta-2.2.27.jar:/home/runner/.m2/repository/io/swagger/core/v3/swagger-models-jakarta/2.2.27/swagger-models-jakarta-2.2.27.jar:/home/runner/.m2/repository/jakarta/validation/jakarta.validation-api/3.0.2/jakarta.validation-api-3.0.2.jar:/home/runner/.m2/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.21.4/jackson-dataformat-yaml-2.21.4.jar:/home/runner/.m2/repository/org/webjars/swagger-ui/5.18.2/swagger-ui-5.18.2.jar:/home/runner/.m2/repository/org/webjars/webjars-locator-lite/1.1.3/webjars-locator-lite-1.1.3.jar:/home/runner/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.5/jjwt-jackson-0.11.5.jar:/home/runner/.m2/repository/org/wiremock/wiremock-standalone/3.12.1/wiremock-standalone-3.12.1.jar:"/>
+    <property name="java.vm.vendor" value="Eclipse Adoptium"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.vendor.url" value="https://adoptium.net/"/>
+    <property name="user.timezone" value="Etc/UTC"/>
+    <property name="os.name" value="Linux"/>
+    <property name="java.vm.specification.version" value="21"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.boot.library.path" value="/usr/lib/jvm/temurin-21-jdk-amd64/lib"/>
+    <property name="sun.java.command" value="/home/runner/work/Software_engineering/Software_engineering/backend/target/surefire/surefirebooter-20260902022052421_3.jar /home/runner/work/Software_engineering/Software_engineering/backend/target/surefire 2026-09-02T02-20-52_070-jvmRun1 surefire-20260902022052421_1tmp surefire_0-20260902022052421_2tmp"/>
+    <property name="jdk.debug" value="release"/>
+    <property name="surefire.test.class.path" value="/home/runner/work/Software_engineering/Software_engineering/backend/target/test-classes:/home/runner/work/Software_engineering/Software_engineering/backend/target/classes:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-web/3.5.15/spring-boot-starter-web-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter/3.5.15/spring-boot-starter-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot/3.5.15/spring-boot-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-logging/3.5.15/spring-boot-starter-logging-3.5.15.jar:/home/runner/.m2/repository/ch/qos/logback/logback-classic/1.5.34/logback-classic-1.5.34.jar:/home/runner/.m2/repository/ch/qos/logback/logback-core/1.5.34/logback-core-1.5.34.jar:/home/runner/.m2/repository/org/apache/logging/log4j/log4j-to-slf4j/2.24.3/log4j-to-slf4j-2.24.3.jar:/home/runner/.m2/repository/org/apache/logging/log4j/log4j-api/2.24.3/log4j-api-2.24.3.jar:/home/runner/.m2/repository/org/slf4j/jul-to-slf4j/2.0.18/jul-to-slf4j-2.0.18.jar:/home/runner/.m2/repository/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar:/home/runner/.m2/repository/org/yaml/snakeyaml/2.4/snakeyaml-2.4.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-json/3.5.15/spring-boot-starter-json-3.5.15.jar:/home/runner/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.21.4/jackson-datatype-jdk8-2.21.4.jar:/home/runner/.m2/repository/com/fasterxml/jackson/module/jackson-module-parameter-names/2.21.4/jackson-module-parameter-names-2.21.4.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-tomcat/3.5.15/spring-boot-starter-tomcat-3.5.15.jar:/home/runner/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/10.1.55/tomcat-embed-core-10.1.55.jar:/home/runner/.m2/repository/org/apache/tomcat/embed/tomcat-embed-el/10.1.55/tomcat-embed-el-10.1.55.jar:/home/runner/.m2/repository/org/apache/tomcat/embed/tomcat-embed-websocket/10.1.55/tomcat-embed-websocket-10.1.55.jar:/home/runner/.m2/repository/org/springframework/spring-web/6.2.19/spring-web-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-beans/6.2.19/spring-beans-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-webmvc/6.2.19/spring-webmvc-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-context/6.2.19/spring-context-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-expression/6.2.19/spring-expression-6.2.19.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus-spring-boot3-starter/3.5.7/mybatis-plus-spring-boot3-starter-3.5.7.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus/3.5.7/mybatis-plus-3.5.7.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus-core/3.5.7/mybatis-plus-core-3.5.7.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus-annotation/3.5.7/mybatis-plus-annotation-3.5.7.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus-extension/3.5.7/mybatis-plus-extension-3.5.7.jar:/home/runner/.m2/repository/org/mybatis/mybatis/3.5.16/mybatis-3.5.16.jar:/home/runner/.m2/repository/com/github/jsqlparser/jsqlparser/4.9/jsqlparser-4.9.jar:/home/runner/.m2/repository/org/mybatis/mybatis-spring/3.0.3/mybatis-spring-3.0.3.jar:/home/runner/.m2/repository/com/baomidou/mybatis-plus-spring-boot-autoconfigure/3.5.7/mybatis-plus-spring-boot-autoconfigure-3.5.7.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.5.15/spring-boot-autoconfigure-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-jdbc/3.5.15/spring-boot-starter-jdbc-3.5.15.jar:/home/runner/.m2/repository/com/zaxxer/HikariCP/6.3.3/HikariCP-6.3.3.jar:/home/runner/.m2/repository/org/springframework/spring-jdbc/6.2.19/spring-jdbc-6.2.19.jar:/home/runner/.m2/repository/com/mysql/mysql-connector-j/9.7.0/mysql-connector-j-9.7.0.jar:/home/runner/.m2/repository/org/flywaydb/flyway-core/11.7.2/flyway-core-11.7.2.jar:/home/runner/.m2/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2.21.4/jackson-dataformat-toml-2.21.4.jar:/home/runner/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.21.4/jackson-datatype-jsr310-2.21.4.jar:/home/runner/.m2/repository/org/flywaydb/flyway-mysql/11.7.2/flyway-mysql-11.7.2.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-data-redis/3.5.15/spring-boot-starter-data-redis-3.5.15.jar:/home/runner/.m2/repository/io/lettuce/lettuce-core/6.6.0.RELEASE/lettuce-core-6.6.0.RELEASE.jar:/home/runner/.m2/repository/redis/clients/authentication/redis-authx-core/0.1.1-beta2/redis-authx-core-0.1.1-beta2.jar:/home/runner/.m2/repository/io/netty/netty-common/4.1.136.Final/netty-common-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-handler/4.1.136.Final/netty-handler-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-resolver/4.1.136.Final/netty-resolver-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-buffer/4.1.136.Final/netty-buffer-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.136.Final/netty-transport-native-unix-common-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-codec/4.1.136.Final/netty-codec-4.1.136.Final.jar:/home/runner/.m2/repository/io/netty/netty-transport/4.1.136.Final/netty-transport-4.1.136.Final.jar:/home/runner/.m2/repository/io/projectreactor/reactor-core/3.7.19/reactor-core-3.7.19.jar:/home/runner/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar:/home/runner/.m2/repository/org/springframework/data/spring-data-redis/3.5.12/spring-data-redis-3.5.12.jar:/home/runner/.m2/repository/org/springframework/data/spring-data-keyvalue/3.5.12/spring-data-keyvalue-3.5.12.jar:/home/runner/.m2/repository/org/springframework/data/spring-data-commons/3.5.12/spring-data-commons-3.5.12.jar:/home/runner/.m2/repository/org/springframework/spring-tx/6.2.19/spring-tx-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-oxm/6.2.19/spring-oxm-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-context-support/6.2.19/spring-context-support-6.2.19.jar:/home/runner/.m2/repository/org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18.jar:/home/runner/.m2/repository/io/minio/minio/8.6.0/minio-8.6.0.jar:/home/runner/.m2/repository/com/carrotsearch/thirdparty/simple-xml-safe/2.7.1/simple-xml-safe-2.7.1.jar:/home/runner/.m2/repository/com/google/guava/guava/33.4.8-jre/guava-33.4.8-jre.jar:/home/runner/.m2/repository/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar:/home/runner/.m2/repository/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/home/runner/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/home/runner/.m2/repository/com/google/errorprone/error_prone_annotations/2.36.0/error_prone_annotations-2.36.0.jar:/home/runner/.m2/repository/com/google/j2objc/j2objc-annotations/3.0.0/j2objc-annotations-3.0.0.jar:/home/runner/.m2/repository/com/squareup/okhttp3/okhttp/5.1.0/okhttp-5.1.0.jar:/home/runner/.m2/repository/com/squareup/okio/okio/3.15.0/okio-3.15.0.jar:/home/runner/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21.jar:/home/runner/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.21.4/jackson-core-2.21.4.jar:/home/runner/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.21.4/jackson-databind-2.21.4.jar:/home/runner/.m2/repository/org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0.jar:/home/runner/.m2/repository/org/apache/commons/commons-lang3/3.17.0/commons-lang3-3.17.0.jar:/home/runner/.m2/repository/commons-codec/commons-codec/1.18.0/commons-codec-1.18.0.jar:/home/runner/.m2/repository/org/xerial/snappy/snappy-java/1.1.10.7/snappy-java-1.1.10.7.jar:/home/runner/.m2/repository/org/bouncycastle/bcprov-jdk18on/1.81.1/bcprov-jdk18on-1.81.1.jar:/home/runner/.m2/repository/com/squareup/okhttp3/okhttp-jvm/5.1.0/okhttp-jvm-5.1.0.jar:/home/runner/.m2/repository/com/squareup/okio/okio-jvm/3.15.0/okio-jvm-3.15.0.jar:/home/runner/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.9.25/kotlin-stdlib-1.9.25.jar:/home/runner/.m2/repository/org/jetbrains/annotations/13.0/annotations-13.0.jar:/home/runner/.m2/repository/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-test/3.5.15/spring-boot-starter-test-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-test/3.5.15/spring-boot-test-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-test-autoconfigure/3.5.15/spring-boot-test-autoconfigure-3.5.15.jar:/home/runner/.m2/repository/com/jayway/jsonpath/json-path/2.9.0/json-path-2.9.0.jar:/home/runner/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/4.0.5/jakarta.xml.bind-api-4.0.5.jar:/home/runner/.m2/repository/jakarta/activation/jakarta.activation-api/2.1.4/jakarta.activation-api-2.1.4.jar:/home/runner/.m2/repository/net/minidev/json-smart/2.5.2/json-smart-2.5.2.jar:/home/runner/.m2/repository/net/minidev/accessors-smart/2.5.2/accessors-smart-2.5.2.jar:/home/runner/.m2/repository/org/ow2/asm/asm/9.7.1/asm-9.7.1.jar:/home/runner/.m2/repository/org/assertj/assertj-core/3.27.7/assertj-core-3.27.7.jar:/home/runner/.m2/repository/net/bytebuddy/byte-buddy/1.17.8/byte-buddy-1.17.8.jar:/home/runner/.m2/repository/org/awaitility/awaitility/4.2.2/awaitility-4.2.2.jar:/home/runner/.m2/repository/org/hamcrest/hamcrest/3.0/hamcrest-3.0.jar:/home/runner/.m2/repository/org/junit/jupiter/junit-jupiter/5.12.2/junit-jupiter-5.12.2.jar:/home/runner/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.12.2/junit-jupiter-api-5.12.2.jar:/home/runner/.m2/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/home/runner/.m2/repository/org/junit/platform/junit-platform-commons/1.12.2/junit-platform-commons-1.12.2.jar:/home/runner/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/home/runner/.m2/repository/org/junit/jupiter/junit-jupiter-params/5.12.2/junit-jupiter-params-5.12.2.jar:/home/runner/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.12.2/junit-jupiter-engine-5.12.2.jar:/home/runner/.m2/repository/org/junit/platform/junit-platform-engine/1.12.2/junit-platform-engine-1.12.2.jar:/home/runner/.m2/repository/org/mockito/mockito-core/5.17.0/mockito-core-5.17.0.jar:/home/runner/.m2/repository/net/bytebuddy/byte-buddy-agent/1.17.8/byte-buddy-agent-1.17.8.jar:/home/runner/.m2/repository/org/objenesis/objenesis/3.3/objenesis-3.3.jar:/home/runner/.m2/repository/org/mockito/mockito-junit-jupiter/5.17.0/mockito-junit-jupiter-5.17.0.jar:/home/runner/.m2/repository/org/skyscreamer/jsonassert/1.5.3/jsonassert-1.5.3.jar:/home/runner/.m2/repository/com/vaadin/external/google/android-json/0.0.20131108.vaadin1/android-json-0.0.20131108.vaadin1.jar:/home/runner/.m2/repository/org/springframework/spring-core/6.2.19/spring-core-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-jcl/6.2.19/spring-jcl-6.2.19.jar:/home/runner/.m2/repository/org/springframework/spring-test/6.2.19/spring-test-6.2.19.jar:/home/runner/.m2/repository/org/xmlunit/xmlunit-core/2.10.4/xmlunit-core-2.10.4.jar:/home/runner/.m2/repository/com/h2database/h2/2.3.232/h2-2.3.232.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-security/3.5.15/spring-boot-starter-security-3.5.15.jar:/home/runner/.m2/repository/org/springframework/spring-aop/6.2.19/spring-aop-6.2.19.jar:/home/runner/.m2/repository/org/springframework/security/spring-security-config/6.5.11/spring-security-config-6.5.11.jar:/home/runner/.m2/repository/org/springframework/security/spring-security-core/6.5.11/spring-security-core-6.5.11.jar:/home/runner/.m2/repository/org/springframework/security/spring-security-crypto/6.5.11/spring-security-crypto-6.5.11.jar:/home/runner/.m2/repository/org/springframework/security/spring-security-web/6.5.11/spring-security-web-6.5.11.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-aop/3.5.15/spring-boot-starter-aop-3.5.15.jar:/home/runner/.m2/repository/org/aspectj/aspectjweaver/1.9.25.1/aspectjweaver-1.9.25.1.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-starter-actuator/3.5.15/spring-boot-starter-actuator-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-actuator-autoconfigure/3.5.15/spring-boot-actuator-autoconfigure-3.5.15.jar:/home/runner/.m2/repository/org/springframework/boot/spring-boot-actuator/3.5.15/spring-boot-actuator-3.5.15.jar:/home/runner/.m2/repository/io/micrometer/micrometer-observation/1.15.12/micrometer-observation-1.15.12.jar:/home/runner/.m2/repository/io/micrometer/micrometer-commons/1.15.12/micrometer-commons-1.15.12.jar:/home/runner/.m2/repository/io/micrometer/micrometer-jakarta9/1.15.12/micrometer-jakarta9-1.15.12.jar:/home/runner/.m2/repository/io/micrometer/micrometer-core/1.15.12/micrometer-core-1.15.12.jar:/home/runner/.m2/repository/org/hdrhistogram/HdrHistogram/2.2.2/HdrHistogram-2.2.2.jar:/home/runner/.m2/repository/org/latencyutils/LatencyUtils/2.0.3/LatencyUtils-2.0.3.jar:/home/runner/.m2/repository/org/apache/commons/commons-csv/1.11.0/commons-csv-1.11.0.jar:/home/runner/.m2/repository/commons-io/commons-io/2.16.1/commons-io-2.16.1.jar:/home/runner/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.5/jjwt-api-0.11.5.jar:/home/runner/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.5/jjwt-impl-0.11.5.jar:/home/runner/.m2/repository/org/springdoc/springdoc-openapi-starter-webmvc-ui/2.8.0/springdoc-openapi-starter-webmvc-ui-2.8.0.jar:/home/runner/.m2/repository/org/springdoc/springdoc-openapi-starter-webmvc-api/2.8.0/springdoc-openapi-starter-webmvc-api-2.8.0.jar:/home/runner/.m2/repository/org/springdoc/springdoc-openapi-starter-common/2.8.0/springdoc-openapi-starter-common-2.8.0.jar:/home/runner/.m2/repository/io/swagger/core/v3/swagger-core-jakarta/2.2.27/swagger-core-jakarta-2.2.27.jar:/home/runner/.m2/repository/io/swagger/core/v3/swagger-annotations-jakarta/2.2.27/swagger-annotations-jakarta-2.2.27.jar:/home/runner/.m2/repository/io/swagger/core/v3/swagger-models-jakarta/2.2.27/swagger-models-jakarta-2.2.27.jar:/home/runner/.m2/repository/jakarta/validation/jakarta.validation-api/3.0.2/jakarta.validation-api-3.0.2.jar:/home/runner/.m2/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.21.4/jackson-dataformat-yaml-2.21.4.jar:/home/runner/.m2/repository/org/webjars/swagger-ui/5.18.2/swagger-ui-5.18.2.jar:/home/runner/.m2/repository/org/webjars/webjars-locator-lite/1.1.3/webjars-locator-lite-1.1.3.jar:/home/runner/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.5/jjwt-jackson-0.11.5.jar:/home/runner/.m2/repository/org/wiremock/wiremock-standalone/3.12.1/wiremock-standalone-3.12.1.jar:"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="user.home" value="/home/runner"/>
+    <property name="user.language" value="en"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.version.date" value="2026-08-18"/>
+    <property name="java.home" value="/usr/lib/jvm/temurin-21-jdk-amd64"/>
+    <property name="file.separator" value="/"/>
+    <property name="basedir" value="/home/runner/work/Software_engineering/Software_engineering/backend"/>
+    <property name="java.vm.compressedOopsMode" value="Zero based"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="FILE_LOG_CHARSET" value="UTF-8"/>
+    <property name="skipITs" value="true"/>
+    <property name="java.awt.headless" value="true"/>
+    <property name="surefire.real.class.path" value="/home/runner/work/Software_engineering/Software_engineering/backend/target/surefire/surefirebooter-20260902022052421_3.jar"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="java.runtime.version" value="21.0.12.1+1-LTS"/>
+    <property name="user.name" value="runner"/>
+    <property name="stdout.encoding" value="UTF-8"/>
+    <property name="path.separator" value=":"/>
+    <property name="os.version" value="6.17.0-1022-azure"/>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="java.vendor.version" value="Temurin-21.0.12.1+1"/>
+    <property name="localRepository" value="/home/runner/.m2/repository"/>
+    <property name="java.vendor.url.bug" value="https://github.com/adoptium/adoptium-support/issues"/>
+    <property name="java.io.tmpdir" value="/tmp"/>
+    <property name="com.zaxxer.hikari.pool_number" value="2"/>
+    <property name="java.version" value="21.0.12.1"/>
+    <property name="user.dir" value="/home/runner/work/Software_engineering/Software_engineering/backend"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="PID" value="3324"/>
+    <property name="CONSOLE_LOG_CHARSET" value="UTF-8"/>
+    <property name="native.encoding" value="UTF-8"/>
+    <property name="java.library.path" value="/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib"/>
+    <property name="java.vm.info" value="mixed mode, sharing"/>
+    <property name="stderr.encoding" value="UTF-8"/>
+    <property name="java.vendor" value="Eclipse Adoptium"/>
+    <property name="java.vm.version" value="21.0.12.1+1-LTS"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="java.class.version" value="65.0"/>
+  </properties>
+  <testcase name="unauthenticatedFollowingPostsRequestIsRejectedBySecurityLayer" classname="com.travelmate.SecurityConfigTests" time="0.019">
+    <system-out><![CDATA[
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.15)
+
+2026-09-02T02:21:12.222Z  INFO 3324 --- [           main] com.travelmate.SecurityConfigTests       : Starting SecurityConfigTests using Java 21.0.12.1 with PID 3324 (started by runner in /home/runner/work/Software_engineering/Software_engineering/backend)
+2026-09-02T02:21:12.222Z  INFO 3324 --- [           main] com.travelmate.SecurityConfigTests       : The following 1 profile is active: "test"
+2026-09-02T02:21:12.664Z  INFO 3324 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-09-02T02:21:12.664Z  INFO 3324 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-09-02T02:21:12.680Z  INFO 3324 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 14 ms. Found 0 Redis repository interfaces.
+2026-09-02T02:21:12.724Z  WARN 3324 --- [           main] o.m.s.mapper.ClassPathMapperScanner      : Skipping MapperFactoryBean with name 'adminBootstrapMapper' and 'com.travelmate.backend.mapper.AdminBootstrapMapper' mapperInterface. Bean already defined with the same name!
+2026-09-02T02:21:12.725Z  WARN 3324 --- [           main] o.m.s.mapper.ClassPathMapperScanner      : Skipping MapperFactoryBean with name 'refreshSessionMapper' and 'com.travelmate.backend.mapper.RefreshSessionMapper' mapperInterface. Bean already defined with the same name!
+2026-09-02T02:21:12.725Z  WARN 3324 --- [           main] o.m.s.mapper.ClassPathMapperScanner      : Skipping MapperFactoryBean with name 'userMapper' and 'com.travelmate.backend.mapper.UserMapper' mapperInterface. Bean already defined with the same name!
+2026-09-02T02:21:12.819Z  INFO 3324 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-09-02T02:21:12.820Z  INFO 3324 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn10: url=jdbc:h2:mem:travelmate-test user=SA
+2026-09-02T02:21:12.821Z  INFO 3324 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+Logging initialized using 'class org.apache.ibatis.logging.stdout.StdOutImpl' adapter.
+Get /10.1.0.56 network interface 
+Get network interface info: name:eth0 (eth0)
+Initialization Sequence datacenterId:3 workerId:21
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-02T02:21:14.067Z  WARN 3324 --- [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: ab76dafd-e066-4983-a59f-85b7538b9b5f
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-09-02T02:21:14.069Z  INFO 3324 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-09-02T02:21:14.180Z  WARN 3324 --- [           main] o.s.w.s.resource.ResourceHandlerUtils    : Appended trailing slash to static resource location: file:///home/runner/work/Software_engineering/Software_engineering/backend/uploads/
+2026-09-02T02:21:14.180Z  WARN 3324 --- [           main] o.s.w.s.resource.ResourceHandlerUtils    : Appended trailing slash to static resource location: file:///home/runner/work/Software_engineering/Software_engineering/backend/uploads/
+2026-09-02T02:21:14.180Z  WARN 3324 --- [           main] o.s.w.s.resource.ResourceHandlerUtils    : Appended trailing slash to static resource location: file:///home/runner/work/Software_engineering/Software_engineering/backend/backend/uploads/
+2026-09-02T02:21:14.180Z  WARN 3324 --- [           main] o.s.w.s.resource.ResourceHandlerUtils    : Appended trailing slash to static resource location: file:///home/runner/work/Software_engineering/Software_engineering/uploads/
+2026-09-02T02:21:14.230Z  INFO 3324 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-09-02T02:21:14.303Z  INFO 3324 --- [           main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2026-09-02T02:21:14.461Z  INFO 3324 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-09-02T02:21:14.461Z  INFO 3324 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-09-02T02:21:14.462Z  INFO 3324 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-09-02T02:21:14.484Z  INFO 3324 --- [           main] com.travelmate.SecurityConfigTests       : Started SecurityConfigTests in 2.309 seconds (process running for 22.013)
+]]></system-out>
+  </testcase>
+  <testcase name="unauthenticatedFileUploadIsRejectedBySecurityLayer" classname="com.travelmate.SecurityConfigTests" time="0.012"/>
+  <testcase name="healthEndpointIsPublicAndReportsServiceStatus" classname="com.travelmate.SecurityConfigTests" time="0.042"/>
+  <testcase name="unauthenticatedPostCreationIsRejectedBySecurityLayer" classname="com.travelmate.SecurityConfigTests" time="0.007"/>
+  <testcase name="administratorBootstrapIsDisabledByDefault" classname="com.travelmate.SecurityConfigTests" time="0.068">
+    <system-out><![CDATA[Creating a new SqlSession
+Registering transaction synchronization for SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@b2baaa6]
+JDBC Connection [HikariProxyConnection@1034214838 wrapping conn10: url=jdbc:h2:mem:travelmate-test user=SA] will be managed by Spring
+==>  Preparing: INSERT INTO admin_bootstrap_audit(token_id, username, source_ip, result) VALUES(?, ?, ?, ?)
+==> Parameters: null, bootstrap-admin(String), 127.0.0.1(String), CONFIG_DISABLED(String)
+<==    Updates: 1
+Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@b2baaa6]
+Transaction synchronization committing SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@b2baaa6]
+Transaction synchronization deregistering SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@b2baaa6]
+Transaction synchronization closing SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@b2baaa6]
+]]></system-out>
+  </testcase>
+  <testcase name="unauthenticatedPostDeletionIsRejectedBySecurityLayer" classname="com.travelmate.SecurityConfigTests" time="0.009"/>
+  <testcase name="unauthenticatedMyPostsRequestIsRejectedBySecurityLayer" classname="com.travelmate.SecurityConfigTests" time="0.008"/>
+  <testcase name="unauthenticatedAdminRequestIsRejectedBySecurityLayer" classname="com.travelmate.SecurityConfigTests" time="0.008"/>
+  <testcase name="unauthenticatedHotelOrdersRequestIsRejectedBySecurityLayer" classname="com.travelmate.SecurityConfigTests" time="0.007"/>
+  <testcase name="unauthenticatedStaticImageRequestIsServed" classname="com.travelmate.SecurityConfigTests" time="0.03"/>
+  <testcase name="frontendHistoryRoutesAreForwardedWithoutAuthentication" classname="com.travelmate.SecurityConfigTests" time="0.024"/>
+  <testcase name="localFrontendOriginIsAllowedForUserApi" classname="com.travelmate.SecurityConfigTests" time="0.007"/>
+  <testcase name="tourProductsCanBeBrowsedWithoutAuthentication" classname="com.travelmate.SecurityConfigTests" time="0.326">
+    <system-out><![CDATA[Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@4178d1b7] was not registered for synchronization because synchronization is not active
+JDBC Connection [HikariProxyConnection@358378671 wrapping conn10: url=jdbc:h2:mem:travelmate-test user=SA] will not be managed by Spring
+==>  Preparing: SELECT id,name,description,tour_type,departure_city,destination,duration,price,cover_img,status,create_time FROM tm_tour_product WHERE (tour_type = ? AND status = ?) ORDER BY create_time DESC
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@4178d1b7]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@2889c388] was not registered for synchronization because synchronization is not active
+JDBC Connection [HikariProxyConnection@1021142278 wrapping conn10: url=jdbc:h2:mem:travelmate-test user=SA] will not be managed by Spring
+==>  Preparing: INSERT INTO sys_log ( username, method, params, ip, time_ms, status, error_msg, create_time ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )
+==> Parameters: anonymousUser(String), TourProductController.list(..)(String), [0](String), 127.0.0.1(String), 306(Long), 0(Integer), 
+### Error querying database.  Cause: org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "tm_tour_product" not found; SQL statement:
+SELECT  id,name,description,tour_type,departure_city,destination,duration,price,cover_img,status,create_time  FROM tm_tour_product      WHERE  (tour_type = ? AND status = ?) ORDER BY create_time DESC [42102-232]
+### The error may exist in com/travelmate/mapper/TourProductMapper.java (best guess)
+### The error may involve com.travelmate.mapper.TourProductMapper.selectLi(String), 2026-09-02T02:21:14.744877741(LocalDateTime)
+<==    Updates: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@2889c388]
+2026-09-02T02:21:15.055Z ERROR 3324 --- [           main] c.t.common.GlobalExceptionHandler        : Unhandled runtime exception
+
+org.springframework.jdbc.BadSqlGrammarException: 
+### Error querying database.  Cause: org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "tm_tour_product" not found; SQL statement:
+SELECT  id,name,description,tour_type,departure_city,destination,duration,price,cover_img,status,create_time  FROM tm_tour_product      WHERE  (tour_type = ? AND status = ?) ORDER BY create_time DESC [42102-232]
+### The error may exist in com/travelmate/mapper/TourProductMapper.java (best guess)
+### The error may involve com.travelmate.mapper.TourProductMapper.selectList
+### The error occurred while executing a query
+### SQL: SELECT  id,name,description,tour_type,departure_city,destination,duration,price,cover_img,status,create_time  FROM tm_tour_product      WHERE  (tour_type = ? AND status = ?) ORDER BY create_time DESC
+### Cause: org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "tm_tour_product" not found; SQL statement:
+SELECT  id,name,description,tour_type,departure_city,destination,duration,price,cover_img,status,create_time  FROM tm_tour_product      WHERE  (tour_type = ? AND status = ?) ORDER BY create_time DESC [42102-232]
+; bad SQL grammar []
+	at org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator.doTranslate(SQLErrorCodeSQLExceptionTranslator.java:246) ~[spring-jdbc-6.2.19.jar:6.2.19]
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:107) ~[spring-jdbc-6.2.19.jar:6.2.19]
+	at org.mybatis.spring.MyBatisExceptionTranslator.translateExceptionIfPossible(MyBatisExceptionTranslator.java:92) ~[mybatis-spring-3.0.3.jar:3.0.3]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:439) ~[mybatis-spring-3.0.3.jar:3.0.3]
+	at jdk.proxy2/jdk.proxy2.$Proxy175.selectList(Unknown Source) ~[na:na]
+	at org.mybatis.spring.SqlSessionTemplate.selectList(SqlSessionTemplate.java:224) ~[mybatis-spring-3.0.3.jar:3.0.3]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.executeForMany(MybatisMapperMethod.java:164) ~[mybatis-plus-core-3.5.7.jar:3.5.7]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.execute(MybatisMapperMethod.java:77) ~[mybatis-plus-core-3.5.7.jar:3.5.7]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy$PlainMethodInvoker.invoke(MybatisMapperProxy.java:152) ~[mybatis-plus-core-3.5.7.jar:3.5.7]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy.invoke(MybatisMapperProxy.java:89) ~[mybatis-plus-core-3.5.7.jar:3.5.7]
+	at jdk.proxy2/jdk.proxy2.$Proxy219.selectList(Unknown Source) ~[na:na]
+	at com.baomidou.mybatisplus.extension.service.IService.list(IService.java:407) ~[mybatis-plus-extension-3.5.7.jar:3.5.7]
+	at com.travelmate.service.impl.TourProductServiceImpl.listByType(TourProductServiceImpl.java:17) ~[classes/:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:360) ~[spring-aop-6.2.19.jar:6.2.19]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:724) ~[spring-aop-6.2.19.jar:6.2.19]
+	at com.travelmate.service.impl.TourProductServiceImpl$$SpringCGLIB$$0.listByType(<generated>) ~[classes/:na]
+	at com.travelmate.controller.TourProductController.list(TourProductController.java:22) ~[classes/:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:360) ~[spring-aop-6.2.19.jar:6.2.19]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.2.19.jar:6.2.19]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.2.19.jar:6.2.19]
+	at org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint.proceed(MethodInvocationProceedingJoinPoint.java:89) ~[spring-aop-6.2.19.jar:6.2.19]
+	at com.travelmate.aspect.SysLogAspect.around(SysLogAspect.java:66) ~[classes/:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethodWithGivenArgs(AbstractAspectJAdvice.java:649) ~[spring-aop-6.2.19.jar:6.2.19]
+	at org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethod(AbstractAspectJAdvice.java:631) ~[spring-aop-6.2.19.jar:6.2.19]
+	at org.springframework.aop.aspectj.AspectJAroundAdvice.invoke(AspectJAroundAdvice.java:71) ~[spring-aop-6.2.19.jar:6.2.19]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.2.19.jar:6.2.19]
+	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97) ~[spring-aop-6.2.19.jar:6.2.19]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.2.19.jar:6.2.19]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:728) ~[spring-aop-6.2.19.jar:6.2.19]
+	at com.travelmate.controller.TourProductController$$SpringCGLIB$$0.list(<generated>) ~[classes/:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:258) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:191) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118) ~[spring-webmvc-6.2.19.jar:6.2.19]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:991) ~[spring-webmvc-6.2.19.jar:6.2.19]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:896) ~[spring-webmvc-6.2.19.jar:6.2.19]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) ~[spring-webmvc-6.2.19.jar:6.2.19]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089) ~[spring-webmvc-6.2.19.jar:6.2.19]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979) ~[spring-webmvc-6.2.19.jar:6.2.19]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014) ~[spring-webmvc-6.2.19.jar:6.2.19]
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:903) ~[spring-webmvc-6.2.19.jar:6.2.19]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:564) ~[tomcat-embed-core-10.1.55.jar:6.0]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885) ~[spring-webmvc-6.2.19.jar:6.2.19]
+	at org.springframework.test.web.servlet.TestDispatcherServlet.service(TestDispatcherServlet.java:72) ~[spring-test-6.2.19.jar:6.2.19]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658) ~[tomcat-embed-core-10.1.55.jar:6.0]
+	at org.springframework.mock.web.MockFilterChain$ServletFilterProxy.doFilter(MockFilterChain.java:165) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.test.web.servlet.setup.MockMvcFilterDecorator.doFilter(MockMvcFilterDecorator.java:162) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.test.web.servlet.setup.MockMvcFilterDecorator.doFilter(MockMvcFilterDecorator.java:162) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:490) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:351) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:83) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:129) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:101) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:125) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:119) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at com.travelmate.backend.config.JwtFilter.doFilterInternal(JwtFilter.java:75) ~[classes/:na]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.csrf.CsrfFilter.doFilterInternal(CsrfFilter.java:117) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:241) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:334) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:225) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:138) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191) ~[spring-security-web-6.5.11.jar:6.5.11]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.ServletRequestPathFilter.doFilter(ServletRequestPathFilter.java:52) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebSecurityConfiguration.java:319) ~[spring-security-config-6.5.11.jar:6.5.11]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$4(HandlerMappingIntrospector.java:267) ~[spring-webmvc-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:240) ~[spring-security-config-6.5.11.jar:6.5.11]
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.test.web.servlet.setup.MockMvcFilterDecorator.doFilter(MockMvcFilterDecorator.java:162) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.test.web.servlet.setup.MockMvcFilterDecorator.doFilter(MockMvcFilterDecorator.java:162) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.test.web.servlet.setup.MockMvcFilterDecorator.doFilter(MockMvcFilterDecorator.java:162) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:110) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.test.web.servlet.setup.MockMvcFilterDecorator.doFilter(MockMvcFilterDecorator.java:162) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.19.jar:6.2.19]
+	at org.springframework.test.web.servlet.setup.MockMvcFilterDecorator.doFilter(MockMvcFilterDecorator.java:162) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132) ~[spring-test-6.2.19.jar:6.2.19]
+	at org.springframework.test.web.servlet.MockMvc.perform(MockMvc.java:201) ~[spring-test-6.2.19.jar:6.2.19]
+	at com.travelmate.SecurityConfigTests.tourProductsCanBeBrowsedWithoutAuthentication(SecurityConfigTests.java:74) ~[test-classes/:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:775) ~[junit-platform-commons-1.12.2.jar:1.12.2]
+	at org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:479) ~[junit-platform-commons-1.12.2.jar:1.12.2]
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:161) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:152) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:91) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:112) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:94) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:93) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:87) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:216) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:212) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69) ~[junit-jupiter-engine-5.12.2.jar:5.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:201) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:170) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:94) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:59) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:142) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$1(InterceptingLauncher.java:39) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:38) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.12.2.jar:1.12.2]
+	at org.apache.maven.surefire.junitplatform.LauncherAdapter.executeWithoutCancellationToken(LauncherAdapter.java:60) ~[surefire-junit-platform-3.5.6.jar:3.5.6]
+	at org.apache.maven.surefire.junitplatform.LauncherAdapter.execute(LauncherAdapter.java:52) ~[surefire-junit-platform-3.5.6.jar:3.5.6]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:203) ~[surefire-junit-platform-3.5.6.jar:3.5.6]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:168) ~[surefire-junit-platform-3.5.6.jar:3.5.6]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:136) ~[surefire-junit-platform-3.5.6.jar:3.5.6]
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385) ~[surefire-booter-3.5.6.jar:3.5.6]
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162) ~[surefire-booter-3.5.6.jar:3.5.6]
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507) ~[surefire-booter-3.5.6.jar:3.5.6]
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495) ~[surefire-booter-3.5.6.jar:3.5.6]
+Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "tm_tour_product" not found; SQL statement:
+SELECT  id,name,description,tour_type,departure_city,destination,duration,price,cover_img,status,create_time  FROM tm_tour_product      WHERE  (tour_type = ? AND status = ?) ORDER BY create_time DESC [42102-232]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:514) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.message.DbException.get(DbException.java:223) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.message.DbException.get(DbException.java:199) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.getTableOrViewNotFoundDbException(Parser.java:7945) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.getTableOrViewNotFoundDbException(Parser.java:7916) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.readTableOrView(Parser.java:7895) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.readTablePrimary(Parser.java:1769) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.readTableReference(Parser.java:2249) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.parseSelectFromPart(Parser.java:2702) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.parseSelect(Parser.java:2810) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.parseQueryPrimary(Parser.java:2692) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.parseQueryTerm(Parser.java:2547) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.parseQueryExpressionBody(Parser.java:2526) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.parseQueryExpressionBodyAndEndOfQuery(Parser.java:2519) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.parseQueryExpression(Parser.java:2512) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.parseQuery(Parser.java:2479) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.parsePrepared(Parser.java:610) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.parse(Parser.java:581) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.parse(Parser.java:556) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.command.Parser.prepareCommand(Parser.java:484) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.engine.SessionLocal.prepareLocal(SessionLocal.java:645) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.engine.SessionLocal.prepareCommand(SessionLocal.java:561) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.jdbc.JdbcConnection.prepareCommand(JdbcConnection.java:1164) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.jdbc.JdbcPreparedStatement.<init>(JdbcPreparedStatement.java:93) ~[h2-2.3.232.jar:2.3.232]
+	at org.h2.jdbc.JdbcConnection.prepareStatement(JdbcConnection.java:315) ~[h2-2.3.232.jar:2.3.232]
+	at com.zaxxer.hikari.pool.ProxyConnection.prepareStatement(ProxyConnection.java:328) ~[HikariCP-6.3.3.jar:na]
+	at com.zaxxer.hikari.pool.HikariProxyConnection.prepareStatement(HikariProxyConnection.java) ~[HikariCP-6.3.3.jar:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.apache.ibatis.logging.jdbc.ConnectionLogger.invoke(ConnectionLogger.java:53) ~[mybatis-3.5.16.jar:3.5.16]
+	at jdk.proxy3/jdk.proxy3.$Proxy172.prepareStatement(Unknown Source) ~[na:na]
+	at org.apache.ibatis.executor.statement.PreparedStatementHandler.instantiateStatement(PreparedStatementHandler.java:88) ~[mybatis-3.5.16.jar:3.5.16]
+	at org.apache.ibatis.executor.statement.BaseStatementHandler.prepare(BaseStatementHandler.java:90) ~[mybatis-3.5.16.jar:3.5.16]
+	at org.apache.ibatis.executor.statement.RoutingStatementHandler.prepare(RoutingStatementHandler.java:60) ~[mybatis-3.5.16.jar:3.5.16]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.apache.ibatis.plugin.Invocation.proceed(Invocation.java:61) ~[mybatis-3.5.16.jar:3.5.16]
+	at com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor.intercept(MybatisPlusInterceptor.java:106) ~[mybatis-plus-extension-3.5.7.jar:3.5.7]
+	at org.apache.ibatis.plugin.Plugin.invoke(Plugin.java:59) ~[mybatis-3.5.16.jar:3.5.16]
+	at jdk.proxy2/jdk.proxy2.$Proxy245.prepare(Unknown Source) ~[na:na]
+	at org.apache.ibatis.executor.SimpleExecutor.prepareStatement(SimpleExecutor.java:90) ~[mybatis-3.5.16.jar:3.5.16]
+	at org.apache.ibatis.executor.SimpleExecutor.doQuery(SimpleExecutor.java:64) ~[mybatis-3.5.16.jar:3.5.16]
+	at org.apache.ibatis.executor.BaseExecutor.queryFromDatabase(BaseExecutor.java:336) ~[mybatis-3.5.16.jar:3.5.16]
+	at org.apache.ibatis.executor.BaseExecutor.query(BaseExecutor.java:158) ~[mybatis-3.5.16.jar:3.5.16]
+	at org.apache.ibatis.executor.CachingExecutor.query(CachingExecutor.java:110) ~[mybatis-3.5.16.jar:3.5.16]
+	at com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor.intercept(MybatisPlusInterceptor.java:81) ~[mybatis-plus-extension-3.5.7.jar:3.5.7]
+	at org.apache.ibatis.plugin.Plugin.invoke(Plugin.java:59) ~[mybatis-3.5.16.jar:3.5.16]
+	at jdk.proxy2/jdk.proxy2.$Proxy244.query(Unknown Source) ~[na:na]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:154) ~[mybatis-3.5.16.jar:3.5.16]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.16.jar:3.5.16]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.16.jar:3.5.16]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:425) ~[mybatis-spring-3.0.3.jar:3.0.3]
+	... 235 common frames omitted
+
+]]></system-out>
+  </testcase>
+  <testcase name="unauthenticatedPasswordResetIsRejected" classname="com.travelmate.SecurityConfigTests" time="0.008"/>
+</testsuite>

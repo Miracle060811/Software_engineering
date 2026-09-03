@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrafficOrderController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.controller</a> &gt; <span class="el_source">TrafficOrderController.java</span></div><h1>TrafficOrderController.java</h1><pre class="source lang-java linenums">package com.travelmate.controller;
+
+import com.travelmate.common.Result;
+import com.travelmate.common.UserContext;
+import com.travelmate.dto.FlightOrderCreateDTO;
+import com.travelmate.dto.TrainOrderCreateDTO;
+import com.travelmate.entity.TrafficOrder;
+import com.travelmate.service.TrafficOrderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+
+import com.travelmate.annotation.RateLimiter;
+
+/**
+ * 成员A负责: 订单核心与防超卖机制
+ */
+@RestController
+@RequestMapping(&quot;/api/order&quot;)
+<span class="fc" id="L22">public class TrafficOrderController {</span>
+
+    @Autowired
+    private TrafficOrderService trafficOrderService;
+
+    @Autowired
+    private UserContext userContext;
+
+    @RateLimiter(maxRequests = 3, timeWindowSeconds = 1)
+    @PostMapping(&quot;/flight/create&quot;)
+    public Result&lt;String&gt; createFlightOrder(@RequestBody FlightOrderCreateDTO dto) {
+<span class="nc" id="L33">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">        if (userId == null)</span>
+<span class="nc" id="L35">            return Result.error(&quot;用户未登录&quot;);</span>
+        try {
+<span class="nc" id="L37">            return Result.success(trafficOrderService.createFlightOrder(userId, dto));</span>
+<span class="nc" id="L38">        } catch (ResponseStatusException e) {</span>
+<span class="nc" id="L39">            throw e;</span>
+<span class="nc" id="L40">        } catch (Exception e) {</span>
+<span class="nc" id="L41">            return Result.error(e.getMessage());</span>
+        }
+    }
+
+    @RateLimiter(maxRequests = 3, timeWindowSeconds = 1)
+    @PostMapping(&quot;/train/create&quot;)
+    public Result&lt;String&gt; createTrainOrder(@RequestBody TrainOrderCreateDTO dto) {
+<span class="nc" id="L48">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        if (userId == null)</span>
+<span class="nc" id="L50">            return Result.error(&quot;用户未登录&quot;);</span>
+        try {
+<span class="nc" id="L52">            return Result.success(trafficOrderService.createTrainOrder(userId, dto));</span>
+<span class="nc" id="L53">        } catch (ResponseStatusException e) {</span>
+<span class="nc" id="L54">            throw e;</span>
+<span class="nc" id="L55">        } catch (Exception e) {</span>
+<span class="nc" id="L56">            return Result.error(e.getMessage());</span>
+        }
+    }
+
+    @RateLimiter(maxRequests = 5, timeWindowSeconds = 1)
+    @PostMapping(&quot;/pay/{orderNo}&quot;)
+    public Result&lt;String&gt; mockPay(@PathVariable String orderNo) {
+<span class="nc" id="L63">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (userId == null)</span>
+<span class="nc" id="L65">            return Result.error(&quot;用户未登录&quot;);</span>
+        try {
+<span class="nc" id="L67">            boolean ok = trafficOrderService.payOrder(userId, orderNo);</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">            return ok ? Result.success(&quot;支付成功，正在出票&quot;) : Result.error(&quot;支付异常&quot;);</span>
+<span class="nc" id="L69">        } catch (Exception e) {</span>
+<span class="nc" id="L70">            return Result.error(e.getMessage());</span>
+        }
+    }
+
+    @RateLimiter(maxRequests = 5, timeWindowSeconds = 1)
+    @PostMapping(&quot;/{orderNo}/pay&quot;)
+    public Result&lt;String&gt; mockPayCompat(@PathVariable String orderNo) {
+<span class="nc" id="L77">        return mockPay(orderNo);</span>
+    }
+
+    @PostMapping(&quot;/cancel/{orderNo}&quot;)
+    public Result&lt;String&gt; cancelOrder(@PathVariable String orderNo) {
+<span class="nc" id="L82">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (userId == null)</span>
+<span class="nc" id="L84">            return Result.error(&quot;用户未登录&quot;);</span>
+        try {
+<span class="nc" id="L86">            boolean ok = trafficOrderService.cancelOrder(userId, orderNo);</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            return ok ? Result.success(&quot;已取消，座位已归还&quot;) : Result.error(&quot;取消失败&quot;);</span>
+<span class="nc" id="L88">        } catch (Exception e) {</span>
+<span class="nc" id="L89">            return Result.error(e.getMessage());</span>
+        }
+    }
+
+    @PostMapping(&quot;/{orderNo}/cancel&quot;)
+    public Result&lt;String&gt; cancelOrderCompat(@PathVariable String orderNo) {
+<span class="nc" id="L95">        return cancelOrder(orderNo);</span>
+    }
+
+    @PostMapping(&quot;/{orderNo}/refund&quot;)
+    public Result&lt;String&gt; requestRefund(@PathVariable String orderNo) {
+<span class="nc" id="L100">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (userId == null)</span>
+<span class="nc" id="L102">            return Result.error(&quot;用户未登录&quot;);</span>
+        try {
+<span class="nc" id="L104">            boolean ok = trafficOrderService.requestRefund(userId, orderNo);</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">            return ok ? Result.success(&quot;退票申请已提交&quot;) : Result.error(&quot;申请失败&quot;);</span>
+<span class="nc" id="L106">        } catch (Exception e) {</span>
+<span class="nc" id="L107">            return Result.error(e.getMessage());</span>
+        }
+    }
+
+    @GetMapping(&quot;/list&quot;)
+    public Result&lt;List&lt;TrafficOrder&gt;&gt; getMyOrders() {
+<span class="nc" id="L113">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (userId == null)</span>
+<span class="nc" id="L115">            return Result.error(&quot;用户未登录&quot;);</span>
+<span class="nc" id="L116">        return Result.success(trafficOrderService.getUserOrders(userId));</span>
+    }
+
+    /**
+     * 获取单个订单详情（行程单/收据基础数据）
+     */
+    @GetMapping(&quot;/{orderNo}/receipt&quot;)
+    public Result&lt;TrafficOrder&gt; getReceipt(@PathVariable String orderNo) {
+<span class="nc" id="L124">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        if (userId == null)</span>
+<span class="nc" id="L126">            return Result.error(&quot;用户未登录&quot;);</span>
+<span class="nc" id="L127">        TrafficOrder order = trafficOrderService.getOrderDetail(userId, orderNo);</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        if (order == null)</span>
+<span class="nc" id="L129">            return Result.error(&quot;订单不存在或无权查看&quot;);</span>
+<span class="nc" id="L130">        return Result.success(order);</span>
+    }
+
+    private Long getCurrentUserId() {
+<span class="nc" id="L134">        return userContext.getCurrentUserIdOrNull();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.travelmate.interceptor.RateLimiterInterceptorTests
+-------------------------------------------------------------------------------
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.484 s -- in com.travelmate.interceptor.RateLimiterInterceptorTests

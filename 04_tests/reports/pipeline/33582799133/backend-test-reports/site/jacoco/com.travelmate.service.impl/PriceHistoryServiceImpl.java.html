@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PriceHistoryServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">PriceHistoryServiceImpl.java</span></div><h1>PriceHistoryServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travelmate.entity.PriceHistory;
+import com.travelmate.mapper.PriceHistoryMapper;
+import com.travelmate.service.PriceHistoryService;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+<span class="fc" id="L16">public class PriceHistoryServiceImpl extends ServiceImpl&lt;PriceHistoryMapper, PriceHistory&gt;</span>
+        implements PriceHistoryService {
+
+    @Override
+    public List&lt;PriceHistory&gt; getTrendData(Long ticketId, Integer ticketType) {
+        // 先在数据库中按照 ticket_id 和 type 查询近 7 天的数据
+<span class="nc" id="L22">        List&lt;PriceHistory&gt; dbList = this.list(new LambdaQueryWrapper&lt;PriceHistory&gt;()</span>
+<span class="nc" id="L23">                .eq(PriceHistory::getTicketId, ticketId)</span>
+<span class="nc" id="L24">                .eq(PriceHistory::getTicketType, ticketType)</span>
+<span class="nc" id="L25">                .orderByAsc(PriceHistory::getRecordDate));</span>
+
+        // 作为加分项：假如数据库没有这班航班/火车的历史趋势真实数据，
+        // 这里用算法模拟生成 7 天波动的“杀熟/早鸟”价格返回给前端 ECharts。
+<span class="nc bnc" id="L29" title="All 4 branches missed.">        if (dbList == null || dbList.isEmpty()) {</span>
+<span class="nc" id="L30">            List&lt;PriceHistory&gt; mockList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L31">            LocalDate today = LocalDate.now();</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">            BigDecimal basePrice = ticketType == 0 ? new BigDecimal(&quot;800&quot;) : new BigDecimal(&quot;350&quot;); // 机票基准800，火车票基准350</span>
+
+<span class="nc bnc" id="L34" title="All 2 branches missed.">            for (int i = 0; i &lt; 7; i++) {</span>
+<span class="nc" id="L35">                PriceHistory p = new PriceHistory();</span>
+<span class="nc" id="L36">                p.setTicketId(ticketId);</span>
+<span class="nc" id="L37">                p.setTicketType(ticketType);</span>
+<span class="nc" id="L38">                p.setRecordDate(today.plusDays(i)); // 往后预测7天的价格</span>
+
+                // 模拟算法：票价随着日期越近可能越贵，或者周末有一些波动(随机数)
+<span class="nc" id="L41">                double randomFactor = (Math.random() - 0.5) * 150; // -75 到 +75 随机波动</span>
+<span class="nc" id="L42">                p.setLowestPrice(basePrice.add(new BigDecimal((int) randomFactor)));</span>
+<span class="nc" id="L43">                mockList.add(p);</span>
+            }
+<span class="nc" id="L45">            return mockList;</span>
+        }
+
+<span class="nc" id="L48">        return dbList;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

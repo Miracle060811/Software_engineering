@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AttractionController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.controller</a> &gt; <span class="el_source">AttractionController.java</span></div><h1>AttractionController.java</h1><pre class="source lang-java linenums">package com.travelmate.controller;
+
+import com.travelmate.common.Result;
+import com.travelmate.common.UserContext;
+import com.travelmate.entity.Attraction;
+import com.travelmate.entity.AttractionOrder;
+import com.travelmate.service.AttractionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 景点门票控制器 (成员B负责)
+ */
+@RestController
+@RequestMapping(&quot;/api/attraction&quot;)
+<span class="fc" id="L19">public class AttractionController {</span>
+
+    @Autowired
+    private AttractionService attractionService;
+
+    @Autowired
+    private UserContext userContext;
+
+    /**
+     * 搜索景点
+     * GET /api/attraction/search?city=
+     */
+    @GetMapping(&quot;/search&quot;)
+    public Result&lt;List&lt;Attraction&gt;&gt; searchAttractions(
+            @RequestParam(required = false) String city) {
+<span class="fc" id="L34">        return Result.success(attractionService.searchAttractions(city));</span>
+    }
+
+    /**
+     * 景点详情
+     * GET /api/attraction/{id}
+     */
+    @GetMapping(&quot;/{id}&quot;)
+    public Result&lt;Attraction&gt; getDetail(@PathVariable Long id) {
+<span class="nc" id="L43">        Attraction attraction = attractionService.getById(id);</span>
+<span class="nc bnc" id="L44" title="All 4 branches missed.">        if (attraction == null || attraction.getStatus() != 1) {</span>
+<span class="nc" id="L45">            return Result.error(&quot;景点不存在或已下线&quot;);</span>
+        }
+<span class="nc" id="L47">        return Result.success(attraction);</span>
+    }
+
+    /**
+     * 购买门票
+     * POST /api/attraction/{id}/ticket
+     * Body: { &quot;adultCount&quot;: 1, &quot;childCount&quot;: 1, &quot;guestName&quot;: &quot;张三&quot;, &quot;guestPhone&quot;: &quot;13800138000&quot; }
+     */
+    @PostMapping(&quot;/{id}/ticket&quot;)
+    public Result&lt;String&gt; buyTicket(
+            @PathVariable Long id,
+            @RequestBody Map&lt;String, Object&gt; body) {
+
+<span class="nc" id="L60">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        if (userId == null) {</span>
+<span class="nc" id="L62">            return Result.error(&quot;用户未登录或Token无效&quot;);</span>
+        }
+
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        Integer adultCount = body.get(&quot;adultCount&quot;) != null</span>
+<span class="nc" id="L66">                ? Integer.parseInt(body.get(&quot;adultCount&quot;).toString())</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">                : (body.get(&quot;count&quot;) != null ? Integer.parseInt(body.get(&quot;count&quot;).toString()) : 1);</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        Integer childCount = body.get(&quot;childCount&quot;) != null</span>
+<span class="nc" id="L69">                ? Integer.parseInt(body.get(&quot;childCount&quot;).toString())</span>
+<span class="nc" id="L70">                : 0;</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        String guestName = body.get(&quot;guestName&quot;) != null</span>
+<span class="nc" id="L72">                ? body.get(&quot;guestName&quot;).toString()</span>
+<span class="nc" id="L73">                : &quot;&quot;;</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        String guestPhone = body.get(&quot;guestPhone&quot;) != null</span>
+<span class="nc" id="L75">                ? body.get(&quot;guestPhone&quot;).toString()</span>
+<span class="nc" id="L76">                : &quot;&quot;;</span>
+
+        try {
+<span class="nc" id="L79">            String orderNo = attractionService.buyTicket(userId, id, adultCount, childCount, guestName, guestPhone);</span>
+<span class="nc" id="L80">            return Result.success(orderNo);</span>
+<span class="nc" id="L81">        } catch (Exception e) {</span>
+<span class="nc" id="L82">            return Result.error(e.getMessage());</span>
+        }
+    }
+
+    /**
+     * 我的景点门票订单
+     * GET /api/attraction/orders
+     */
+    @GetMapping(&quot;/orders&quot;)
+    public Result&lt;List&lt;AttractionOrder&gt;&gt; getMyTicketOrders() {
+<span class="nc" id="L92">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        if (userId == null) {</span>
+<span class="nc" id="L94">            return Result.error(&quot;用户未登录或Token无效&quot;);</span>
+        }
+<span class="nc" id="L96">        return Result.success(attractionService.getUserTicketOrders(userId));</span>
+    }
+
+    /**
+     * 景点门票订单详情/核销凭证
+     * GET /api/attraction/order/{orderNo}/receipt
+     */
+    @GetMapping(&quot;/order/{orderNo}/receipt&quot;)
+    public Result&lt;AttractionOrder&gt; getTicketReceipt(@PathVariable String orderNo) {
+<span class="nc" id="L105">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        if (userId == null) {</span>
+<span class="nc" id="L107">            return Result.error(&quot;用户未登录或Token无效&quot;);</span>
+        }
+<span class="nc" id="L109">        AttractionOrder order = attractionService.getTicketOrderDetail(userId, orderNo);</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        return order == null ? Result.error(&quot;订单不存在或无权查看&quot;) : Result.success(order);</span>
+    }
+
+    // ===================== 工具方法 =====================
+
+    private Long getCurrentUserId() {
+<span class="nc" id="L116">        return userContext.getCurrentUserIdOrNull();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

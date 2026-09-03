@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrafficOrderServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">TrafficOrderServiceImpl.java</span></div><h1>TrafficOrderServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travelmate.dto.FlightOrderCreateDTO;
+import com.travelmate.dto.TrainOrderCreateDTO;
+import com.travelmate.entity.Flight;
+import com.travelmate.entity.TrafficOrder;
+import com.travelmate.entity.Train;
+import com.travelmate.mapper.FlightMapper;
+import com.travelmate.mapper.TrafficOrderMapper;
+import com.travelmate.mapper.TrainMapper;
+import com.travelmate.integration.CouponGateway;
+import com.travelmate.integration.NotificationGateway;
+import com.travelmate.integration.PassengerGateway;
+import com.travelmate.service.TrafficOrderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.UUID;
+
+@Service
+<span class="fc" id="L28">public class TrafficOrderServiceImpl extends ServiceImpl&lt;TrafficOrderMapper, TrafficOrder&gt;</span>
+        implements TrafficOrderService {
+
+    @Autowired
+    private FlightMapper flightMapper;
+
+    @Autowired
+    private TrainMapper trainMapper;
+
+    @Autowired
+    private PassengerGateway passengerGateway;
+
+    @Autowired
+    private CouponGateway couponGateway;
+
+    @Autowired
+    private NotificationGateway notificationGateway;
+
+    /**
+     * 核心难点：防超卖事务拦截、减库存并生成订单
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String createFlightOrder(Long userId, FlightOrderCreateDTO dto) {
+<span class="fc" id="L52">        validateFlightOrder(dto);</span>
+
+        // 1. 查询乘车人信息
+<span class="fc" id="L55">        PassengerGateway.PassengerSnapshot passenger = passengerGateway.findOwnedPassenger(dto.getPassengerId(), userId);</span>
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        if (passenger == null) {</span>
+<span class="fc" id="L57">            throw new RuntimeException(&quot;乘车人选错或不存在&quot;);</span>
+        }
+
+<span class="fc" id="L60">        Flight flight = flightMapper.selectById(dto.getFlightId());</span>
+<span class="pc bpc" id="L61" title="3 of 6 branches missed.">        if (flight == null || flight.getStatus() == null || flight.getStatus() != 1) {</span>
+<span class="nc" id="L62">            throw new RuntimeException(&quot;航班不存在或已取消&quot;);</span>
+        }
+
+<span class="fc" id="L65">        int ticketCount = normalizeCount(dto.getTicketCount(), &quot;购票数量&quot;);</span>
+
+        // 2. 扣减航班库存 (乐观扣减, 利用 MySQL 行级锁和 where available_seats &gt;= count)
+<span class="fc" id="L68">        int updated = flightMapper.deductSeat(dto.getFlightId(), ticketCount);</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        if (updated == 0) {</span>
+            // 抛出异常会自动触发 spring 的事务回滚(@Transactional)
+<span class="fc" id="L71">            throw new RuntimeException(&quot;库存不足或航班已取消，下单失败 (已超卖)&quot;);</span>
+        }
+
+        // 3. 获取航班信息用于计算金额
+<span class="fc" id="L75">        String seatType = normalizeFlightSeatType(dto.getSeatType());</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">        BigDecimal price = &quot;Business&quot;.equals(seatType)</span>
+<span class="nc" id="L77">                ? flight.getBusinessPrice()</span>
+<span class="fc" id="L78">                : flight.getEconomyPrice();</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">        if (price == null) {</span>
+<span class="nc" id="L80">            throw new RuntimeException(&quot;该舱位暂不可售&quot;);</span>
+        }
+<span class="fc" id="L82">        BigDecimal amount = price.multiply(BigDecimal.valueOf(ticketCount));</span>
+<span class="fc" id="L83">        BigDecimal payableAmount = couponGateway.redeem(userId, dto.getUserCouponId(), amount, &quot;flight&quot;);</span>
+
+        // 4. 构建订单对象并落表生成
+<span class="fc" id="L86">        TrafficOrder order = new TrafficOrder();</span>
+        // 生成唯一单号 (前缀 T 表示 Ticket + 随机字符串，实际生产可使用雪花算法 Snowflake / Redis Incr)
+<span class="fc" id="L88">        String orderNo = &quot;T&quot; + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 4).toUpperCase();</span>
+<span class="fc" id="L89">        order.setOrderNo(orderNo);</span>
+<span class="fc" id="L90">        order.setUserId(userId);</span>
+<span class="fc" id="L91">        order.setOrderType(0); // 0 代表航班机票</span>
+<span class="fc" id="L92">        order.setTicketId(dto.getFlightId());</span>
+<span class="fc" id="L93">        order.setSeatType(seatType);</span>
+<span class="fc" id="L94">        order.setTicketCount(ticketCount);</span>
+<span class="fc" id="L95">        order.setPassengerName(passenger.name());</span>
+<span class="fc" id="L96">        order.setPassengerIdCard(passenger.idCard());</span>
+<span class="fc" id="L97">        order.setAmount(payableAmount);</span>
+<span class="fc" id="L98">        order.setStatus(0); // 0 = 待支付</span>
+<span class="fc" id="L99">        order.setCreateTime(LocalDateTime.now());</span>
+
+<span class="fc" id="L101">        save(order); // insert 插入数据</span>
+
+<span class="fc" id="L103">        return order.getOrderNo();</span>
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String createTrainOrder(Long userId, TrainOrderCreateDTO dto) {
+<span class="fc" id="L109">        validateTrainOrder(dto);</span>
+
+<span class="fc" id="L111">        PassengerGateway.PassengerSnapshot passenger = passengerGateway.findOwnedPassenger(dto.getPassengerId(), userId);</span>
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        if (passenger == null) {</span>
+<span class="nc" id="L113">            throw new RuntimeException(&quot;乘车人选错或不存在&quot;);</span>
+        }
+
+<span class="fc" id="L116">        Train train = trainMapper.selectById(dto.getTrainId());</span>
+<span class="pc bpc" id="L117" title="3 of 6 branches missed.">        if (train == null || train.getStatus() == null || train.getStatus() != 1) {</span>
+<span class="nc" id="L118">            throw new RuntimeException(&quot;车次不存在或已停运&quot;);</span>
+        }
+
+        // 判断席位并进行并发防超卖扣减
+<span class="fc" id="L122">        String seatType = normalizeTrainSeatType(dto.getSeatType());</span>
+<span class="fc" id="L123">        int ticketCount = normalizeCount(dto.getTicketCount(), &quot;购票数量&quot;);</span>
+        int updated;
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        if (&quot;FirstClass&quot;.equals(seatType)) {</span>
+<span class="fc" id="L126">            updated = trainMapper.deductFirstClassSeat(dto.getTrainId(), ticketCount);</span>
+        } else {
+<span class="fc" id="L128">            updated = trainMapper.deductSecondClassSeat(dto.getTrainId(), ticketCount);</span>
+        }
+
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if (updated == 0) {</span>
+<span class="fc" id="L132">            throw new RuntimeException(&quot;所选席位已售罄或车次停运&quot;);</span>
+        }
+
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">        BigDecimal price = &quot;FirstClass&quot;.equals(seatType)</span>
+<span class="fc" id="L136">                ? train.getFirstClassPrice()</span>
+<span class="pc" id="L137">                : train.getSecondClassPrice();</span>
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">        if (price == null) {</span>
+<span class="nc" id="L139">            throw new RuntimeException(&quot;该席别暂不可售&quot;);</span>
+        }
+<span class="fc" id="L141">        BigDecimal amount = price.multiply(BigDecimal.valueOf(ticketCount));</span>
+<span class="fc" id="L142">        BigDecimal payableAmount = couponGateway.redeem(userId, dto.getUserCouponId(), amount, &quot;train&quot;);</span>
+
+<span class="fc" id="L144">        TrafficOrder order = new TrafficOrder();</span>
+<span class="fc" id="L145">        String orderNo = &quot;TR&quot; + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 4).toUpperCase();</span>
+<span class="fc" id="L146">        order.setOrderNo(orderNo);</span>
+<span class="fc" id="L147">        order.setUserId(userId);</span>
+<span class="fc" id="L148">        order.setOrderType(1); // 1 = 火车票</span>
+<span class="fc" id="L149">        order.setTicketId(dto.getTrainId());</span>
+<span class="fc" id="L150">        order.setSeatType(seatType);</span>
+<span class="fc" id="L151">        order.setTicketCount(ticketCount);</span>
+<span class="fc" id="L152">        order.setPassengerName(passenger.name());</span>
+<span class="fc" id="L153">        order.setPassengerIdCard(passenger.idCard());</span>
+<span class="fc" id="L154">        order.setAmount(payableAmount);</span>
+<span class="fc" id="L155">        order.setStatus(0);</span>
+<span class="fc" id="L156">        order.setCreateTime(LocalDateTime.now());</span>
+
+<span class="fc" id="L158">        save(order);</span>
+
+<span class="fc" id="L160">        return order.getOrderNo();</span>
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean payOrder(Long userId, String orderNo) {
+        // 先找出这笔订单
+<span class="fc" id="L167">        TrafficOrder order = this.getOne(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="fc" id="L168">                .eq(TrafficOrder::getOrderNo, orderNo)</span>
+<span class="fc" id="L169">                .eq(TrafficOrder::getUserId, userId));</span>
+
+<span class="pc bpc" id="L171" title="1 of 2 branches missed.">        if (order == null)</span>
+<span class="nc" id="L172">            throw new RuntimeException(&quot;订单不存在&quot;);</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">        if (order.getStatus() != 0)</span>
+<span class="fc" id="L174">            throw new RuntimeException(&quot;订单已处理过, 无法再次支付&quot;);</span>
+
+        // 模拟支付完成, 原子改为 1-出票中，避免并发重复支付。
+<span class="fc" id="L177">        int updated = baseMapper.markPaid(userId, orderNo);</span>
+<span class="fc bfc" id="L178" title="All 2 branches covered.">        if (updated == 0) {</span>
+<span class="fc" id="L179">            throw new RuntimeException(&quot;订单状态已变化，请刷新后重试&quot;);</span>
+        }
+<span class="fc" id="L181">        notificationGateway.publish(</span>
+                userId,
+                &quot;traffic_order&quot;,
+<span class="pc bpc" id="L184" title="1 of 2 branches missed.">                Objects.equals(order.getOrderType(), 0) ? &quot;机票购票成功&quot; : &quot;火车票购票成功&quot;,</span>
+<span class="fc" id="L185">                String.format(&quot;订单 %s 支付成功，系统正在为您出票。&quot;, orderNo),</span>
+                &quot;/my-orders?tab=traffic&quot;);
+<span class="fc" id="L187">        return true;</span>
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean cancelOrder(Long userId, String orderNo) {
+<span class="fc" id="L193">        TrafficOrder order = this.getOne(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="fc" id="L194">                .eq(TrafficOrder::getOrderNo, orderNo)</span>
+<span class="fc" id="L195">                .eq(TrafficOrder::getUserId, userId));</span>
+
+<span class="pc bpc" id="L197" title="1 of 2 branches missed.">        if (order == null)</span>
+<span class="nc" id="L198">            throw new RuntimeException(&quot;订单不存在&quot;);</span>
+        // 只能取消待支付(0)，如果要取消已出票的应该叫 退票(4)
+<span class="fc bfc" id="L200" title="All 2 branches covered.">        if (order.getStatus() != 0)</span>
+<span class="fc" id="L201">            throw new RuntimeException(&quot;非待支付订单无法直接取消&quot;);</span>
+
+        // 1. 原子修改订单状态为已取消 (3)，防止重复取消多次归还库存。
+<span class="fc" id="L204">        int updated = baseMapper.markCancelledFromPending(userId, orderNo);</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">        if (updated == 0) {</span>
+<span class="fc" id="L206">            throw new RuntimeException(&quot;订单状态已变化，请刷新后重试&quot;);</span>
+        }
+
+        // 2. 归还被锁定的库存(余票 + 1)
+<span class="pc bpc" id="L210" title="1 of 2 branches missed.">        int ticketCount = order.getTicketCount() == null ? 1 : order.getTicketCount();</span>
+<span class="fc bfc" id="L211" title="All 2 branches covered.">        if (order.getOrderType() == 0) {</span>
+<span class="fc" id="L212">            flightMapper.returnSeat(order.getTicketId(), ticketCount);</span>
+<span class="pc bpc" id="L213" title="1 of 2 branches missed.">        } else if (order.getOrderType() == 1) {</span>
+<span class="pc bpc" id="L214" title="1 of 2 branches missed.">            if (&quot;FirstClass&quot;.equalsIgnoreCase(order.getSeatType())) {</span>
+<span class="fc" id="L215">                trainMapper.returnFirstClassSeat(order.getTicketId(), ticketCount);</span>
+            } else {
+<span class="nc" id="L217">                trainMapper.returnSecondClassSeat(order.getTicketId(), ticketCount);</span>
+            }
+        }
+
+<span class="fc" id="L221">        return true;</span>
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean requestRefund(Long userId, String orderNo) {
+<span class="fc" id="L227">        TrafficOrder order = this.getOne(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="fc" id="L228">                .eq(TrafficOrder::getOrderNo, orderNo)</span>
+<span class="fc" id="L229">                .eq(TrafficOrder::getUserId, userId));</span>
+
+<span class="pc bpc" id="L231" title="1 of 2 branches missed.">        if (order == null) {</span>
+<span class="nc" id="L232">            throw new RuntimeException(&quot;订单不存在&quot;);</span>
+        }
+<span class="pc bpc" id="L234" title="1 of 4 branches missed.">        if (!Objects.equals(order.getStatus(), 1) &amp;&amp; !Objects.equals(order.getStatus(), 2)) {</span>
+<span class="fc" id="L235">            throw new RuntimeException(&quot;只有出票中或已出票订单可以申请退票&quot;);</span>
+        }
+
+<span class="fc" id="L238">        int updated = baseMapper.markRefundRequested(userId, orderNo);</span>
+<span class="fc bfc" id="L239" title="All 2 branches covered.">        if (updated == 0) {</span>
+<span class="fc" id="L240">            throw new RuntimeException(&quot;订单状态已变化，请刷新后重试&quot;);</span>
+        }
+
+<span class="fc" id="L243">        notificationGateway.publish(</span>
+                userId,
+                &quot;traffic_order&quot;,
+                &quot;退票申请已提交&quot;,
+<span class="fc" id="L247">                String.format(&quot;订单 %s 已提交退票申请，请等待管理员处理。&quot;, orderNo),</span>
+                &quot;/my-orders?tab=traffic&quot;);
+<span class="fc" id="L249">        return true;</span>
+    }
+
+    @Override
+    public TrafficOrder getOrderDetail(Long userId, String orderNo) {
+<span class="nc" id="L254">        TrafficOrder order = this.getOne(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="nc" id="L255">                .eq(TrafficOrder::getOrderNo, orderNo)</span>
+<span class="nc" id="L256">                .eq(TrafficOrder::getUserId, userId));</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">        if (order == null) {</span>
+<span class="nc" id="L258">            return null;</span>
+        }
+<span class="nc" id="L260">        fillTicketSnapshot(order);</span>
+<span class="nc" id="L261">        return order;</span>
+    }
+
+    @Override
+    public java.util.List&lt;TrafficOrder&gt; getUserOrders(Long userId) {
+<span class="nc" id="L266">        java.util.List&lt;TrafficOrder&gt; orders = this.list(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="nc" id="L267">                .eq(TrafficOrder::getUserId, userId)</span>
+<span class="nc" id="L268">                .orderByDesc(TrafficOrder::getCreateTime));</span>
+<span class="nc" id="L269">        orders.forEach(this::fillTicketSnapshot);</span>
+<span class="nc" id="L270">        return orders;</span>
+    }
+
+    private void fillTicketSnapshot(TrafficOrder order) {
+<span class="nc bnc" id="L274" title="All 4 branches missed.">        if (order.getOrderType() == null || order.getTicketId() == null) {</span>
+<span class="nc" id="L275">            return;</span>
+        }
+
+<span class="nc bnc" id="L278" title="All 2 branches missed.">        if (order.getOrderType() == 0) {</span>
+<span class="nc" id="L279">            Flight flight = flightMapper.selectById(order.getTicketId());</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">            if (flight != null) {</span>
+<span class="nc" id="L281">                order.setTicketNo(flight.getFlightNo());</span>
+<span class="nc" id="L282">                order.setDepartureCity(flight.getDepartureCity());</span>
+<span class="nc" id="L283">                order.setArrivalCity(flight.getArrivalCity());</span>
+            }
+<span class="nc" id="L285">            return;</span>
+        }
+
+<span class="nc bnc" id="L288" title="All 2 branches missed.">        if (order.getOrderType() == 1) {</span>
+<span class="nc" id="L289">            Train train = trainMapper.selectById(order.getTicketId());</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">            if (train != null) {</span>
+<span class="nc" id="L291">                order.setTicketNo(train.getTrainNo());</span>
+<span class="nc" id="L292">                order.setDepartureStation(train.getDepartureStation());</span>
+<span class="nc" id="L293">                order.setArrivalStation(train.getArrivalStation());</span>
+            }
+        }
+<span class="nc" id="L296">    }</span>
+
+    private void validateFlightOrder(FlightOrderCreateDTO dto) {
+<span class="pc bpc" id="L299" title="2 of 4 branches missed.">        if (dto == null || dto.getFlightId() == null) {</span>
+<span class="nc" id="L300">            throw new RuntimeException(&quot;请选择航班&quot;);</span>
+        }
+<span class="pc bpc" id="L302" title="1 of 2 branches missed.">        if (dto.getPassengerId() == null) {</span>
+<span class="nc" id="L303">            throw new RuntimeException(&quot;请选择乘车人&quot;);</span>
+        }
+<span class="fc" id="L305">        normalizeFlightSeatType(dto.getSeatType());</span>
+<span class="fc" id="L306">    }</span>
+
+    private void validateTrainOrder(TrainOrderCreateDTO dto) {
+<span class="pc bpc" id="L309" title="2 of 4 branches missed.">        if (dto == null || dto.getTrainId() == null) {</span>
+<span class="nc" id="L310">            throw new RuntimeException(&quot;请选择车次&quot;);</span>
+        }
+<span class="pc bpc" id="L312" title="1 of 2 branches missed.">        if (dto.getPassengerId() == null) {</span>
+<span class="nc" id="L313">            throw new RuntimeException(&quot;请选择乘车人&quot;);</span>
+        }
+<span class="fc" id="L315">        normalizeTrainSeatType(dto.getSeatType());</span>
+<span class="fc" id="L316">    }</span>
+
+    private String normalizeFlightSeatType(String seatType) {
+<span class="pc bpc" id="L319" title="1 of 2 branches missed.">        if (!StringUtils.hasText(seatType)) {</span>
+<span class="nc" id="L320">            throw new RuntimeException(&quot;请选择舱位&quot;);</span>
+        }
+<span class="pc bpc" id="L322" title="1 of 2 branches missed.">        if (&quot;Economy&quot;.equalsIgnoreCase(seatType)) {</span>
+<span class="fc" id="L323">            return &quot;Economy&quot;;</span>
+        }
+<span class="nc bnc" id="L325" title="All 2 branches missed.">        if (&quot;Business&quot;.equalsIgnoreCase(seatType)) {</span>
+<span class="nc" id="L326">            return &quot;Business&quot;;</span>
+        }
+<span class="nc" id="L328">        throw new RuntimeException(&quot;未知的舱位类型&quot;);</span>
+    }
+
+    private String normalizeTrainSeatType(String seatType) {
+<span class="pc bpc" id="L332" title="1 of 2 branches missed.">        if (!StringUtils.hasText(seatType)) {</span>
+<span class="nc" id="L333">            throw new RuntimeException(&quot;请选择席别&quot;);</span>
+        }
+<span class="fc bfc" id="L335" title="All 2 branches covered.">        if (&quot;FirstClass&quot;.equalsIgnoreCase(seatType)) {</span>
+<span class="fc" id="L336">            return &quot;FirstClass&quot;;</span>
+        }
+<span class="pc bpc" id="L338" title="1 of 2 branches missed.">        if (&quot;SecondClass&quot;.equalsIgnoreCase(seatType)) {</span>
+<span class="fc" id="L339">            return &quot;SecondClass&quot;;</span>
+        }
+<span class="nc" id="L341">        throw new RuntimeException(&quot;未知的席别&quot;);</span>
+    }
+
+    private int normalizeCount(Integer count, String fieldName) {
+<span class="pc bpc" id="L345" title="1 of 2 branches missed.">        int value = count == null ? 1 : count;</span>
+<span class="pc bpc" id="L346" title="2 of 4 branches missed.">        if (value &lt;= 0 || value &gt; 10) {</span>
+<span class="nc" id="L347">            throw new RuntimeException(fieldName + &quot;必须在1-10之间&quot;);</span>
+        }
+<span class="fc" id="L349">        return value;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

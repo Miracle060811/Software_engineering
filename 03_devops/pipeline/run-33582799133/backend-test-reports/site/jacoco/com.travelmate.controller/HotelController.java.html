@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HotelController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.controller</a> &gt; <span class="el_source">HotelController.java</span></div><h1>HotelController.java</h1><pre class="source lang-java linenums">package com.travelmate.controller;
+
+import com.travelmate.common.Result;
+import com.travelmate.common.UserContext;
+import com.travelmate.dto.HotelOrderCreateDTO;
+import com.travelmate.entity.Hotel;
+import com.travelmate.entity.HotelOrder;
+import com.travelmate.entity.HotelRoom;
+import com.travelmate.service.HotelOrderService;
+import com.travelmate.service.HotelService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
+import com.travelmate.annotation.RateLimiter;
+
+/**
+ * 酒店住宿控制器 (成员B负责)
+ */
+@RestController
+@RequestMapping(&quot;/api/hotel&quot;)
+<span class="fc" id="L25">public class HotelController {</span>
+
+    @Autowired
+    private HotelService hotelService;
+
+    @Autowired
+    private HotelOrderService hotelOrderService;
+
+    @Autowired
+    private UserContext userContext;
+
+    // ===================== 酒店查询 =====================
+
+    /**
+     * 搜索酒店
+     * GET
+     * /api/hotel/search?city=&amp;checkIn=&amp;checkOut=&amp;starRating=&amp;minPrice=&amp;maxPrice=
+     */
+    @GetMapping(&quot;/search&quot;)
+    public Result&lt;List&lt;Hotel&gt;&gt; searchHotels(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String checkIn,
+            @RequestParam(required = false) String checkOut,
+            @RequestParam(required = false) Integer starRating,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice) {
+
+<span class="fc" id="L52">        List&lt;Hotel&gt; hotels = hotelService.searchHotels(city, checkIn, checkOut,</span>
+                starRating, minPrice, maxPrice);
+<span class="fc" id="L54">        return Result.success(hotels);</span>
+    }
+
+    /**
+     * 获取酒店详情（含房型列表）
+     * GET /api/hotel/{id}
+     */
+    @GetMapping(&quot;/{id}&quot;)
+    public Result&lt;Map&lt;String, Object&gt;&gt; getHotelDetail(@PathVariable Long id) {
+        try {
+<span class="nc" id="L64">            Map&lt;String, Object&gt; detail = hotelService.getHotelWithRooms(id);</span>
+<span class="nc" id="L65">            return Result.success(detail);</span>
+<span class="nc" id="L66">        } catch (Exception e) {</span>
+<span class="nc" id="L67">            return Result.error(e.getMessage());</span>
+        }
+    }
+
+    /**
+     * 获取酒店房型列表
+     * GET /api/hotel/{id}/rooms
+     */
+    @GetMapping(&quot;/{id}/rooms&quot;)
+    public Result&lt;List&lt;HotelRoom&gt;&gt; getRooms(@PathVariable Long id) {
+<span class="nc" id="L77">        List&lt;HotelRoom&gt; rooms = hotelService.getRoomsByHotelId(id);</span>
+<span class="nc" id="L78">        return Result.success(rooms);</span>
+    }
+
+    // ===================== 酒店订单 =====================
+
+    /**
+     * 创建酒店订单（需要登录认证）
+     * POST /api/hotel/order/create
+     */
+    @RateLimiter(maxRequests = 3, timeWindowSeconds = 1)
+    @PostMapping(&quot;/order/create&quot;)
+    public Result&lt;String&gt; createOrder(@RequestBody HotelOrderCreateDTO dto) {
+<span class="nc" id="L90">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (userId == null) {</span>
+<span class="nc" id="L92">            return Result.error(&quot;用户未登录或Token无效&quot;);</span>
+        }
+        try {
+<span class="nc" id="L95">            String orderNo = hotelOrderService.createOrder(userId, dto);</span>
+<span class="nc" id="L96">            return Result.success(orderNo);</span>
+<span class="nc" id="L97">        } catch (Exception e) {</span>
+<span class="nc" id="L98">            return Result.error(e.getMessage());</span>
+        }
+    }
+
+    /**
+     * 模拟支付订单
+     * POST /api/hotel/order/{orderNo}/pay
+     */
+    @RateLimiter(maxRequests = 5, timeWindowSeconds = 1)
+    @PostMapping(&quot;/order/{orderNo}/pay&quot;)
+    public Result&lt;String&gt; payOrder(@PathVariable String orderNo) {
+<span class="nc" id="L109">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        if (userId == null) {</span>
+<span class="nc" id="L111">            return Result.error(&quot;用户未登录或Token无效&quot;);</span>
+        }
+        try {
+<span class="nc" id="L114">            boolean success = hotelOrderService.payOrder(userId, orderNo);</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">            return success ? Result.success(&quot;支付成功&quot;) : Result.error(&quot;支付失败&quot;);</span>
+<span class="nc" id="L116">        } catch (Exception e) {</span>
+<span class="nc" id="L117">            return Result.error(e.getMessage());</span>
+        }
+    }
+
+    /**
+     * 取消订单
+     * POST /api/hotel/order/{orderNo}/cancel
+     */
+    @PostMapping(&quot;/order/{orderNo}/cancel&quot;)
+    public Result&lt;String&gt; cancelOrder(@PathVariable String orderNo) {
+<span class="nc" id="L127">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        if (userId == null) {</span>
+<span class="nc" id="L129">            return Result.error(&quot;用户未登录或Token无效&quot;);</span>
+        }
+        try {
+<span class="nc" id="L132">            boolean success = hotelOrderService.cancelOrder(userId, orderNo);</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">            return success ? Result.success(&quot;订单已取消&quot;) : Result.error(&quot;取消失败&quot;);</span>
+<span class="nc" id="L134">        } catch (Exception e) {</span>
+<span class="nc" id="L135">            return Result.error(e.getMessage());</span>
+        }
+    }
+
+    /**
+     * 申请退款
+     * POST /api/hotel/order/{orderNo}/refund
+     */
+    @PostMapping(&quot;/order/{orderNo}/refund&quot;)
+    public Result&lt;String&gt; requestRefund(@PathVariable String orderNo) {
+<span class="nc" id="L145">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">        if (userId == null) {</span>
+<span class="nc" id="L147">            return Result.error(&quot;用户未登录或Token无效&quot;);</span>
+        }
+        try {
+<span class="nc" id="L150">            boolean success = hotelOrderService.requestRefund(userId, orderNo);</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">            return success ? Result.success(&quot;退款申请已提交&quot;) : Result.error(&quot;申请失败&quot;);</span>
+<span class="nc" id="L152">        } catch (Exception e) {</span>
+<span class="nc" id="L153">            return Result.error(e.getMessage());</span>
+        }
+    }
+
+    /**
+     * 我的酒店订单列表
+     * GET /api/hotel/orders
+     */
+    @GetMapping(&quot;/orders&quot;)
+    public Result&lt;List&lt;HotelOrder&gt;&gt; getMyOrders() {
+<span class="nc" id="L163">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        if (userId == null) {</span>
+<span class="nc" id="L165">            return Result.error(&quot;用户未登录或Token无效&quot;);</span>
+        }
+<span class="nc" id="L167">        return Result.success(hotelOrderService.getUserOrders(userId));</span>
+    }
+
+    /**
+     * 酒店订单详情/核销凭证
+     * GET /api/hotel/order/{orderNo}/receipt
+     */
+    @GetMapping(&quot;/order/{orderNo}/receipt&quot;)
+    public Result&lt;HotelOrder&gt; getReceipt(@PathVariable String orderNo) {
+<span class="nc" id="L176">        Long userId = getCurrentUserId();</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">        if (userId == null) {</span>
+<span class="nc" id="L178">            return Result.error(&quot;用户未登录或Token无效&quot;);</span>
+        }
+
+<span class="nc" id="L181">        HotelOrder order = hotelOrderService.getOrderDetail(userId, orderNo);</span>
+<span class="nc" id="L182">        return java.util.Optional.ofNullable(order)</span>
+<span class="nc" id="L183">                .map(Result::success)</span>
+<span class="nc" id="L184">                .orElseGet(() -&gt; Result.error(&quot;订单不存在或无权查看&quot;));</span>
+    }
+
+    // ===================== 工具方法 =====================
+
+    /**
+     * 从 SecurityContext 获取当前登录用户的 userId
+     */
+    private Long getCurrentUserId() {
+<span class="nc" id="L193">        return userContext.getCurrentUserIdOrNull();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

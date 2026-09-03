@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CommentServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">CommentServiceImpl.java</span></div><h1>CommentServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.travelmate.backend.entity.User;
+import com.travelmate.backend.mapper.UserMapper;
+import com.travelmate.entity.Comment;
+import com.travelmate.entity.Post;
+import com.travelmate.mapper.CommentMapper;
+import com.travelmate.mapper.PostMapper;
+import com.travelmate.service.CommentService;
+import com.travelmate.service.SensitiveWordService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Service
+<span class="fc" id="L20">public class CommentServiceImpl implements CommentService {</span>
+
+    @Autowired
+    private CommentMapper commentMapper;
+
+    @Autowired
+    private PostMapper postMapper;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private SensitiveWordService sensitiveWordService;
+
+    @Override
+    public List&lt;Map&lt;String, Object&gt;&gt; listComments(Long postId) {
+<span class="nc" id="L36">        LambdaQueryWrapper&lt;Comment&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L37">        wrapper.eq(Comment::getPostId, postId).orderByAsc(Comment::getCreateTime);</span>
+<span class="nc" id="L38">        List&lt;Comment&gt; all = commentMapper.selectList(wrapper);</span>
+<span class="nc" id="L39">        Map&lt;Long, User&gt; users = loadUsers(all);</span>
+
+<span class="nc" id="L41">        Map&lt;Long, Map&lt;String, Object&gt;&gt; map = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L42">        List&lt;Map&lt;String, Object&gt;&gt; roots = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        for (Comment c : all) {</span>
+<span class="nc" id="L45">            Map&lt;String, Object&gt; node = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L46">            node.put(&quot;id&quot;, c.getId());</span>
+<span class="nc" id="L47">            node.put(&quot;postId&quot;, c.getPostId());</span>
+<span class="nc" id="L48">            node.put(&quot;userId&quot;, c.getUserId());</span>
+<span class="nc" id="L49">            node.put(&quot;parentId&quot;, c.getParentId());</span>
+<span class="nc" id="L50">            node.put(&quot;replyUserId&quot;, c.getReplyUserId());</span>
+<span class="nc" id="L51">            node.put(&quot;content&quot;, c.getContent());</span>
+<span class="nc" id="L52">            node.put(&quot;likeCount&quot;, c.getLikeCount());</span>
+<span class="nc" id="L53">            node.put(&quot;createTime&quot;, c.getCreateTime());</span>
+<span class="nc" id="L54">            fillAuthor(node, users.get(c.getUserId()));</span>
+<span class="nc" id="L55">            fillReplyUser(node, users.get(c.getReplyUserId()));</span>
+<span class="nc" id="L56">            node.put(&quot;children&quot;, new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L57">            map.put(c.getId(), node);</span>
+<span class="nc" id="L58">        }</span>
+
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        for (Comment c : all) {</span>
+<span class="nc" id="L61">            Map&lt;String, Object&gt; node = map.get(c.getId());</span>
+<span class="nc bnc" id="L62" title="All 4 branches missed.">            if (c.getParentId() == null || c.getParentId() == 0) {</span>
+<span class="nc" id="L63">                roots.add(node);</span>
+            } else {
+<span class="nc" id="L65">                Map&lt;String, Object&gt; parent = map.get(c.getParentId());</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">                if (parent != null) {</span>
+                    @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L68">                    List&lt;Map&lt;String, Object&gt;&gt; children = (List&lt;Map&lt;String, Object&gt;&gt;) parent.get(&quot;children&quot;);</span>
+<span class="nc" id="L69">                    children.add(node);</span>
+                }
+            }
+<span class="nc" id="L72">        }</span>
+
+<span class="nc" id="L74">        return roots;</span>
+    }
+
+    private Map&lt;Long, User&gt; loadUsers(List&lt;Comment&gt; comments) {
+<span class="nc" id="L78">        Set&lt;Long&gt; userIds = new HashSet&lt;&gt;();</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        for (Comment comment : comments) {</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">            if (comment.getUserId() != null) {</span>
+<span class="nc" id="L81">                userIds.add(comment.getUserId());</span>
+            }
+<span class="nc bnc" id="L83" title="All 2 branches missed.">            if (comment.getReplyUserId() != null) {</span>
+<span class="nc" id="L84">                userIds.add(comment.getReplyUserId());</span>
+            }
+<span class="nc" id="L86">        }</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (userIds.isEmpty()) {</span>
+<span class="nc" id="L88">            return Collections.emptyMap();</span>
+        }
+
+<span class="nc" id="L91">        List&lt;User&gt; users = userMapper.selectList(new LambdaQueryWrapper&lt;User&gt;().in(User::getId, userIds));</span>
+<span class="nc" id="L92">        Map&lt;Long, User&gt; result = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        for (User user : users) {</span>
+<span class="nc" id="L94">            result.put(user.getId(), user);</span>
+<span class="nc" id="L95">        }</span>
+<span class="nc" id="L96">        return result;</span>
+    }
+
+    private void fillAuthor(Map&lt;String, Object&gt; node, User user) {
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L101">            node.put(&quot;authorUsername&quot;, &quot;匿名用户&quot;);</span>
+<span class="nc" id="L102">            node.put(&quot;authorNickname&quot;, &quot;匿名用户&quot;);</span>
+<span class="nc" id="L103">            node.put(&quot;authorAvatar&quot;, null);</span>
+<span class="nc" id="L104">            return;</span>
+        }
+<span class="nc" id="L106">        node.put(&quot;authorUsername&quot;, user.getUsername());</span>
+<span class="nc" id="L107">        node.put(&quot;authorNickname&quot;, user.getNickname());</span>
+<span class="nc" id="L108">        node.put(&quot;authorAvatar&quot;, user.getAvatar());</span>
+<span class="nc" id="L109">    }</span>
+
+    private void fillReplyUser(Map&lt;String, Object&gt; node, User user) {
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L113">            node.put(&quot;replyUsername&quot;, null);</span>
+<span class="nc" id="L114">            node.put(&quot;replyNickname&quot;, null);</span>
+<span class="nc" id="L115">            return;</span>
+        }
+<span class="nc" id="L117">        node.put(&quot;replyUsername&quot;, user.getUsername());</span>
+<span class="nc" id="L118">        node.put(&quot;replyNickname&quot;, user.getNickname());</span>
+<span class="nc" id="L119">    }</span>
+
+    @Override
+    @Transactional
+    public Map&lt;String, Object&gt; addComment(Map&lt;String, Object&gt; body, Long userId) {
+<span class="fc" id="L124">        Long postId = Long.valueOf(body.get(&quot;postId&quot;).toString());</span>
+<span class="fc" id="L125">        String content = (String) body.get(&quot;content&quot;);</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">        content = content == null ? &quot;&quot; : content.trim();</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        Long parentId = body.get(&quot;parentId&quot;) != null ? Long.valueOf(body.get(&quot;parentId&quot;).toString()) : null;</span>
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">        Long replyUserId = body.get(&quot;replyUserId&quot;) != null ? Long.valueOf(body.get(&quot;replyUserId&quot;).toString()) : null;</span>
+
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">        if (content.isEmpty()) {</span>
+<span class="nc" id="L131">            throw new RuntimeException(&quot;评论内容不能为空&quot;);</span>
+        }
+<span class="pc bpc" id="L133" title="1 of 2 branches missed.">        if (content.length() &gt; 1000) {</span>
+<span class="nc" id="L134">            throw new RuntimeException(&quot;评论内容不能超过1000个字符&quot;);</span>
+        }
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">        if (sensitiveWordService.containsSensitiveWord(content)) {</span>
+<span class="nc" id="L137">            throw new RuntimeException(&quot;评论包含敏感词，请修改后发布&quot;);</span>
+        }
+
+<span class="fc" id="L140">        Post post = postMapper.selectById(postId);</span>
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">        if (post == null) {</span>
+<span class="nc" id="L142">            throw new RuntimeException(&quot;游记不存在&quot;);</span>
+        }
+<span class="pc bpc" id="L144" title="1 of 4 branches missed.">        if (parentId != null &amp;&amp; parentId != 0) {</span>
+<span class="fc" id="L145">            Comment parent = commentMapper.selectById(parentId);</span>
+<span class="pc bpc" id="L146" title="2 of 4 branches missed.">            if (parent == null || !Objects.equals(parent.getPostId(), postId)) {</span>
+<span class="fc" id="L147">                throw new RuntimeException(&quot;父评论不存在或不属于当前游记&quot;);</span>
+            }
+        }
+
+<span class="fc" id="L151">        Comment comment = new Comment();</span>
+<span class="fc" id="L152">        comment.setPostId(postId);</span>
+<span class="fc" id="L153">        comment.setUserId(userId);</span>
+<span class="fc" id="L154">        comment.setParentId(parentId);</span>
+<span class="fc" id="L155">        comment.setReplyUserId(replyUserId);</span>
+<span class="fc" id="L156">        comment.setContent(content);</span>
+<span class="fc" id="L157">        comment.setLikeCount(0);</span>
+<span class="fc" id="L158">        comment.setCreateTime(LocalDateTime.now());</span>
+
+<span class="fc" id="L160">        commentMapper.insert(comment);</span>
+
+<span class="fc" id="L162">        refreshPostCommentCount(postId);</span>
+
+<span class="fc" id="L164">        Map&lt;String, Object&gt; result = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L165">        result.put(&quot;id&quot;, comment.getId());</span>
+<span class="fc" id="L166">        result.put(&quot;postId&quot;, comment.getPostId());</span>
+<span class="fc" id="L167">        result.put(&quot;userId&quot;, comment.getUserId());</span>
+<span class="fc" id="L168">        result.put(&quot;content&quot;, comment.getContent());</span>
+<span class="fc" id="L169">        result.put(&quot;createTime&quot;, comment.getCreateTime());</span>
+<span class="fc" id="L170">        return result;</span>
+    }
+
+    @Override
+    @Transactional
+    public void deleteComment(Long id, Long userId) {
+<span class="fc" id="L176">        Comment comment = commentMapper.selectById(id);</span>
+<span class="pc bpc" id="L177" title="1 of 2 branches missed.">        if (comment == null) {</span>
+<span class="nc" id="L178">            throw new RuntimeException(&quot;评论不存在&quot;);</span>
+        }
+<span class="pc bpc" id="L180" title="1 of 2 branches missed.">        if (!comment.getUserId().equals(userId)) {</span>
+<span class="fc" id="L181">            throw new RuntimeException(&quot;无权删除他人评论&quot;);</span>
+        }
+<span class="nc" id="L183">        commentMapper.deleteById(id);</span>
+<span class="nc" id="L184">        refreshPostCommentCount(comment.getPostId());</span>
+<span class="nc" id="L185">    }</span>
+
+    private void refreshPostCommentCount(Long postId) {
+<span class="fc" id="L188">        LambdaQueryWrapper&lt;Comment&gt; countWrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="fc" id="L189">        countWrapper.eq(Comment::getPostId, postId);</span>
+<span class="fc" id="L190">        long count = commentMapper.selectCount(countWrapper);</span>
+<span class="fc" id="L191">        Post post = new Post();</span>
+<span class="fc" id="L192">        post.setId(postId);</span>
+<span class="fc" id="L193">        post.setCommentCount((int) count);</span>
+<span class="fc" id="L194">        postMapper.updateById(post);</span>
+<span class="fc" id="L195">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

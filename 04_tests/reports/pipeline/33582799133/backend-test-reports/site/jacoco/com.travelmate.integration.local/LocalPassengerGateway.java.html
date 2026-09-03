@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LocalPassengerGateway.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.integration.local</a> &gt; <span class="el_source">LocalPassengerGateway.java</span></div><h1>LocalPassengerGateway.java</h1><pre class="source lang-java linenums">package com.travelmate.integration.local;
+
+import com.travelmate.entity.Passenger;
+import com.travelmate.integration.PassengerGateway;
+import com.travelmate.mapper.PassengerMapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+
+@Component
+@ConditionalOnProperty(name = &quot;app.integration.mode&quot;, havingValue = &quot;local&quot;, matchIfMissing = true)
+public class LocalPassengerGateway implements PassengerGateway {
+    private final PassengerMapper passengerMapper;
+
+<span class="fc" id="L14">    public LocalPassengerGateway(PassengerMapper passengerMapper) {</span>
+<span class="fc" id="L15">        this.passengerMapper = passengerMapper;</span>
+<span class="fc" id="L16">    }</span>
+
+    @Override
+    public PassengerSnapshot findOwnedPassenger(Long passengerId, Long userId) {
+<span class="fc" id="L20">        Passenger passenger = passengerMapper.selectById(passengerId);</span>
+<span class="pc bpc" id="L21" title="1 of 4 branches missed.">        if (passenger == null || !userId.equals(passenger.getUserId())) {</span>
+<span class="fc" id="L22">            return null;</span>
+        }
+<span class="fc" id="L24">        return new PassengerSnapshot(passenger.getId(), passenger.getName(), passenger.getIdCard());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.controller</a> &gt; <span class="el_source">FileController.java</span></div><h1>FileController.java</h1><pre class="source lang-java linenums">package com.travelmate.controller;
+
+import com.travelmate.common.Result;
+import com.travelmate.storage.FileStorageService;
+import com.travelmate.storage.StoredFile;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+
+@RestController
+@RequestMapping(&quot;/api/file&quot;)
+public class FileController {
+
+<span class="fc" id="L17">    private static final List&lt;String&gt; ALLOWED_EXTENSIONS = Arrays.asList(&quot;jpg&quot;, &quot;jpeg&quot;, &quot;png&quot;, &quot;gif&quot;, &quot;webp&quot;);</span>
+<span class="fc" id="L18">    private static final Set&lt;String&gt; ALLOWED_CONTENT_TYPES = Set.of(</span>
+            &quot;image/jpeg&quot;, &quot;image/png&quot;, &quot;image/gif&quot;, &quot;image/webp&quot;);
+    private static final long MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+    private final FileStorageService fileStorageService;
+
+<span class="fc" id="L24">    public FileController(FileStorageService fileStorageService) {</span>
+<span class="fc" id="L25">        this.fileStorageService = fileStorageService;</span>
+<span class="fc" id="L26">    }</span>
+
+    @PostMapping(&quot;/upload&quot;)
+    public Result&lt;Map&lt;String, String&gt;&gt; upload(@RequestParam(&quot;file&quot;) MultipartFile file) {
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        if (file.isEmpty())</span>
+<span class="fc" id="L31">            return Result.error(&quot;文件为空&quot;);</span>
+
+<span class="fc bfc" id="L33" title="All 2 branches covered.">        if (file.getSize() &gt; MAX_SIZE)</span>
+<span class="fc" id="L34">            return Result.error(&quot;文件过大，最大10MB&quot;);</span>
+
+<span class="fc" id="L36">        String originalName = file.getOriginalFilename();</span>
+<span class="fc" id="L37">        String ext = &quot;&quot;;</span>
+<span class="pc bpc" id="L38" title="2 of 4 branches missed.">        if (originalName != null &amp;&amp; originalName.contains(&quot;.&quot;)) {</span>
+<span class="fc" id="L39">            ext = originalName.substring(originalName.lastIndexOf(&quot;.&quot;) + 1).toLowerCase();</span>
+        }
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        if (!ALLOWED_EXTENSIONS.contains(ext))</span>
+<span class="fc" id="L42">            return Result.error(&quot;不支持的文件类型，仅允许: &quot; + String.join(&quot;,&quot;, ALLOWED_EXTENSIONS));</span>
+
+<span class="fc" id="L44">        String contentType = file.getContentType();</span>
+<span class="pc bpc" id="L45" title="1 of 4 branches missed.">        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase(Locale.ROOT)))</span>
+<span class="fc" id="L46">            return Result.error(&quot;文件内容不是受支持的图片格式&quot;);</span>
+
+        try {
+<span class="fc bfc" id="L49" title="All 2 branches covered.">            if (!hasValidImageSignature(file, ext))</span>
+<span class="fc" id="L50">                return Result.error(&quot;图片文件内容与扩展名不匹配&quot;);</span>
+<span class="nc" id="L51">        } catch (IOException e) {</span>
+<span class="nc" id="L52">            return Result.error(&quot;无法读取上传文件&quot;);</span>
+<span class="fc" id="L53">        }</span>
+
+        StoredFile storedFile;
+        try {
+<span class="fc" id="L57">            storedFile = fileStorageService.store(file, ext);</span>
+<span class="nc" id="L58">        } catch (IOException e) {</span>
+<span class="nc" id="L59">            return Result.error(&quot;上传失败，请稍后重试&quot;);</span>
+<span class="fc" id="L60">        }</span>
+
+<span class="fc" id="L62">        Map&lt;String, String&gt; data = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L63">        data.put(&quot;key&quot;, storedFile.objectKey());</span>
+<span class="fc" id="L64">        data.put(&quot;url&quot;, storedFile.url());</span>
+<span class="fc" id="L65">        data.put(&quot;name&quot;, originalName);</span>
+<span class="fc" id="L66">        return Result.success(data);</span>
+    }
+
+    private boolean hasValidImageSignature(MultipartFile file, String extension) throws IOException {
+<span class="fc" id="L70">        try (InputStream input = file.getInputStream()) {</span>
+<span class="fc" id="L71">            byte[] header = input.readNBytes(12);</span>
+<span class="pc bpc" id="L72" title="3 of 5 branches missed.">            return switch (extension) {</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">                case &quot;jpg&quot;, &quot;jpeg&quot; -&gt; header.length &gt;= 3</span>
+<span class="pc bpc" id="L74" title="2 of 6 branches missed.">                        &amp;&amp; unsigned(header[0]) == 0xff &amp;&amp; unsigned(header[1]) == 0xd8 &amp;&amp; unsigned(header[2]) == 0xff;</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">                case &quot;png&quot; -&gt; header.length &gt;= 8</span>
+<span class="nc bnc" id="L76" title="All 8 branches missed.">                        &amp;&amp; unsigned(header[0]) == 0x89 &amp;&amp; header[1] == 'P' &amp;&amp; header[2] == 'N' &amp;&amp; header[3] == 'G'</span>
+<span class="nc bnc" id="L77" title="All 4 branches missed.">                        &amp;&amp; unsigned(header[4]) == 0x0d &amp;&amp; unsigned(header[5]) == 0x0a</span>
+<span class="nc bnc" id="L78" title="All 4 branches missed.">                        &amp;&amp; unsigned(header[6]) == 0x1a &amp;&amp; unsigned(header[7]) == 0x0a;</span>
+<span class="nc bnc" id="L79" title="All 16 branches missed.">                case &quot;gif&quot; -&gt; header.length &gt;= 6</span>
+                        &amp;&amp; header[0] == 'G' &amp;&amp; header[1] == 'I' &amp;&amp; header[2] == 'F'
+                        &amp;&amp; header[3] == '8' &amp;&amp; (header[4] == '7' || header[4] == '9') &amp;&amp; header[5] == 'a';
+<span class="pc bpc" id="L82" title="9 of 18 branches missed.">                case &quot;webp&quot; -&gt; header.length &gt;= 12</span>
+                        &amp;&amp; header[0] == 'R' &amp;&amp; header[1] == 'I' &amp;&amp; header[2] == 'F' &amp;&amp; header[3] == 'F'
+                        &amp;&amp; header[8] == 'W' &amp;&amp; header[9] == 'E' &amp;&amp; header[10] == 'B' &amp;&amp; header[11] == 'P';
+<span class="pc" id="L85">                default -&gt; false;</span>
+            };
+        }
+    }
+
+    private int unsigned(byte value) {
+<span class="fc" id="L91">        return Byte.toUnsignedInt(value);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

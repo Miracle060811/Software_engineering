@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DotenvEnvironmentPostProcessor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.config</a> &gt; <span class="el_source">DotenvEnvironmentPostProcessor.java</span></div><h1>DotenvEnvironmentPostProcessor.java</h1><pre class="source lang-java linenums">package com.travelmate.config;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.env.EnvironmentPostProcessor;
+import org.springframework.core.Ordered;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.StandardEnvironment;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+<span class="fc" id="L20">public class DotenvEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {</span>
+
+    private static final String PROPERTY_SOURCE_NAME = &quot;travelmateDotenv&quot;;
+
+    @Override
+    public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
+<span class="fc" id="L26">        Map&lt;String, Object&gt; values = new LinkedHashMap&lt;&gt;();</span>
+
+<span class="fc bfc" id="L28" title="All 2 branches covered.">        for (Path path : getCandidatePaths()) {</span>
+<span class="fc" id="L29">            loadDotenv(path, values);</span>
+<span class="fc" id="L30">        }</span>
+
+<span class="pc bpc" id="L32" title="1 of 2 branches missed.">        if (values.isEmpty()) {</span>
+<span class="fc" id="L33">            return;</span>
+        }
+
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        if (environment.getPropertySources().contains(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME)) {</span>
+<span class="nc" id="L37">            environment.getPropertySources().addAfter(</span>
+                    StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME,
+                    new MapPropertySource(PROPERTY_SOURCE_NAME, values)
+            );
+        } else {
+<span class="nc" id="L42">            environment.getPropertySources().addFirst(new MapPropertySource(PROPERTY_SOURCE_NAME, values));</span>
+        }
+<span class="nc" id="L44">    }</span>
+
+    private List&lt;Path&gt; getCandidatePaths() {
+<span class="fc" id="L47">        Path workingDirectory = Paths.get(&quot;&quot;).toAbsolutePath().normalize();</span>
+<span class="fc" id="L48">        return List.of(</span>
+<span class="fc" id="L49">                workingDirectory.resolve(&quot;.env&quot;),</span>
+<span class="fc" id="L50">                workingDirectory.resolve(&quot;..&quot;).resolve(&quot;.env&quot;).normalize()</span>
+        );
+    }
+
+    private void loadDotenv(Path path, Map&lt;String, Object&gt; values) {
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">        if (!Files.isRegularFile(path)) {</span>
+<span class="fc" id="L56">            return;</span>
+        }
+
+<span class="nc" id="L59">        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {</span>
+            String line;
+<span class="nc bnc" id="L61" title="All 2 branches missed.">            while ((line = reader.readLine()) != null) {</span>
+<span class="nc" id="L62">                parseLine(line, values);</span>
+            }
+<span class="nc" id="L64">        } catch (IOException ignored) {</span>
+            // .env is optional; unreadable files should not block startup.
+<span class="nc" id="L66">        }</span>
+<span class="nc" id="L67">    }</span>
+
+    private void parseLine(String line, Map&lt;String, Object&gt; values) {
+<span class="nc" id="L70">        String trimmed = line.trim();</span>
+<span class="nc bnc" id="L71" title="All 4 branches missed.">        if (trimmed.isEmpty() || trimmed.startsWith(&quot;#&quot;)) {</span>
+<span class="nc" id="L72">            return;</span>
+        }
+
+<span class="nc" id="L75">        int separatorIndex = trimmed.indexOf('=');</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (separatorIndex &lt;= 0) {</span>
+<span class="nc" id="L77">            return;</span>
+        }
+
+<span class="nc" id="L80">        String key = trimmed.substring(0, separatorIndex).trim();</span>
+<span class="nc bnc" id="L81" title="All 4 branches missed.">        if (!key.matches(&quot;[A-Z_][A-Z0-9_]*&quot;) || values.containsKey(key)) {</span>
+<span class="nc" id="L82">            return;</span>
+        }
+
+<span class="nc" id="L85">        String value = trimmed.substring(separatorIndex + 1).trim();</span>
+<span class="nc bnc" id="L86" title="All 4 branches missed.">        if ((value.startsWith(&quot;\&quot;&quot;) &amp;&amp; value.endsWith(&quot;\&quot;&quot;))</span>
+<span class="nc bnc" id="L87" title="All 4 branches missed.">                || (value.startsWith(&quot;'&quot;) &amp;&amp; value.endsWith(&quot;'&quot;))) {</span>
+<span class="nc" id="L88">            value = value.substring(1, value.length() - 1);</span>
+        }
+
+<span class="nc" id="L91">        values.put(key, value);</span>
+<span class="nc" id="L92">    }</span>
+
+    @Override
+    public int getOrder() {
+<span class="fc" id="L96">        return Ordered.HIGHEST_PRECEDENCE + 20;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DelayAlertService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service</a> &gt; <span class="el_source">DelayAlertService.java</span></div><h1>DelayAlertService.java</h1><pre class="source lang-java linenums">package com.travelmate.service;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.travelmate.entity.Flight;
+import com.travelmate.entity.Notification;
+import com.travelmate.entity.TrafficOrder;
+import com.travelmate.mapper.FlightMapper;
+import com.travelmate.mapper.TrafficOrderMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.*;
+
+/**
+ * 航班延误预警服务（模拟）
+ * 定期检查航班并随机生成延误预警通知
+ */
+@Service
+<span class="fc" id="L21">public class DelayAlertService {</span>
+
+    @Autowired
+    private FlightMapper flightMapper;
+
+    @Autowired
+    private TrafficOrderMapper trafficOrderMapper;
+
+    @Autowired
+    private NotificationCenterService notificationCenterService;
+
+<span class="fc" id="L32">    private final Random random = new Random();</span>
+
+    /**
+     * 每60秒检查一次（实际项目中可改为每5分钟或更长）
+     */
+    @Scheduled(fixedDelay = 60000)
+    public void checkAndAlert() {
+        try {
+<span class="nc" id="L40">            List&lt;Flight&gt; flights = flightMapper.selectList(</span>
+<span class="nc" id="L41">                    new LambdaQueryWrapper&lt;Flight&gt;().eq(Flight::getStatus, 1));</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">            if (flights.isEmpty()) return;</span>
+
+            // 随机选择1-2个航班进行延误模拟
+<span class="nc" id="L45">            int count = random.nextInt(2) + 1;</span>
+<span class="nc bnc" id="L46" title="All 4 branches missed.">            for (int i = 0; i &lt; count &amp;&amp; i &lt; flights.size(); i++) {</span>
+<span class="nc" id="L47">                Flight flight = flights.get(random.nextInt(flights.size()));</span>
+<span class="nc" id="L48">                int delayMinutes = random.nextInt(120) + 15; // 15-135分钟</span>
+
+                // 查找该航班的所有已出票订单
+<span class="nc" id="L51">                List&lt;TrafficOrder&gt; orders = trafficOrderMapper.selectList(</span>
+                        new LambdaQueryWrapper&lt;TrafficOrder&gt;()
+<span class="nc" id="L53">                                .eq(TrafficOrder::getTicketId, flight.getId())</span>
+<span class="nc" id="L54">                                .eq(TrafficOrder::getOrderType, 0)</span>
+<span class="nc" id="L55">                                .eq(TrafficOrder::getStatus, 2));</span>
+
+<span class="nc bnc" id="L57" title="All 2 branches missed.">                for (TrafficOrder order : orders) {</span>
+<span class="nc" id="L58">                    notificationCenterService.createNotification(</span>
+<span class="nc" id="L59">                            order.getUserId(),</span>
+                            &quot;system&quot;,
+                            &quot;航班延误预警&quot;,
+<span class="nc" id="L62">                            String.format(&quot;您的航班 %s（%s→%s）预计延误%d分钟，请提前做好安排。&quot;,</span>
+<span class="nc" id="L63">                                    flight.getFlightNo(), flight.getDepartureCity(),</span>
+<span class="nc" id="L64">                                    flight.getArrivalCity(), delayMinutes));</span>
+<span class="nc" id="L65">                }</span>
+            }
+<span class="nc" id="L67">        } catch (Exception ignored) {</span>
+            // 静默处理，不影响主业务
+<span class="nc" id="L69">        }</span>
+<span class="nc" id="L70">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>S3FileStorageService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.storage</a> &gt; <span class="el_source">S3FileStorageService.java</span></div><h1>S3FileStorageService.java</h1><pre class="source lang-java linenums">package com.travelmate.storage;
+
+import io.minio.BucketExistsArgs;
+import io.minio.MakeBucketArgs;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
+import io.minio.StatObjectArgs;
+import io.minio.errors.ErrorResponseException;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+@Service
+@ConditionalOnProperty(prefix = &quot;app.storage&quot;, name = &quot;type&quot;, havingValue = &quot;s3&quot;)
+public class S3FileStorageService implements FileStorageService {
+
+    private final MinioClient client;
+    private final String bucket;
+    private final String publicBaseUrl;
+
+    public S3FileStorageService(
+            @Value(&quot;${app.storage.s3.endpoint:}&quot;) String endpoint,
+            @Value(&quot;${app.storage.s3.region:us-east-1}&quot;) String region,
+            @Value(&quot;${app.storage.s3.bucket:travelmate}&quot;) String bucket,
+            @Value(&quot;${app.storage.s3.access-key:}&quot;) String accessKey,
+            @Value(&quot;${app.storage.s3.secret-key:}&quot;) String secretKey,
+<span class="nc" id="L34">            @Value(&quot;${app.storage.s3.public-base-url:}&quot;) String publicBaseUrl) {</span>
+<span class="nc bnc" id="L35" title="All 4 branches missed.">        if (!StringUtils.hasText(endpoint) || !StringUtils.hasText(bucket)</span>
+<span class="nc bnc" id="L36" title="All 4 branches missed.">                || !StringUtils.hasText(accessKey) || !StringUtils.hasText(secretKey)</span>
+<span class="nc bnc" id="L37" title="All 2 branches missed.">                || !StringUtils.hasText(publicBaseUrl)) {</span>
+<span class="nc" id="L38">            throw new IllegalStateException(&quot;S3 storage requires endpoint, bucket, credentials and public base URL&quot;);</span>
+        }
+<span class="nc" id="L40">        this.client = MinioClient.builder()</span>
+<span class="nc" id="L41">                .endpoint(endpoint.trim())</span>
+<span class="nc" id="L42">                .credentials(accessKey.trim(), secretKey.trim())</span>
+<span class="nc" id="L43">                .region(region.trim())</span>
+<span class="nc" id="L44">                .build();</span>
+<span class="nc" id="L45">        this.bucket = bucket.trim();</span>
+<span class="nc" id="L46">        this.publicBaseUrl = publicBaseUrl.replaceAll(&quot;/+$&quot;, &quot;&quot;);</span>
+<span class="nc" id="L47">    }</span>
+
+    @PostConstruct
+    void ensureBucket() {
+        try {
+<span class="nc" id="L52">            boolean exists = client.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">            if (!exists) {</span>
+<span class="nc" id="L54">                client.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());</span>
+            }
+<span class="nc" id="L56">        } catch (Exception exception) {</span>
+<span class="nc" id="L57">            throw new IllegalStateException(&quot;Unable to initialize S3 bucket &quot; + bucket, exception);</span>
+<span class="nc" id="L58">        }</span>
+<span class="nc" id="L59">    }</span>
+
+    @Override
+    public StoredFile store(MultipartFile file, String extension) throws IOException {
+<span class="nc" id="L63">        String objectKey = StorageObjectNames.newImageKey(extension);</span>
+<span class="nc" id="L64">        try (InputStream input = file.getInputStream()) {</span>
+<span class="nc" id="L65">            client.putObject(PutObjectArgs.builder()</span>
+<span class="nc" id="L66">                    .bucket(bucket)</span>
+<span class="nc" id="L67">                    .object(objectKey)</span>
+<span class="nc" id="L68">                    .contentType(file.getContentType())</span>
+<span class="nc" id="L69">                    .stream(input, file.getSize(), -1)</span>
+<span class="nc" id="L70">                    .build());</span>
+<span class="nc" id="L71">        } catch (Exception exception) {</span>
+<span class="nc" id="L72">            throw new IOException(&quot;Object storage upload failed&quot;, exception);</span>
+<span class="nc" id="L73">        }</span>
+<span class="nc" id="L74">        return new StoredFile(objectKey, publicBaseUrl + &quot;/&quot; + objectKey);</span>
+    }
+
+    @Override
+    public void delete(String objectKey) throws IOException {
+<span class="nc" id="L79">        String safeKey = StorageObjectNames.requireSafeKey(objectKey);</span>
+        try {
+<span class="nc" id="L81">            client.removeObject(RemoveObjectArgs.builder().bucket(bucket).object(safeKey).build());</span>
+<span class="nc" id="L82">        } catch (Exception exception) {</span>
+<span class="nc" id="L83">            throw new IOException(&quot;Object storage deletion failed&quot;, exception);</span>
+<span class="nc" id="L84">        }</span>
+<span class="nc" id="L85">    }</span>
+
+    @Override
+    public boolean exists(String objectKey) throws IOException {
+<span class="nc" id="L89">        String safeKey = StorageObjectNames.requireSafeKey(objectKey);</span>
+        try {
+<span class="nc" id="L91">            client.statObject(StatObjectArgs.builder().bucket(bucket).object(safeKey).build());</span>
+<span class="nc" id="L92">            return true;</span>
+<span class="nc" id="L93">        } catch (ErrorResponseException exception) {</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">            if (&quot;NoSuchKey&quot;.equals(exception.errorResponse().code())</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">                    || &quot;NoSuchObject&quot;.equals(exception.errorResponse().code())) {</span>
+<span class="nc" id="L96">                return false;</span>
+            }
+<span class="nc" id="L98">            throw new IOException(&quot;Object storage existence check failed&quot;, exception);</span>
+<span class="nc" id="L99">        } catch (Exception exception) {</span>
+<span class="nc" id="L100">            throw new IOException(&quot;Object storage existence check failed&quot;, exception);</span>
+        }
+    }
+
+    @Override
+    public String publicUrl(String objectKey) {
+<span class="nc" id="L106">        return publicBaseUrl + &quot;/&quot; + StorageObjectNames.requireSafeKey(objectKey);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrainStationResolver.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">TrainStationResolver.java</span></div><h1>TrainStationResolver.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.travelmate.service.TrainBrowserSyncService;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+@Component
+public class TrainStationResolver {
+    private static final int MAX_ROUTE_CANDIDATES = 20;
+<span class="fc" id="L16">    private static final Map&lt;String, List&lt;String&gt;&gt; CITY_STATIONS = new LinkedHashMap&lt;&gt;();</span>
+
+    private final TrainBrowserSyncService trainBrowserSyncService;
+
+    static {
+<span class="fc" id="L21">        city(&quot;北京&quot;, &quot;北京南&quot;, &quot;北京西&quot;, &quot;北京&quot;, &quot;北京丰台&quot;, &quot;北京朝阳&quot;, &quot;清河&quot;, &quot;北京北&quot;);</span>
+<span class="fc" id="L22">        city(&quot;上海&quot;, &quot;上海虹桥&quot;, &quot;上海&quot;, &quot;上海南&quot;, &quot;上海西&quot;);</span>
+<span class="fc" id="L23">        city(&quot;广州&quot;, &quot;广州南&quot;, &quot;广州&quot;, &quot;广州东&quot;, &quot;广州白云&quot;, &quot;广州北&quot;);</span>
+<span class="fc" id="L24">        city(&quot;深圳&quot;, &quot;深圳北&quot;, &quot;深圳&quot;, &quot;福田&quot;, &quot;深圳东&quot;, &quot;深圳坪山&quot;);</span>
+<span class="fc" id="L25">        city(&quot;杭州&quot;, &quot;杭州东&quot;, &quot;杭州西&quot;, &quot;杭州&quot;, &quot;杭州南&quot;);</span>
+<span class="fc" id="L26">        city(&quot;南京&quot;, &quot;南京南&quot;, &quot;南京&quot;);</span>
+<span class="fc" id="L27">        city(&quot;苏州&quot;, &quot;苏州北&quot;, &quot;苏州&quot;, &quot;苏州园区&quot;, &quot;苏州新区&quot;);</span>
+<span class="fc" id="L28">        city(&quot;成都&quot;, &quot;成都东&quot;, &quot;成都西&quot;, &quot;成都南&quot;, &quot;成都&quot;);</span>
+<span class="fc" id="L29">        city(&quot;重庆&quot;, &quot;重庆北&quot;, &quot;重庆西&quot;, &quot;重庆沙坪坝&quot;, &quot;重庆&quot;);</span>
+<span class="fc" id="L30">        city(&quot;南昌&quot;, &quot;南昌西&quot;, &quot;南昌&quot;);</span>
+<span class="fc" id="L31">        city(&quot;泉州&quot;, &quot;泉州&quot;, &quot;泉州东&quot;, &quot;泉州南&quot;);</span>
+<span class="fc" id="L32">        city(&quot;厦门&quot;, &quot;厦门北&quot;, &quot;厦门&quot;);</span>
+<span class="fc" id="L33">        city(&quot;福州&quot;, &quot;福州南&quot;, &quot;福州&quot;);</span>
+<span class="fc" id="L34">        city(&quot;长沙&quot;, &quot;长沙南&quot;, &quot;长沙&quot;);</span>
+<span class="fc" id="L35">        city(&quot;武汉&quot;, &quot;武汉&quot;, &quot;汉口&quot;, &quot;武昌&quot;);</span>
+<span class="fc" id="L36">        city(&quot;西安&quot;, &quot;西安北&quot;, &quot;西安&quot;);</span>
+<span class="fc" id="L37">        city(&quot;郑州&quot;, &quot;郑州东&quot;, &quot;郑州&quot;);</span>
+<span class="fc" id="L38">        city(&quot;济南&quot;, &quot;济南西&quot;, &quot;济南&quot;, &quot;济南东&quot;);</span>
+<span class="fc" id="L39">        city(&quot;青岛&quot;, &quot;青岛北&quot;, &quot;青岛&quot;, &quot;青岛西&quot;);</span>
+<span class="fc" id="L40">        city(&quot;天津&quot;, &quot;天津西&quot;, &quot;天津&quot;, &quot;天津南&quot;);</span>
+<span class="fc" id="L41">        city(&quot;昆明&quot;, &quot;昆明南&quot;, &quot;昆明&quot;);</span>
+<span class="fc" id="L42">        city(&quot;合肥&quot;, &quot;合肥南&quot;, &quot;合肥&quot;);</span>
+<span class="fc" id="L43">        city(&quot;石家庄&quot;, &quot;石家庄&quot;, &quot;石家庄东&quot;, &quot;石家庄北&quot;);</span>
+<span class="fc" id="L44">        city(&quot;太原&quot;, &quot;太原南&quot;, &quot;太原&quot;);</span>
+<span class="fc" id="L45">        city(&quot;沈阳&quot;, &quot;沈阳北&quot;, &quot;沈阳南&quot;, &quot;沈阳&quot;);</span>
+<span class="fc" id="L46">        city(&quot;长春&quot;, &quot;长春西&quot;, &quot;长春&quot;, &quot;长春南&quot;);</span>
+<span class="fc" id="L47">        city(&quot;哈尔滨&quot;, &quot;哈尔滨西&quot;, &quot;哈尔滨&quot;, &quot;哈尔滨北&quot;);</span>
+<span class="fc" id="L48">        city(&quot;呼和浩特&quot;, &quot;呼和浩特东&quot;, &quot;呼和浩特&quot;);</span>
+<span class="fc" id="L49">        city(&quot;兰州&quot;, &quot;兰州西&quot;, &quot;兰州&quot;);</span>
+<span class="fc" id="L50">        city(&quot;贵阳&quot;, &quot;贵阳北&quot;, &quot;贵阳东&quot;, &quot;贵阳&quot;);</span>
+<span class="fc" id="L51">        city(&quot;南宁&quot;, &quot;南宁东&quot;, &quot;南宁&quot;);</span>
+<span class="fc" id="L52">        city(&quot;海口&quot;, &quot;海口东&quot;, &quot;海口&quot;);</span>
+<span class="fc" id="L53">        city(&quot;宁波&quot;, &quot;宁波&quot;);</span>
+<span class="fc" id="L54">        city(&quot;温州&quot;, &quot;温州南&quot;, &quot;温州北&quot;, &quot;温州&quot;);</span>
+<span class="fc" id="L55">        city(&quot;徐州&quot;, &quot;徐州东&quot;, &quot;徐州&quot;);</span>
+<span class="fc" id="L56">        city(&quot;无锡&quot;, &quot;无锡东&quot;, &quot;无锡&quot;, &quot;无锡新区&quot;);</span>
+<span class="fc" id="L57">        city(&quot;常州&quot;, &quot;常州北&quot;, &quot;常州&quot;);</span>
+<span class="fc" id="L58">    }</span>
+
+<span class="fc" id="L60">    public TrainStationResolver(TrainBrowserSyncService trainBrowserSyncService) {</span>
+<span class="fc" id="L61">        this.trainBrowserSyncService = trainBrowserSyncService;</span>
+<span class="fc" id="L62">    }</span>
+
+    public List&lt;RouteCandidate&gt; routeCandidates(String depInput, String arrInput) {
+<span class="fc" id="L65">        List&lt;String&gt; deps = stationsFor(depInput);</span>
+<span class="fc" id="L66">        List&lt;String&gt; arrs = stationsFor(arrInput);</span>
+<span class="fc" id="L67">        List&lt;RouteCandidate&gt; routes = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        for (String dep : deps) {</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">            for (String arr : arrs) {</span>
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">                if (dep.equals(arr)) {</span>
+<span class="nc" id="L71">                    continue;</span>
+                }
+<span class="fc" id="L73">                routes.add(new RouteCandidate(dep, arr));</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">                if (routes.size() &gt;= MAX_ROUTE_CANDIDATES) {</span>
+<span class="fc" id="L75">                    return routes;</span>
+                }
+<span class="fc" id="L77">            }</span>
+<span class="fc" id="L78">        }</span>
+<span class="nc" id="L79">        return routes;</span>
+    }
+
+    public List&lt;String&gt; stationsFor(String input) {
+<span class="fc" id="L83">        String normalized = normalize(input);</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (!StringUtils.hasText(normalized)) {</span>
+<span class="nc" id="L85">            return List.of();</span>
+        }
+
+<span class="fc" id="L88">        List&lt;String&gt; official = trainBrowserSyncService.resolveStationCandidates(normalized);</span>
+<span class="fc" id="L89">        List&lt;String&gt; mapped = CITY_STATIONS.get(normalized);</span>
+<span class="pc bpc" id="L90" title="1 of 4 branches missed.">        if (mapped == null &amp;&amp; official.size() &lt;= 1) {</span>
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">            return official.isEmpty() ? List.of(normalized) : official;</span>
+        }
+
+<span class="fc" id="L94">        List&lt;String&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">        if (mapped != null) {</span>
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">            boolean catalogExpanded = official.size() &gt; 1;</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">            for (String station : mapped) {</span>
+<span class="pc bpc" id="L98" title="3 of 6 branches missed.">                if ((!catalogExpanded || official.contains(station)) &amp;&amp; !result.contains(station)) {</span>
+<span class="fc" id="L99">                    result.add(station);</span>
+                }
+<span class="fc" id="L101">            }</span>
+        }
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        for (String station : official) {</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">            if (!result.contains(station)) {</span>
+<span class="fc" id="L105">                result.add(station);</span>
+            }
+<span class="fc" id="L107">        }</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        if (result.isEmpty()) {</span>
+<span class="nc" id="L109">            result.add(normalized);</span>
+        }
+<span class="fc" id="L111">        return result;</span>
+    }
+
+    public boolean isCityInput(String input) {
+<span class="nc" id="L115">        return CITY_STATIONS.containsKey(normalize(input));</span>
+    }
+
+    private static void city(String city, String... stations) {
+<span class="fc" id="L119">        CITY_STATIONS.put(city, List.of(stations));</span>
+<span class="fc" id="L120">    }</span>
+
+    private static String normalize(String value) {
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">        return StringUtils.hasText(value) ? value.trim().replace(&quot;　&quot;, &quot;&quot;).toUpperCase(Locale.ROOT) : &quot;&quot;;</span>
+    }
+
+<span class="fc" id="L126">    public record RouteCandidate(String depStation, String arrStation) {</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

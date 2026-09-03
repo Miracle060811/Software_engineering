@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FlightServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">FlightServiceImpl.java</span></div><h1>FlightServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travelmate.entity.Flight;
+import com.travelmate.mapper.FlightMapper;
+import com.travelmate.service.FlightService;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.*;
+
+@Service
+<span class="fc" id="L19">public class FlightServiceImpl extends ServiceImpl&lt;FlightMapper, Flight&gt; implements FlightService {</span>
+
+    @Override
+    public List&lt;Flight&gt; searchFlights(String depCity, String arrCity, String depDate) {
+<span class="nc" id="L23">        LambdaQueryWrapper&lt;Flight&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L24">        wrapper.eq(Flight::getStatus, 1);</span>
+<span class="nc" id="L25">        wrapper.gt(Flight::getAvailableSeats, 0);</span>
+
+<span class="nc bnc" id="L27" title="All 2 branches missed.">        if (StringUtils.hasText(depCity)) {</span>
+<span class="nc" id="L28">            wrapper.eq(Flight::getDepartureCity, depCity);</span>
+        }
+<span class="nc bnc" id="L30" title="All 2 branches missed.">        if (StringUtils.hasText(arrCity)) {</span>
+<span class="nc" id="L31">            wrapper.eq(Flight::getArrivalCity, arrCity);</span>
+        }
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        if (StringUtils.hasText(depDate)) {</span>
+<span class="nc" id="L34">            wrapper.likeRight(Flight::getDepartureTime, depDate);</span>
+        }
+<span class="nc" id="L36">        wrapper.orderByAsc(Flight::getDepartureTime);</span>
+
+<span class="nc" id="L38">        List&lt;Flight&gt; results = list(wrapper);</span>
+
+        // 数据库里没有该日期的航班时，动态生成演示数据
+<span class="nc bnc" id="L41" title="All 4 branches missed.">        if (results.isEmpty() &amp;&amp; StringUtils.hasText(depDate)) {</span>
+<span class="nc bnc" id="L42" title="All 4 branches missed.">            if (StringUtils.hasText(depCity) &amp;&amp; StringUtils.hasText(arrCity)) {</span>
+<span class="nc" id="L43">                results = generateDemoFlights(depCity, arrCity, depDate);</span>
+            } else {
+<span class="nc" id="L45">                results = generateDemoFlightsMultiRoute(depDate, depCity, arrCity);</span>
+            }
+        }
+
+<span class="nc" id="L49">        return results;</span>
+    }
+
+    private List&lt;Flight&gt; generateDemoFlightsMultiRoute(String depDate, String depCity, String arrCity) {
+<span class="nc" id="L53">        String[][] routes = {</span>
+            {&quot;北京&quot;, &quot;上海&quot;}, {&quot;上海&quot;, &quot;北京&quot;}, {&quot;北京&quot;, &quot;广州&quot;}, {&quot;广州&quot;, &quot;北京&quot;},
+            {&quot;北京&quot;, &quot;成都&quot;}, {&quot;上海&quot;, &quot;成都&quot;}, {&quot;广州&quot;, &quot;成都&quot;}, {&quot;北京&quot;, &quot;三亚&quot;},
+            {&quot;上海&quot;, &quot;三亚&quot;}, {&quot;北京&quot;, &quot;西安&quot;}, {&quot;上海&quot;, &quot;杭州&quot;}, {&quot;广州&quot;, &quot;重庆&quot;}
+        };
+<span class="nc" id="L58">        List&lt;Flight&gt; all = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        for (String[] route : routes) {</span>
+<span class="nc" id="L60">            String dep = route[0], arr = route[1];</span>
+<span class="nc bnc" id="L61" title="All 4 branches missed.">            if (StringUtils.hasText(depCity) &amp;&amp; !dep.equals(depCity)) continue;</span>
+<span class="nc bnc" id="L62" title="All 4 branches missed.">            if (StringUtils.hasText(arrCity) &amp;&amp; !arr.equals(arrCity)) continue;</span>
+<span class="nc" id="L63">            all.addAll(generateDemoFlights(dep, arr, depDate));</span>
+        }
+<span class="nc" id="L65">        return all;</span>
+    }
+
+    private List&lt;Flight&gt; generateDemoFlights(String depCity, String arrCity, String depDate) {
+<span class="nc" id="L69">        String[][] airlines = {</span>
+            {&quot;CA&quot;, &quot;中国国际航空&quot;},
+            {&quot;MU&quot;, &quot;中国东方航空&quot;},
+            {&quot;CZ&quot;, &quot;中国南方航空&quot;},
+            {&quot;HU&quot;, &quot;海南航空&quot;},
+            {&quot;3U&quot;, &quot;四川航空&quot;}
+        };
+
+<span class="nc" id="L77">        int durationMinutes = estimateDuration(depCity, arrCity);</span>
+<span class="nc" id="L78">        BigDecimal baseEconomy = BigDecimal.valueOf(Math.max(280, durationMinutes * 2L))</span>
+<span class="nc" id="L79">                .setScale(0, RoundingMode.HALF_UP);</span>
+<span class="nc" id="L80">        BigDecimal baseBusiness = baseEconomy.multiply(BigDecimal.valueOf(3.2))</span>
+<span class="nc" id="L81">                .setScale(0, RoundingMode.HALF_UP);</span>
+
+        LocalDate date;
+        try {
+<span class="nc" id="L85">            date = LocalDate.parse(depDate);</span>
+<span class="nc" id="L86">        } catch (Exception e) {</span>
+<span class="nc" id="L87">            return Collections.emptyList();</span>
+<span class="nc" id="L88">        }</span>
+
+<span class="nc" id="L90">        int[][] departureTimes = {{7, 30}, {10, 0}, {13, 30}, {17, 0}, {20, 30}};</span>
+<span class="nc" id="L91">        double[] priceFactors = {0.85, 0.925, 1.0, 1.075, 1.15};</span>
+<span class="nc" id="L92">        int routeSeed = Math.floorMod((depCity + arrCity).hashCode(), 100);</span>
+
+<span class="nc" id="L94">        List&lt;Flight&gt; flights = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        for (int i = 0; i &lt; departureTimes.length; i++) {</span>
+<span class="nc" id="L96">            String[] airline = airlines[i % airlines.length];</span>
+<span class="nc" id="L97">            LocalDateTime dep = LocalDateTime.of(date, LocalTime.of(departureTimes[i][0], departureTimes[i][1]));</span>
+<span class="nc" id="L98">            LocalDateTime arr = dep.plusMinutes(durationMinutes);</span>
+
+<span class="nc" id="L100">            BigDecimal ecoPrice = baseEconomy.multiply(BigDecimal.valueOf(priceFactors[i]))</span>
+<span class="nc" id="L101">                    .setScale(0, RoundingMode.HALF_UP);</span>
+<span class="nc" id="L102">            BigDecimal bizPrice = baseBusiness.multiply(BigDecimal.valueOf(priceFactors[i]))</span>
+<span class="nc" id="L103">                    .setScale(0, RoundingMode.HALF_UP);</span>
+
+<span class="nc" id="L105">            String flightNo = airline[0] + (1000 + routeSeed + i * 11);</span>
+
+            // 先查是否已存在（避免重复插入）
+<span class="nc" id="L108">            LambdaQueryWrapper&lt;Flight&gt; existCheck = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L109">            existCheck.eq(Flight::getFlightNo, flightNo).likeRight(Flight::getDepartureTime, depDate);</span>
+<span class="nc" id="L110">            Flight existing = getOne(existCheck);</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">            if (existing != null) {</span>
+<span class="nc" id="L112">                flights.add(existing);</span>
+<span class="nc" id="L113">                continue;</span>
+            }
+
+<span class="nc" id="L116">            Flight f = new Flight();</span>
+<span class="nc" id="L117">            f.setFlightNo(flightNo);</span>
+<span class="nc" id="L118">            f.setAirline(airline[1]);</span>
+<span class="nc" id="L119">            f.setDepartureCity(depCity);</span>
+<span class="nc" id="L120">            f.setArrivalCity(arrCity);</span>
+<span class="nc" id="L121">            f.setDepartureTime(dep);</span>
+<span class="nc" id="L122">            f.setArrivalTime(arr);</span>
+<span class="nc" id="L123">            f.setEconomyPrice(ecoPrice);</span>
+<span class="nc" id="L124">            f.setBusinessPrice(bizPrice);</span>
+<span class="nc" id="L125">            f.setTotalSeats(180);</span>
+<span class="nc" id="L126">            f.setAvailableSeats(30 + i * 15);</span>
+<span class="nc" id="L127">            f.setStatus(1);</span>
+<span class="nc" id="L128">            save(f);</span>
+<span class="nc" id="L129">            flights.add(f);</span>
+        }
+<span class="nc" id="L131">        return flights;</span>
+    }
+
+    private int estimateDuration(String depCity, String arrCity) {
+<span class="nc" id="L135">        Map&lt;String, Integer&gt; durations = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L136">        durations.put(&quot;北京-上海&quot;, 130);   durations.put(&quot;上海-北京&quot;, 130);</span>
+<span class="nc" id="L137">        durations.put(&quot;北京-广州&quot;, 210);   durations.put(&quot;广州-北京&quot;, 210);</span>
+<span class="nc" id="L138">        durations.put(&quot;北京-成都&quot;, 150);   durations.put(&quot;成都-北京&quot;, 150);</span>
+<span class="nc" id="L139">        durations.put(&quot;北京-三亚&quot;, 210);   durations.put(&quot;三亚-北京&quot;, 210);</span>
+<span class="nc" id="L140">        durations.put(&quot;北京-西安&quot;, 105);   durations.put(&quot;西安-北京&quot;, 105);</span>
+<span class="nc" id="L141">        durations.put(&quot;北京-杭州&quot;, 90);    durations.put(&quot;杭州-北京&quot;, 90);</span>
+<span class="nc" id="L142">        durations.put(&quot;北京-重庆&quot;, 150);   durations.put(&quot;重庆-北京&quot;, 150);</span>
+<span class="nc" id="L143">        durations.put(&quot;北京-丽江&quot;, 180);   durations.put(&quot;丽江-北京&quot;, 180);</span>
+<span class="nc" id="L144">        durations.put(&quot;上海-广州&quot;, 150);   durations.put(&quot;广州-上海&quot;, 150);</span>
+<span class="nc" id="L145">        durations.put(&quot;上海-成都&quot;, 150);   durations.put(&quot;成都-上海&quot;, 150);</span>
+<span class="nc" id="L146">        durations.put(&quot;上海-三亚&quot;, 210);   durations.put(&quot;三亚-上海&quot;, 210);</span>
+<span class="nc" id="L147">        durations.put(&quot;上海-西安&quot;, 120);   durations.put(&quot;西安-上海&quot;, 120);</span>
+<span class="nc" id="L148">        durations.put(&quot;上海-重庆&quot;, 150);   durations.put(&quot;重庆-上海&quot;, 150);</span>
+<span class="nc" id="L149">        durations.put(&quot;上海-南京&quot;, 60);    durations.put(&quot;南京-上海&quot;, 60);</span>
+<span class="nc" id="L150">        durations.put(&quot;上海-厦门&quot;, 110);   durations.put(&quot;厦门-上海&quot;, 110);</span>
+<span class="nc" id="L151">        durations.put(&quot;广州-成都&quot;, 130);   durations.put(&quot;成都-广州&quot;, 130);</span>
+<span class="nc" id="L152">        durations.put(&quot;广州-三亚&quot;, 90);    durations.put(&quot;三亚-广州&quot;, 90);</span>
+<span class="nc" id="L153">        durations.put(&quot;广州-重庆&quot;, 120);   durations.put(&quot;重庆-广州&quot;, 120);</span>
+<span class="nc" id="L154">        return durations.getOrDefault(depCity + &quot;-&quot; + arrCity, 120);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

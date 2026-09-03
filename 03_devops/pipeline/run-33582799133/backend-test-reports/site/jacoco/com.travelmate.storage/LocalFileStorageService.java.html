@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LocalFileStorageService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.storage</a> &gt; <span class="el_source">LocalFileStorageService.java</span></div><h1>LocalFileStorageService.java</h1><pre class="source lang-java linenums">package com.travelmate.storage;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+@Service
+@ConditionalOnProperty(prefix = &quot;app.storage&quot;, name = &quot;type&quot;, havingValue = &quot;local&quot;, matchIfMissing = true)
+public class LocalFileStorageService implements FileStorageService {
+
+    private final Path uploadRoot;
+
+<span class="fc" id="L18">    public LocalFileStorageService(@Value(&quot;${app.upload-dir:uploads}&quot;) String uploadDir) {</span>
+<span class="fc" id="L19">        this.uploadRoot = Path.of(uploadDir).toAbsolutePath().normalize();</span>
+<span class="fc" id="L20">    }</span>
+
+    @Override
+    public StoredFile store(MultipartFile file, String extension) throws IOException {
+<span class="fc" id="L24">        String objectKey = StorageObjectNames.newImageKey(extension);</span>
+<span class="fc" id="L25">        String relativeName = objectKey.substring(&quot;uploads/&quot;.length());</span>
+<span class="fc" id="L26">        Path destination = uploadRoot.resolve(relativeName).normalize();</span>
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">        if (!destination.startsWith(uploadRoot)) {</span>
+<span class="nc" id="L28">            throw new IOException(&quot;Invalid storage path&quot;);</span>
+        }
+<span class="fc" id="L30">        Files.createDirectories(destination.getParent());</span>
+<span class="fc" id="L31">        file.transferTo(destination);</span>
+<span class="fc" id="L32">        return new StoredFile(objectKey, &quot;/&quot; + objectKey);</span>
+    }
+
+    @Override
+    public void delete(String objectKey) throws IOException {
+<span class="fc" id="L37">        Files.deleteIfExists(resolve(objectKey));</span>
+<span class="fc" id="L38">    }</span>
+
+    @Override
+    public boolean exists(String objectKey) {
+<span class="fc" id="L42">        return Files.isRegularFile(resolve(objectKey));</span>
+    }
+
+    @Override
+    public String publicUrl(String objectKey) {
+<span class="fc" id="L47">        return &quot;/&quot; + StorageObjectNames.requireSafeKey(objectKey);</span>
+    }
+
+    private Path resolve(String objectKey) {
+<span class="fc" id="L51">        String safeKey = StorageObjectNames.requireSafeKey(objectKey);</span>
+<span class="fc" id="L52">        Path destination = uploadRoot.resolve(safeKey.substring(&quot;uploads/&quot;.length())).normalize();</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if (!destination.startsWith(uploadRoot)) {</span>
+<span class="nc" id="L54">            throw new IllegalArgumentException(&quot;Invalid storage object key&quot;);</span>
+        }
+<span class="fc" id="L56">        return destination;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

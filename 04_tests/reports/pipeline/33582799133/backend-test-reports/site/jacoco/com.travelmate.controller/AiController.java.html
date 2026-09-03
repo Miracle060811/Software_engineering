@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AiController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.controller</a> &gt; <span class="el_source">AiController.java</span></div><h1>AiController.java</h1><pre class="source lang-java linenums">package com.travelmate.controller;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.travelmate.backend.entity.User;
+import com.travelmate.backend.mapper.UserMapper;
+import com.travelmate.common.Result;
+import com.travelmate.dto.AiChatDTO;
+import com.travelmate.dto.AiPlanCreateDTO;
+import com.travelmate.entity.AiChat;
+import com.travelmate.entity.AiPlan;
+import com.travelmate.entity.Notification;
+import com.travelmate.service.AiService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import com.travelmate.annotation.RateLimiter;
+
+@RestController
+<span class="fc" id="L22">public class AiController {</span>
+
+    @Autowired
+    private AiService aiService;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    // ======================== AI 行程接口 ========================
+
+    /**
+     * POST /api/ai/plan/generate - 生成AI行程（需要认证）
+     */
+    @PostMapping(&quot;/api/ai/plan/generate&quot;)
+    public Result&lt;AiPlan&gt; generatePlan(@RequestBody AiPlanCreateDTO dto) {
+<span class="nc" id="L37">        Long userId = getCurrentUserId();</span>
+<span class="nc" id="L38">        AiPlan plan = aiService.generatePlan(dto, userId);</span>
+<span class="nc" id="L39">        return Result.success(plan);</span>
+    }
+
+    /**
+     * GET /api/ai/plan/list - 我的行程列表
+     */
+    @GetMapping(&quot;/api/ai/plan/list&quot;)
+    public Result&lt;List&lt;AiPlan&gt;&gt; listMyPlans() {
+<span class="nc" id="L47">        Long userId = getCurrentUserId();</span>
+<span class="nc" id="L48">        return Result.success(aiService.listMyPlans(userId));</span>
+    }
+
+    /**
+     * GET /api/ai/plan/{id} - 行程详情
+     */
+    @GetMapping(&quot;/api/ai/plan/{id}&quot;)
+    public Result&lt;AiPlan&gt; getPlan(@PathVariable Long id) {
+<span class="nc" id="L56">        Long userId = getCurrentUserId();</span>
+<span class="nc" id="L57">        return Result.success(aiService.getPlanById(id, userId));</span>
+    }
+
+    /**
+     * POST /api/ai/chat - AI客服对话
+     */
+    @RateLimiter(maxRequests = 10, timeWindowSeconds = 1)
+    @PostMapping(&quot;/api/ai/chat&quot;)
+    public Result&lt;AiChat&gt; chat(@RequestBody AiChatDTO dto) {
+<span class="nc" id="L66">        Long userId = getCurrentUserId();</span>
+<span class="nc" id="L67">        AiChat reply = aiService.chat(dto, userId);</span>
+<span class="nc" id="L68">        return Result.success(reply);</span>
+    }
+
+    // ======================== 通知接口 ========================
+
+    /**
+     * GET /api/notification/list - 通知列表（需认证）
+     */
+    @GetMapping(&quot;/api/notification/list&quot;)
+    public Result&lt;List&lt;Notification&gt;&gt; listNotifications() {
+<span class="nc" id="L78">        Long userId = getCurrentUserId();</span>
+<span class="nc" id="L79">        return Result.success(aiService.listNotifications(userId));</span>
+    }
+
+    /**
+     * POST /api/notification/read/{id} - 标记已读
+     */
+    @PostMapping(&quot;/api/notification/read/{id}&quot;)
+    public Result&lt;Void&gt; markRead(@PathVariable Long id) {
+<span class="nc" id="L87">        Long userId = getCurrentUserId();</span>
+<span class="nc" id="L88">        aiService.markRead(id, userId);</span>
+<span class="nc" id="L89">        return Result.success();</span>
+    }
+
+    /**
+     * DELETE /api/notification/clear-all - 清空通知
+     */
+    @DeleteMapping(&quot;/api/notification/clear-all&quot;)
+    public Result&lt;Void&gt; deleteAllNotifications() {
+<span class="nc" id="L97">        Long userId = getCurrentUserId();</span>
+<span class="nc" id="L98">        aiService.deleteAllNotifications(userId);</span>
+<span class="nc" id="L99">        return Result.success();</span>
+    }
+
+    /**
+     * DELETE /api/notifications/clear-all - 清空通知（避免与 /api/notification/{id} 冲突）
+     */
+    @DeleteMapping(&quot;/api/notifications/clear-all&quot;)
+    public Result&lt;Void&gt; deleteAllNotificationsCompat() {
+<span class="nc" id="L107">        return deleteAllNotifications();</span>
+    }
+
+    /**
+     * DELETE /api/notification/{id} - 删除通知
+     */
+    @DeleteMapping(&quot;/api/notification/{id}&quot;)
+    public Result&lt;Void&gt; deleteNotification(@PathVariable Long id) {
+<span class="nc" id="L115">        Long userId = getCurrentUserId();</span>
+<span class="nc" id="L116">        aiService.deleteNotification(id, userId);</span>
+<span class="nc" id="L117">        return Result.success();</span>
+    }
+
+    /**
+     * GET /api/notification/unread-count - 未读通知数
+     */
+    @GetMapping(&quot;/api/notification/unread-count&quot;)
+    public Result&lt;Long&gt; unreadCount() {
+<span class="nc" id="L125">        Long userId = getCurrentUserId();</span>
+<span class="nc" id="L126">        return Result.success(aiService.unreadCount(userId));</span>
+    }
+
+    // ======================== 工具方法 ========================
+
+    private Long getCurrentUserId() {
+<span class="nc" id="L132">        String username = SecurityContextHolder.getContext().getAuthentication().getName();</span>
+<span class="nc" id="L133">        LambdaQueryWrapper&lt;User&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L134">        wrapper.eq(User::getUsername, username);</span>
+<span class="nc" id="L135">        User user = userMapper.selectOne(wrapper);</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L137">            throw new RuntimeException(&quot;用户不存在&quot;);</span>
+        }
+<span class="nc" id="L139">        return user.getId();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrainLiveSyncServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">TrainLiveSyncServiceImpl.java</span></div><h1>TrainLiveSyncServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.travelmate.dto.TrainBrowserTicket;
+import com.travelmate.dto.TrainLiveSyncStatus;
+import com.travelmate.common.LogSanitizer;
+import com.travelmate.entity.Train;
+import com.travelmate.mapper.TrainMapper;
+import com.travelmate.service.TrainBrowserSyncService;
+import com.travelmate.service.TrainLiveSyncService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.Set;
+
+@Service
+public class TrainLiveSyncServiceImpl implements TrainLiveSyncService {
+<span class="fc" id="L34">    private static final Logger log = LoggerFactory.getLogger(TrainLiveSyncServiceImpl.class);</span>
+    private static final int MAX_SYNC_DAYS = 15;
+    private static final int MAX_SYNC_TRAINS_PER_ROUTE = 30;
+<span class="fc" id="L37">    private static final Duration ATTEMPT_CACHE_TTL = Duration.ofMinutes(8);</span>
+
+    private static final String SOURCE_12306_PAGE = &quot;12306_PAGE&quot;;
+    private static final String SOURCE_LOCAL_DEMO_CACHE = &quot;LOCAL_DEMO_CACHE&quot;;
+    private static final String SOURCE_LOCAL_DATABASE = &quot;LOCAL_DATABASE&quot;;
+<span class="fc" id="L42">    private static final Set&lt;String&gt; CITY_ALIASES = Set.of(&quot;北京&quot;, &quot;上海&quot;, &quot;广州&quot;, &quot;杭州&quot;, &quot;成都&quot;, &quot;重庆&quot;);</span>
+
+    private final TrainMapper trainMapper;
+    private final TrainBrowserSyncService trainBrowserSyncService;
+    private final AtomicReference&lt;TrainLiveSyncStatus&gt; lastStatus;
+    private final Map&lt;String, TrainLiveSyncStatus&gt; recentStatuses;
+    private final Map&lt;String, List&lt;Train&gt;&gt; recentLiveTrains;
+
+    @Value(&quot;${train.live-sync.enabled:true}&quot;)
+    private boolean enabled;
+
+<span class="fc" id="L53">    private static final Map&lt;String, Station&gt; STATIONS = new LinkedHashMap&lt;&gt;();</span>
+
+    static {
+<span class="fc" id="L56">        station(&quot;北京南&quot;, &quot;VNP&quot;);</span>
+<span class="fc" id="L57">        station(&quot;北京西&quot;, &quot;BXP&quot;);</span>
+<span class="fc" id="L58">        station(&quot;上海虹桥&quot;, &quot;AOH&quot;);</span>
+<span class="fc" id="L59">        station(&quot;广州南&quot;, &quot;IZQ&quot;);</span>
+<span class="fc" id="L60">        station(&quot;杭州东&quot;, &quot;HGH&quot;);</span>
+<span class="fc" id="L61">        station(&quot;成都东&quot;, &quot;ICW&quot;);</span>
+<span class="fc" id="L62">        station(&quot;重庆北&quot;, &quot;CUW&quot;);</span>
+
+        // 城市输入没有唯一站名时，使用主要客运站作为 12306 查询入口。
+<span class="fc" id="L65">        stationAlias(&quot;北京&quot;, &quot;北京南&quot;, &quot;VNP&quot;);</span>
+<span class="fc" id="L66">        stationAlias(&quot;上海&quot;, &quot;上海虹桥&quot;, &quot;AOH&quot;);</span>
+<span class="fc" id="L67">        stationAlias(&quot;广州&quot;, &quot;广州南&quot;, &quot;IZQ&quot;);</span>
+<span class="fc" id="L68">        stationAlias(&quot;杭州&quot;, &quot;杭州东&quot;, &quot;HGH&quot;);</span>
+<span class="fc" id="L69">        stationAlias(&quot;成都&quot;, &quot;成都东&quot;, &quot;ICW&quot;);</span>
+<span class="fc" id="L70">        stationAlias(&quot;重庆&quot;, &quot;重庆北&quot;, &quot;CUW&quot;);</span>
+<span class="fc" id="L71">    }</span>
+
+<span class="fc" id="L73">    public TrainLiveSyncServiceImpl(TrainMapper trainMapper, TrainBrowserSyncService trainBrowserSyncService) {</span>
+<span class="fc" id="L74">        this.trainMapper = trainMapper;</span>
+<span class="fc" id="L75">        this.trainBrowserSyncService = trainBrowserSyncService;</span>
+<span class="fc" id="L76">        this.lastStatus = new AtomicReference&lt;&gt;(</span>
+                new TrainLiveSyncStatus(true, false, false, &quot;尚未同步&quot;, null, null, SOURCE_LOCAL_DATABASE, 0, null));
+<span class="fc" id="L78">        this.recentStatuses = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L79">        this.recentLiveTrains = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L80">    }</span>
+
+    @Override
+    public TrainLiveSyncStatus syncIfSupported(String depStation, String arrStation, String date) {
+<span class="nc" id="L84">        String normalizedDep = normalizeStation(depStation);</span>
+<span class="nc" id="L85">        String normalizedArr = normalizeStation(arrStation);</span>
+<span class="nc" id="L86">        String routeKey = routeKey(normalizedDep, normalizedArr);</span>
+
+<span class="nc bnc" id="L88" title="All 2 branches missed.">        if (!enabled) {</span>
+<span class="nc" id="L89">            return remember(false, false, false, &quot;12306 页面读取演示已关闭，展示本地数据库数据&quot;,</span>
+                    routeKey, date, SOURCE_LOCAL_DATABASE, 0);
+        }
+<span class="nc bnc" id="L92" title="All 6 branches missed.">        if (!StringUtils.hasText(normalizedDep) || !StringUtils.hasText(normalizedArr) || !StringUtils.hasText(date)) {</span>
+<span class="nc" id="L93">            return remember(true, false, false, &quot;请输入出发站、到达站和日期后再尝试读取 12306 页面&quot;,</span>
+                    routeKey, date, SOURCE_LOCAL_DATABASE, 0);
+        }
+<span class="nc" id="L96">        Station configuredDep = STATIONS.get(normalizedDep);</span>
+<span class="nc" id="L97">        Station configuredArr = STATIONS.get(normalizedArr);</span>
+<span class="nc bnc" id="L98" title="All 4 branches missed.">        if (CITY_ALIASES.contains(normalizedDep) || CITY_ALIASES.contains(normalizedArr)) {</span>
+<span class="nc" id="L99">            return remember(true, true, false, &quot;城市已映射到主要车站；输入具体车站名可尝试 12306 实时读取&quot;,</span>
+                    routeKey, date, SOURCE_LOCAL_DATABASE, 0);
+        }
+
+        LocalDate trainDate;
+        try {
+<span class="nc" id="L105">            trainDate = LocalDate.parse(date);</span>
+<span class="nc" id="L106">        } catch (Exception ex) {</span>
+<span class="nc" id="L107">            return remember(true, false, false, &quot;日期格式应为 yyyy-MM-dd&quot;,</span>
+                    routeKey, date, SOURCE_LOCAL_DATABASE, 0);
+<span class="nc" id="L109">        }</span>
+<span class="nc" id="L110">        LocalDate today = LocalDate.now();</span>
+<span class="nc bnc" id="L111" title="All 4 branches missed.">        if (trainDate.isBefore(today) || trainDate.isAfter(today.plusDays(MAX_SYNC_DAYS))) {</span>
+<span class="nc" id="L112">            return remember(true, false, false, &quot;仅允许读取未来 15 天内的 12306 公开余票页面&quot;,</span>
+                    routeKey, date, SOURCE_LOCAL_DATABASE, 0);
+        }
+
+<span class="nc" id="L116">        String attemptKey = routeKey + &quot;|&quot; + date;</span>
+<span class="nc" id="L117">        TrainLiveSyncStatus recent = recentStatuses.get(attemptKey);</span>
+<span class="nc bnc" id="L118" title="All 4 branches missed.">        if (recent != null &amp;&amp; recent.getSyncedAt() != null</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">                &amp;&amp; recent.getSyncedAt().plus(ATTEMPT_CACHE_TTL).isAfter(LocalDateTime.now())) {</span>
+<span class="nc" id="L120">            lastStatus.set(recent);</span>
+<span class="nc" id="L121">            return recent;</span>
+        }
+
+        // 未写入本地白名单的具体车站由 12306 页面中的 station_names 动态解析编码。
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        Station dep = configuredDep != null ? configuredDep : new Station(normalizedDep, &quot;&quot;);</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        Station arr = configuredArr != null ? configuredArr : new Station(normalizedArr, &quot;&quot;);</span>
+        try {
+<span class="nc" id="L128">            List&lt;TrainBrowserTicket&gt; tickets = trainBrowserSyncService.readPublicLeftTickets(</span>
+                    dep.name, dep.code, arr.name, arr.code, trainDate);
+<span class="nc bnc" id="L130" title="All 2 branches missed.">            if (tickets.isEmpty()) {</span>
+<span class="nc" id="L131">                return remember(attemptKey, true, true, false,</span>
+                        &quot;12306 页面未读取到可展示车次，展示本地演示缓存&quot;,
+                        routeKey, date, SOURCE_LOCAL_DEMO_CACHE, 0);
+            }
+
+<span class="nc" id="L136">            List&lt;Train&gt; trains = tickets.stream()</span>
+<span class="nc" id="L137">                    .limit(MAX_SYNC_TRAINS_PER_ROUTE)</span>
+<span class="nc" id="L138">                    .map(ticket -&gt; toTrain(ticket, normalizedDep, normalizedArr, trainDate))</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">                    .filter(train -&gt; train.getDepartureTime() != null)</span>
+<span class="nc" id="L140">                    .toList();</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">            for (Train train : trains) {</span>
+<span class="nc" id="L142">                upsertTrain(train);</span>
+<span class="nc" id="L143">            }</span>
+<span class="nc" id="L144">            recentLiveTrains.put(attemptKey, trains);</span>
+
+<span class="nc" id="L146">            return remember(attemptKey, true, true, true,</span>
+                    &quot;12306 页面实时读取成功，已写入/更新本地车次表&quot;,
+<span class="nc" id="L148">                    routeKey, date, SOURCE_12306_PAGE, trains.size());</span>
+<span class="nc" id="L149">        } catch (Exception ex) {</span>
+<span class="nc" id="L150">            log.warn(&quot;12306 browser sync failed for {} {}: {}&quot;,</span>
+<span class="nc" id="L151">                    LogSanitizer.singleLine(routeKey),</span>
+<span class="nc" id="L152">                    LogSanitizer.singleLine(date),</span>
+<span class="nc" id="L153">                    LogSanitizer.singleLine(ex.getMessage()));</span>
+<span class="nc" id="L154">            return remember(attemptKey, true, true, false,</span>
+<span class="nc" id="L155">                    &quot;12306 页面读取失败：&quot; + friendlyError(ex) + &quot;；展示本地演示缓存&quot;,</span>
+                    routeKey, date, SOURCE_LOCAL_DEMO_CACHE, 0);
+        }
+    }
+
+    @Override
+    public TrainLiveSyncStatus getLastStatus() {
+<span class="nc" id="L162">        return lastStatus.get();</span>
+    }
+
+    @Override
+    public List&lt;Train&gt; getCachedLiveTrains(String depStation, String arrStation, String date) {
+<span class="nc" id="L167">        String attemptKey = routeKey(normalizeStation(depStation), normalizeStation(arrStation)) + &quot;|&quot; + date;</span>
+<span class="nc" id="L168">        TrainLiveSyncStatus recent = recentStatuses.get(attemptKey);</span>
+<span class="nc bnc" id="L169" title="All 6 branches missed.">        if (recent == null || !recent.isSynced() || recent.getSyncedAt() == null</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">                || recent.getSyncedAt().plus(ATTEMPT_CACHE_TTL).isBefore(LocalDateTime.now())) {</span>
+<span class="nc" id="L171">            return List.of();</span>
+        }
+<span class="nc" id="L173">        return recentLiveTrains.getOrDefault(attemptKey, List.of());</span>
+    }
+
+    private Train toTrain(TrainBrowserTicket ticket, String depStation, String arrStation, LocalDate trainDate) {
+<span class="nc" id="L177">        Train train = new Train();</span>
+<span class="nc" id="L178">        train.setTrainNo(ticket.getTrainNo());</span>
+<span class="nc" id="L179">        train.setTrainType(trainType(ticket.getTrainNo()));</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        train.setDepartureStation(StringUtils.hasText(ticket.getDepartureStation()) ? ticket.getDepartureStation() : depStation);</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        train.setArrivalStation(StringUtils.hasText(ticket.getArrivalStation()) ? ticket.getArrivalStation() : arrStation);</span>
+<span class="nc" id="L182">        train.setDepartureTime(parseDateTime(trainDate, ticket.getDepartureTime()));</span>
+<span class="nc" id="L183">        train.setArrivalTime(parseArrivalDateTime(train.getDepartureTime(), ticket.getArrivalTime()));</span>
+<span class="nc" id="L184">        train.setDurationMinutes(durationMinutes(ticket.getDuration(), train.getDepartureTime(), train.getArrivalTime()));</span>
+<span class="nc" id="L185">        train.setSecondClassPrice(estimatePrice(train, false));</span>
+<span class="nc" id="L186">        train.setFirstClassPrice(estimatePrice(train, true));</span>
+<span class="nc" id="L187">        train.setFirstClassSeats(seatCount(ticket.getFirstClassSeat()));</span>
+<span class="nc" id="L188">        train.setSecondClassSeats(seatCount(ticket.getSecondClassSeat()));</span>
+<span class="nc" id="L189">        train.setBusinessClassSeats(seatCount(ticket.getBusinessSeat()));</span>
+<span class="nc" id="L190">        train.setHardSeatSeats(seatCount(ticket.getHardSeat()));</span>
+<span class="nc" id="L191">        train.setNoSeatSeats(seatCount(ticket.getNoSeat()));</span>
+<span class="nc" id="L192">        train.setBusinessSeatText(ticket.getBusinessSeat());</span>
+<span class="nc" id="L193">        train.setFirstClassSeatText(ticket.getFirstClassSeat());</span>
+<span class="nc" id="L194">        train.setSecondClassSeatText(ticket.getSecondClassSeat());</span>
+<span class="nc" id="L195">        train.setHardSeatText(ticket.getHardSeat());</span>
+<span class="nc" id="L196">        train.setNoSeatText(ticket.getNoSeat());</span>
+<span class="nc" id="L197">        train.setStatus(1);</span>
+<span class="nc" id="L198">        train.setLiveOnly(false);</span>
+<span class="nc" id="L199">        train.setDataSource(SOURCE_12306_PAGE);</span>
+<span class="nc" id="L200">        return train;</span>
+    }
+
+    private void upsertTrain(Train train) {
+<span class="nc" id="L204">        Train existing = trainMapper.selectOne(new LambdaQueryWrapper&lt;Train&gt;()</span>
+<span class="nc" id="L205">                .eq(Train::getTrainNo, train.getTrainNo())</span>
+<span class="nc" id="L206">                .eq(Train::getDepartureStation, train.getDepartureStation())</span>
+<span class="nc" id="L207">                .eq(Train::getArrivalStation, train.getArrivalStation())</span>
+<span class="nc" id="L208">                .eq(Train::getDepartureTime, train.getDepartureTime())</span>
+<span class="nc" id="L209">                .last(&quot;LIMIT 1&quot;));</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">        if (existing == null) {</span>
+            try {
+<span class="nc" id="L212">                trainMapper.insert(train);</span>
+<span class="nc" id="L213">            } catch (DuplicateKeyException ex) {</span>
+<span class="nc" id="L214">                Train sameDeparture = trainMapper.selectOne(new LambdaQueryWrapper&lt;Train&gt;()</span>
+<span class="nc" id="L215">                        .eq(Train::getTrainNo, train.getTrainNo())</span>
+<span class="nc" id="L216">                        .eq(Train::getDepartureTime, train.getDepartureTime())</span>
+<span class="nc" id="L217">                        .last(&quot;LIMIT 1&quot;));</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">                if (sameDeparture == null) {</span>
+<span class="nc" id="L219">                    throw ex;</span>
+                }
+<span class="nc" id="L221">                train.setId(sameDeparture.getId());</span>
+<span class="nc" id="L222">                trainMapper.updateById(train);</span>
+<span class="nc" id="L223">            }</span>
+<span class="nc" id="L224">            return;</span>
+        }
+<span class="nc" id="L226">        train.setId(existing.getId());</span>
+<span class="nc" id="L227">        trainMapper.updateById(train);</span>
+<span class="nc" id="L228">    }</span>
+
+    private TrainLiveSyncStatus remember(boolean enabled, boolean supported, boolean synced,
+                                         String message, String route, String date, String dataSource, int trainCount) {
+<span class="nc" id="L232">        TrainLiveSyncStatus status = new TrainLiveSyncStatus(</span>
+<span class="nc" id="L233">                enabled, supported, synced, message, route, date, dataSource, trainCount, LocalDateTime.now());</span>
+<span class="nc" id="L234">        lastStatus.set(status);</span>
+<span class="nc" id="L235">        return status;</span>
+    }
+
+    private TrainLiveSyncStatus remember(String attemptKey, boolean enabled, boolean supported, boolean synced,
+                                         String message, String route, String date, String dataSource, int trainCount) {
+<span class="nc" id="L240">        TrainLiveSyncStatus status = remember(enabled, supported, synced, message, route, date, dataSource, trainCount);</span>
+<span class="nc" id="L241">        recentStatuses.put(attemptKey, status);</span>
+<span class="nc" id="L242">        return status;</span>
+    }
+
+    private String friendlyError(Exception ex) {
+<span class="nc" id="L246">        String message = ex.getMessage();</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">        if (!StringUtils.hasText(message)) {</span>
+<span class="nc" id="L248">            return &quot;浏览器自动化异常&quot;;</span>
+        }
+<span class="nc bnc" id="L250" title="All 2 branches missed.">        return message.length() &gt; 100 ? message.substring(0, 100) + &quot;...&quot; : message;</span>
+    }
+
+    private static LocalDateTime parseDateTime(LocalDate date, String time) {
+        try {
+<span class="nc" id="L255">            return LocalDateTime.of(date, LocalTime.parse(time));</span>
+<span class="nc" id="L256">        } catch (Exception ex) {</span>
+<span class="nc" id="L257">            return null;</span>
+        }
+    }
+
+    private static LocalDateTime parseArrivalDateTime(LocalDateTime departure, String arrivalTime) {
+<span class="nc bnc" id="L262" title="All 2 branches missed.">        if (departure == null) {</span>
+<span class="nc" id="L263">            return null;</span>
+        }
+        try {
+<span class="nc" id="L266">            LocalDateTime arrival = LocalDateTime.of(departure.toLocalDate(), LocalTime.parse(arrivalTime));</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">            return arrival.isBefore(departure) ? arrival.plusDays(1) : arrival;</span>
+<span class="nc" id="L268">        } catch (Exception ex) {</span>
+<span class="nc" id="L269">            return departure;</span>
+        }
+    }
+
+    private static int durationMinutes(String value, LocalDateTime departure, LocalDateTime arrival) {
+<span class="nc bnc" id="L274" title="All 2 branches missed.">        if (StringUtils.hasText(value)) {</span>
+<span class="nc" id="L275">            String normalized = value.trim();</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">            if (normalized.matches(&quot;\\d{1,2}:\\d{2}&quot;)) {</span>
+<span class="nc" id="L277">                String[] parts = normalized.split(&quot;:&quot;);</span>
+<span class="nc" id="L278">                return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);</span>
+            }
+<span class="nc" id="L280">            java.util.regex.Matcher matcher = java.util.regex.Pattern</span>
+<span class="nc" id="L281">                    .compile(&quot;(?:(\\d+)小时)?(?:(\\d+)分)?&quot;)</span>
+<span class="nc" id="L282">                    .matcher(normalized);</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">            if (matcher.matches()) {</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">                int hours = StringUtils.hasText(matcher.group(1)) ? Integer.parseInt(matcher.group(1)) : 0;</span>
+<span class="nc bnc" id="L285" title="All 2 branches missed.">                int minutes = StringUtils.hasText(matcher.group(2)) ? Integer.parseInt(matcher.group(2)) : 0;</span>
+<span class="nc bnc" id="L286" title="All 4 branches missed.">                if (hours &gt; 0 || minutes &gt; 0) {</span>
+<span class="nc" id="L287">                    return hours * 60 + minutes;</span>
+                }
+            }
+        }
+<span class="nc bnc" id="L291" title="All 4 branches missed.">        if (departure != null &amp;&amp; arrival != null) {</span>
+<span class="nc" id="L292">            return (int) Duration.between(departure, arrival).toMinutes();</span>
+        }
+<span class="nc" id="L294">        return 0;</span>
+    }
+
+    private static BigDecimal estimatePrice(Train train, boolean firstClass) {
+<span class="nc bnc" id="L298" title="All 2 branches missed.">        int minutes = Math.max(train.getDurationMinutes() == null ? 0 : train.getDurationMinutes(), 30);</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">        String prefix = StringUtils.hasText(train.getTrainNo())</span>
+<span class="nc" id="L300">                ? train.getTrainNo().substring(0, 1).toUpperCase(Locale.ROOT)</span>
+<span class="nc" id="L301">                : &quot;&quot;;</span>
+<span class="nc bnc" id="L302" title="All 4 branches missed.">        BigDecimal perMinute = switch (prefix) {</span>
+<span class="nc" id="L303">            case &quot;G&quot; -&gt; new BigDecimal(&quot;1.45&quot;);</span>
+<span class="nc" id="L304">            case &quot;D&quot;, &quot;C&quot; -&gt; new BigDecimal(&quot;1.05&quot;);</span>
+<span class="nc" id="L305">            case &quot;Z&quot;, &quot;T&quot;, &quot;K&quot; -&gt; new BigDecimal(&quot;0.45&quot;);</span>
+<span class="nc" id="L306">            default -&gt; new BigDecimal(&quot;0.60&quot;);</span>
+        };
+<span class="nc" id="L308">        BigDecimal secondClass = perMinute.multiply(BigDecimal.valueOf(minutes)).max(new BigDecimal(&quot;20.00&quot;));</span>
+<span class="nc bnc" id="L309" title="All 2 branches missed.">        BigDecimal price = firstClass ? secondClass.multiply(new BigDecimal(&quot;1.60&quot;)) : secondClass;</span>
+<span class="nc" id="L310">        return price.setScale(2, RoundingMode.HALF_UP);</span>
+    }
+
+    private static int seatCount(String value) {
+<span class="nc bnc" id="L314" title="All 6 branches missed.">        if (!StringUtils.hasText(value) || &quot;--&quot;.equals(value) || &quot;*&quot;.equals(value)</span>
+<span class="nc bnc" id="L315" title="All 4 branches missed.">                || &quot;无&quot;.equals(value) || &quot;候补&quot;.equals(value)) {</span>
+<span class="nc" id="L316">            return 0;</span>
+        }
+<span class="nc bnc" id="L318" title="All 2 branches missed.">        if (&quot;有&quot;.equals(value)) {</span>
+<span class="nc" id="L319">            return 30;</span>
+        }
+        try {
+<span class="nc" id="L322">            return Math.max(0, Integer.parseInt(value));</span>
+<span class="nc" id="L323">        } catch (NumberFormatException ex) {</span>
+<span class="nc" id="L324">            return 0;</span>
+        }
+    }
+
+    private static String trainType(String trainNo) {
+<span class="nc bnc" id="L329" title="All 2 branches missed.">        String prefix = StringUtils.hasText(trainNo) ? trainNo.substring(0, 1).toUpperCase(Locale.ROOT) : &quot;&quot;;</span>
+<span class="nc bnc" id="L330" title="All 7 branches missed.">        return switch (prefix) {</span>
+<span class="nc" id="L331">            case &quot;G&quot; -&gt; &quot;高铁&quot;;</span>
+<span class="nc" id="L332">            case &quot;D&quot; -&gt; &quot;动车&quot;;</span>
+<span class="nc" id="L333">            case &quot;C&quot; -&gt; &quot;城际&quot;;</span>
+<span class="nc" id="L334">            case &quot;Z&quot; -&gt; &quot;直达&quot;;</span>
+<span class="nc" id="L335">            case &quot;T&quot; -&gt; &quot;特快&quot;;</span>
+<span class="nc" id="L336">            case &quot;K&quot; -&gt; &quot;普快&quot;;</span>
+<span class="nc" id="L337">            default -&gt; &quot;火车&quot;;</span>
+        };
+    }
+
+    private static String normalizeStation(String station) {
+<span class="nc bnc" id="L342" title="All 2 branches missed.">        return StringUtils.hasText(station) ? station.trim() : &quot;&quot;;</span>
+    }
+
+    private static String routeKey(String depStation, String arrStation) {
+<span class="nc" id="L346">        return normalizeStation(depStation) + &quot;-&gt;&quot; + normalizeStation(arrStation);</span>
+    }
+
+    private static void station(String name, String code) {
+<span class="fc" id="L350">        STATIONS.put(name, new Station(name, code));</span>
+<span class="fc" id="L351">    }</span>
+
+    private static void stationAlias(String input, String stationName, String code) {
+<span class="fc" id="L354">        STATIONS.put(input, new Station(stationName, code));</span>
+<span class="fc" id="L355">    }</span>
+
+<span class="fc" id="L357">    private record Station(String name, String code) {</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

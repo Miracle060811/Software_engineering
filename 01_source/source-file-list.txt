@@ -2,7 +2,7 @@
 
 - 远程仓库：https://github.com/Miracle060811/Software_engineering
 - 默认分支：main（完整提交历史）；改造前单体基线标签：monolith-start（7258cd2c）；微服务阶段标签：microservices-phase1
-- 本清单由 `git ls-files --cached --others --exclude-standard -- backend frontend microservices` 导出，共 942 个当前源码文件；自动排除 node_modules/、target/、dist/ 等构建产物
+- 本清单由 `git ls-files --cached --others --exclude-standard -- backend frontend microservices` 导出，共 936 个当前源码文件；自动排除 node_modules/、target/、dist/ 等构建产物
 - 代码本体不在 01_source 目录重复存放；请按 README 通过 Git 标签/分支获取完整可构建工程
 
 backend/.dockerignore
@@ -237,7 +237,6 @@ backend/src/test/java/com/travelmate/integration/AbstractMySQLIntegrationTest.ja
 backend/src/test/java/com/travelmate/integration/MySQLCouponWorkflowTests.java
 backend/src/test/java/com/travelmate/integration/MySQLInventoryConcurrencyTests.java
 backend/src/test/java/com/travelmate/integration/MySQLOrderStateMachineTests.java
-backend/src/test/java/com/travelmate/integration/MySQLTourBookingWorkflowTests.java
 backend/src/test/java/com/travelmate/integration/MySQLTrafficOrderWorkflowTests.java
 backend/src/test/java/com/travelmate/integration/MySQLTransactionRollbackTests.java
 backend/src/test/java/com/travelmate/integration/MySQLUniqueConstraintTests.java
@@ -825,14 +824,11 @@ microservices/services/local-service/src/main/java/com/travelmate/service/TourPr
 microservices/services/local-service/src/main/resources/application.yml
 microservices/services/local-service/src/test/java/com/travelmate/microservices/local/InternalAdminLocalControllerTests.java
 microservices/services/local-service/src/test/java/com/travelmate/microservices/local/InternalCouponControllerTests.java
-microservices/services/local-service/src/test/java/com/travelmate/microservices/local/JsonSupport.java
 microservices/services/local-service/src/test/java/com/travelmate/microservices/local/LocalEndpointContractTests.java
 microservices/services/local-service/src/test/java/com/travelmate/microservices/local/LocalOutboxDispatcherTests.java
 microservices/services/local-service/src/test/java/com/travelmate/microservices/local/LocalOutboxNotificationGatewayTests.java
 microservices/services/local-service/src/test/java/com/travelmate/microservices/local/LocalPublicApiTests.java
 microservices/services/local-service/src/test/java/com/travelmate/microservices/local/TourBookingApiContractTests.java
-microservices/services/local-service/src/test/java/com/travelmate/microservices/local/TourBookingMySQLIT.java
-microservices/services/local-service/src/test/java/com/travelmate/microservices/local/TourBookingWorkflowTests.java
 microservices/services/ops-service/Dockerfile
 microservices/services/ops-service/pom.xml
 microservices/services/ops-service/src/main/java/com/travelmate/backend/config/CorsConfig.java
@@ -855,12 +851,10 @@ microservices/services/ops-service/src/main/java/com/travelmate/microservices/op
 microservices/services/ops-service/src/main/java/com/travelmate/service/impl/SensitiveWordServiceImpl.java
 microservices/services/ops-service/src/main/java/com/travelmate/service/SensitiveWordService.java
 microservices/services/ops-service/src/main/resources/application.yml
-microservices/services/ops-service/src/test/java/com/travelmate/microservices/ops/AdminDashboardServiceTests.java
 microservices/services/ops-service/src/test/java/com/travelmate/microservices/ops/InternalContentSafetyControllerTests.java
 microservices/services/ops-service/src/test/java/com/travelmate/microservices/ops/OpsAdminSecurityTests.java
 microservices/services/ops-service/src/test/java/com/travelmate/microservices/ops/OpsDashboardIntegrationTests.java
 microservices/services/ops-service/src/test/java/com/travelmate/microservices/ops/OpsEndpointContractTests.java
-microservices/services/ops-service/src/test/java/com/travelmate/microservices/ops/OpsLocalDashboardMetricsTests.java
 microservices/services/ops-service/src/test/java/com/travelmate/microservices/ops/OpsPublicApiTests.java
 microservices/services/traffic-service/Dockerfile
 microservices/services/traffic-service/pom.xml

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LikeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">LikeServiceImpl.java</span></div><h1>LikeServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.travelmate.entity.Like;
+import com.travelmate.entity.Comment;
+import com.travelmate.entity.Post;
+import com.travelmate.mapper.CommentMapper;
+import com.travelmate.mapper.LikeMapper;
+import com.travelmate.mapper.PostMapper;
+import com.travelmate.service.LikeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+
+@Service
+<span class="fc" id="L19">public class LikeServiceImpl implements LikeService {</span>
+
+    @Autowired
+    private LikeMapper likeMapper;
+
+    @Autowired
+    private PostMapper postMapper;
+
+    @Autowired
+    private CommentMapper commentMapper;
+
+    @Override
+    @Transactional
+    public Map&lt;String, Object&gt; toggleLike(Long userId, Map&lt;String, Object&gt; body) {
+<span class="fc" id="L33">        Long targetId = parseLong(body.get(&quot;targetId&quot;), &quot;目标ID无效&quot;);</span>
+<span class="fc" id="L34">        Integer targetType = parseTargetType(body.get(&quot;targetType&quot;));</span>
+<span class="pc bpc" id="L35" title="2 of 6 branches missed.">        if (targetType != 0 &amp;&amp; targetType != 1 &amp;&amp; targetType != 2) {</span>
+<span class="nc" id="L36">            throw new RuntimeException(&quot;不支持的操作类型&quot;);</span>
+        }
+<span class="pc bpc" id="L38" title="1 of 6 branches missed.">        if ((targetType == 0 || targetType == 2) &amp;&amp; postMapper.selectById(targetId) == null) {</span>
+<span class="fc" id="L39">            throw new RuntimeException(&quot;游记不存在&quot;);</span>
+        }
+<span class="pc bpc" id="L41" title="3 of 4 branches missed.">        if (targetType == 1 &amp;&amp; commentMapper.selectById(targetId) == null) {</span>
+<span class="nc" id="L42">            throw new RuntimeException(&quot;评论不存在&quot;);</span>
+        }
+
+<span class="fc" id="L45">        LambdaQueryWrapper&lt;Like&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="fc" id="L46">        wrapper.eq(Like::getUserId, userId)</span>
+<span class="fc" id="L47">                .eq(Like::getTargetId, targetId)</span>
+<span class="fc" id="L48">                .eq(Like::getTargetType, targetType);</span>
+<span class="fc" id="L49">        Like existing = likeMapper.selectOne(wrapper);</span>
+
+<span class="fc" id="L51">        Map&lt;String, Object&gt; result = new HashMap&lt;&gt;();</span>
+        boolean active;
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if (existing != null) {</span>
+<span class="nc" id="L54">            likeMapper.deleteById(existing.getId());</span>
+<span class="nc" id="L55">            active = false;</span>
+            // 回退点赞/收藏计数
+<span class="nc bnc" id="L57" title="All 2 branches missed.">            if (targetType == 0) {</span>
+<span class="nc" id="L58">                decrementPostLikeCount(targetId);</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">            } else if (targetType == 2) {</span>
+<span class="nc" id="L60">                decrementPostCollectCount(targetId);</span>
+            }
+        } else {
+<span class="fc" id="L63">            Like like = new Like();</span>
+<span class="fc" id="L64">            like.setUserId(userId);</span>
+<span class="fc" id="L65">            like.setTargetId(targetId);</span>
+<span class="fc" id="L66">            like.setTargetType(targetType);</span>
+<span class="fc" id="L67">            likeMapper.insert(like);</span>
+<span class="fc" id="L68">            active = true;</span>
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">            if (targetType == 0) {</span>
+<span class="fc" id="L70">                incrementPostLikeCount(targetId);</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">            } else if (targetType == 2) {</span>
+<span class="nc" id="L72">                incrementPostCollectCount(targetId);</span>
+            }
+        }
+
+<span class="pc bpc" id="L76" title="3 of 4 branches missed.">        Post post = targetType == 0 || targetType == 2 ? postMapper.selectById(targetId) : null;</span>
+<span class="fc" id="L77">        result.put(&quot;liked&quot;, active);</span>
+<span class="fc" id="L78">        result.put(&quot;collected&quot;, active);</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">        if (targetType == 0) {</span>
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">            result.put(&quot;count&quot;, post == null ? 0 : Optional.ofNullable(post.getLikeCount()).orElse(0));</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">        } else if (targetType == 2) {</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">            result.put(&quot;count&quot;, post == null ? 0 : Optional.ofNullable(post.getCollectCount()).orElse(0));</span>
+        }
+<span class="fc" id="L84">        return result;</span>
+    }
+
+    @Override
+    public int likeStatus(Long userId, Long targetId, Integer targetType) {
+<span class="nc" id="L89">        LambdaQueryWrapper&lt;Like&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L90">        wrapper.eq(Like::getUserId, userId)</span>
+<span class="nc" id="L91">                .eq(Like::getTargetId, targetId)</span>
+<span class="nc" id="L92">                .eq(Like::getTargetType, targetType);</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        return likeMapper.selectCount(wrapper) &gt; 0 ? 1 : 0;</span>
+    }
+
+    private void incrementPostLikeCount(Long postId) {
+<span class="fc" id="L97">        LambdaUpdateWrapper&lt;Post&gt; wrapper = new LambdaUpdateWrapper&lt;&gt;();</span>
+<span class="fc" id="L98">        wrapper.eq(Post::getId, postId).setSql(&quot;like_count = COALESCE(like_count, 0) + 1&quot;);</span>
+<span class="fc" id="L99">        postMapper.update(null, wrapper);</span>
+<span class="fc" id="L100">    }</span>
+
+    private void decrementPostLikeCount(Long postId) {
+<span class="nc" id="L103">        LambdaUpdateWrapper&lt;Post&gt; wrapper = new LambdaUpdateWrapper&lt;&gt;();</span>
+<span class="nc" id="L104">        wrapper.eq(Post::getId, postId).setSql(&quot;like_count = GREATEST(COALESCE(like_count, 0) - 1, 0)&quot;);</span>
+<span class="nc" id="L105">        postMapper.update(null, wrapper);</span>
+<span class="nc" id="L106">    }</span>
+
+    private void incrementPostCollectCount(Long postId) {
+<span class="nc" id="L109">        LambdaUpdateWrapper&lt;Post&gt; wrapper = new LambdaUpdateWrapper&lt;&gt;();</span>
+<span class="nc" id="L110">        wrapper.eq(Post::getId, postId).setSql(&quot;collect_count = COALESCE(collect_count, 0) + 1&quot;);</span>
+<span class="nc" id="L111">        postMapper.update(null, wrapper);</span>
+<span class="nc" id="L112">    }</span>
+
+    @Override
+    public List&lt;Map&lt;String, Object&gt;&gt; getMyCollects(Long userId) {
+<span class="nc" id="L116">        LambdaQueryWrapper&lt;Like&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L117">        wrapper.eq(Like::getUserId, userId)</span>
+<span class="nc" id="L118">                .eq(Like::getTargetType, 2)</span>
+<span class="nc" id="L119">                .orderByDesc(Like::getCreateTime);</span>
+<span class="nc" id="L120">        List&lt;Like&gt; likes = likeMapper.selectList(wrapper);</span>
+<span class="nc" id="L121">        List&lt;Map&lt;String, Object&gt;&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        for (Like like : likes) {</span>
+<span class="nc" id="L123">            Post post = postMapper.selectById(like.getTargetId());</span>
+<span class="nc bnc" id="L124" title="All 4 branches missed.">            if (post != null &amp;&amp; post.getStatus() == 1) {</span>
+<span class="nc" id="L125">                Map&lt;String, Object&gt; m = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L126">                m.put(&quot;id&quot;, post.getId());</span>
+<span class="nc" id="L127">                m.put(&quot;title&quot;, post.getTitle());</span>
+<span class="nc" id="L128">                m.put(&quot;content&quot;, post.getContent());</span>
+<span class="nc" id="L129">                m.put(&quot;images&quot;, post.getImages());</span>
+<span class="nc" id="L130">                m.put(&quot;destination&quot;, post.getDestination());</span>
+<span class="nc" id="L131">                m.put(&quot;tags&quot;, post.getTags());</span>
+<span class="nc" id="L132">                m.put(&quot;likeCount&quot;, post.getLikeCount());</span>
+<span class="nc" id="L133">                m.put(&quot;commentCount&quot;, post.getCommentCount());</span>
+<span class="nc" id="L134">                m.put(&quot;viewCount&quot;, post.getViewCount());</span>
+<span class="nc" id="L135">                m.put(&quot;createTime&quot;, post.getCreateTime());</span>
+<span class="nc" id="L136">                result.add(m);</span>
+            }
+<span class="nc" id="L138">        }</span>
+<span class="nc" id="L139">        return result;</span>
+    }
+
+    private void decrementPostCollectCount(Long postId) {
+<span class="nc" id="L143">        LambdaUpdateWrapper&lt;Post&gt; wrapper = new LambdaUpdateWrapper&lt;&gt;();</span>
+<span class="nc" id="L144">        wrapper.eq(Post::getId, postId).setSql(&quot;collect_count = GREATEST(COALESCE(collect_count, 0) - 1, 0)&quot;);</span>
+<span class="nc" id="L145">        postMapper.update(null, wrapper);</span>
+<span class="nc" id="L146">    }</span>
+
+    private Long parseLong(Object value, String message) {
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L150">            throw new RuntimeException(message);</span>
+        }
+        try {
+<span class="fc" id="L153">            return Long.valueOf(value.toString());</span>
+<span class="nc" id="L154">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L155">            throw new RuntimeException(message);</span>
+        }
+    }
+
+    private Integer parseTargetType(Object value) {
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L161">            throw new RuntimeException(&quot;操作类型不能为空&quot;);</span>
+        }
+<span class="fc" id="L163">        String raw = value.toString().trim();</span>
+<span class="pc bpc" id="L164" title="2 of 4 branches missed.">        return switch (raw.toLowerCase()) {</span>
+<span class="fc" id="L165">            case &quot;post&quot;, &quot;like&quot;, &quot;post_like&quot; -&gt; 0;</span>
+<span class="nc" id="L166">            case &quot;comment&quot;, &quot;comment_like&quot; -&gt; 1;</span>
+<span class="fc" id="L167">            case &quot;collect&quot;, &quot;favorite&quot;, &quot;post_collect&quot; -&gt; 2;</span>
+            default -&gt; {
+                try {
+<span class="nc" id="L170">                    yield Integer.valueOf(raw);</span>
+<span class="nc" id="L171">                } catch (NumberFormatException e) {</span>
+<span class="nc" id="L172">                    throw new RuntimeException(&quot;操作类型无效&quot;);</span>
+                }
+            }
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

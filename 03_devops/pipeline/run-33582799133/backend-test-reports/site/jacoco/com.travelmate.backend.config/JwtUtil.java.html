@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.backend.config</a> &gt; <span class="el_source">JwtUtil.java</span></div><h1>JwtUtil.java</h1><pre class="source lang-java linenums">package com.travelmate.backend.config;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import com.travelmate.common.AuthenticatedUser;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.security.Key;
+import java.util.Date;
+import java.util.UUID;
+
+@Component
+public class JwtUtil {
+
+    private final Key key;
+    private final long expirationMillis;
+
+    public JwtUtil(String encodedSecret) {
+<span class="fc" id="L24">        this(encodedSecret, 30);</span>
+<span class="fc" id="L25">    }</span>
+
+    @Autowired
+    public JwtUtil(
+            @Value(&quot;${app.security.jwt-secret}&quot;) String encodedSecret,
+<span class="fc" id="L30">            @Value(&quot;${app.security.jwt-access-token-minutes:30}&quot;) long accessTokenMinutes) {</span>
+<span class="pc bpc" id="L31" title="1 of 4 branches missed.">        if (encodedSecret == null || encodedSecret.isBlank()) {</span>
+<span class="fc" id="L32">            throw new IllegalStateException(&quot;JWT_SECRET must be configured&quot;);</span>
+        }
+<span class="pc bpc" id="L34" title="2 of 4 branches missed.">        if (accessTokenMinutes &lt; 5 || accessTokenMinutes &gt; 1440) {</span>
+<span class="nc" id="L35">            throw new IllegalStateException(&quot;JWT_ACCESS_TOKEN_MINUTES must be between 5 and 1440&quot;);</span>
+        }
+
+        final byte[] secretBytes;
+        try {
+<span class="fc" id="L40">            secretBytes = Decoders.BASE64.decode(encodedSecret.trim());</span>
+<span class="fc" id="L41">        } catch (RuntimeException exception) {</span>
+<span class="fc" id="L42">            throw new IllegalStateException(&quot;JWT_SECRET must be valid Base64&quot;, exception);</span>
+<span class="fc" id="L43">        }</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (secretBytes.length &lt; 32) {</span>
+<span class="fc" id="L45">            throw new IllegalStateException(&quot;JWT_SECRET must decode to at least 32 bytes&quot;);</span>
+        }
+<span class="fc" id="L47">        this.key = Keys.hmacShaKeyFor(secretBytes);</span>
+<span class="fc" id="L48">        this.expirationMillis = accessTokenMinutes * 60_000L;</span>
+<span class="fc" id="L49">    }</span>
+
+    public String generateToken(String username) {
+<span class="fc" id="L52">        return generateToken(null, username, 0, 0);</span>
+    }
+
+    public String generateToken(Long userId, String username, Integer role) {
+<span class="nc" id="L56">        return generateToken(userId, username, role, 0);</span>
+    }
+
+    public String generateToken(Long userId, String username, Integer role, Integer tokenVersion) {
+<span class="fc" id="L60">        return Jwts.builder()</span>
+<span class="fc" id="L61">                .setId(UUID.randomUUID().toString())</span>
+<span class="fc" id="L62">                .setSubject(username)</span>
+<span class="fc" id="L63">                .claim(&quot;uid&quot;, userId)</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">                .claim(&quot;role&quot;, role == null ? 0 : role)</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">                .claim(&quot;ver&quot;, tokenVersion == null ? 0 : tokenVersion)</span>
+<span class="fc" id="L66">                .setIssuedAt(new Date())</span>
+<span class="fc" id="L67">                .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))</span>
+<span class="fc" id="L68">                .signWith(key)</span>
+<span class="fc" id="L69">                .compact();</span>
+    }
+
+    public String extractUsername(String token) {
+<span class="fc" id="L73">        return parseClaims(token).getSubject();</span>
+    }
+
+    public AuthenticatedUser extractPrincipal(String token) {
+<span class="fc" id="L77">        Claims claims = parseClaims(token);</span>
+<span class="fc" id="L78">        Number userId = claims.get(&quot;uid&quot;, Number.class);</span>
+<span class="fc" id="L79">        Number role = claims.get(&quot;role&quot;, Number.class);</span>
+<span class="fc" id="L80">        Number tokenVersion = claims.get(&quot;ver&quot;, Number.class);</span>
+<span class="fc" id="L81">        return new AuthenticatedUser(</span>
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">                userId == null ? null : userId.longValue(),</span>
+<span class="fc" id="L83">                claims.getSubject(),</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">                role == null ? 0 : role.intValue(),</span>
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">                tokenVersion == null ? 0 : tokenVersion.intValue());</span>
+    }
+
+    private Claims parseClaims(String token) {
+<span class="fc" id="L89">        return Jwts.parserBuilder()</span>
+<span class="fc" id="L90">                .setSigningKey(key)</span>
+<span class="fc" id="L91">                .build()</span>
+<span class="fc" id="L92">                .parseClaimsJws(token)</span>
+<span class="fc" id="L93">                .getBody();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

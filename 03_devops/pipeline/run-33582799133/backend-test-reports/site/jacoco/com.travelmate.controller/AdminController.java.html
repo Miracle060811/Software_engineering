@@ -1,0 +1,1968 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.controller</a> &gt; <span class="el_source">AdminController.java</span></div><h1>AdminController.java</h1><pre class="source lang-java linenums">package com.travelmate.controller;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.travelmate.backend.entity.User;
+import com.travelmate.backend.mapper.UserMapper;
+import com.travelmate.common.PaginationSupport;
+import com.travelmate.common.Result;
+import com.travelmate.entity.Attraction;
+import com.travelmate.entity.Comment;
+import com.travelmate.entity.Coupon;
+import com.travelmate.entity.Destination;
+import com.travelmate.entity.Flight;
+import com.travelmate.entity.Hotel;
+import com.travelmate.entity.HotelOrder;
+import com.travelmate.entity.HotelRoom;
+import com.travelmate.entity.Post;
+import com.travelmate.entity.Reply;
+import com.travelmate.entity.Review;
+import com.travelmate.entity.ReviewReport;
+import com.travelmate.entity.SysLog;
+import com.travelmate.entity.SysSensitiveWord;
+import com.travelmate.entity.TrafficOrder;
+import com.travelmate.entity.Train;
+import com.travelmate.entity.UserCoupon;
+import com.travelmate.mapper.AttractionMapper;
+import com.travelmate.mapper.CommentMapper;
+import com.travelmate.mapper.CouponMapper;
+import com.travelmate.mapper.DestinationMapper;
+import com.travelmate.mapper.FlightMapper;
+import com.travelmate.mapper.HotelMapper;
+import com.travelmate.mapper.HotelOrderMapper;
+import com.travelmate.mapper.HotelRoomMapper;
+import com.travelmate.mapper.PostMapper;
+import com.travelmate.mapper.ReplyMapper;
+import com.travelmate.mapper.ReviewMapper;
+import com.travelmate.mapper.ReviewReportMapper;
+import com.travelmate.mapper.SysLogMapper;
+import com.travelmate.mapper.SysSensitiveWordMapper;
+import com.travelmate.mapper.TrafficOrderMapper;
+import com.travelmate.mapper.TrainMapper;
+import com.travelmate.mapper.UserCouponMapper;
+import com.travelmate.service.HotelRoomStockService;
+import com.travelmate.service.NotificationCenterService;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping(&quot;/api/admin&quot;)
+<span class="fc" id="L80">public class AdminController {</span>
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private PostMapper postMapper;
+
+    @Autowired
+    private FlightMapper flightMapper;
+
+    @Autowired
+    private HotelMapper hotelMapper;
+
+    @Autowired
+    private HotelRoomMapper hotelRoomMapper;
+
+    @Autowired
+    private AttractionMapper attractionMapper;
+
+    @Autowired
+    private SysLogMapper sysLogMapper;
+
+    @Autowired
+    private SysSensitiveWordMapper sensitiveWordMapper;
+
+    @Autowired
+    private CouponMapper couponMapper;
+
+    @Autowired
+    private DestinationMapper destinationMapper;
+
+    @Autowired
+    private ReviewReportMapper reviewReportMapper;
+
+    @Autowired
+    private ReviewMapper reviewMapper;
+
+    @Autowired
+    private ReplyMapper replyMapper;
+
+    @Autowired
+    private UserCouponMapper userCouponMapper;
+
+    @Autowired
+    private CommentMapper commentMapper;
+
+    @Autowired
+    private TrafficOrderMapper trafficOrderMapper;
+
+    @Autowired
+    private TrainMapper trainMapper;
+
+    @Autowired
+    private HotelOrderMapper hotelOrderMapper;
+
+    @Autowired
+    private HotelRoomStockService hotelRoomStockService;
+
+    @Autowired
+    private NotificationCenterService notificationCenterService;
+
+    private static final int STATUS_TRAFFIC_CANCELLED = 3;
+    private static final int STATUS_TRAFFIC_TICKETING = 1;
+    private static final int STATUS_TRAFFIC_TICKETED = 2;
+    private static final int STATUS_TRAFFIC_REFUNDED = 4;
+    private static final int STATUS_REFUND_REQUESTED = 5;
+    private static final int STATUS_HOTEL_PAID = 1;
+    private static final int STATUS_HOTEL_COMPLETED = 3;
+    private static final int STATUS_HOTEL_CANCELLED_OR_REFUNDED = 4;
+    private static final long MAX_CSV_FILE_SIZE = 5L * 1024L * 1024L;
+    private static final int MAX_IMPORT_FAILURES_RETURNED = 50;
+    private static final String CSV_MODE_UPSERT = &quot;upsert&quot;;
+<span class="fc" id="L153">    private static final Set&lt;String&gt; CSV_IMPORT_TYPES = Set.of(</span>
+            &quot;flights&quot;, &quot;trains&quot;, &quot;hotels&quot;, &quot;rooms&quot;, &quot;attractions&quot;, &quot;destinations&quot;);
+<span class="fc" id="L155">    private static final Map&lt;String, List&lt;String&gt;&gt; CSV_REQUIRED_HEADERS = Map.of(</span>
+<span class="fc" id="L156">            &quot;flights&quot;, List.of(&quot;flightNo&quot;, &quot;airline&quot;, &quot;departureCity&quot;, &quot;arrivalCity&quot;, &quot;departureTime&quot;, &quot;arrivalTime&quot;,</span>
+                    &quot;economyPrice&quot;, &quot;businessPrice&quot;, &quot;totalSeats&quot;, &quot;availableSeats&quot;),
+<span class="fc" id="L158">            &quot;trains&quot;, List.of(&quot;trainNo&quot;, &quot;trainType&quot;, &quot;departureStation&quot;, &quot;arrivalStation&quot;, &quot;departureTime&quot;,</span>
+                    &quot;arrivalTime&quot;, &quot;firstClassPrice&quot;, &quot;secondClassPrice&quot;, &quot;firstClassSeats&quot;, &quot;secondClassSeats&quot;),
+<span class="fc" id="L160">            &quot;hotels&quot;, List.of(&quot;name&quot;, &quot;city&quot;, &quot;address&quot;, &quot;starRating&quot;, &quot;avgPrice&quot;),</span>
+<span class="fc" id="L161">            &quot;rooms&quot;, List.of(&quot;hotelId&quot;, &quot;roomType&quot;, &quot;bedType&quot;, &quot;price&quot;, &quot;totalRooms&quot;, &quot;availableRooms&quot;),</span>
+<span class="fc" id="L162">            &quot;attractions&quot;, List.of(&quot;name&quot;, &quot;city&quot;, &quot;address&quot;, &quot;adultPrice&quot;, &quot;childPrice&quot;, &quot;totalTickets&quot;,</span>
+                    &quot;availableTickets&quot;),
+<span class="fc" id="L164">            &quot;destinations&quot;, List.of(&quot;slug&quot;, &quot;name&quot;, &quot;tag&quot;, &quot;img&quot;, &quot;desc&quot;, &quot;intro&quot;));</span>
+
+    private User checkAdmin() {
+<span class="fc" id="L167">        String username = SecurityContextHolder.getContext().getAuthentication().getName();</span>
+<span class="fc" id="L168">        User user = userMapper.selectOne(new LambdaQueryWrapper&lt;User&gt;().eq(User::getUsername, username));</span>
+<span class="pc bpc" id="L169" title="2 of 6 branches missed.">        if (user == null || user.getRole() == null || user.getRole() != 1) {</span>
+<span class="fc" id="L170">            throw new RuntimeException(&quot;无管理员权限&quot;);</span>
+        }
+<span class="fc" id="L172">        return user;</span>
+    }
+
+    private void requireText(String value, String fieldName) {
+<span class="pc bpc" id="L176" title="2 of 4 branches missed.">        if (value == null || value.trim().isEmpty()) {</span>
+<span class="nc" id="L177">            throw new RuntimeException(fieldName + &quot;不能为空&quot;);</span>
+        }
+<span class="fc" id="L179">    }</span>
+
+    private void requireNonNegative(Number value, String fieldName) {
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L183">            throw new RuntimeException(fieldName + &quot;不能为空&quot;);</span>
+        }
+<span class="pc bpc" id="L185" title="1 of 4 branches missed.">        if (value instanceof BigDecimal decimal &amp;&amp; decimal.compareTo(BigDecimal.ZERO) &lt; 0) {</span>
+<span class="nc" id="L186">            throw new RuntimeException(fieldName + &quot;不能为负数&quot;);</span>
+        }
+<span class="pc bpc" id="L188" title="1 of 4 branches missed.">        if (!(value instanceof BigDecimal) &amp;&amp; value.longValue() &lt; 0) {</span>
+<span class="nc" id="L189">            throw new RuntimeException(fieldName + &quot;不能为负数&quot;);</span>
+        }
+<span class="fc" id="L191">    }</span>
+
+    private void requireTimeRange(LocalDateTime start, LocalDateTime end) {
+<span class="pc bpc" id="L194" title="2 of 4 branches missed.">        if (start == null || end == null) {</span>
+<span class="nc" id="L195">            throw new RuntimeException(&quot;出发/到达时间不能为空&quot;);</span>
+        }
+<span class="pc bpc" id="L197" title="1 of 2 branches missed.">        if (!end.isAfter(start)) {</span>
+<span class="nc" id="L198">            throw new RuntimeException(&quot;到达时间必须晚于出发时间&quot;);</span>
+        }
+<span class="fc" id="L200">    }</span>
+
+    private void validateFlight(Flight flight) {
+<span class="fc" id="L203">        requireText(flight.getFlightNo(), &quot;航班号&quot;);</span>
+<span class="fc" id="L204">        requireText(flight.getAirline(), &quot;航司&quot;);</span>
+<span class="fc" id="L205">        requireText(flight.getDepartureCity(), &quot;出发城市&quot;);</span>
+<span class="fc" id="L206">        requireText(flight.getArrivalCity(), &quot;到达城市&quot;);</span>
+<span class="fc" id="L207">        requireTimeRange(flight.getDepartureTime(), flight.getArrivalTime());</span>
+<span class="fc" id="L208">        requireNonNegative(flight.getEconomyPrice(), &quot;经济舱价格&quot;);</span>
+<span class="fc" id="L209">        requireNonNegative(flight.getBusinessPrice(), &quot;公务舱价格&quot;);</span>
+<span class="fc" id="L210">        requireNonNegative(flight.getTotalSeats(), &quot;总座位数&quot;);</span>
+<span class="fc" id="L211">        requireNonNegative(flight.getAvailableSeats(), &quot;可售座位数&quot;);</span>
+<span class="fc bfc" id="L212" title="All 2 branches covered.">        if (flight.getAvailableSeats() &gt; flight.getTotalSeats()) {</span>
+<span class="fc" id="L213">            throw new RuntimeException(&quot;可售座位数不能大于总座位数&quot;);</span>
+        }
+<span class="fc" id="L215">    }</span>
+
+    private void validateTrain(Train train) {
+<span class="nc" id="L218">        requireText(train.getTrainNo(), &quot;车次&quot;);</span>
+<span class="nc" id="L219">        requireText(train.getTrainType(), &quot;车型&quot;);</span>
+<span class="nc" id="L220">        requireText(train.getDepartureStation(), &quot;出发站&quot;);</span>
+<span class="nc" id="L221">        requireText(train.getArrivalStation(), &quot;到达站&quot;);</span>
+<span class="nc" id="L222">        requireTimeRange(train.getDepartureTime(), train.getArrivalTime());</span>
+<span class="nc" id="L223">        requireNonNegative(train.getFirstClassPrice(), &quot;一等座价格&quot;);</span>
+<span class="nc" id="L224">        requireNonNegative(train.getSecondClassPrice(), &quot;二等座价格&quot;);</span>
+<span class="nc" id="L225">        requireNonNegative(train.getFirstClassSeats(), &quot;一等座余票&quot;);</span>
+<span class="nc" id="L226">        requireNonNegative(train.getSecondClassSeats(), &quot;二等座余票&quot;);</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">        if (train.getDurationMinutes() == null) {</span>
+<span class="nc" id="L228">            train.setDurationMinutes((int) Duration.between(train.getDepartureTime(), train.getArrivalTime()).toMinutes());</span>
+        }
+<span class="nc" id="L230">    }</span>
+
+    private void validateHotel(Hotel hotel) {
+<span class="nc" id="L233">        requireText(hotel.getName(), &quot;酒店名称&quot;);</span>
+<span class="nc" id="L234">        requireText(hotel.getCity(), &quot;城市&quot;);</span>
+<span class="nc" id="L235">        requireText(hotel.getAddress(), &quot;地址&quot;);</span>
+<span class="nc" id="L236">        requireNonNegative(hotel.getAvgPrice(), &quot;均价&quot;);</span>
+<span class="nc bnc" id="L237" title="All 6 branches missed.">        if (hotel.getStarRating() == null || hotel.getStarRating() &lt; 1 || hotel.getStarRating() &gt; 5) {</span>
+<span class="nc" id="L238">            throw new RuntimeException(&quot;星级必须在 1-5 之间&quot;);</span>
+        }
+<span class="nc bnc" id="L240" title="All 2 branches missed.">        if (hotel.getScore() != null</span>
+<span class="nc bnc" id="L241" title="All 4 branches missed.">                &amp;&amp; (hotel.getScore().compareTo(BigDecimal.ZERO) &lt; 0 || hotel.getScore().compareTo(BigDecimal.valueOf(5)) &gt; 0)) {</span>
+<span class="nc" id="L242">            throw new RuntimeException(&quot;评分必须在 0-5 之间&quot;);</span>
+        }
+<span class="nc" id="L244">    }</span>
+
+    private void validateHotelRoom(HotelRoom room) {
+<span class="nc" id="L247">        requireText(room.getRoomType(), &quot;房型&quot;);</span>
+<span class="nc" id="L248">        requireText(room.getBedType(), &quot;床型&quot;);</span>
+<span class="nc" id="L249">        requireNonNegative(room.getPrice(), &quot;房型价格&quot;);</span>
+<span class="nc" id="L250">        requireNonNegative(room.getTotalRooms(), &quot;总房量&quot;);</span>
+<span class="nc" id="L251">        requireNonNegative(room.getAvailableRooms(), &quot;可售房量&quot;);</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">        if (room.getAvailableRooms() &gt; room.getTotalRooms()) {</span>
+<span class="nc" id="L253">            throw new RuntimeException(&quot;可售房量不能大于总房量&quot;);</span>
+        }
+<span class="nc" id="L255">    }</span>
+
+    private void validateAttraction(Attraction attraction) {
+<span class="nc" id="L258">        requireText(attraction.getName(), &quot;景点名称&quot;);</span>
+<span class="nc" id="L259">        requireText(attraction.getCity(), &quot;城市&quot;);</span>
+<span class="nc" id="L260">        requireText(attraction.getAddress(), &quot;地址&quot;);</span>
+<span class="nc" id="L261">        requireNonNegative(attraction.getAdultPrice(), &quot;成人票价&quot;);</span>
+<span class="nc" id="L262">        requireNonNegative(attraction.getChildPrice(), &quot;儿童票价&quot;);</span>
+<span class="nc" id="L263">        requireNonNegative(attraction.getTotalTickets(), &quot;总票数&quot;);</span>
+<span class="nc" id="L264">        requireNonNegative(attraction.getAvailableTickets(), &quot;可售票数&quot;);</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">        if (attraction.getAvailableTickets() &gt; attraction.getTotalTickets()) {</span>
+<span class="nc" id="L266">            throw new RuntimeException(&quot;可售票数不能大于总票数&quot;);</span>
+        }
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        if (attraction.getStatus() == null) {</span>
+<span class="nc" id="L269">            attraction.setStatus(1);</span>
+        }
+<span class="nc" id="L271">    }</span>
+
+    private void validateCoupon(Coupon coupon) {
+<span class="nc" id="L274">        requireText(coupon.getName(), &quot;优惠券名称&quot;);</span>
+<span class="nc bnc" id="L275" title="All 6 branches missed.">        if (coupon.getDiscountType() == null || (coupon.getDiscountType() != 0 &amp;&amp; coupon.getDiscountType() != 1)) {</span>
+<span class="nc" id="L276">            throw new RuntimeException(&quot;优惠类型必须为满减或折扣&quot;);</span>
+        }
+<span class="nc" id="L278">        requireNonNegative(coupon.getDiscountValue(), &quot;优惠值&quot;);</span>
+<span class="nc" id="L279">        requireNonNegative(coupon.getMinAmount(), &quot;最低消费&quot;);</span>
+<span class="nc" id="L280">        requireNonNegative(coupon.getStock(), &quot;库存&quot;);</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (coupon.getExpireDate() == null) {</span>
+<span class="nc" id="L282">            throw new RuntimeException(&quot;有效期不能为空&quot;);</span>
+        }
+<span class="nc bnc" id="L284" title="All 4 branches missed.">        if (coupon.getDiscountType() == 1 &amp;&amp; coupon.getDiscountValue().compareTo(BigDecimal.ZERO) &lt;= 0) {</span>
+<span class="nc" id="L285">            throw new RuntimeException(&quot;折扣比例必须大于 0&quot;);</span>
+        }
+<span class="nc" id="L287">    }</span>
+
+    private void validateDestination(Destination destination) {
+<span class="fc" id="L290">        requireText(destination.getSlug(), &quot;城市标识&quot;);</span>
+<span class="fc" id="L291">        requireText(destination.getName(), &quot;城市名称&quot;);</span>
+<span class="fc" id="L292">        requireText(destination.getCountry(), &quot;国家/地区&quot;);</span>
+<span class="fc" id="L293">        requireText(destination.getTag(), &quot;城市标签&quot;);</span>
+<span class="fc" id="L294">        requireText(destination.getImg(), &quot;封面图&quot;);</span>
+<span class="fc" id="L295">        requireText(destination.getDesc(), &quot;短描述&quot;);</span>
+<span class="fc" id="L296">        requireText(destination.getIntro(), &quot;城市介绍&quot;);</span>
+<span class="pc bpc" id="L297" title="1 of 2 branches missed.">        if (destination.getStatus() == null) {</span>
+<span class="nc" id="L298">            destination.setStatus(1);</span>
+        }
+<span class="pc bpc" id="L300" title="1 of 2 branches missed.">        if (destination.getSortOrder() == null) {</span>
+<span class="nc" id="L301">            destination.setSortOrder(100);</span>
+        }
+<span class="fc" id="L303">    }</span>
+
+    private void validateSensitiveWordUnique(SysSensitiveWord word, Long excludeId) {
+<span class="fc" id="L306">        requireText(word.getWord(), &quot;敏感词&quot;);</span>
+<span class="fc" id="L307">        Long count = sensitiveWordMapper.selectCount(new LambdaQueryWrapper&lt;SysSensitiveWord&gt;()</span>
+<span class="pc bpc" id="L308" title="1 of 2 branches missed.">                .eq(SysSensitiveWord::getWord, word.getWord().trim())</span>
+<span class="fc" id="L309">                .ne(excludeId != null, SysSensitiveWord::getId, excludeId));</span>
+<span class="fc bfc" id="L310" title="All 2 branches covered.">        if (count &gt; 0) {</span>
+<span class="fc" id="L311">            throw new RuntimeException(&quot;敏感词已存在&quot;);</span>
+        }
+<span class="fc" id="L313">    }</span>
+
+    private long countTotalOrders() {
+<span class="nc" id="L316">        return trafficOrderMapper.selectCount(null) + hotelOrderMapper.selectCount(null);</span>
+    }
+
+    private long countTodayOrders() {
+<span class="nc" id="L320">        LocalDateTime todayStart = LocalDate.now().atStartOfDay();</span>
+<span class="nc" id="L321">        return trafficOrderMapper.selectCount(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="nc" id="L322">                .ge(TrafficOrder::getCreateTime, todayStart))</span>
+<span class="nc" id="L323">                + hotelOrderMapper.selectCount(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="nc" id="L324">                        .ge(HotelOrder::getCreateTime, todayStart));</span>
+    }
+
+    private BigDecimal countTodayGmv() {
+<span class="nc" id="L328">        LocalDateTime todayStart = LocalDate.now().atStartOfDay();</span>
+<span class="nc" id="L329">        BigDecimal traffic = trafficOrderMapper.selectList(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="nc" id="L330">                .ge(TrafficOrder::getCreateTime, todayStart)</span>
+<span class="nc" id="L331">                .in(TrafficOrder::getStatus, List.of(1, 2)))</span>
+<span class="nc" id="L332">                .stream()</span>
+<span class="nc" id="L333">                .map(TrafficOrder::getAmount)</span>
+<span class="nc" id="L334">                .filter(Objects::nonNull)</span>
+<span class="nc" id="L335">                .reduce(BigDecimal.ZERO, BigDecimal::add);</span>
+<span class="nc" id="L336">        BigDecimal hotel = hotelOrderMapper.selectList(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="nc" id="L337">                .ge(HotelOrder::getCreateTime, todayStart)</span>
+<span class="nc" id="L338">                .in(HotelOrder::getStatus, List.of(1, 2, 3)))</span>
+<span class="nc" id="L339">                .stream()</span>
+<span class="nc" id="L340">                .map(HotelOrder::getAmount)</span>
+<span class="nc" id="L341">                .filter(Objects::nonNull)</span>
+<span class="nc" id="L342">                .reduce(BigDecimal.ZERO, BigDecimal::add);</span>
+<span class="nc" id="L343">        return traffic.add(hotel);</span>
+    }
+
+    private long countOnlineUsers() {
+<span class="nc" id="L347">        return sysLogMapper.selectList(new LambdaQueryWrapper&lt;SysLog&gt;()</span>
+<span class="nc" id="L348">                .ge(SysLog::getCreateTime, LocalDateTime.now().minusMinutes(15))</span>
+<span class="nc" id="L349">                .isNotNull(SysLog::getUserId))</span>
+<span class="nc" id="L350">                .stream()</span>
+<span class="nc" id="L351">                .map(SysLog::getUserId)</span>
+<span class="nc" id="L352">                .distinct()</span>
+<span class="nc" id="L353">                .count();</span>
+    }
+
+    private String buildTrafficRoute(TrafficOrder order) {
+<span class="nc bnc" id="L357" title="All 2 branches missed.">        if (Objects.equals(order.getOrderType(), 0)) {</span>
+<span class="nc" id="L358">            Flight flight = flightMapper.selectById(order.getTicketId());</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">            if (flight != null) {</span>
+<span class="nc" id="L360">                return flight.getDepartureCity() + &quot;→&quot; + flight.getArrivalCity();</span>
+            }
+        }
+<span class="nc bnc" id="L363" title="All 2 branches missed.">        if (Objects.equals(order.getOrderType(), 1)) {</span>
+<span class="nc" id="L364">            Train train = trainMapper.selectById(order.getTicketId());</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">            if (train != null) {</span>
+<span class="nc" id="L366">                return train.getDepartureStation() + &quot;→&quot; + train.getArrivalStation();</span>
+            }
+        }
+<span class="nc" id="L369">        return &quot;未知路线&quot;;</span>
+    }
+
+    private List&lt;LocalDate&gt; lastSevenDays() {
+<span class="nc" id="L373">        List&lt;LocalDate&gt; days = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L374" title="All 2 branches missed.">        for (int i = 6; i &gt;= 0; i--) {</span>
+<span class="nc" id="L375">            days.add(LocalDate.now().minusDays(i));</span>
+        }
+<span class="nc" id="L377">        return days;</span>
+    }
+
+    private List&lt;Map&lt;String, Object&gt;&gt; buildDailyOrderTrend() {
+<span class="nc" id="L381">        Map&lt;LocalDate, Long&gt; trafficCounts = trafficOrderMapper.selectList(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="nc" id="L382">                .ge(TrafficOrder::getCreateTime, LocalDate.now().minusDays(6).atStartOfDay()))</span>
+<span class="nc" id="L383">                .stream()</span>
+<span class="nc bnc" id="L384" title="All 2 branches missed.">                .filter(o -&gt; o.getCreateTime() != null)</span>
+<span class="nc" id="L385">                .collect(Collectors.groupingBy(o -&gt; o.getCreateTime().toLocalDate(), Collectors.counting()));</span>
+<span class="nc" id="L386">        Map&lt;LocalDate, Long&gt; hotelCounts = hotelOrderMapper.selectList(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="nc" id="L387">                .ge(HotelOrder::getCreateTime, LocalDate.now().minusDays(6).atStartOfDay()))</span>
+<span class="nc" id="L388">                .stream()</span>
+<span class="nc bnc" id="L389" title="All 2 branches missed.">                .filter(o -&gt; o.getCreateTime() != null)</span>
+<span class="nc" id="L390">                .collect(Collectors.groupingBy(o -&gt; o.getCreateTime().toLocalDate(), Collectors.counting()));</span>
+
+<span class="nc" id="L392">        return lastSevenDays().stream().map(day -&gt; {</span>
+<span class="nc" id="L393">            Map&lt;String, Object&gt; row = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L394">            row.put(&quot;day&quot;, day.format(DateTimeFormatter.ofPattern(&quot;MM-dd&quot;)));</span>
+<span class="nc" id="L395">            row.put(&quot;count&quot;, trafficCounts.getOrDefault(day, 0L) + hotelCounts.getOrDefault(day, 0L));</span>
+<span class="nc" id="L396">            return row;</span>
+<span class="nc" id="L397">        }).toList();</span>
+    }
+
+    private List&lt;Map&lt;String, Object&gt;&gt; buildUserGrowthTrend() {
+<span class="nc" id="L401">        Map&lt;LocalDate, Long&gt; counts = userMapper.selectList(new LambdaQueryWrapper&lt;User&gt;()</span>
+<span class="nc" id="L402">                .ge(User::getCreateTime, LocalDate.now().minusDays(6).atStartOfDay()))</span>
+<span class="nc" id="L403">                .stream()</span>
+<span class="nc bnc" id="L404" title="All 2 branches missed.">                .filter(u -&gt; u.getCreateTime() != null)</span>
+<span class="nc" id="L405">                .collect(Collectors.groupingBy(u -&gt; u.getCreateTime().toLocalDate(), Collectors.counting()));</span>
+<span class="nc" id="L406">        return lastSevenDays().stream().map(day -&gt; {</span>
+<span class="nc" id="L407">            Map&lt;String, Object&gt; row = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L408">            row.put(&quot;day&quot;, day.format(DateTimeFormatter.ofPattern(&quot;MM-dd&quot;)));</span>
+<span class="nc" id="L409">            row.put(&quot;count&quot;, counts.getOrDefault(day, 0L));</span>
+<span class="nc" id="L410">            return row;</span>
+<span class="nc" id="L411">        }).toList();</span>
+    }
+
+    private List&lt;Map&lt;String, Object&gt;&gt; buildOrderTypeDist() {
+<span class="nc" id="L415">        long flightCount = trafficOrderMapper.selectCount(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="nc" id="L416">                .eq(TrafficOrder::getOrderType, 0));</span>
+<span class="nc" id="L417">        long trainCount = trafficOrderMapper.selectCount(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="nc" id="L418">                .eq(TrafficOrder::getOrderType, 1));</span>
+<span class="nc" id="L419">        long hotelCount = hotelOrderMapper.selectCount(null);</span>
+<span class="nc" id="L420">        return List.of(</span>
+<span class="nc" id="L421">                Map.of(&quot;name&quot;, &quot;机票&quot;, &quot;value&quot;, flightCount),</span>
+<span class="nc" id="L422">                Map.of(&quot;name&quot;, &quot;火车票&quot;, &quot;value&quot;, trainCount),</span>
+<span class="nc" id="L423">                Map.of(&quot;name&quot;, &quot;酒店&quot;, &quot;value&quot;, hotelCount));</span>
+    }
+
+    private List&lt;Map&lt;String, Object&gt;&gt; buildHotDestinations() {
+<span class="nc" id="L427">        Map&lt;String, Long&gt; counts = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L428">        trafficOrderMapper.selectList(null).forEach(order -&gt; {</span>
+<span class="nc" id="L429">            String destination = null;</span>
+<span class="nc bnc" id="L430" title="All 2 branches missed.">            if (Objects.equals(order.getOrderType(), 0)) {</span>
+<span class="nc" id="L431">                Flight flight = flightMapper.selectById(order.getTicketId());</span>
+<span class="nc bnc" id="L432" title="All 2 branches missed.">                destination = flight == null ? null : flight.getArrivalCity();</span>
+<span class="nc bnc" id="L433" title="All 2 branches missed.">            } else if (Objects.equals(order.getOrderType(), 1)) {</span>
+<span class="nc" id="L434">                Train train = trainMapper.selectById(order.getTicketId());</span>
+<span class="nc bnc" id="L435" title="All 2 branches missed.">                destination = train == null ? null : train.getArrivalStation();</span>
+            }
+<span class="nc bnc" id="L437" title="All 4 branches missed.">            if (destination != null &amp;&amp; !destination.isBlank()) {</span>
+<span class="nc" id="L438">                counts.merge(destination, 1L, Long::sum);</span>
+            }
+<span class="nc" id="L440">        });</span>
+<span class="nc" id="L441">        hotelOrderMapper.selectList(null).forEach(order -&gt; {</span>
+<span class="nc" id="L442">            Hotel hotel = hotelMapper.selectById(order.getHotelId());</span>
+<span class="nc bnc" id="L443" title="All 2 branches missed.">            String city = hotel == null ? null : hotel.getCity();</span>
+<span class="nc bnc" id="L444" title="All 4 branches missed.">            if (city != null &amp;&amp; !city.isBlank()) {</span>
+<span class="nc" id="L445">                counts.merge(city, 1L, Long::sum);</span>
+            }
+<span class="nc" id="L447">        });</span>
+<span class="nc" id="L448">        return counts.entrySet().stream()</span>
+<span class="nc" id="L449">                .sorted(Map.Entry.&lt;String, Long&gt;comparingByValue().reversed())</span>
+<span class="nc" id="L450">                .limit(10)</span>
+<span class="nc" id="L451">                .map(e -&gt; Map.&lt;String, Object&gt;of(&quot;name&quot;, e.getKey(), &quot;count&quot;, e.getValue()))</span>
+<span class="nc" id="L452">                .toList();</span>
+    }
+
+    private List&lt;Map&lt;String, Object&gt;&gt; buildLogTrend(boolean latency) {
+<span class="nc" id="L456">        LocalDateTime start = LocalDateTime.now().minusMinutes(11).withSecond(0).withNano(0);</span>
+<span class="nc" id="L457">        Map&lt;LocalDateTime, List&lt;SysLog&gt;&gt; grouped = sysLogMapper.selectList(new LambdaQueryWrapper&lt;SysLog&gt;()</span>
+<span class="nc" id="L458">                .ge(SysLog::getCreateTime, start))</span>
+<span class="nc" id="L459">                .stream()</span>
+<span class="nc bnc" id="L460" title="All 2 branches missed.">                .filter(log -&gt; log.getCreateTime() != null)</span>
+<span class="nc" id="L461">                .collect(Collectors.groupingBy(log -&gt; log.getCreateTime().withSecond(0).withNano(0)));</span>
+
+<span class="nc" id="L463">        List&lt;Map&lt;String, Object&gt;&gt; trend = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L464" title="All 2 branches missed.">        for (int i = 0; i &lt; 12; i++) {</span>
+<span class="nc" id="L465">            LocalDateTime minute = start.plusMinutes(i);</span>
+<span class="nc" id="L466">            List&lt;SysLog&gt; logs = grouped.getOrDefault(minute, List.of());</span>
+            long value;
+<span class="nc bnc" id="L468" title="All 2 branches missed.">            if (latency) {</span>
+<span class="nc" id="L469">                value = logs.stream()</span>
+<span class="nc bnc" id="L470" title="All 2 branches missed.">                        .filter(log -&gt; log.getTimeMs() != null)</span>
+<span class="nc" id="L471">                        .mapToLong(SysLog::getTimeMs)</span>
+<span class="nc" id="L472">                        .average()</span>
+<span class="nc" id="L473">                        .stream()</span>
+<span class="nc" id="L474">                        .mapToLong(Math::round)</span>
+<span class="nc" id="L475">                        .findFirst()</span>
+<span class="nc" id="L476">                        .orElse(0L);</span>
+            } else {
+<span class="nc" id="L478">                value = logs.size();</span>
+            }
+<span class="nc" id="L480">            trend.add(Map.of(&quot;time&quot;, minute.format(DateTimeFormatter.ofPattern(&quot;HH:mm&quot;)), &quot;value&quot;, value));</span>
+        }
+<span class="nc" id="L482">        return trend;</span>
+    }
+
+    private List&lt;Map&lt;String, Object&gt;&gt; buildRecentErrorLogs() {
+<span class="nc" id="L486">        return sysLogMapper.selectList(new LambdaQueryWrapper&lt;SysLog&gt;()</span>
+<span class="nc" id="L487">                .eq(SysLog::getStatus, 0)</span>
+<span class="nc" id="L488">                .orderByDesc(SysLog::getCreateTime)</span>
+<span class="nc" id="L489">                .last(&quot;LIMIT 10&quot;))</span>
+<span class="nc" id="L490">                .stream()</span>
+<span class="nc" id="L491">                .map(log -&gt; {</span>
+<span class="nc" id="L492">                    Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L493">                    row.put(&quot;method&quot;, log.getMethod());</span>
+<span class="nc" id="L494">                    row.put(&quot;errorMsg&quot;, log.getErrorMsg());</span>
+<span class="nc" id="L495">                    row.put(&quot;timeMs&quot;, log.getTimeMs());</span>
+<span class="nc" id="L496">                    row.put(&quot;createTime&quot;, log.getCreateTime());</span>
+<span class="nc" id="L497">                    return row;</span>
+<span class="nc" id="L498">                }).toList();</span>
+    }
+
+    private List&lt;Map&lt;String, Object&gt;&gt; buildAlerts(long pendingPosts) {
+<span class="nc" id="L502">        List&lt;Map&lt;String, Object&gt;&gt; alerts = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L503">        LocalDateTime todayStart = LocalDate.now().atStartOfDay();</span>
+<span class="nc" id="L504">        long errorLogs = sysLogMapper.selectCount(new LambdaQueryWrapper&lt;SysLog&gt;()</span>
+<span class="nc" id="L505">                .eq(SysLog::getStatus, 0).ge(SysLog::getCreateTime, todayStart));</span>
+<span class="nc bnc" id="L506" title="All 2 branches missed.">        if (errorLogs &gt; 0) {</span>
+<span class="nc" id="L507">            alerts.add(Map.of(&quot;level&quot;, &quot;danger&quot;, &quot;title&quot;, &quot;系统异常日志告警&quot;,</span>
+                    &quot;message&quot;, &quot;今日检测到 &quot; + errorLogs + &quot; 条失败操作日志，请尽快排查。&quot;));
+        }
+<span class="nc" id="L510">        long lowStockRooms = hotelRoomMapper.selectCount(new LambdaQueryWrapper&lt;HotelRoom&gt;()</span>
+<span class="nc" id="L511">                .eq(HotelRoom::getStatus, 1).le(HotelRoom::getAvailableRooms, 2));</span>
+<span class="nc bnc" id="L512" title="All 2 branches missed.">        if (lowStockRooms &gt; 0) {</span>
+<span class="nc" id="L513">            alerts.add(Map.of(&quot;level&quot;, &quot;warning&quot;, &quot;title&quot;, &quot;房态库存预警&quot;,</span>
+                    &quot;message&quot;, &quot;当前有 &quot; + lowStockRooms + &quot; 个房型库存低于等于 2。&quot;));
+        }
+<span class="nc bnc" id="L516" title="All 2 branches missed.">        if (pendingPosts &gt; 0) {</span>
+<span class="nc" id="L517">            alerts.add(Map.of(&quot;level&quot;, &quot;info&quot;, &quot;title&quot;, &quot;内容审核待处理&quot;,</span>
+                    &quot;message&quot;, &quot;待审核游记还有 &quot; + pendingPosts + &quot; 篇。&quot;));
+        }
+<span class="nc bnc" id="L520" title="All 2 branches missed.">        if (alerts.isEmpty()) {</span>
+<span class="nc" id="L521">            alerts.add(Map.of(&quot;level&quot;, &quot;success&quot;, &quot;title&quot;, &quot;系统运行稳定&quot;,</span>
+                    &quot;message&quot;, &quot;当前未发现高优先级异常。&quot;));
+        }
+<span class="nc" id="L524">        return alerts;</span>
+    }
+
+    private Map&lt;String, Object&gt; buildPostAuditRow(Post post) {
+<span class="nc" id="L528">        Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L529">        row.put(&quot;id&quot;, post.getId());</span>
+<span class="nc" id="L530">        row.put(&quot;userId&quot;, post.getUserId());</span>
+<span class="nc" id="L531">        row.put(&quot;title&quot;, post.getTitle());</span>
+<span class="nc" id="L532">        row.put(&quot;content&quot;, post.getContent());</span>
+<span class="nc" id="L533">        row.put(&quot;destination&quot;, post.getDestination());</span>
+<span class="nc" id="L534">        row.put(&quot;tags&quot;, post.getTags());</span>
+<span class="nc" id="L535">        row.put(&quot;likeCount&quot;, post.getLikeCount());</span>
+<span class="nc" id="L536">        row.put(&quot;collectCount&quot;, post.getCollectCount());</span>
+<span class="nc" id="L537">        row.put(&quot;status&quot;, post.getStatus());</span>
+<span class="nc" id="L538">        row.put(&quot;rejectReason&quot;, post.getRejectReason());</span>
+<span class="nc" id="L539">        row.put(&quot;createTime&quot;, post.getCreateTime());</span>
+<span class="nc bnc" id="L540" title="All 2 branches missed.">        User author = post.getUserId() == null ? null : userMapper.selectById(post.getUserId());</span>
+<span class="nc bnc" id="L541" title="All 2 branches missed.">        row.put(&quot;authorUsername&quot;, author == null ? &quot;未知用户&quot; : author.getUsername());</span>
+<span class="nc bnc" id="L542" title="All 2 branches missed.">        row.put(&quot;authorNickname&quot;, author == null ? null : author.getNickname());</span>
+
+<span class="nc" id="L544">        String joined = String.join(&quot; &quot;,</span>
+<span class="nc" id="L545">                Objects.toString(post.getTitle(), &quot;&quot;),</span>
+<span class="nc" id="L546">                Objects.toString(post.getContent(), &quot;&quot;),</span>
+<span class="nc" id="L547">                Objects.toString(post.getTags(), &quot;&quot;),</span>
+<span class="nc" id="L548">                Objects.toString(post.getDestination(), &quot;&quot;));</span>
+<span class="nc" id="L549">        List&lt;String&gt; matchedWords = sensitiveWordMapper.selectList(null).stream()</span>
+<span class="nc bnc" id="L550" title="All 6 branches missed.">                .filter(word -&gt; word.getWord() != null &amp;&amp; !word.getWord().isBlank() &amp;&amp; joined.contains(word.getWord()))</span>
+<span class="nc" id="L551">                .map(SysSensitiveWord::getWord)</span>
+<span class="nc" id="L552">                .distinct()</span>
+<span class="nc" id="L553">                .toList();</span>
+<span class="nc" id="L554">        row.put(&quot;matchedWords&quot;, matchedWords);</span>
+<span class="nc bnc" id="L555" title="All 2 branches missed.">        if (Objects.equals(post.getStatus(), 0)) {</span>
+<span class="nc bnc" id="L556" title="All 2 branches missed.">            row.put(&quot;aiSuggestion&quot;, matchedWords.isEmpty() ? &quot;AI建议：未命中敏感词，可人工复核后通过&quot; : &quot;AI建议：命中敏感词，建议重点复核&quot;);</span>
+<span class="nc bnc" id="L557" title="All 2 branches missed.">        } else if (Objects.equals(post.getStatus(), 2)) {</span>
+<span class="nc bnc" id="L558" title="All 2 branches missed.">            row.put(&quot;aiSuggestion&quot;, post.getRejectReason() == null ? &quot;已拒绝&quot; : post.getRejectReason());</span>
+        } else {
+<span class="nc" id="L560">            row.put(&quot;aiSuggestion&quot;, &quot;已通过审核&quot;);</span>
+        }
+<span class="nc" id="L562">        return row;</span>
+    }
+
+    private Map&lt;String, Object&gt; buildReviewReportRow(ReviewReport report) {
+<span class="nc" id="L566">        Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L567">        row.put(&quot;id&quot;, report.getId());</span>
+<span class="nc" id="L568">        row.put(&quot;reviewId&quot;, report.getReviewId());</span>
+<span class="nc" id="L569">        row.put(&quot;reporterId&quot;, report.getReporterId());</span>
+<span class="nc" id="L570">        row.put(&quot;reason&quot;, report.getReason());</span>
+<span class="nc" id="L571">        row.put(&quot;status&quot;, report.getStatus());</span>
+<span class="nc" id="L572">        row.put(&quot;handleRemark&quot;, report.getHandleRemark());</span>
+<span class="nc" id="L573">        row.put(&quot;createTime&quot;, report.getCreateTime());</span>
+<span class="nc" id="L574">        row.put(&quot;handleTime&quot;, report.getHandleTime());</span>
+
+<span class="nc bnc" id="L576" title="All 2 branches missed.">        User reporter = report.getReporterId() == null ? null : userMapper.selectById(report.getReporterId());</span>
+<span class="nc bnc" id="L577" title="All 2 branches missed.">        row.put(&quot;reporterUsername&quot;, reporter == null ? &quot;未知用户&quot; : reporter.getUsername());</span>
+<span class="nc bnc" id="L578" title="All 2 branches missed.">        Review review = report.getReviewId() == null ? null : reviewMapper.selectById(report.getReviewId());</span>
+<span class="nc bnc" id="L579" title="All 2 branches missed.">        if (review != null) {</span>
+<span class="nc" id="L580">            row.put(&quot;reviewContent&quot;, review.getContent());</span>
+<span class="nc" id="L581">            row.put(&quot;rating&quot;, review.getRating());</span>
+<span class="nc" id="L582">            row.put(&quot;targetType&quot;, review.getTargetType());</span>
+<span class="nc" id="L583">            row.put(&quot;reviewUserId&quot;, review.getUserId());</span>
+<span class="nc bnc" id="L584" title="All 2 branches missed.">            User reviewUser = review.getUserId() == null ? null : userMapper.selectById(review.getUserId());</span>
+<span class="nc bnc" id="L585" title="All 2 branches missed.">            row.put(&quot;reviewUsername&quot;, reviewUser == null ? &quot;未知用户&quot; : reviewUser.getUsername());</span>
+<span class="nc bnc" id="L586" title="All 2 branches missed.">            if (Objects.equals(review.getTargetType(), 0)) {</span>
+<span class="nc" id="L587">                Hotel hotel = hotelMapper.selectById(review.getTargetId());</span>
+<span class="nc bnc" id="L588" title="All 2 branches missed.">                row.put(&quot;targetName&quot;, hotel == null ? &quot;未知酒店&quot; : hotel.getName());</span>
+<span class="nc" id="L589">            } else {</span>
+<span class="nc" id="L590">                Attraction attraction = attractionMapper.selectById(review.getTargetId());</span>
+<span class="nc bnc" id="L591" title="All 2 branches missed.">                row.put(&quot;targetName&quot;, attraction == null ? &quot;未知景点&quot; : attraction.getName());</span>
+            }
+        }
+<span class="nc" id="L594">        return row;</span>
+    }
+
+    private Map&lt;String, Object&gt; buildUserProfileRow(User user) {
+<span class="nc" id="L598">        Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L599">        row.put(&quot;id&quot;, user.getId());</span>
+<span class="nc" id="L600">        row.put(&quot;username&quot;, user.getUsername());</span>
+<span class="nc" id="L601">        row.put(&quot;nickname&quot;, user.getNickname());</span>
+<span class="nc" id="L602">        row.put(&quot;email&quot;, user.getEmail());</span>
+<span class="nc" id="L603">        row.put(&quot;phone&quot;, user.getPhone());</span>
+<span class="nc" id="L604">        row.put(&quot;bio&quot;, user.getBio());</span>
+<span class="nc" id="L605">        row.put(&quot;role&quot;, user.getRole());</span>
+<span class="nc" id="L606">        row.put(&quot;level&quot;, user.getLevel());</span>
+<span class="nc" id="L607">        row.put(&quot;status&quot;, user.getStatus());</span>
+<span class="nc" id="L608">        row.put(&quot;createTime&quot;, user.getCreateTime());</span>
+<span class="nc" id="L609">        row.put(&quot;updateTime&quot;, user.getUpdateTime());</span>
+<span class="nc" id="L610">        row.put(&quot;trafficOrderCount&quot;, trafficOrderMapper.selectCount(new LambdaQueryWrapper&lt;TrafficOrder&gt;().eq(TrafficOrder::getUserId, user.getId())));</span>
+<span class="nc" id="L611">        row.put(&quot;hotelOrderCount&quot;, hotelOrderMapper.selectCount(new LambdaQueryWrapper&lt;HotelOrder&gt;().eq(HotelOrder::getUserId, user.getId())));</span>
+<span class="nc" id="L612">        row.put(&quot;postCount&quot;, postMapper.selectCount(new LambdaQueryWrapper&lt;Post&gt;().eq(Post::getUserId, user.getId())));</span>
+<span class="nc" id="L613">        row.put(&quot;commentCount&quot;, commentMapper.selectCount(new LambdaQueryWrapper&lt;Comment&gt;().eq(Comment::getUserId, user.getId())));</span>
+<span class="nc" id="L614">        row.put(&quot;reviewCount&quot;, reviewMapper.selectCount(new LambdaQueryWrapper&lt;Review&gt;().eq(Review::getUserId, user.getId()).eq(Review::getDeleted, 0)));</span>
+<span class="nc" id="L615">        row.put(&quot;reportCount&quot;, reviewReportMapper.selectCount(new LambdaQueryWrapper&lt;ReviewReport&gt;().eq(ReviewReport::getReporterId, user.getId())));</span>
+<span class="nc" id="L616">        SysLog lastLog = sysLogMapper.selectOne(new LambdaQueryWrapper&lt;SysLog&gt;()</span>
+<span class="nc" id="L617">                .eq(SysLog::getUserId, user.getId())</span>
+<span class="nc" id="L618">                .orderByDesc(SysLog::getCreateTime)</span>
+<span class="nc" id="L619">                .last(&quot;LIMIT 1&quot;));</span>
+<span class="nc bnc" id="L620" title="All 2 branches missed.">        row.put(&quot;lastOperationTime&quot;, lastLog == null ? null : lastLog.getCreateTime());</span>
+<span class="nc bnc" id="L621" title="All 2 branches missed.">        row.put(&quot;lastOperation&quot;, lastLog == null ? null : lastLog.getOperation());</span>
+<span class="nc" id="L622">        return row;</span>
+    }
+
+    @GetMapping(&quot;/stats&quot;)
+    public Result&lt;Map&lt;String, Object&gt;&gt; stats() {
+<span class="nc" id="L627">        checkAdmin();</span>
+<span class="nc" id="L628">        long pendingPosts = postMapper.selectCount(new LambdaQueryWrapper&lt;Post&gt;().eq(Post::getStatus, 0));</span>
+<span class="nc" id="L629">        long todayNewUsers = userMapper.selectCount(new LambdaQueryWrapper&lt;User&gt;()</span>
+<span class="nc" id="L630">                .ge(User::getCreateTime, LocalDate.now().atStartOfDay()));</span>
+<span class="nc" id="L631">        Map&lt;String, Object&gt; stats = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L632">        stats.put(&quot;totalUsers&quot;, userMapper.selectCount(null));</span>
+<span class="nc" id="L633">        stats.put(&quot;totalOrders&quot;, countTotalOrders());</span>
+<span class="nc" id="L634">        stats.put(&quot;todayOrders&quot;, countTodayOrders());</span>
+<span class="nc" id="L635">        stats.put(&quot;pendingPosts&quot;, pendingPosts);</span>
+<span class="nc" id="L636">        stats.put(&quot;todayNewUsers&quot;, todayNewUsers);</span>
+<span class="nc" id="L637">        stats.put(&quot;todayGmv&quot;, countTodayGmv());</span>
+<span class="nc" id="L638">        stats.put(&quot;onlineUsers&quot;, countOnlineUsers());</span>
+<span class="nc" id="L639">        return Result.success(stats);</span>
+    }
+
+    @GetMapping(&quot;/dashboard/data&quot;)
+    public Result&lt;Map&lt;String, Object&gt;&gt; dashboardData() {
+<span class="nc" id="L644">        checkAdmin();</span>
+<span class="nc" id="L645">        long pendingPosts = postMapper.selectCount(new LambdaQueryWrapper&lt;Post&gt;().eq(Post::getStatus, 0));</span>
+<span class="nc" id="L646">        Map&lt;String, Object&gt; data = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L647">        data.put(&quot;totalUsers&quot;, userMapper.selectCount(null));</span>
+<span class="nc" id="L648">        data.put(&quot;totalOrders&quot;, countTotalOrders());</span>
+<span class="nc" id="L649">        data.put(&quot;todayOrders&quot;, countTodayOrders());</span>
+<span class="nc" id="L650">        data.put(&quot;pendingPosts&quot;, pendingPosts);</span>
+<span class="nc" id="L651">        data.put(&quot;todayGmv&quot;, countTodayGmv());</span>
+<span class="nc" id="L652">        data.put(&quot;onlineUsers&quot;, countOnlineUsers());</span>
+<span class="nc" id="L653">        data.put(&quot;dailyTrend&quot;, buildDailyOrderTrend());</span>
+<span class="nc" id="L654">        data.put(&quot;hotDestinations&quot;, buildHotDestinations());</span>
+<span class="nc" id="L655">        data.put(&quot;orderTypeDist&quot;, buildOrderTypeDist());</span>
+<span class="nc" id="L656">        data.put(&quot;userGrowth&quot;, buildUserGrowthTrend());</span>
+<span class="nc" id="L657">        data.put(&quot;qpsTrend&quot;, buildLogTrend(false));</span>
+<span class="nc" id="L658">        data.put(&quot;latencyTrend&quot;, buildLogTrend(true));</span>
+<span class="nc" id="L659">        data.put(&quot;recentErrors&quot;, buildRecentErrorLogs());</span>
+<span class="nc" id="L660">        data.put(&quot;alerts&quot;, buildAlerts(pendingPosts));</span>
+<span class="nc" id="L661">        return Result.success(data);</span>
+    }
+
+    @GetMapping(&quot;/flights&quot;)
+    public Result&lt;List&lt;Flight&gt;&gt; listFlights() {
+<span class="nc" id="L666">        checkAdmin();</span>
+<span class="nc" id="L667">        return Result.success(flightMapper.selectList(null));</span>
+    }
+
+    @PostMapping(&quot;/flights&quot;)
+    public Result&lt;Flight&gt; addFlight(@RequestBody Flight flight) {
+<span class="fc" id="L672">        checkAdmin();</span>
+<span class="fc" id="L673">        validateFlight(flight);</span>
+<span class="fc" id="L674">        flightMapper.insert(flight);</span>
+<span class="fc" id="L675">        return Result.success(flight);</span>
+    }
+
+    @PutMapping(&quot;/flights/{id}&quot;)
+    public Result&lt;Void&gt; updateFlight(@PathVariable Long id, @RequestBody Flight flight) {
+<span class="nc" id="L680">        checkAdmin();</span>
+<span class="nc" id="L681">        validateFlight(flight);</span>
+<span class="nc" id="L682">        flight.setId(id);</span>
+<span class="nc" id="L683">        flightMapper.updateById(flight);</span>
+<span class="nc" id="L684">        return Result.success();</span>
+    }
+
+    @DeleteMapping(&quot;/flights/{id}&quot;)
+    public Result&lt;Void&gt; deleteFlight(@PathVariable Long id) {
+<span class="fc" id="L689">        checkAdmin();</span>
+<span class="fc" id="L690">        long orderCount = trafficOrderMapper.selectCount(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="fc" id="L691">                .eq(TrafficOrder::getOrderType, 0).eq(TrafficOrder::getTicketId, id));</span>
+<span class="pc bpc" id="L692" title="1 of 2 branches missed.">        if (orderCount &gt; 0) {</span>
+<span class="fc" id="L693">            return Result.error(&quot;该航班已有订单，不能删除&quot;);</span>
+        }
+<span class="nc" id="L695">        flightMapper.deleteById(id);</span>
+<span class="nc" id="L696">        return Result.success();</span>
+    }
+
+    @GetMapping(&quot;/trains&quot;)
+    public Result&lt;List&lt;Train&gt;&gt; listTrains() {
+<span class="nc" id="L701">        checkAdmin();</span>
+<span class="nc" id="L702">        return Result.success(trainMapper.selectList(null));</span>
+    }
+
+    @PostMapping(&quot;/trains&quot;)
+    public Result&lt;Train&gt; addTrain(@RequestBody Train train) {
+<span class="nc" id="L707">        checkAdmin();</span>
+<span class="nc" id="L708">        validateTrain(train);</span>
+<span class="nc" id="L709">        trainMapper.insert(train);</span>
+<span class="nc" id="L710">        return Result.success(train);</span>
+    }
+
+    @PutMapping(&quot;/trains/{id}&quot;)
+    public Result&lt;Void&gt; updateTrain(@PathVariable Long id, @RequestBody Train train) {
+<span class="nc" id="L715">        checkAdmin();</span>
+<span class="nc" id="L716">        validateTrain(train);</span>
+<span class="nc" id="L717">        train.setId(id);</span>
+<span class="nc" id="L718">        trainMapper.updateById(train);</span>
+<span class="nc" id="L719">        return Result.success();</span>
+    }
+
+    @DeleteMapping(&quot;/trains/{id}&quot;)
+    public Result&lt;Void&gt; deleteTrain(@PathVariable Long id) {
+<span class="nc" id="L724">        checkAdmin();</span>
+<span class="nc" id="L725">        long orderCount = trafficOrderMapper.selectCount(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="nc" id="L726">                .eq(TrafficOrder::getOrderType, 1).eq(TrafficOrder::getTicketId, id));</span>
+<span class="nc bnc" id="L727" title="All 2 branches missed.">        if (orderCount &gt; 0) {</span>
+<span class="nc" id="L728">            return Result.error(&quot;该车次已有订单，不能删除&quot;);</span>
+        }
+<span class="nc" id="L730">        trainMapper.deleteById(id);</span>
+<span class="nc" id="L731">        return Result.success();</span>
+    }
+
+    @GetMapping(&quot;/hotels&quot;)
+    public Result&lt;List&lt;Hotel&gt;&gt; listHotels() {
+<span class="nc" id="L736">        checkAdmin();</span>
+<span class="nc" id="L737">        return Result.success(hotelMapper.selectList(null));</span>
+    }
+
+    @PostMapping(&quot;/hotels&quot;)
+    public Result&lt;Hotel&gt; addHotel(@RequestBody Hotel hotel) {
+<span class="nc" id="L742">        checkAdmin();</span>
+<span class="nc" id="L743">        validateHotel(hotel);</span>
+<span class="nc" id="L744">        hotelMapper.insert(hotel);</span>
+<span class="nc" id="L745">        return Result.success(hotel);</span>
+    }
+
+    @PutMapping(&quot;/hotels/{id}&quot;)
+    public Result&lt;Void&gt; updateHotel(@PathVariable Long id, @RequestBody Hotel hotel) {
+<span class="nc" id="L750">        checkAdmin();</span>
+<span class="nc" id="L751">        validateHotel(hotel);</span>
+<span class="nc" id="L752">        hotel.setId(id);</span>
+<span class="nc" id="L753">        hotelMapper.updateById(hotel);</span>
+<span class="nc" id="L754">        return Result.success();</span>
+    }
+
+    @DeleteMapping(&quot;/hotels/{id}&quot;)
+    public Result&lt;Void&gt; deleteHotel(@PathVariable Long id) {
+<span class="nc" id="L759">        checkAdmin();</span>
+<span class="nc" id="L760">        long orderCount = hotelOrderMapper.selectCount(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="nc" id="L761">                .eq(HotelOrder::getHotelId, id));</span>
+<span class="nc bnc" id="L762" title="All 2 branches missed.">        if (orderCount &gt; 0) {</span>
+<span class="nc" id="L763">            return Result.error(&quot;该酒店已有订单，不能删除&quot;);</span>
+        }
+<span class="nc" id="L765">        hotelMapper.deleteById(id);</span>
+<span class="nc" id="L766">        return Result.success();</span>
+    }
+
+    @GetMapping(&quot;/hotels/{hotelId}/rooms&quot;)
+    public Result&lt;List&lt;HotelRoom&gt;&gt; listHotelRooms(@PathVariable Long hotelId) {
+<span class="nc" id="L771">        checkAdmin();</span>
+<span class="nc" id="L772">        return Result.success(hotelRoomMapper.selectList(new LambdaQueryWrapper&lt;HotelRoom&gt;()</span>
+<span class="nc" id="L773">                .eq(HotelRoom::getHotelId, hotelId).orderByAsc(HotelRoom::getId)));</span>
+    }
+
+    @PostMapping(&quot;/hotels/{hotelId}/rooms&quot;)
+    public Result&lt;HotelRoom&gt; addHotelRoom(@PathVariable Long hotelId, @RequestBody HotelRoom room) {
+<span class="nc" id="L778">        checkAdmin();</span>
+<span class="nc" id="L779">        validateHotelRoom(room);</span>
+<span class="nc" id="L780">        room.setHotelId(hotelId);</span>
+<span class="nc" id="L781">        hotelRoomMapper.insert(room);</span>
+<span class="nc" id="L782">        hotelRoomStockService.syncWithDatabase(room.getId());</span>
+<span class="nc" id="L783">        return Result.success(room);</span>
+    }
+
+    @PutMapping(&quot;/hotel-rooms/{id}&quot;)
+    public Result&lt;Void&gt; updateHotelRoom(@PathVariable Long id, @RequestBody HotelRoom room) {
+<span class="nc" id="L788">        checkAdmin();</span>
+<span class="nc" id="L789">        validateHotelRoom(room);</span>
+<span class="nc" id="L790">        room.setId(id);</span>
+<span class="nc" id="L791">        hotelRoomMapper.updateById(room);</span>
+<span class="nc" id="L792">        hotelRoomStockService.syncWithDatabase(id);</span>
+<span class="nc" id="L793">        return Result.success();</span>
+    }
+
+    @DeleteMapping(&quot;/hotel-rooms/{id}&quot;)
+    public Result&lt;Void&gt; deleteHotelRoom(@PathVariable Long id) {
+<span class="nc" id="L798">        checkAdmin();</span>
+<span class="nc" id="L799">        long orderCount = hotelOrderMapper.selectCount(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="nc" id="L800">                .eq(HotelOrder::getRoomId, id));</span>
+<span class="nc bnc" id="L801" title="All 2 branches missed.">        if (orderCount &gt; 0) {</span>
+<span class="nc" id="L802">            return Result.error(&quot;该房型已有订单，不能删除&quot;);</span>
+        }
+<span class="nc" id="L804">        hotelRoomMapper.deleteById(id);</span>
+<span class="nc" id="L805">        hotelRoomStockService.syncWithDatabase(id);</span>
+<span class="nc" id="L806">        return Result.success();</span>
+    }
+
+    @GetMapping(&quot;/attractions&quot;)
+    public Result&lt;List&lt;Attraction&gt;&gt; listAttractions() {
+<span class="nc" id="L811">        checkAdmin();</span>
+<span class="nc" id="L812">        return Result.success(attractionMapper.selectList(new LambdaQueryWrapper&lt;Attraction&gt;()</span>
+<span class="nc" id="L813">                .orderByAsc(Attraction::getCity).orderByDesc(Attraction::getId)));</span>
+    }
+
+    @PostMapping(&quot;/attractions&quot;)
+    public Result&lt;Attraction&gt; addAttraction(@RequestBody Attraction attraction) {
+<span class="nc" id="L818">        checkAdmin();</span>
+<span class="nc" id="L819">        validateAttraction(attraction);</span>
+<span class="nc" id="L820">        attractionMapper.insert(attraction);</span>
+<span class="nc" id="L821">        return Result.success(attraction);</span>
+    }
+
+    @PutMapping(&quot;/attractions/{id}&quot;)
+    public Result&lt;Void&gt; updateAttraction(@PathVariable Long id, @RequestBody Attraction attraction) {
+<span class="nc" id="L826">        checkAdmin();</span>
+<span class="nc" id="L827">        validateAttraction(attraction);</span>
+<span class="nc" id="L828">        attraction.setId(id);</span>
+<span class="nc" id="L829">        attractionMapper.updateById(attraction);</span>
+<span class="nc" id="L830">        return Result.success();</span>
+    }
+
+    @DeleteMapping(&quot;/attractions/{id}&quot;)
+    public Result&lt;Void&gt; deleteAttraction(@PathVariable Long id) {
+<span class="nc" id="L835">        checkAdmin();</span>
+<span class="nc" id="L836">        long reviewCount = reviewMapper.selectCount(new LambdaQueryWrapper&lt;Review&gt;()</span>
+<span class="nc" id="L837">                .eq(Review::getTargetType, 1)</span>
+<span class="nc" id="L838">                .eq(Review::getTargetId, id)</span>
+<span class="nc" id="L839">                .eq(Review::getDeleted, 0));</span>
+<span class="nc bnc" id="L840" title="All 2 branches missed.">        if (reviewCount &gt; 0) {</span>
+<span class="nc" id="L841">            attractionMapper.update(null, new LambdaUpdateWrapper&lt;Attraction&gt;()</span>
+<span class="nc" id="L842">                    .eq(Attraction::getId, id)</span>
+<span class="nc" id="L843">                    .set(Attraction::getStatus, 0));</span>
+<span class="nc" id="L844">            return Result.success();</span>
+        }
+<span class="nc" id="L846">        attractionMapper.deleteById(id);</span>
+<span class="nc" id="L847">        return Result.success();</span>
+    }
+
+    @GetMapping(&quot;/posts&quot;)
+    public Result&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; listPosts(@RequestParam(required = false) Integer status) {
+<span class="nc" id="L852">        checkAdmin();</span>
+<span class="nc" id="L853">        LambdaQueryWrapper&lt;Post&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc bnc" id="L854" title="All 2 branches missed.">        if (status != null) {</span>
+<span class="nc" id="L855">            wrapper.eq(Post::getStatus, status);</span>
+        }
+<span class="nc" id="L857">        wrapper.orderByDesc(Post::getCreateTime);</span>
+<span class="nc" id="L858">        return Result.success(postMapper.selectList(wrapper).stream()</span>
+<span class="nc" id="L859">                .map(this::buildPostAuditRow)</span>
+<span class="nc" id="L860">                .toList());</span>
+    }
+
+    @GetMapping(&quot;/destinations&quot;)
+    public Result&lt;List&lt;Destination&gt;&gt; listAdminDestinations() {
+<span class="nc" id="L865">        checkAdmin();</span>
+<span class="nc" id="L866">        return Result.success(destinationMapper.selectList(new LambdaQueryWrapper&lt;Destination&gt;()</span>
+<span class="nc" id="L867">                .orderByAsc(Destination::getSortOrder)</span>
+<span class="nc" id="L868">                .orderByDesc(Destination::getId)));</span>
+    }
+
+    @PostMapping(&quot;/destinations/sync-home&quot;)
+    @Transactional(rollbackFor = Exception.class)
+    public Result&lt;Map&lt;String, Object&gt;&gt; syncHomeDestinations(@RequestBody List&lt;Destination&gt; homeDestinations) {
+<span class="fc" id="L874">        checkAdmin();</span>
+<span class="pc bpc" id="L875" title="2 of 4 branches missed.">        if (homeDestinations == null || homeDestinations.isEmpty()) {</span>
+<span class="nc" id="L876">            return Result.error(&quot;首页城市资源不能为空&quot;);</span>
+        }
+<span class="pc bpc" id="L878" title="1 of 2 branches missed.">        if (homeDestinations.size() &gt; 100) {</span>
+<span class="nc" id="L879">            return Result.error(&quot;单次最多同步 100 个城市&quot;);</span>
+        }
+
+<span class="fc" id="L882">        int inserted = 0;</span>
+<span class="fc" id="L883">        int updated = 0;</span>
+<span class="fc" id="L884">        Set&lt;String&gt; slugs = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L885">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="fc bfc" id="L886" title="All 2 branches covered.">        for (int i = 0; i &lt; homeDestinations.size(); i++) {</span>
+<span class="fc" id="L887">            Destination destination = homeDestinations.get(i);</span>
+<span class="pc bpc" id="L888" title="1 of 2 branches missed.">            if (destination == null) {</span>
+<span class="nc" id="L889">                throw new RuntimeException(&quot;第 &quot; + (i + 1) + &quot; 个城市资源不能为空&quot;);</span>
+            }
+<span class="fc" id="L891">            destination.setId(null);</span>
+<span class="pc bpc" id="L892" title="1 of 2 branches missed.">            destination.setSlug(destination.getSlug() == null</span>
+<span class="nc" id="L893">                    ? null</span>
+<span class="fc" id="L894">                    : destination.getSlug().trim().toLowerCase(Locale.ROOT));</span>
+<span class="pc bpc" id="L895" title="1 of 2 branches missed.">            if (!slugs.add(destination.getSlug())) {</span>
+<span class="nc" id="L896">                throw new RuntimeException(&quot;首页城市标识重复：&quot; + destination.getSlug());</span>
+            }
+<span class="pc bpc" id="L898" title="2 of 4 branches missed.">            if (destination.getCountry() == null || destination.getCountry().isBlank()) {</span>
+<span class="nc" id="L899">                destination.setCountry(&quot;中国&quot;);</span>
+            }
+<span class="pc bpc" id="L901" title="1 of 2 branches missed.">            if (destination.getSortOrder() == null) {</span>
+<span class="fc" id="L902">                destination.setSortOrder((i + 1) * 10);</span>
+            }
+<span class="pc bpc" id="L904" title="1 of 2 branches missed.">            if (destination.getStatus() == null) {</span>
+<span class="nc" id="L905">                destination.setStatus(1);</span>
+            }
+<span class="fc" id="L907">            validateDestination(destination);</span>
+
+<span class="fc" id="L909">            Destination existing = destinationMapper.selectOne(new LambdaQueryWrapper&lt;Destination&gt;()</span>
+<span class="fc" id="L910">                    .eq(Destination::getSlug, destination.getSlug())</span>
+<span class="fc" id="L911">                    .last(&quot;LIMIT 1&quot;));</span>
+<span class="fc" id="L912">            destination.setUpdateTime(now);</span>
+<span class="fc bfc" id="L913" title="All 2 branches covered.">            if (existing == null) {</span>
+<span class="fc" id="L914">                destination.setCreateTime(now);</span>
+<span class="fc" id="L915">                destinationMapper.insert(destination);</span>
+<span class="fc" id="L916">                inserted++;</span>
+            } else {
+<span class="fc" id="L918">                destination.setId(existing.getId());</span>
+<span class="fc" id="L919">                destination.setCreateTime(existing.getCreateTime());</span>
+<span class="fc" id="L920">                destinationMapper.updateById(destination);</span>
+<span class="fc" id="L921">                updated++;</span>
+            }
+        }
+
+<span class="fc" id="L925">        Map&lt;String, Object&gt; result = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L926">        result.put(&quot;total&quot;, homeDestinations.size());</span>
+<span class="fc" id="L927">        result.put(&quot;inserted&quot;, inserted);</span>
+<span class="fc" id="L928">        result.put(&quot;updated&quot;, updated);</span>
+<span class="fc" id="L929">        return Result.success(result);</span>
+    }
+
+    @PutMapping(&quot;/destinations/{id}&quot;)
+    public Result&lt;Void&gt; updateDestination(@PathVariable Long id, @RequestBody Destination destination) {
+<span class="nc" id="L934">        checkAdmin();</span>
+<span class="nc" id="L935">        destination.setId(id);</span>
+<span class="nc" id="L936">        validateDestination(destination);</span>
+<span class="nc" id="L937">        destination.setUpdateTime(LocalDateTime.now());</span>
+<span class="nc" id="L938">        destinationMapper.updateById(destination);</span>
+<span class="nc" id="L939">        return Result.success();</span>
+    }
+
+    @DeleteMapping(&quot;/destinations/{id}&quot;)
+    public Result&lt;Void&gt; deleteDestination(@PathVariable Long id) {
+<span class="nc" id="L944">        checkAdmin();</span>
+<span class="nc" id="L945">        destinationMapper.update(null, new LambdaUpdateWrapper&lt;Destination&gt;()</span>
+<span class="nc" id="L946">                .eq(Destination::getId, id)</span>
+<span class="nc" id="L947">                .set(Destination::getStatus, 0)</span>
+<span class="nc" id="L948">                .set(Destination::getUpdateTime, LocalDateTime.now()));</span>
+<span class="nc" id="L949">        return Result.success();</span>
+    }
+
+    @PostMapping(&quot;/posts/{id}/approve&quot;)
+    public Result&lt;Void&gt; approvePost(@PathVariable Long id) {
+<span class="fc" id="L954">        checkAdmin();</span>
+<span class="fc" id="L955">        Post post = postMapper.selectById(id);</span>
+<span class="fc" id="L956">        postMapper.update(null, new LambdaUpdateWrapper&lt;Post&gt;()</span>
+<span class="fc" id="L957">                .eq(Post::getId, id)</span>
+<span class="fc" id="L958">                .set(Post::getStatus, 1)</span>
+<span class="fc" id="L959">                .set(Post::getRejectReason, null)</span>
+<span class="fc" id="L960">                .set(Post::getUpdateTime, LocalDateTime.now()));</span>
+<span class="pc bpc" id="L961" title="1 of 2 branches missed.">        if (post != null) {</span>
+<span class="fc" id="L962">            notificationCenterService.createNotification(</span>
+<span class="fc" id="L963">                    post.getUserId(),</span>
+                    &quot;post_audit&quot;,
+                    &quot;游记审核通过&quot;,
+<span class="fc" id="L966">                    String.format(&quot;《%s》已通过人工审核并发布。&quot;, post.getTitle()),</span>
+<span class="fc" id="L967">                    &quot;/post/&quot; + post.getId());</span>
+        }
+<span class="fc" id="L969">        return Result.success();</span>
+    }
+
+    @PostMapping(&quot;/posts/{id}/reject&quot;)
+    public Result&lt;Void&gt; rejectPost(@PathVariable Long id, @RequestBody(required = false) Map&lt;String, Object&gt; body) {
+<span class="fc" id="L974">        checkAdmin();</span>
+<span class="pc bpc" id="L975" title="1 of 4 branches missed.">        String reason = body == null || body.get(&quot;reason&quot;) == null ? &quot;内容不符合社区规范&quot; : body.get(&quot;reason&quot;).toString();</span>
+<span class="fc" id="L976">        Post post = postMapper.selectById(id);</span>
+<span class="fc" id="L977">        postMapper.update(null, new LambdaUpdateWrapper&lt;Post&gt;()</span>
+<span class="fc" id="L978">                .eq(Post::getId, id)</span>
+<span class="fc" id="L979">                .set(Post::getStatus, 2)</span>
+<span class="fc" id="L980">                .set(Post::getRejectReason, reason)</span>
+<span class="fc" id="L981">                .set(Post::getUpdateTime, LocalDateTime.now()));</span>
+<span class="pc bpc" id="L982" title="1 of 2 branches missed.">        if (post != null) {</span>
+<span class="fc" id="L983">            notificationCenterService.createNotification(</span>
+<span class="fc" id="L984">                    post.getUserId(),</span>
+                    &quot;post_audit&quot;,
+                    &quot;游记审核未通过&quot;,
+<span class="fc" id="L987">                    String.format(&quot;《%s》未通过人工审核，原因：%s&quot;, post.getTitle(), reason),</span>
+<span class="fc" id="L988">                    &quot;/post/&quot; + post.getId());</span>
+        }
+<span class="fc" id="L990">        return Result.success();</span>
+    }
+
+    @PostMapping(&quot;/posts/{id}/metrics&quot;)
+    public Result&lt;Void&gt; updatePostMetrics(@PathVariable Long id, @RequestBody Map&lt;String, Object&gt; body) {
+<span class="nc" id="L995">        checkAdmin();</span>
+<span class="nc" id="L996">        Post post = postMapper.selectById(id);</span>
+<span class="nc bnc" id="L997" title="All 2 branches missed.">        if (post == null) {</span>
+<span class="nc" id="L998">            return Result.error(&quot;游记不存在&quot;);</span>
+        }
+<span class="nc bnc" id="L1000" title="All 2 branches missed.">        Integer likeCount = parseNonNegativeInteger(body == null ? null : body.get(&quot;likeCount&quot;), &quot;点赞量&quot;);</span>
+<span class="nc bnc" id="L1001" title="All 2 branches missed.">        Integer collectCount = parseNonNegativeInteger(body == null ? null : body.get(&quot;collectCount&quot;), &quot;收藏量&quot;);</span>
+<span class="nc" id="L1002">        postMapper.update(null, new LambdaUpdateWrapper&lt;Post&gt;()</span>
+<span class="nc" id="L1003">                .eq(Post::getId, id)</span>
+<span class="nc" id="L1004">                .set(Post::getLikeCount, likeCount)</span>
+<span class="nc" id="L1005">                .set(Post::getCollectCount, collectCount)</span>
+<span class="nc" id="L1006">                .set(Post::getUpdateTime, LocalDateTime.now()));</span>
+<span class="nc" id="L1007">        return Result.success();</span>
+    }
+
+    private Integer parseNonNegativeInteger(Object value, String fieldName) {
+<span class="nc bnc" id="L1011" title="All 4 branches missed.">        if (value == null || value.toString().isBlank()) {</span>
+<span class="nc" id="L1012">            throw new RuntimeException(fieldName + &quot;不能为空&quot;);</span>
+        }
+        try {
+<span class="nc" id="L1015">            int parsed = Integer.parseInt(value.toString());</span>
+<span class="nc bnc" id="L1016" title="All 2 branches missed.">            if (parsed &lt; 0) {</span>
+<span class="nc" id="L1017">                throw new RuntimeException(fieldName + &quot;不能小于0&quot;);</span>
+            }
+<span class="nc" id="L1019">            return parsed;</span>
+<span class="nc" id="L1020">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L1021">            throw new RuntimeException(fieldName + &quot;必须是整数&quot;);</span>
+        }
+    }
+
+    @GetMapping(&quot;/users&quot;)
+    public Result&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; listUsers() {
+<span class="nc" id="L1027">        checkAdmin();</span>
+<span class="nc" id="L1028">        return Result.success(userMapper.selectList(new LambdaQueryWrapper&lt;User&gt;().orderByDesc(User::getCreateTime))</span>
+<span class="nc" id="L1029">                .stream()</span>
+<span class="nc" id="L1030">                .map(this::buildUserProfileRow)</span>
+<span class="nc" id="L1031">                .toList());</span>
+    }
+
+    @PostMapping(&quot;/users/{id}/disable&quot;)
+    public Result&lt;Void&gt; disableUser(@PathVariable Long id) {
+<span class="fc" id="L1036">        User admin = checkAdmin();</span>
+<span class="pc bpc" id="L1037" title="1 of 2 branches missed.">        if (Objects.equals(admin.getId(), id)) {</span>
+<span class="fc" id="L1038">            throw new RuntimeException(&quot;不能禁用当前管理员账号&quot;);</span>
+        }
+<span class="nc" id="L1040">        userMapper.update(null, new LambdaUpdateWrapper&lt;User&gt;()</span>
+<span class="nc" id="L1041">                .eq(User::getId, id)</span>
+<span class="nc" id="L1042">                .set(User::getStatus, 0)</span>
+<span class="nc" id="L1043">                .setSql(&quot;token_version = token_version + 1&quot;));</span>
+<span class="nc" id="L1044">        return Result.success();</span>
+    }
+
+    @PostMapping(&quot;/users/{id}/enable&quot;)
+    public Result&lt;Void&gt; enableUser(@PathVariable Long id) {
+<span class="nc" id="L1049">        checkAdmin();</span>
+<span class="nc" id="L1050">        userMapper.update(null, new LambdaUpdateWrapper&lt;User&gt;().eq(User::getId, id).set(User::getStatus, 1));</span>
+<span class="nc" id="L1051">        return Result.success();</span>
+    }
+
+    @GetMapping(&quot;/orders&quot;)
+    public Result&lt;Map&lt;String, Object&gt;&gt; listOrders(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(defaultValue = &quot;1&quot;) int page,
+            @RequestParam(defaultValue = &quot;20&quot;) int size) {
+<span class="nc" id="L1060">        checkAdmin();</span>
+<span class="nc" id="L1061">        List&lt;Map&lt;String, Object&gt;&gt; allOrders = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L1063" title="All 8 branches missed.">        if (type == null || type.equals(&quot;all&quot;) || type.equals(&quot;flight&quot;) || type.equals(&quot;train&quot;)) {</span>
+<span class="nc" id="L1064">            LambdaQueryWrapper&lt;TrafficOrder&gt; tw = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc bnc" id="L1065" title="All 2 branches missed.">            if (&quot;flight&quot;.equals(type)) {</span>
+<span class="nc" id="L1066">                tw.eq(TrafficOrder::getOrderType, 0);</span>
+            }
+<span class="nc bnc" id="L1068" title="All 2 branches missed.">            if (&quot;train&quot;.equals(type)) {</span>
+<span class="nc" id="L1069">                tw.eq(TrafficOrder::getOrderType, 1);</span>
+            }
+<span class="nc bnc" id="L1071" title="All 2 branches missed.">            if (status != null) {</span>
+<span class="nc" id="L1072">                tw.eq(TrafficOrder::getStatus, status);</span>
+            }
+<span class="nc" id="L1074">            trafficOrderMapper.selectList(tw).forEach(o -&gt; {</span>
+<span class="nc" id="L1075">                Map&lt;String, Object&gt; m = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L1076">                m.put(&quot;orderNo&quot;, o.getOrderNo());</span>
+<span class="nc bnc" id="L1077" title="All 2 branches missed.">                m.put(&quot;type&quot;, Objects.equals(o.getOrderType(), 0) ? &quot;机票&quot; : &quot;火车票&quot;);</span>
+<span class="nc" id="L1078">                m.put(&quot;route&quot;, buildTrafficRoute(o));</span>
+<span class="nc" id="L1079">                m.put(&quot;passenger&quot;, o.getPassengerName());</span>
+<span class="nc" id="L1080">                m.put(&quot;seatType&quot;, o.getSeatType());</span>
+<span class="nc" id="L1081">                m.put(&quot;amount&quot;, o.getAmount());</span>
+<span class="nc" id="L1082">                m.put(&quot;status&quot;, o.getStatus());</span>
+<span class="nc" id="L1083">                m.put(&quot;createTime&quot;, o.getCreateTime());</span>
+<span class="nc" id="L1084">                allOrders.add(m);</span>
+<span class="nc" id="L1085">            });</span>
+        }
+
+<span class="nc bnc" id="L1088" title="All 6 branches missed.">        if (type == null || type.equals(&quot;all&quot;) || type.equals(&quot;hotel&quot;)) {</span>
+<span class="nc" id="L1089">            LambdaQueryWrapper&lt;HotelOrder&gt; hw = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc bnc" id="L1090" title="All 2 branches missed.">            if (status != null) {</span>
+<span class="nc" id="L1091">                hw.eq(HotelOrder::getStatus, status);</span>
+            }
+<span class="nc" id="L1093">            hotelOrderMapper.selectList(hw).forEach(o -&gt; {</span>
+<span class="nc" id="L1094">                Map&lt;String, Object&gt; m = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L1095">                m.put(&quot;orderNo&quot;, o.getOrderNo());</span>
+<span class="nc" id="L1096">                m.put(&quot;type&quot;, &quot;酒店&quot;);</span>
+<span class="nc bnc" id="L1097" title="All 2 branches missed.">                m.put(&quot;route&quot;, o.getHotelName() + &quot; &quot; + o.getRoomType() + &quot; x&quot; + (o.getRoomCount() == null ? 1 : o.getRoomCount()));</span>
+<span class="nc" id="L1098">                m.put(&quot;passenger&quot;, o.getGuestName());</span>
+<span class="nc" id="L1099">                m.put(&quot;amount&quot;, o.getAmount());</span>
+<span class="nc" id="L1100">                m.put(&quot;status&quot;, o.getStatus());</span>
+<span class="nc" id="L1101">                m.put(&quot;createTime&quot;, o.getCreateTime());</span>
+<span class="nc" id="L1102">                allOrders.add(m);</span>
+<span class="nc" id="L1103">            });</span>
+        }
+
+<span class="nc" id="L1106">        allOrders.sort(Comparator.comparing(o -&gt; String.valueOf(o.get(&quot;createTime&quot;)), Comparator.reverseOrder()));</span>
+<span class="nc" id="L1107">        int total = allOrders.size();</span>
+<span class="nc" id="L1108">        PaginationSupport.Window pagination = PaginationSupport.window(page, size, 200, total);</span>
+<span class="nc" id="L1109">        Map&lt;String, Object&gt; result = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L1110" title="All 2 branches missed.">        result.put(&quot;records&quot;, pagination.start() &lt; total</span>
+<span class="nc" id="L1111">                ? allOrders.subList(pagination.start(), pagination.end())</span>
+<span class="nc" id="L1112">                : List.of());</span>
+<span class="nc" id="L1113">        result.put(&quot;total&quot;, total);</span>
+<span class="nc" id="L1114">        result.put(&quot;page&quot;, pagination.page());</span>
+<span class="nc" id="L1115">        result.put(&quot;size&quot;, pagination.size());</span>
+<span class="nc" id="L1116">        return Result.success(result);</span>
+    }
+
+    @PostMapping(&quot;/orders/{orderNo}/refund/approve&quot;)
+    @Transactional(rollbackFor = Exception.class)
+    public Result&lt;String&gt; approveRefund(@PathVariable String orderNo) {
+<span class="nc" id="L1122">        checkAdmin();</span>
+<span class="nc bnc" id="L1123" title="All 2 branches missed.">        if (orderNo.startsWith(&quot;HT&quot;)) {</span>
+<span class="nc" id="L1124">            HotelOrder order = hotelOrderMapper.selectOne(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="nc" id="L1125">                    .eq(HotelOrder::getOrderNo, orderNo));</span>
+<span class="nc bnc" id="L1126" title="All 2 branches missed.">            if (order == null) {</span>
+<span class="nc" id="L1127">                return Result.error(&quot;订单不存在&quot;);</span>
+            }
+<span class="nc bnc" id="L1129" title="All 2 branches missed.">            if (Objects.equals(order.getStatus(), STATUS_HOTEL_CANCELLED_OR_REFUNDED)) {</span>
+<span class="nc" id="L1130">                return Result.success(&quot;订单已取消或已退款，无需重复处理&quot;);</span>
+            }
+<span class="nc bnc" id="L1132" title="All 2 branches missed.">            if (Objects.equals(order.getStatus(), STATUS_HOTEL_COMPLETED)) {</span>
+<span class="nc" id="L1133">                return Result.error(&quot;已完成的酒店订单不能直接退款&quot;);</span>
+            }
+<span class="nc bnc" id="L1135" title="All 2 branches missed.">            if (!Objects.equals(order.getStatus(), STATUS_REFUND_REQUESTED)) {</span>
+<span class="nc" id="L1136">                return Result.error(&quot;只有已提交退款申请的酒店订单可以办理退款&quot;);</span>
+            }
+<span class="nc" id="L1138">            int updated = hotelOrderMapper.markRefundApproved(orderNo);</span>
+<span class="nc bnc" id="L1139" title="All 2 branches missed.">            if (updated == 0) {</span>
+<span class="nc" id="L1140">                return Result.error(&quot;订单状态已变化，请刷新后重试&quot;);</span>
+            }
+<span class="nc bnc" id="L1142" title="All 2 branches missed.">            hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());</span>
+<span class="nc" id="L1143">            hotelRoomStockService.syncWithDatabase(order.getRoomId());</span>
+<span class="nc" id="L1144">            notificationCenterService.createNotification(</span>
+<span class="nc" id="L1145">                    order.getUserId(),</span>
+                    &quot;hotel_order&quot;,
+                    &quot;酒店退款已通过&quot;,
+<span class="nc" id="L1148">                    String.format(&quot;订单 %s 已退款，房间库存已归还。&quot;, orderNo),</span>
+                    &quot;/my-orders?tab=hotel&quot;);
+<span class="nc" id="L1150">        } else {</span>
+<span class="nc" id="L1151">            TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="nc" id="L1152">                    .eq(TrafficOrder::getOrderNo, orderNo));</span>
+<span class="nc bnc" id="L1153" title="All 2 branches missed.">            if (order == null) {</span>
+<span class="nc" id="L1154">                return Result.error(&quot;订单不存在&quot;);</span>
+            }
+<span class="nc bnc" id="L1156" title="All 2 branches missed.">            if (Objects.equals(order.getStatus(), STATUS_TRAFFIC_REFUNDED)) {</span>
+<span class="nc" id="L1157">                return Result.success(&quot;订单已退票，无需重复处理&quot;);</span>
+            }
+<span class="nc bnc" id="L1159" title="All 2 branches missed.">            if (Objects.equals(order.getStatus(), STATUS_TRAFFIC_CANCELLED)) {</span>
+<span class="nc" id="L1160">                return Result.error(&quot;已取消的待支付订单库存已归还，不能再次退款&quot;);</span>
+            }
+<span class="nc bnc" id="L1162" title="All 2 branches missed.">            if (!Objects.equals(order.getStatus(), STATUS_REFUND_REQUESTED)) {</span>
+<span class="nc" id="L1163">                return Result.error(&quot;只有已提交退票申请的订单可以办理退票&quot;);</span>
+            }
+<span class="nc" id="L1165">            int updated = trafficOrderMapper.markRefundApproved(orderNo);</span>
+<span class="nc bnc" id="L1166" title="All 2 branches missed.">            if (updated == 0) {</span>
+<span class="nc" id="L1167">                return Result.error(&quot;订单状态已变化，请刷新后重试&quot;);</span>
+            }
+<span class="nc" id="L1169">            returnTrafficStock(order);</span>
+<span class="nc" id="L1170">            notificationCenterService.createNotification(</span>
+<span class="nc" id="L1171">                    order.getUserId(),</span>
+                    &quot;traffic_order&quot;,
+                    &quot;退票申请已通过&quot;,
+<span class="nc" id="L1174">                    String.format(&quot;订单 %s 已退票，库存已归还。&quot;, orderNo),</span>
+                    &quot;/my-orders?tab=traffic&quot;);
+        }
+<span class="nc" id="L1177">        return Result.success(&quot;退款审批已通过&quot;);</span>
+    }
+
+    @PostMapping(&quot;/orders/{orderNo}/ticket/complete&quot;)
+    @Transactional(rollbackFor = Exception.class)
+    public Result&lt;String&gt; completeTicketing(@PathVariable String orderNo) {
+<span class="fc" id="L1183">        checkAdmin();</span>
+<span class="fc" id="L1184">        TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="fc" id="L1185">                .eq(TrafficOrder::getOrderNo, orderNo)</span>
+<span class="fc" id="L1186">                .last(&quot;LIMIT 1&quot;));</span>
+<span class="pc bpc" id="L1187" title="1 of 2 branches missed.">        if (order == null) {</span>
+<span class="nc" id="L1188">            return Result.error(&quot;订单不存在&quot;);</span>
+        }
+<span class="pc bpc" id="L1190" title="1 of 2 branches missed.">        if (Objects.equals(order.getStatus(), STATUS_TRAFFIC_TICKETED)) {</span>
+<span class="nc" id="L1191">            return Result.success(&quot;订单已完成出票，无需重复处理&quot;);</span>
+        }
+<span class="fc bfc" id="L1193" title="All 2 branches covered.">        if (!Objects.equals(order.getStatus(), STATUS_TRAFFIC_TICKETING)) {</span>
+<span class="fc" id="L1194">            return Result.error(&quot;只有出票中的交通订单可以完成出票&quot;);</span>
+        }
+<span class="pc bpc" id="L1196" title="1 of 2 branches missed.">        if (trafficOrderMapper.markTicketed(orderNo) == 0) {</span>
+<span class="nc" id="L1197">            return Result.error(&quot;订单状态已变化，请刷新后重试&quot;);</span>
+        }
+
+<span class="fc" id="L1200">        notificationCenterService.createNotification(</span>
+<span class="fc" id="L1201">                order.getUserId(),</span>
+                &quot;traffic_order&quot;,
+<span class="pc bpc" id="L1203" title="1 of 2 branches missed.">                Objects.equals(order.getOrderType(), 0) ? &quot;机票已出票&quot; : &quot;火车票已出票&quot;,</span>
+<span class="fc" id="L1204">                String.format(&quot;订单 %s 已完成出票，可在订单详情中查看。&quot;, orderNo),</span>
+                &quot;/my-orders?tab=traffic&quot;);
+<span class="fc" id="L1206">        return Result.success(&quot;出票已完成&quot;);</span>
+    }
+
+    @PostMapping(&quot;/orders/{orderNo}/refund/reject&quot;)
+    @Transactional(rollbackFor = Exception.class)
+    public Result&lt;String&gt; rejectRefund(@PathVariable String orderNo) {
+<span class="nc" id="L1212">        checkAdmin();</span>
+<span class="nc bnc" id="L1213" title="All 2 branches missed.">        if (orderNo.startsWith(&quot;HT&quot;)) {</span>
+<span class="nc" id="L1214">            HotelOrder order = hotelOrderMapper.selectOne(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="nc" id="L1215">                    .eq(HotelOrder::getOrderNo, orderNo));</span>
+<span class="nc bnc" id="L1216" title="All 2 branches missed.">            if (order == null) {</span>
+<span class="nc" id="L1217">                return Result.error(&quot;订单不存在&quot;);</span>
+            }
+<span class="nc" id="L1219">            int updated = hotelOrderMapper.markRefundRejected(orderNo);</span>
+<span class="nc bnc" id="L1220" title="All 2 branches missed.">            if (updated == 0) {</span>
+<span class="nc" id="L1221">                return Result.error(&quot;只有退款申请中的酒店订单可以驳回&quot;);</span>
+            }
+<span class="nc" id="L1223">            notificationCenterService.createNotification(</span>
+<span class="nc" id="L1224">                    order.getUserId(),</span>
+                    &quot;hotel_order&quot;,
+                    &quot;酒店退款申请被驳回&quot;,
+<span class="nc" id="L1227">                    String.format(&quot;订单 %s 未通过退款审核，订单已恢复为已支付。&quot;, orderNo),</span>
+                    &quot;/my-orders?tab=hotel&quot;);
+<span class="nc" id="L1229">            return Result.success(&quot;退款申请已驳回&quot;);</span>
+        } else {
+<span class="nc" id="L1231">            TrafficOrder order = trafficOrderMapper.selectOne(new LambdaQueryWrapper&lt;TrafficOrder&gt;()</span>
+<span class="nc" id="L1232">                    .eq(TrafficOrder::getOrderNo, orderNo));</span>
+<span class="nc bnc" id="L1233" title="All 2 branches missed.">            if (order == null) {</span>
+<span class="nc" id="L1234">                return Result.error(&quot;订单不存在&quot;);</span>
+            }
+<span class="nc" id="L1236">            int updated = trafficOrderMapper.markRefundRejected(orderNo);</span>
+<span class="nc bnc" id="L1237" title="All 2 branches missed.">            if (updated == 0) {</span>
+<span class="nc" id="L1238">                return Result.error(&quot;只有退票申请中的订单可以驳回&quot;);</span>
+            }
+<span class="nc" id="L1240">            notificationCenterService.createNotification(</span>
+<span class="nc" id="L1241">                    order.getUserId(),</span>
+                    &quot;traffic_order&quot;,
+                    &quot;退票申请被驳回&quot;,
+<span class="nc" id="L1244">                    String.format(&quot;订单 %s 未通过退票审核，订单已恢复为已出票。&quot;, orderNo),</span>
+                    &quot;/my-orders?tab=traffic&quot;);
+<span class="nc" id="L1246">            return Result.success(&quot;退票申请已驳回&quot;);</span>
+        }
+    }
+
+    private void returnTrafficStock(TrafficOrder order) {
+<span class="nc bnc" id="L1251" title="All 2 branches missed.">        if (order.getOrderType() == null) {</span>
+<span class="nc" id="L1252">            return;</span>
+        }
+<span class="nc bnc" id="L1254" title="All 2 branches missed.">        if (order.getOrderType() == 0) {</span>
+<span class="nc" id="L1255">            flightMapper.returnSeat(order.getTicketId(), getTicketCount(order));</span>
+<span class="nc" id="L1256">            return;</span>
+        }
+<span class="nc bnc" id="L1258" title="All 2 branches missed.">        if (order.getOrderType() == 1) {</span>
+<span class="nc bnc" id="L1259" title="All 2 branches missed.">            if (&quot;FirstClass&quot;.equalsIgnoreCase(order.getSeatType())) {</span>
+<span class="nc" id="L1260">                trainMapper.returnFirstClassSeat(order.getTicketId(), getTicketCount(order));</span>
+            } else {
+<span class="nc" id="L1262">                trainMapper.returnSecondClassSeat(order.getTicketId(), getTicketCount(order));</span>
+            }
+        }
+<span class="nc" id="L1265">    }</span>
+
+    private int getTicketCount(TrafficOrder order) {
+<span class="nc bnc" id="L1268" title="All 2 branches missed.">        return order.getTicketCount() == null ? 1 : order.getTicketCount();</span>
+    }
+
+    @GetMapping(&quot;/coupons&quot;)
+    public Result&lt;List&lt;Coupon&gt;&gt; listCoupons() {
+<span class="nc" id="L1273">        checkAdmin();</span>
+<span class="nc" id="L1274">        return Result.success(couponMapper.selectList(new LambdaQueryWrapper&lt;Coupon&gt;()</span>
+<span class="nc" id="L1275">                .orderByDesc(Coupon::getCreateTime).orderByDesc(Coupon::getId)));</span>
+    }
+
+    @PostMapping(&quot;/coupons&quot;)
+    public Result&lt;Coupon&gt; addCoupon(@RequestBody Coupon coupon) {
+<span class="nc" id="L1280">        checkAdmin();</span>
+<span class="nc" id="L1281">        coupon.setCategory(normalizeCouponCategory(coupon.getCategory()));</span>
+<span class="nc" id="L1282">        validateCoupon(coupon);</span>
+<span class="nc bnc" id="L1283" title="All 2 branches missed.">        if (coupon.getCreateTime() == null) {</span>
+<span class="nc" id="L1284">            coupon.setCreateTime(LocalDateTime.now());</span>
+        }
+<span class="nc" id="L1286">        couponMapper.insert(coupon);</span>
+<span class="nc" id="L1287">        return Result.success(coupon);</span>
+    }
+
+    @PutMapping(&quot;/coupons/{id}&quot;)
+    public Result&lt;Void&gt; updateCoupon(@PathVariable Long id, @RequestBody Coupon coupon) {
+<span class="nc" id="L1292">        checkAdmin();</span>
+<span class="nc" id="L1293">        coupon.setId(id);</span>
+<span class="nc" id="L1294">        coupon.setCategory(normalizeCouponCategory(coupon.getCategory()));</span>
+<span class="nc" id="L1295">        validateCoupon(coupon);</span>
+<span class="nc" id="L1296">        couponMapper.updateById(coupon);</span>
+<span class="nc" id="L1297">        return Result.success();</span>
+    }
+
+    @DeleteMapping(&quot;/coupons/{id}&quot;)
+    public Result&lt;Void&gt; deleteCoupon(@PathVariable Long id) {
+<span class="nc" id="L1302">        checkAdmin();</span>
+<span class="nc" id="L1303">        long claimedCount = userCouponMapper.selectCount(new LambdaQueryWrapper&lt;UserCoupon&gt;()</span>
+<span class="nc" id="L1304">                .eq(UserCoupon::getCouponId, id));</span>
+<span class="nc bnc" id="L1305" title="All 2 branches missed.">        if (claimedCount &gt; 0) {</span>
+<span class="nc" id="L1306">            couponMapper.update(null, new LambdaUpdateWrapper&lt;Coupon&gt;()</span>
+<span class="nc" id="L1307">                    .eq(Coupon::getId, id)</span>
+<span class="nc" id="L1308">                    .set(Coupon::getStatus, 1)</span>
+<span class="nc" id="L1309">                    .set(Coupon::getStock, 0));</span>
+<span class="nc" id="L1310">            return Result.success();</span>
+        }
+<span class="nc" id="L1312">        couponMapper.deleteById(id);</span>
+<span class="nc" id="L1313">        return Result.success();</span>
+    }
+
+    @GetMapping(&quot;/coupons/{id}/claims&quot;)
+    public Result&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; listCouponClaims(@PathVariable Long id) {
+<span class="nc" id="L1318">        checkAdmin();</span>
+<span class="nc" id="L1319">        List&lt;UserCoupon&gt; claims = userCouponMapper.selectList(new LambdaQueryWrapper&lt;UserCoupon&gt;()</span>
+<span class="nc" id="L1320">                .eq(UserCoupon::getCouponId, id)</span>
+<span class="nc" id="L1321">                .orderByDesc(UserCoupon::getReceivedTime));</span>
+<span class="nc" id="L1322">        return Result.success(claims.stream().map(claim -&gt; {</span>
+<span class="nc" id="L1323">            Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L1324">            row.put(&quot;id&quot;, claim.getId());</span>
+<span class="nc" id="L1325">            row.put(&quot;userId&quot;, claim.getUserId());</span>
+<span class="nc" id="L1326">            User user = userMapper.selectById(claim.getUserId());</span>
+<span class="nc bnc" id="L1327" title="All 2 branches missed.">            row.put(&quot;username&quot;, user == null ? &quot;未知用户&quot; : user.getUsername());</span>
+<span class="nc bnc" id="L1328" title="All 2 branches missed.">            row.put(&quot;nickname&quot;, user == null ? null : user.getNickname());</span>
+<span class="nc" id="L1329">            row.put(&quot;status&quot;, claim.getStatus());</span>
+<span class="nc" id="L1330">            row.put(&quot;receivedTime&quot;, claim.getReceivedTime());</span>
+<span class="nc" id="L1331">            row.put(&quot;usedTime&quot;, claim.getUsedTime());</span>
+<span class="nc" id="L1332">            return row;</span>
+<span class="nc" id="L1333">        }).toList());</span>
+    }
+
+    private String normalizeCouponCategory(String category) {
+<span class="nc bnc" id="L1337" title="All 4 branches missed.">        if (category == null || category.isBlank()) {</span>
+<span class="nc" id="L1338">            return &quot;all&quot;;</span>
+        }
+<span class="nc" id="L1340">        String value = category.trim().toLowerCase();</span>
+<span class="nc bnc" id="L1341" title="All 6 branches missed.">        if (&quot;flight&quot;.equals(value) || &quot;train&quot;.equals(value) || &quot;hotel&quot;.equals(value)) {</span>
+<span class="nc" id="L1342">            return value;</span>
+        }
+<span class="nc" id="L1344">        return &quot;all&quot;;</span>
+    }
+
+    @GetMapping(&quot;/review-reports&quot;)
+    public Result&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; listReviewReports(@RequestParam(required = false) Integer status) {
+<span class="nc" id="L1349">        checkAdmin();</span>
+<span class="nc" id="L1350">        LambdaQueryWrapper&lt;ReviewReport&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc bnc" id="L1351" title="All 2 branches missed.">        if (status != null) {</span>
+<span class="nc" id="L1352">            wrapper.eq(ReviewReport::getStatus, status);</span>
+        }
+<span class="nc" id="L1354">        wrapper.orderByDesc(ReviewReport::getCreateTime).orderByDesc(ReviewReport::getId);</span>
+<span class="nc" id="L1355">        return Result.success(reviewReportMapper.selectList(wrapper).stream()</span>
+<span class="nc" id="L1356">                .map(this::buildReviewReportRow)</span>
+<span class="nc" id="L1357">                .toList());</span>
+    }
+
+    @PostMapping(&quot;/review-reports/{id}/resolve&quot;)
+    public Result&lt;Void&gt; resolveReviewReport(@PathVariable Long id, @RequestBody(required = false) Map&lt;String, Object&gt; body) {
+<span class="fc" id="L1362">        checkAdmin();</span>
+<span class="pc bpc" id="L1363" title="2 of 4 branches missed.">        String remark = body == null || body.get(&quot;remark&quot;) == null ? &quot;已人工复核&quot; : body.get(&quot;remark&quot;).toString();</span>
+<span class="fc" id="L1364">        reviewReportMapper.update(null, new LambdaUpdateWrapper&lt;ReviewReport&gt;()</span>
+<span class="fc" id="L1365">                .eq(ReviewReport::getId, id)</span>
+<span class="fc" id="L1366">                .set(ReviewReport::getStatus, 1)</span>
+<span class="fc" id="L1367">                .set(ReviewReport::getHandleRemark, remark)</span>
+<span class="fc" id="L1368">                .set(ReviewReport::getHandleTime, LocalDateTime.now()));</span>
+<span class="fc" id="L1369">        return Result.success();</span>
+    }
+
+    @PostMapping(&quot;/review-reports/{id}/reject&quot;)
+    public Result&lt;Void&gt; rejectReviewReport(@PathVariable Long id, @RequestBody(required = false) Map&lt;String, Object&gt; body) {
+<span class="nc" id="L1374">        checkAdmin();</span>
+<span class="nc bnc" id="L1375" title="All 4 branches missed.">        String remark = body == null || body.get(&quot;remark&quot;) == null ? &quot;举报不成立，已驳回&quot; : body.get(&quot;remark&quot;).toString();</span>
+<span class="nc" id="L1376">        reviewReportMapper.update(null, new LambdaUpdateWrapper&lt;ReviewReport&gt;()</span>
+<span class="nc" id="L1377">                .eq(ReviewReport::getId, id)</span>
+<span class="nc" id="L1378">                .set(ReviewReport::getStatus, 1)</span>
+<span class="nc" id="L1379">                .set(ReviewReport::getHandleRemark, remark)</span>
+<span class="nc" id="L1380">                .set(ReviewReport::getHandleTime, LocalDateTime.now()));</span>
+<span class="nc" id="L1381">        return Result.success();</span>
+    }
+
+    @PostMapping(&quot;/review-reports/{id}/delete-review&quot;)
+    public Result&lt;Void&gt; deleteReportedReview(@PathVariable Long id, @RequestBody(required = false) Map&lt;String, Object&gt; body) {
+<span class="fc" id="L1386">        checkAdmin();</span>
+<span class="fc" id="L1387">        ReviewReport report = reviewReportMapper.selectById(id);</span>
+<span class="pc bpc" id="L1388" title="1 of 2 branches missed.">        if (report == null) {</span>
+<span class="nc" id="L1389">            return Result.error(&quot;举报工单不存在&quot;);</span>
+        }
+<span class="fc" id="L1391">        Review review = reviewMapper.selectById(report.getReviewId());</span>
+<span class="pc bpc" id="L1392" title="1 of 2 branches missed.">        if (review == null) {</span>
+<span class="nc" id="L1393">            return Result.error(&quot;评价不存在&quot;);</span>
+        }
+<span class="fc" id="L1395">        reviewMapper.update(null, new LambdaUpdateWrapper&lt;Review&gt;()</span>
+<span class="fc" id="L1396">                .eq(Review::getId, review.getId())</span>
+<span class="fc" id="L1397">                .set(Review::getDeleted, 1));</span>
+<span class="pc bpc" id="L1398" title="2 of 4 branches missed.">        String remark = body == null || body.get(&quot;remark&quot;) == null ? &quot;举报成立，评价已删除&quot; : body.get(&quot;remark&quot;).toString();</span>
+<span class="fc" id="L1399">        reviewReportMapper.update(null, new LambdaUpdateWrapper&lt;ReviewReport&gt;()</span>
+<span class="fc" id="L1400">                .eq(ReviewReport::getId, id)</span>
+<span class="fc" id="L1401">                .set(ReviewReport::getStatus, 1)</span>
+<span class="fc" id="L1402">                .set(ReviewReport::getHandleRemark, remark)</span>
+<span class="fc" id="L1403">                .set(ReviewReport::getHandleTime, LocalDateTime.now()));</span>
+<span class="fc" id="L1404">        return Result.success();</span>
+    }
+
+    @GetMapping(&quot;/reviews/{reviewId}/replies&quot;)
+    public Result&lt;List&lt;Reply&gt;&gt; listReviewReplies(@PathVariable Long reviewId) {
+<span class="nc" id="L1409">        checkAdmin();</span>
+<span class="nc" id="L1410">        return Result.success(replyMapper.selectList(new LambdaQueryWrapper&lt;Reply&gt;()</span>
+<span class="nc" id="L1411">                .eq(Reply::getReviewId, reviewId)</span>
+<span class="nc" id="L1412">                .eq(Reply::getDeleted, 0)</span>
+<span class="nc" id="L1413">                .orderByAsc(Reply::getCreateTime)));</span>
+    }
+
+    @PostMapping(&quot;/reviews/{reviewId}/replies&quot;)
+    public Result&lt;Reply&gt; addReviewReply(@PathVariable Long reviewId, @RequestBody Map&lt;String, Object&gt; body) {
+<span class="nc" id="L1418">        User admin = checkAdmin();</span>
+<span class="nc bnc" id="L1419" title="All 4 branches missed.">        String content = body == null || body.get(&quot;content&quot;) == null ? &quot;&quot; : body.get(&quot;content&quot;).toString();</span>
+<span class="nc" id="L1420">        requireText(content, &quot;回复内容&quot;);</span>
+<span class="nc" id="L1421">        Reply reply = new Reply();</span>
+<span class="nc" id="L1422">        reply.setReviewId(reviewId);</span>
+<span class="nc" id="L1423">        reply.setUserId(admin.getId());</span>
+<span class="nc" id="L1424">        reply.setContent(content.trim());</span>
+<span class="nc" id="L1425">        reply.setDeleted(0);</span>
+<span class="nc" id="L1426">        reply.setCreateTime(LocalDateTime.now());</span>
+<span class="nc" id="L1427">        replyMapper.insert(reply);</span>
+<span class="nc" id="L1428">        return Result.success(reply);</span>
+    }
+
+    @DeleteMapping(&quot;/replies/{id}&quot;)
+    public Result&lt;Void&gt; deleteReply(@PathVariable Long id) {
+<span class="nc" id="L1433">        checkAdmin();</span>
+<span class="nc" id="L1434">        replyMapper.update(null, new LambdaUpdateWrapper&lt;Reply&gt;()</span>
+<span class="nc" id="L1435">                .eq(Reply::getId, id)</span>
+<span class="nc" id="L1436">                .set(Reply::getDeleted, 1));</span>
+<span class="nc" id="L1437">        return Result.success();</span>
+    }
+
+    @GetMapping(&quot;/sensitive-words&quot;)
+    public Result&lt;List&lt;SysSensitiveWord&gt;&gt; listSensitiveWords() {
+<span class="nc" id="L1442">        checkAdmin();</span>
+<span class="nc" id="L1443">        return Result.success(sensitiveWordMapper.selectList(null));</span>
+    }
+
+    @PostMapping(&quot;/sensitive-words&quot;)
+    public Result&lt;SysSensitiveWord&gt; addSensitiveWord(@RequestBody SysSensitiveWord word) {
+<span class="fc" id="L1448">        checkAdmin();</span>
+<span class="fc" id="L1449">        validateSensitiveWordUnique(word, null);</span>
+<span class="fc" id="L1450">        word.setWord(word.getWord().trim());</span>
+<span class="fc" id="L1451">        word.setCreateTime(LocalDateTime.now());</span>
+<span class="fc" id="L1452">        sensitiveWordMapper.insert(word);</span>
+<span class="fc" id="L1453">        return Result.success(word);</span>
+    }
+
+    @PutMapping(&quot;/sensitive-words/{id}&quot;)
+    public Result&lt;Void&gt; updateSensitiveWord(@PathVariable Long id, @RequestBody SysSensitiveWord word) {
+<span class="nc" id="L1458">        checkAdmin();</span>
+<span class="nc" id="L1459">        validateSensitiveWordUnique(word, id);</span>
+<span class="nc" id="L1460">        word.setId(id);</span>
+<span class="nc" id="L1461">        word.setWord(word.getWord().trim());</span>
+<span class="nc" id="L1462">        sensitiveWordMapper.updateById(word);</span>
+<span class="nc" id="L1463">        return Result.success();</span>
+    }
+
+    @DeleteMapping(&quot;/sensitive-words/{id}&quot;)
+    public Result&lt;Void&gt; deleteSensitiveWord(@PathVariable Long id) {
+<span class="nc" id="L1468">        checkAdmin();</span>
+<span class="nc" id="L1469">        sensitiveWordMapper.deleteById(id);</span>
+<span class="nc" id="L1470">        return Result.success();</span>
+    }
+
+    @GetMapping(&quot;/import/{type}/template&quot;)
+    public ResponseEntity&lt;byte[]&gt; downloadImportTemplate(@PathVariable String type) {
+<span class="nc" id="L1475">        checkAdmin();</span>
+<span class="nc" id="L1476">        String normalizedType = normalizeCsvType(type);</span>
+<span class="nc" id="L1477">        String csv = &quot;\uFEFF&quot; + String.join(&quot;,&quot;, csvHeadersFor(normalizedType)) + &quot;\n&quot;</span>
+<span class="nc" id="L1478">                + csvTemplateSample(normalizedType) + &quot;\n&quot;;</span>
+<span class="nc" id="L1479">        return ResponseEntity.ok()</span>
+<span class="nc" id="L1480">                .header(HttpHeaders.CONTENT_DISPOSITION,</span>
+                        &quot;attachment; filename=\&quot;travelmate-&quot; + normalizedType + &quot;-template.csv\&quot;&quot;)
+<span class="nc" id="L1482">                .contentType(MediaType.parseMediaType(&quot;text/csv;charset=UTF-8&quot;))</span>
+<span class="nc" id="L1483">                .body(csv.getBytes(StandardCharsets.UTF_8));</span>
+    }
+
+    @PostMapping(&quot;/import/{type}&quot;)
+    public Result&lt;Map&lt;String, Object&gt;&gt; importCsv(
+            @PathVariable String type,
+            @RequestParam(&quot;file&quot;) MultipartFile file,
+            @RequestParam(defaultValue = &quot;false&quot;) boolean dryRun,
+            @RequestParam(defaultValue = &quot;insert&quot;) String mode) {
+<span class="nc" id="L1492">        checkAdmin();</span>
+<span class="nc bnc" id="L1493" title="All 4 branches missed.">        if (file == null || file.isEmpty()) {</span>
+<span class="nc" id="L1494">            return Result.error(&quot;CSV 文件不能为空&quot;);</span>
+        }
+<span class="nc bnc" id="L1496" title="All 2 branches missed.">        if (file.getSize() &gt; MAX_CSV_FILE_SIZE) {</span>
+<span class="nc" id="L1497">            return Result.error(&quot;CSV 文件不能超过 5MB&quot;);</span>
+        }
+        try {
+<span class="nc" id="L1500">            String normalizedType = normalizeCsvType(type);</span>
+<span class="nc" id="L1501">            boolean upsert = CSV_MODE_UPSERT.equalsIgnoreCase(mode);</span>
+<span class="nc" id="L1502">            int success = 0;</span>
+<span class="nc" id="L1503">            int failed = 0;</span>
+<span class="nc" id="L1504">            int total = 0;</span>
+<span class="nc" id="L1505">            Map&lt;String, Integer&gt; actionCounts = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L1506">            List&lt;Map&lt;String, Object&gt;&gt; failures = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L1508">            try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);</span>
+<span class="nc" id="L1509">                    CSVParser parser = CSVFormat.DEFAULT.builder()</span>
+<span class="nc" id="L1510">                            .setHeader()</span>
+<span class="nc" id="L1511">                            .setSkipHeaderRecord(true)</span>
+<span class="nc" id="L1512">                            .setIgnoreEmptyLines(true)</span>
+<span class="nc" id="L1513">                            .setTrim(true)</span>
+<span class="nc" id="L1514">                            .build()</span>
+<span class="nc" id="L1515">                            .parse(reader)) {</span>
+<span class="nc" id="L1516">                List&lt;String&gt; headers = new ArrayList&lt;&gt;(parser.getHeaderMap().keySet());</span>
+<span class="nc" id="L1517">                List&lt;String&gt; missingHeaders = findMissingHeaders(normalizedType, headers);</span>
+<span class="nc bnc" id="L1518" title="All 2 branches missed.">                if (!missingHeaders.isEmpty()) {</span>
+<span class="nc" id="L1519">                    return Result.error(&quot;CSV 缺少必填表头：&quot; + String.join(&quot;, &quot;, missingHeaders));</span>
+                }
+
+<span class="nc bnc" id="L1522" title="All 2 branches missed.">                for (CSVRecord record : parser) {</span>
+<span class="nc" id="L1523">                    Map&lt;String, String&gt; row = mapCsvRecord(headers, record);</span>
+<span class="nc bnc" id="L1524" title="All 2 branches missed.">                    if (isBlankCsvRow(row)) {</span>
+<span class="nc" id="L1525">                        continue;</span>
+                    }
+<span class="nc" id="L1527">                    total++;</span>
+                    try {
+<span class="nc" id="L1529">                        String action = importCsvRow(normalizedType, row, dryRun, upsert);</span>
+<span class="nc" id="L1530">                        success++;</span>
+<span class="nc" id="L1531">                        actionCounts.merge(action, 1, Integer::sum);</span>
+<span class="nc" id="L1532">                    } catch (Exception e) {</span>
+<span class="nc" id="L1533">                        failed++;</span>
+<span class="nc bnc" id="L1534" title="All 2 branches missed.">                        if (failures.size() &lt; MAX_IMPORT_FAILURES_RETURNED) {</span>
+<span class="nc" id="L1535">                            failures.add(Map.of(</span>
+<span class="nc" id="L1536">                                    &quot;line&quot;, record.getRecordNumber() + 1,</span>
+<span class="nc" id="L1537">                                    &quot;reason&quot;, e.getMessage()));</span>
+                        }
+<span class="nc" id="L1539">                    }</span>
+<span class="nc" id="L1540">                }</span>
+<span class="nc bnc" id="L1541" title="All 2 branches missed.">            }</span>
+<span class="nc bnc" id="L1542" title="All 2 branches missed.">            if (total == 0) {</span>
+<span class="nc" id="L1543">                return Result.error(&quot;CSV 至少需要一行有效数据&quot;);</span>
+            }
+<span class="nc" id="L1545">            Map&lt;String, Object&gt; result = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L1546">            result.put(&quot;type&quot;, normalizedType);</span>
+<span class="nc bnc" id="L1547" title="All 2 branches missed.">            result.put(&quot;mode&quot;, upsert ? CSV_MODE_UPSERT : &quot;insert&quot;);</span>
+<span class="nc" id="L1548">            result.put(&quot;dryRun&quot;, dryRun);</span>
+<span class="nc" id="L1549">            result.put(&quot;total&quot;, total);</span>
+<span class="nc" id="L1550">            result.put(&quot;success&quot;, success);</span>
+<span class="nc" id="L1551">            result.put(&quot;failed&quot;, failed);</span>
+<span class="nc" id="L1552">            result.put(&quot;inserted&quot;, actionCounts.getOrDefault(&quot;inserted&quot;, 0));</span>
+<span class="nc" id="L1553">            result.put(&quot;updated&quot;, actionCounts.getOrDefault(&quot;updated&quot;, 0));</span>
+<span class="nc" id="L1554">            result.put(&quot;validated&quot;, actionCounts.getOrDefault(&quot;validated&quot;, 0));</span>
+<span class="nc" id="L1555">            result.put(&quot;failures&quot;, failures);</span>
+<span class="nc" id="L1556">            result.put(&quot;failureLimit&quot;, MAX_IMPORT_FAILURES_RETURNED);</span>
+<span class="nc" id="L1557">            return Result.success(result);</span>
+<span class="nc" id="L1558">        } catch (Exception e) {</span>
+<span class="nc" id="L1559">            return Result.error(&quot;导入失败：&quot; + e.getMessage());</span>
+        }
+    }
+
+    private String normalizeCsvType(String type) {
+<span class="nc bnc" id="L1564" title="All 2 branches missed.">        String normalized = type == null ? &quot;&quot; : type.trim().toLowerCase();</span>
+<span class="nc bnc" id="L1565" title="All 2 branches missed.">        if (!CSV_IMPORT_TYPES.contains(normalized)) {</span>
+<span class="nc" id="L1566">            throw new RuntimeException(&quot;不支持的导入类型：&quot; + type);</span>
+        }
+<span class="nc" id="L1568">        return normalized;</span>
+    }
+
+    private List&lt;String&gt; findMissingHeaders(String type, List&lt;String&gt; headers) {
+<span class="nc" id="L1572">        Set&lt;String&gt; normalizedHeaders = headers.stream()</span>
+<span class="nc" id="L1573">                .map(this::normalizeHeaderName)</span>
+<span class="nc" id="L1574">                .collect(Collectors.toSet());</span>
+<span class="nc" id="L1575">        return CSV_REQUIRED_HEADERS.getOrDefault(type, List.of()).stream()</span>
+<span class="nc bnc" id="L1576" title="All 2 branches missed.">                .filter(required -&gt; !normalizedHeaders.contains(normalizeHeaderName(required)))</span>
+<span class="nc" id="L1577">                .toList();</span>
+    }
+
+    private Map&lt;String, String&gt; mapCsvRecord(List&lt;String&gt; headers, CSVRecord record) {
+<span class="nc" id="L1581">        Map&lt;String, String&gt; row = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L1582" title="All 2 branches missed.">        for (int i = 0; i &lt; headers.size(); i++) {</span>
+<span class="nc" id="L1583">            String header = cleanCsvHeader(headers.get(i));</span>
+<span class="nc bnc" id="L1584" title="All 2 branches missed.">            String value = i &lt; record.size() ? record.get(i).trim() : &quot;&quot;;</span>
+<span class="nc" id="L1585">            row.put(header, value);</span>
+<span class="nc" id="L1586">            row.put(normalizeHeaderName(header), value);</span>
+        }
+<span class="nc" id="L1588">        return row;</span>
+    }
+
+    private boolean isBlankCsvRow(Map&lt;String, String&gt; row) {
+<span class="nc bnc" id="L1592" title="All 4 branches missed.">        return row.values().stream().allMatch(value -&gt; value == null || value.isBlank());</span>
+    }
+
+    private String importCsvRow(String type, Map&lt;String, String&gt; row, boolean dryRun, boolean upsert) {
+<span class="nc bnc" id="L1596" title="All 7 branches missed.">        switch (type) {</span>
+            case &quot;flights&quot; -&gt; {
+<span class="nc" id="L1598">                Flight flight = new Flight();</span>
+<span class="nc" id="L1599">                flight.setFlightNo(csv(row, &quot;flightNo&quot;));</span>
+<span class="nc" id="L1600">                flight.setAirline(csv(row, &quot;airline&quot;));</span>
+<span class="nc" id="L1601">                flight.setDepartureCity(csv(row, &quot;departureCity&quot;));</span>
+<span class="nc" id="L1602">                flight.setArrivalCity(csv(row, &quot;arrivalCity&quot;));</span>
+<span class="nc" id="L1603">                flight.setDepartureTime(dateTime(row, &quot;departureTime&quot;));</span>
+<span class="nc" id="L1604">                flight.setArrivalTime(dateTime(row, &quot;arrivalTime&quot;));</span>
+<span class="nc" id="L1605">                flight.setEconomyPrice(decimal(row, &quot;economyPrice&quot;));</span>
+<span class="nc" id="L1606">                flight.setBusinessPrice(decimal(row, &quot;businessPrice&quot;));</span>
+<span class="nc" id="L1607">                flight.setTotalSeats(integer(row, &quot;totalSeats&quot;));</span>
+<span class="nc" id="L1608">                flight.setAvailableSeats(integer(row, &quot;availableSeats&quot;));</span>
+<span class="nc" id="L1609">                flight.setStatus(optionalInteger(row, &quot;status&quot;, 1));</span>
+<span class="nc" id="L1610">                validateFlight(flight);</span>
+<span class="nc bnc" id="L1611" title="All 2 branches missed.">                if (dryRun) {</span>
+<span class="nc" id="L1612">                    return &quot;validated&quot;;</span>
+                }
+<span class="nc bnc" id="L1614" title="All 2 branches missed.">                if (upsert) {</span>
+<span class="nc" id="L1615">                    Flight exists = flightMapper.selectOne(new LambdaQueryWrapper&lt;Flight&gt;()</span>
+<span class="nc" id="L1616">                            .eq(Flight::getFlightNo, flight.getFlightNo())</span>
+<span class="nc" id="L1617">                            .last(&quot;LIMIT 1&quot;));</span>
+<span class="nc bnc" id="L1618" title="All 2 branches missed.">                    if (exists != null) {</span>
+<span class="nc" id="L1619">                        flight.setId(exists.getId());</span>
+<span class="nc" id="L1620">                        flightMapper.updateById(flight);</span>
+<span class="nc" id="L1621">                        return &quot;updated&quot;;</span>
+                    }
+                }
+<span class="nc" id="L1624">                flightMapper.insert(flight);</span>
+<span class="nc" id="L1625">                return &quot;inserted&quot;;</span>
+            }
+            case &quot;trains&quot; -&gt; {
+<span class="nc" id="L1628">                Train train = new Train();</span>
+<span class="nc" id="L1629">                train.setTrainNo(csv(row, &quot;trainNo&quot;));</span>
+<span class="nc" id="L1630">                train.setTrainType(csv(row, &quot;trainType&quot;));</span>
+<span class="nc" id="L1631">                train.setDepartureStation(csv(row, &quot;departureStation&quot;));</span>
+<span class="nc" id="L1632">                train.setArrivalStation(csv(row, &quot;arrivalStation&quot;));</span>
+<span class="nc" id="L1633">                train.setDepartureTime(dateTime(row, &quot;departureTime&quot;));</span>
+<span class="nc" id="L1634">                train.setArrivalTime(dateTime(row, &quot;arrivalTime&quot;));</span>
+<span class="nc" id="L1635">                train.setDurationMinutes(optionalInteger(row, &quot;durationMinutes&quot;, null));</span>
+<span class="nc" id="L1636">                train.setFirstClassPrice(decimal(row, &quot;firstClassPrice&quot;));</span>
+<span class="nc" id="L1637">                train.setSecondClassPrice(decimal(row, &quot;secondClassPrice&quot;));</span>
+<span class="nc" id="L1638">                train.setFirstClassSeats(integer(row, &quot;firstClassSeats&quot;));</span>
+<span class="nc" id="L1639">                train.setSecondClassSeats(integer(row, &quot;secondClassSeats&quot;));</span>
+<span class="nc" id="L1640">                train.setStatus(optionalInteger(row, &quot;status&quot;, 1));</span>
+<span class="nc" id="L1641">                validateTrain(train);</span>
+<span class="nc bnc" id="L1642" title="All 2 branches missed.">                if (dryRun) {</span>
+<span class="nc" id="L1643">                    return &quot;validated&quot;;</span>
+                }
+<span class="nc bnc" id="L1645" title="All 2 branches missed.">                if (upsert) {</span>
+<span class="nc" id="L1646">                    Train exists = trainMapper.selectOne(new LambdaQueryWrapper&lt;Train&gt;()</span>
+<span class="nc" id="L1647">                            .eq(Train::getTrainNo, train.getTrainNo())</span>
+<span class="nc" id="L1648">                            .last(&quot;LIMIT 1&quot;));</span>
+<span class="nc bnc" id="L1649" title="All 2 branches missed.">                    if (exists != null) {</span>
+<span class="nc" id="L1650">                        train.setId(exists.getId());</span>
+<span class="nc" id="L1651">                        trainMapper.updateById(train);</span>
+<span class="nc" id="L1652">                        return &quot;updated&quot;;</span>
+                    }
+                }
+<span class="nc" id="L1655">                trainMapper.insert(train);</span>
+<span class="nc" id="L1656">                return &quot;inserted&quot;;</span>
+            }
+            case &quot;hotels&quot; -&gt; {
+<span class="nc" id="L1659">                Hotel hotel = new Hotel();</span>
+<span class="nc" id="L1660">                hotel.setName(csv(row, &quot;name&quot;));</span>
+<span class="nc" id="L1661">                hotel.setCity(csv(row, &quot;city&quot;));</span>
+<span class="nc" id="L1662">                hotel.setAddress(csv(row, &quot;address&quot;));</span>
+<span class="nc" id="L1663">                hotel.setDescription(optionalText(row, &quot;description&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1664">                hotel.setCoverImg(optionalText(row, &quot;coverImg&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1665">                hotel.setLat(optionalDecimal(row, &quot;lat&quot;));</span>
+<span class="nc" id="L1666">                hotel.setLng(optionalDecimal(row, &quot;lng&quot;));</span>
+<span class="nc" id="L1667">                hotel.setStarRating(integer(row, &quot;starRating&quot;));</span>
+<span class="nc" id="L1668">                hotel.setAvgPrice(decimal(row, &quot;avgPrice&quot;));</span>
+<span class="nc" id="L1669">                hotel.setScore(optionalDecimal(row, &quot;score&quot;, BigDecimal.valueOf(4.5)));</span>
+<span class="nc" id="L1670">                hotel.setStatus(optionalInteger(row, &quot;status&quot;, 1));</span>
+<span class="nc" id="L1671">                validateHotel(hotel);</span>
+<span class="nc bnc" id="L1672" title="All 2 branches missed.">                if (dryRun) {</span>
+<span class="nc" id="L1673">                    return &quot;validated&quot;;</span>
+                }
+<span class="nc bnc" id="L1675" title="All 2 branches missed.">                if (upsert) {</span>
+<span class="nc" id="L1676">                    Hotel exists = hotelMapper.selectOne(new LambdaQueryWrapper&lt;Hotel&gt;()</span>
+<span class="nc" id="L1677">                            .eq(Hotel::getName, hotel.getName())</span>
+<span class="nc" id="L1678">                            .eq(Hotel::getCity, hotel.getCity())</span>
+<span class="nc" id="L1679">                            .eq(Hotel::getAddress, hotel.getAddress())</span>
+<span class="nc" id="L1680">                            .last(&quot;LIMIT 1&quot;));</span>
+<span class="nc bnc" id="L1681" title="All 2 branches missed.">                    if (exists != null) {</span>
+<span class="nc" id="L1682">                        hotel.setId(exists.getId());</span>
+<span class="nc" id="L1683">                        hotelMapper.updateById(hotel);</span>
+<span class="nc" id="L1684">                        return &quot;updated&quot;;</span>
+                    }
+                }
+<span class="nc" id="L1687">                hotelMapper.insert(hotel);</span>
+<span class="nc" id="L1688">                return &quot;inserted&quot;;</span>
+            }
+            case &quot;rooms&quot; -&gt; {
+<span class="nc" id="L1691">                HotelRoom room = new HotelRoom();</span>
+<span class="nc" id="L1692">                room.setHotelId(longValue(row, &quot;hotelId&quot;));</span>
+<span class="nc bnc" id="L1693" title="All 2 branches missed.">                if (hotelMapper.selectById(room.getHotelId()) == null) {</span>
+<span class="nc" id="L1694">                    throw new RuntimeException(&quot;酒店ID不存在：&quot; + room.getHotelId());</span>
+                }
+<span class="nc" id="L1696">                room.setRoomType(csv(row, &quot;roomType&quot;));</span>
+<span class="nc" id="L1697">                room.setBedType(csv(row, &quot;bedType&quot;));</span>
+<span class="nc" id="L1698">                room.setArea(optionalInteger(row, &quot;area&quot;, 30));</span>
+<span class="nc" id="L1699">                room.setPrice(decimal(row, &quot;price&quot;));</span>
+<span class="nc" id="L1700">                room.setTotalRooms(integer(row, &quot;totalRooms&quot;));</span>
+<span class="nc" id="L1701">                room.setAvailableRooms(integer(row, &quot;availableRooms&quot;));</span>
+<span class="nc" id="L1702">                room.setImages(optionalText(row, &quot;images&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1703">                room.setFacilities(optionalText(row, &quot;facilities&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1704">                room.setStatus(optionalInteger(row, &quot;status&quot;, 1));</span>
+<span class="nc" id="L1705">                validateHotelRoom(room);</span>
+<span class="nc bnc" id="L1706" title="All 2 branches missed.">                if (dryRun) {</span>
+<span class="nc" id="L1707">                    return &quot;validated&quot;;</span>
+                }
+<span class="nc bnc" id="L1709" title="All 2 branches missed.">                if (upsert) {</span>
+<span class="nc" id="L1710">                    HotelRoom exists = hotelRoomMapper.selectOne(new LambdaQueryWrapper&lt;HotelRoom&gt;()</span>
+<span class="nc" id="L1711">                            .eq(HotelRoom::getHotelId, room.getHotelId())</span>
+<span class="nc" id="L1712">                            .eq(HotelRoom::getRoomType, room.getRoomType())</span>
+<span class="nc" id="L1713">                            .last(&quot;LIMIT 1&quot;));</span>
+<span class="nc bnc" id="L1714" title="All 2 branches missed.">                    if (exists != null) {</span>
+<span class="nc" id="L1715">                        room.setId(exists.getId());</span>
+<span class="nc" id="L1716">                        hotelRoomMapper.updateById(room);</span>
+<span class="nc" id="L1717">                        hotelRoomStockService.syncWithDatabase(room.getId());</span>
+<span class="nc" id="L1718">                        return &quot;updated&quot;;</span>
+                    }
+                }
+<span class="nc" id="L1721">                hotelRoomMapper.insert(room);</span>
+<span class="nc" id="L1722">                hotelRoomStockService.syncWithDatabase(room.getId());</span>
+<span class="nc" id="L1723">                return &quot;inserted&quot;;</span>
+            }
+            case &quot;attractions&quot; -&gt; {
+<span class="nc" id="L1726">                Attraction attraction = new Attraction();</span>
+<span class="nc" id="L1727">                attraction.setName(csv(row, &quot;name&quot;));</span>
+<span class="nc" id="L1728">                attraction.setCity(csv(row, &quot;city&quot;));</span>
+<span class="nc" id="L1729">                attraction.setAddress(csv(row, &quot;address&quot;));</span>
+<span class="nc" id="L1730">                attraction.setDescription(optionalText(row, &quot;description&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1731">                attraction.setCoverImg(optionalText(row, &quot;coverImg&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1732">                attraction.setAdultPrice(decimal(row, &quot;adultPrice&quot;));</span>
+<span class="nc" id="L1733">                attraction.setChildPrice(decimal(row, &quot;childPrice&quot;));</span>
+<span class="nc" id="L1734">                attraction.setTotalTickets(integer(row, &quot;totalTickets&quot;));</span>
+<span class="nc" id="L1735">                attraction.setAvailableTickets(integer(row, &quot;availableTickets&quot;));</span>
+<span class="nc" id="L1736">                attraction.setOpenTime(optionalText(row, &quot;openTime&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1737">                attraction.setLat(optionalDecimal(row, &quot;lat&quot;));</span>
+<span class="nc" id="L1738">                attraction.setLng(optionalDecimal(row, &quot;lng&quot;));</span>
+<span class="nc" id="L1739">                attraction.setOfficialUrl(optionalText(row, &quot;officialUrl&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1740">                attraction.setSourceName(optionalText(row, &quot;sourceName&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1741">                attraction.setDataCheckedDate(optionalDate(row, &quot;dataCheckedDate&quot;));</span>
+<span class="nc" id="L1742">                attraction.setStatus(optionalInteger(row, &quot;status&quot;, 1));</span>
+<span class="nc" id="L1743">                validateAttraction(attraction);</span>
+<span class="nc bnc" id="L1744" title="All 2 branches missed.">                if (dryRun) {</span>
+<span class="nc" id="L1745">                    return &quot;validated&quot;;</span>
+                }
+<span class="nc bnc" id="L1747" title="All 2 branches missed.">                if (upsert) {</span>
+<span class="nc" id="L1748">                    Attraction exists = attractionMapper.selectOne(new LambdaQueryWrapper&lt;Attraction&gt;()</span>
+<span class="nc" id="L1749">                            .eq(Attraction::getName, attraction.getName())</span>
+<span class="nc" id="L1750">                            .eq(Attraction::getCity, attraction.getCity())</span>
+<span class="nc" id="L1751">                            .last(&quot;LIMIT 1&quot;));</span>
+<span class="nc bnc" id="L1752" title="All 2 branches missed.">                    if (exists != null) {</span>
+<span class="nc" id="L1753">                        attraction.setId(exists.getId());</span>
+<span class="nc" id="L1754">                        attractionMapper.updateById(attraction);</span>
+<span class="nc" id="L1755">                        return &quot;updated&quot;;</span>
+                    }
+                }
+<span class="nc" id="L1758">                attractionMapper.insert(attraction);</span>
+<span class="nc" id="L1759">                return &quot;inserted&quot;;</span>
+            }
+            case &quot;destinations&quot; -&gt; {
+<span class="nc" id="L1762">                Destination destination = new Destination();</span>
+<span class="nc" id="L1763">                destination.setSlug(csv(row, &quot;slug&quot;));</span>
+<span class="nc" id="L1764">                destination.setName(csv(row, &quot;name&quot;));</span>
+<span class="nc" id="L1765">                destination.setCountry(optionalText(row, &quot;country&quot;, &quot;中国&quot;));</span>
+<span class="nc" id="L1766">                destination.setTag(csv(row, &quot;tag&quot;));</span>
+<span class="nc" id="L1767">                destination.setKeywords(optionalText(row, &quot;keywords&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1768">                destination.setImg(csv(row, &quot;img&quot;));</span>
+<span class="nc" id="L1769">                destination.setDesc(csv(row, &quot;desc&quot;));</span>
+<span class="nc" id="L1770">                destination.setIntro(csv(row, &quot;intro&quot;));</span>
+<span class="nc" id="L1771">                destination.setHighlights(optionalText(row, &quot;highlights&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1772">                destination.setCulture(optionalText(row, &quot;culture&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1773">                destination.setBestSeason(optionalText(row, &quot;bestSeason&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1774">                destination.setTransport(optionalText(row, &quot;transport&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1775">                destination.setSourceName(optionalText(row, &quot;sourceName&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1776">                destination.setSourceUrl(optionalText(row, &quot;sourceUrl&quot;, &quot;&quot;));</span>
+<span class="nc" id="L1777">                destination.setSortOrder(optionalInteger(row, &quot;sortOrder&quot;, 100));</span>
+<span class="nc" id="L1778">                destination.setStatus(optionalInteger(row, &quot;status&quot;, 1));</span>
+<span class="nc" id="L1779">                validateDestination(destination);</span>
+<span class="nc bnc" id="L1780" title="All 2 branches missed.">                if (dryRun) {</span>
+<span class="nc" id="L1781">                    return &quot;validated&quot;;</span>
+                }
+<span class="nc" id="L1783">                Destination exists = destinationMapper.selectOne(new LambdaQueryWrapper&lt;Destination&gt;()</span>
+<span class="nc" id="L1784">                        .eq(Destination::getSlug, destination.getSlug())</span>
+<span class="nc" id="L1785">                        .last(&quot;LIMIT 1&quot;));</span>
+<span class="nc" id="L1786">                destination.setUpdateTime(LocalDateTime.now());</span>
+<span class="nc bnc" id="L1787" title="All 2 branches missed.">                if (exists == null) {</span>
+<span class="nc" id="L1788">                    destination.setCreateTime(LocalDateTime.now());</span>
+<span class="nc" id="L1789">                    destinationMapper.insert(destination);</span>
+                } else {
+<span class="nc" id="L1791">                    destination.setId(exists.getId());</span>
+<span class="nc" id="L1792">                    destination.setCreateTime(exists.getCreateTime());</span>
+<span class="nc" id="L1793">                    destinationMapper.updateById(destination);</span>
+<span class="nc" id="L1794">                    return &quot;updated&quot;;</span>
+                }
+<span class="nc" id="L1796">                return &quot;inserted&quot;;</span>
+            }
+<span class="nc" id="L1798">            default -&gt; throw new RuntimeException(&quot;不支持的导入类型：&quot; + type);</span>
+        }
+    }
+
+    private String cleanCsvHeader(String header) {
+<span class="nc bnc" id="L1803" title="All 2 branches missed.">        return header == null ? &quot;&quot; : header.replace(&quot;\uFEFF&quot;, &quot;&quot;).trim();</span>
+    }
+
+    private String normalizeHeaderName(String header) {
+<span class="nc" id="L1807">        return cleanCsvHeader(header)</span>
+<span class="nc" id="L1808">                .replace(&quot;_&quot;, &quot;&quot;)</span>
+<span class="nc" id="L1809">                .replace(&quot;-&quot;, &quot;&quot;)</span>
+<span class="nc" id="L1810">                .replace(&quot; &quot;, &quot;&quot;)</span>
+<span class="nc" id="L1811">                .toLowerCase();</span>
+    }
+
+    private String csv(Map&lt;String, String&gt; row, String key) {
+<span class="nc" id="L1815">        String value = row.get(key);</span>
+<span class="nc bnc" id="L1816" title="All 4 branches missed.">        if ((value == null || value.isBlank())) {</span>
+<span class="nc" id="L1817">            value = row.get(normalizeHeaderName(key));</span>
+        }
+<span class="nc bnc" id="L1819" title="All 4 branches missed.">        if (value == null || value.isBlank()) {</span>
+<span class="nc" id="L1820">            throw new RuntimeException(&quot;缺少字段 &quot; + key);</span>
+        }
+<span class="nc" id="L1822">        return value.trim();</span>
+    }
+
+    private String optionalText(Map&lt;String, String&gt; row, String key, String fallback) {
+<span class="nc" id="L1826">        String value = row.get(key);</span>
+<span class="nc bnc" id="L1827" title="All 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L1828">            value = row.get(normalizeHeaderName(key));</span>
+        }
+<span class="nc bnc" id="L1830" title="All 4 branches missed.">        return value == null || value.isBlank() ? fallback : value.trim();</span>
+    }
+
+    private Integer integer(Map&lt;String, String&gt; row, String key) {
+        try {
+<span class="nc" id="L1835">            return Integer.valueOf(normalizeNumber(csv(row, key)));</span>
+<span class="nc" id="L1836">        } catch (Exception e) {</span>
+<span class="nc" id="L1837">            throw new RuntimeException(&quot;字段 &quot; + key + &quot; 必须是整数&quot;);</span>
+        }
+    }
+
+    private Integer optionalInteger(Map&lt;String, String&gt; row, String key, Integer fallback) {
+<span class="nc" id="L1842">        String value = optionalText(row, key, &quot;&quot;);</span>
+<span class="nc bnc" id="L1843" title="All 2 branches missed.">        if (value.isBlank()) {</span>
+<span class="nc" id="L1844">            return fallback;</span>
+        }
+        try {
+<span class="nc" id="L1847">            return Integer.valueOf(normalizeNumber(value));</span>
+<span class="nc" id="L1848">        } catch (Exception e) {</span>
+<span class="nc" id="L1849">            throw new RuntimeException(&quot;字段 &quot; + key + &quot; 必须是整数&quot;);</span>
+        }
+    }
+
+    private Long longValue(Map&lt;String, String&gt; row, String key) {
+        try {
+<span class="nc" id="L1855">            return Long.valueOf(normalizeNumber(csv(row, key)));</span>
+<span class="nc" id="L1856">        } catch (Exception e) {</span>
+<span class="nc" id="L1857">            throw new RuntimeException(&quot;字段 &quot; + key + &quot; 必须是整数&quot;);</span>
+        }
+    }
+
+    private BigDecimal decimal(Map&lt;String, String&gt; row, String key) {
+        try {
+<span class="nc" id="L1863">            return new BigDecimal(normalizeNumber(csv(row, key)));</span>
+<span class="nc" id="L1864">        } catch (Exception e) {</span>
+<span class="nc" id="L1865">            throw new RuntimeException(&quot;字段 &quot; + key + &quot; 必须是数字&quot;);</span>
+        }
+    }
+
+    private BigDecimal optionalDecimal(Map&lt;String, String&gt; row, String key) {
+<span class="nc" id="L1870">        String value = optionalText(row, key, &quot;&quot;);</span>
+<span class="nc bnc" id="L1871" title="All 2 branches missed.">        if (value.isBlank()) {</span>
+<span class="nc" id="L1872">            return null;</span>
+        }
+        try {
+<span class="nc" id="L1875">            return new BigDecimal(normalizeNumber(value));</span>
+<span class="nc" id="L1876">        } catch (Exception e) {</span>
+<span class="nc" id="L1877">            throw new RuntimeException(&quot;字段 &quot; + key + &quot; 必须是数字&quot;);</span>
+        }
+    }
+
+    private BigDecimal optionalDecimal(Map&lt;String, String&gt; row, String key, BigDecimal fallback) {
+<span class="nc" id="L1882">        BigDecimal value = optionalDecimal(row, key);</span>
+<span class="nc bnc" id="L1883" title="All 2 branches missed.">        return value == null ? fallback : value;</span>
+    }
+
+    private String normalizeNumber(String value) {
+<span class="nc" id="L1887">        return value.trim().replace(&quot;￥&quot;, &quot;&quot;).replace(&quot;¥&quot;, &quot;&quot;).replace(&quot;,&quot;, &quot;&quot;);</span>
+    }
+
+    private LocalDateTime dateTime(Map&lt;String, String&gt; row, String key) {
+<span class="nc" id="L1891">        String value = csv(row, key);</span>
+<span class="nc" id="L1892">        List&lt;DateTimeFormatter&gt; formatters = List.of(</span>
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+<span class="nc" id="L1894">                DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd HH:mm:ss&quot;),</span>
+<span class="nc" id="L1895">                DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd HH:mm&quot;));</span>
+<span class="nc bnc" id="L1896" title="All 2 branches missed.">        for (DateTimeFormatter formatter : formatters) {</span>
+            try {
+<span class="nc" id="L1898">                return LocalDateTime.parse(value, formatter);</span>
+<span class="nc" id="L1899">            } catch (Exception ignored) {</span>
+            }
+<span class="nc" id="L1901">        }</span>
+<span class="nc" id="L1902">        throw new RuntimeException(&quot;字段 &quot; + key + &quot; 时间格式应为 2026-06-01T08:00:00 或 2026-06-01 08:00:00&quot;);</span>
+    }
+
+    private LocalDate optionalDate(Map&lt;String, String&gt; row, String key) {
+<span class="nc" id="L1906">        String value = optionalText(row, key, &quot;&quot;);</span>
+<span class="nc bnc" id="L1907" title="All 2 branches missed.">        if (value.isBlank()) {</span>
+<span class="nc" id="L1908">            return null;</span>
+        }
+        try {
+<span class="nc" id="L1911">            return LocalDate.parse(value);</span>
+<span class="nc" id="L1912">        } catch (Exception e) {</span>
+<span class="nc" id="L1913">            throw new RuntimeException(&quot;字段 &quot; + key + &quot; 日期格式应为 2026-05-30&quot;);</span>
+        }
+    }
+
+    private List&lt;String&gt; csvHeadersFor(String type) {
+<span class="nc bnc" id="L1918" title="All 7 branches missed.">        return switch (type) {</span>
+<span class="nc" id="L1919">            case &quot;flights&quot; -&gt; List.of(&quot;flightNo&quot;, &quot;airline&quot;, &quot;departureCity&quot;, &quot;arrivalCity&quot;, &quot;departureTime&quot;,</span>
+                    &quot;arrivalTime&quot;, &quot;economyPrice&quot;, &quot;businessPrice&quot;, &quot;totalSeats&quot;, &quot;availableSeats&quot;, &quot;status&quot;);
+<span class="nc" id="L1921">            case &quot;trains&quot; -&gt; List.of(&quot;trainNo&quot;, &quot;trainType&quot;, &quot;departureStation&quot;, &quot;arrivalStation&quot;, &quot;departureTime&quot;,</span>
+                    &quot;arrivalTime&quot;, &quot;durationMinutes&quot;, &quot;firstClassPrice&quot;, &quot;secondClassPrice&quot;, &quot;firstClassSeats&quot;,
+                    &quot;secondClassSeats&quot;, &quot;status&quot;);
+<span class="nc" id="L1924">            case &quot;hotels&quot; -&gt; List.of(&quot;name&quot;, &quot;city&quot;, &quot;address&quot;, &quot;description&quot;, &quot;coverImg&quot;, &quot;lat&quot;, &quot;lng&quot;,</span>
+                    &quot;starRating&quot;, &quot;avgPrice&quot;, &quot;score&quot;, &quot;status&quot;);
+<span class="nc" id="L1926">            case &quot;rooms&quot; -&gt; List.of(&quot;hotelId&quot;, &quot;roomType&quot;, &quot;bedType&quot;, &quot;area&quot;, &quot;price&quot;, &quot;totalRooms&quot;,</span>
+                    &quot;availableRooms&quot;, &quot;images&quot;, &quot;facilities&quot;, &quot;status&quot;);
+<span class="nc" id="L1928">            case &quot;attractions&quot; -&gt; List.of(&quot;name&quot;, &quot;city&quot;, &quot;address&quot;, &quot;description&quot;, &quot;coverImg&quot;, &quot;adultPrice&quot;,</span>
+                    &quot;childPrice&quot;, &quot;totalTickets&quot;, &quot;availableTickets&quot;, &quot;openTime&quot;, &quot;lat&quot;, &quot;lng&quot;, &quot;officialUrl&quot;,
+                    &quot;sourceName&quot;, &quot;dataCheckedDate&quot;, &quot;status&quot;);
+<span class="nc" id="L1931">            case &quot;destinations&quot; -&gt; List.of(&quot;slug&quot;, &quot;name&quot;, &quot;country&quot;, &quot;tag&quot;, &quot;keywords&quot;, &quot;img&quot;, &quot;desc&quot;, &quot;intro&quot;,</span>
+                    &quot;highlights&quot;, &quot;culture&quot;, &quot;bestSeason&quot;, &quot;transport&quot;, &quot;sourceName&quot;, &quot;sourceUrl&quot;, &quot;sortOrder&quot;,
+                    &quot;status&quot;);
+<span class="nc" id="L1934">            default -&gt; throw new RuntimeException(&quot;不支持的导入类型：&quot; + type);</span>
+        };
+    }
+
+    private String csvTemplateSample(String type) {
+<span class="nc bnc" id="L1939" title="All 7 branches missed.">        return switch (type) {</span>
+<span class="nc" id="L1940">            case &quot;flights&quot; -&gt; &quot;CA1001,中国国际航空,北京,上海,2026-06-01T08:00:00,2026-06-01T10:00:00,680,2180,200,120,1&quot;;</span>
+<span class="nc" id="L1941">            case &quot;trains&quot; -&gt; &quot;G1001,G,北京南,上海虹桥,2026-06-01T08:00:00,2026-06-01T12:30:00,270,880,553,80,420,1&quot;;</span>
+<span class="nc" id="L1942">            case &quot;hotels&quot; -&gt; &quot;城市花园酒店,上海,上海市黄浦区示例路1号,近地铁商务酒店,https://example.com/hotel.jpg,31.2304,121.4737,4,520,4.6,1&quot;;</span>
+<span class="nc" id="L1943">            case &quot;rooms&quot; -&gt; &quot;1,豪华大床房,1张大床,38,688,20,12,\&quot;[\&quot;\&quot;/images/room.jpg\&quot;\&quot;]\&quot;,\&quot;[\&quot;\&quot;早餐\&quot;\&quot;,\&quot;\&quot;洗衣房\&quot;\&quot;]\&quot;,1&quot;;</span>
+<span class="nc" id="L1944">            case &quot;attractions&quot; -&gt; &quot;示例景区,杭州,杭州市示例路1号,城市观光景区,https://example.com/scenic.jpg,80,40,1000,800,08:00-18:00,30.2741,120.1551,https://example.com,景区官网,2026-05-30,1&quot;;</span>
+<span class="nc" id="L1945">            case &quot;destinations&quot; -&gt; &quot;dali,大理,中国,风花雪月,洱海|古城|苍山,/images/seed/dali.svg,苍山洱海与古城生活交织,适合慢旅行的城市,洱海骑行|古城夜游,白族文化,春秋季,高铁到大理站,公开旅游资料,https://example.com,90,1&quot;;</span>
+<span class="nc" id="L1946">            default -&gt; throw new RuntimeException(&quot;不支持的导入类型：&quot; + type);</span>
+        };
+    }
+
+    @GetMapping(&quot;/logs&quot;)
+    public Result&lt;Map&lt;String, Object&gt;&gt; listLogs(
+            @RequestParam(defaultValue = &quot;1&quot;) int page,
+            @RequestParam(defaultValue = &quot;200&quot;) int size) {
+<span class="nc" id="L1954">        checkAdmin();</span>
+<span class="nc" id="L1955">        int safePage = Math.max(page, 1);</span>
+<span class="nc" id="L1956">        int safeSize = Math.max(1, Math.min(size, 200));</span>
+<span class="nc" id="L1957">        Page&lt;SysLog&gt; pageObj = new Page&lt;&gt;(safePage, safeSize);</span>
+<span class="nc" id="L1958">        Page&lt;SysLog&gt; result = sysLogMapper.selectPage(pageObj,</span>
+<span class="nc" id="L1959">                new LambdaQueryWrapper&lt;SysLog&gt;().orderByDesc(SysLog::getCreateTime));</span>
+<span class="nc" id="L1960">        Map&lt;String, Object&gt; data = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L1961">        data.put(&quot;records&quot;, result.getRecords());</span>
+<span class="nc" id="L1962">        data.put(&quot;total&quot;, result.getTotal());</span>
+<span class="nc" id="L1963">        data.put(&quot;page&quot;, safePage);</span>
+<span class="nc" id="L1964">        data.put(&quot;size&quot;, safeSize);</span>
+<span class="nc" id="L1965">        return Result.success(data);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

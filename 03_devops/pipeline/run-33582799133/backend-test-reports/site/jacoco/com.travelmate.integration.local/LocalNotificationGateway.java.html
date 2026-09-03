@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LocalNotificationGateway.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.integration.local</a> &gt; <span class="el_source">LocalNotificationGateway.java</span></div><h1>LocalNotificationGateway.java</h1><pre class="source lang-java linenums">package com.travelmate.integration.local;
+
+import com.travelmate.integration.NotificationGateway;
+import com.travelmate.service.NotificationCenterService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+
+@Component
+@ConditionalOnProperty(name = &quot;app.integration.mode&quot;, havingValue = &quot;local&quot;, matchIfMissing = true)
+public class LocalNotificationGateway implements NotificationGateway {
+    private final NotificationCenterService notificationCenterService;
+
+<span class="fc" id="L13">    public LocalNotificationGateway(NotificationCenterService notificationCenterService) {</span>
+<span class="fc" id="L14">        this.notificationCenterService = notificationCenterService;</span>
+<span class="fc" id="L15">    }</span>
+
+    @Override
+    public void publish(Long userId, String type, String title, String content, String link) {
+<span class="fc" id="L19">        notificationCenterService.createNotification(userId, type, title, content, link);</span>
+<span class="fc" id="L20">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

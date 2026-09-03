@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AttractionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">AttractionServiceImpl.java</span></div><h1>AttractionServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travelmate.entity.Attraction;
+import com.travelmate.entity.AttractionOrder;
+import com.travelmate.mapper.AttractionMapper;
+import com.travelmate.mapper.AttractionOrderMapper;
+import com.travelmate.service.AttractionService;
+import com.travelmate.integration.NotificationGateway;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.UUID;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Service
+<span class="fc" id="L22">public class AttractionServiceImpl extends ServiceImpl&lt;AttractionMapper, Attraction&gt;</span>
+        implements AttractionService {
+
+    @Autowired
+    private NotificationGateway notificationGateway;
+
+    @Autowired
+    private AttractionOrderMapper attractionOrderMapper;
+
+    @Override
+    public List&lt;Attraction&gt; searchAttractions(String city) {
+<span class="nc" id="L33">        LambdaQueryWrapper&lt;Attraction&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L34">        wrapper.eq(Attraction::getStatus, 1);</span>
+
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        if (StringUtils.hasText(city)) {</span>
+<span class="nc" id="L37">            wrapper.eq(Attraction::getCity, city);</span>
+        }
+
+<span class="nc" id="L40">        wrapper.orderByDesc(Attraction::getId);</span>
+<span class="nc" id="L41">        return list(wrapper);</span>
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String buyTicket(Long userId, Long attractionId, Integer adultCount, Integer childCount,
+            String guestName, String guestPhone) {
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        int adults = adultCount == null ? 0 : adultCount;</span>
+<span class="pc bpc" id="L49" title="1 of 2 branches missed.">        int children = childCount == null ? 0 : childCount;</span>
+<span class="fc" id="L50">        int count = adults + children;</span>
+<span class="pc bpc" id="L51" title="1 of 4 branches missed.">        if (count &lt;= 0 || count &gt; 10) {</span>
+<span class="fc" id="L52">            throw new RuntimeException(&quot;购买数量不合法&quot;);</span>
+        }
+<span class="pc bpc" id="L54" title="1 of 4 branches missed.">        if (adults &lt; 0 || children &lt; 0) {</span>
+<span class="fc" id="L55">            throw new RuntimeException(&quot;票数不能为负数&quot;);</span>
+        }
+
+        // 查询景点信息
+<span class="fc" id="L59">        Attraction attraction = getById(attractionId);</span>
+<span class="pc bpc" id="L60" title="1 of 4 branches missed.">        if (attraction == null || attraction.getStatus() != 1) {</span>
+<span class="fc" id="L61">            throw new RuntimeException(&quot;景点不存在或已下线&quot;);</span>
+        }
+<span class="pc bpc" id="L63" title="2 of 4 branches missed.">        if (!StringUtils.hasText(guestName) || !StringUtils.hasText(guestPhone)) {</span>
+<span class="nc" id="L64">            throw new RuntimeException(&quot;游客姓名和手机号不能为空&quot;);</span>
+        }
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        if (attraction.getAdultPrice() == null) {</span>
+<span class="nc" id="L67">            throw new RuntimeException(&quot;景点票价缺失，暂不可购买&quot;);</span>
+        }
+
+        // 乐观锁扣减票数（支持批量购买）
+<span class="fc" id="L71">        int updated = baseMapper.deductTicket(attractionId, count);</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        if (updated == 0) {</span>
+<span class="fc" id="L73">            throw new RuntimeException(&quot;门票库存不足，购票失败&quot;);</span>
+        }
+
+        // 生成景点订单号 (前缀 AT = Attraction Ticket)
+<span class="fc" id="L77">        String orderNo = &quot;AT&quot; + System.currentTimeMillis()</span>
+<span class="fc" id="L78">                + UUID.randomUUID().toString().substring(0, 4).toUpperCase();</span>
+
+<span class="fc" id="L80">        BigDecimal amount = attraction.getAdultPrice().multiply(BigDecimal.valueOf(adults))</span>
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">                .add((attraction.getChildPrice() == null ? BigDecimal.ZERO : attraction.getChildPrice())</span>
+<span class="fc" id="L82">                        .multiply(BigDecimal.valueOf(children)));</span>
+
+<span class="fc" id="L84">        AttractionOrder order = new AttractionOrder();</span>
+<span class="fc" id="L85">        order.setOrderNo(orderNo);</span>
+<span class="fc" id="L86">        order.setUserId(userId);</span>
+<span class="fc" id="L87">        order.setAttractionId(attractionId);</span>
+<span class="fc" id="L88">        order.setAttractionName(attraction.getName());</span>
+<span class="fc" id="L89">        order.setCity(attraction.getCity());</span>
+<span class="fc" id="L90">        order.setAdultCount(adults);</span>
+<span class="fc" id="L91">        order.setChildCount(children);</span>
+<span class="fc" id="L92">        order.setTicketCount(count);</span>
+<span class="fc" id="L93">        order.setGuestName(guestName);</span>
+<span class="fc" id="L94">        order.setGuestPhone(guestPhone);</span>
+<span class="fc" id="L95">        order.setAmount(amount);</span>
+<span class="fc" id="L96">        order.setStatus(1);</span>
+<span class="fc" id="L97">        order.setCreateTime(LocalDateTime.now());</span>
+<span class="fc" id="L98">        order.setDeleted(0);</span>
+<span class="fc" id="L99">        attractionOrderMapper.insert(order);</span>
+
+<span class="fc" id="L101">        System.out.println(&quot;====== [Attraction] 购票成功，订单号: &quot; + orderNo</span>
+<span class="fc" id="L102">                + &quot;，景点: &quot; + attraction.getName()</span>
+                + &quot;，成人票: &quot; + adults
+                + &quot;，儿童票: &quot; + children
+                + &quot;，总数: &quot; + count + &quot; ======&quot;);
+
+<span class="fc" id="L107">        notificationGateway.publish(</span>
+                userId,
+                &quot;attraction_order&quot;,
+                &quot;景点门票购买成功&quot;,
+<span class="fc" id="L111">                String.format(&quot;您已成功购买 %s 门票 %d 张，订单号：%s。&quot;, attraction.getName(), count, orderNo),</span>
+                &quot;/my-orders?tab=attraction&quot;);
+
+<span class="fc" id="L114">        return orderNo;</span>
+    }
+
+    @Override
+    public List&lt;AttractionOrder&gt; getUserTicketOrders(Long userId) {
+<span class="nc" id="L119">        return attractionOrderMapper.selectList(new LambdaQueryWrapper&lt;AttractionOrder&gt;()</span>
+<span class="nc" id="L120">                .eq(AttractionOrder::getUserId, userId)</span>
+<span class="nc" id="L121">                .eq(AttractionOrder::getDeleted, 0)</span>
+<span class="nc" id="L122">                .orderByDesc(AttractionOrder::getCreateTime));</span>
+    }
+
+    @Override
+    public AttractionOrder getTicketOrderDetail(Long userId, String orderNo) {
+<span class="nc" id="L127">        return attractionOrderMapper.selectOne(new LambdaQueryWrapper&lt;AttractionOrder&gt;()</span>
+<span class="nc" id="L128">                .eq(AttractionOrder::getUserId, userId)</span>
+<span class="nc" id="L129">                .eq(AttractionOrder::getOrderNo, orderNo)</span>
+<span class="nc" id="L130">                .eq(AttractionOrder::getDeleted, 0));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

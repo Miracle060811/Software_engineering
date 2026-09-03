@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DatabaseStartupValidator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.config</a> &gt; <span class="el_source">DatabaseStartupValidator.java</span></div><h1>DatabaseStartupValidator.java</h1><pre class="source lang-java linenums">package com.travelmate.config;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+@Component
+@ConditionalOnProperty(
+        name = &quot;app.database.startup-validation.enabled&quot;,
+        havingValue = &quot;true&quot;,
+        matchIfMissing = true)
+public class DatabaseStartupValidator implements ApplicationRunner {
+
+<span class="nc" id="L25">    private static final Logger log = LoggerFactory.getLogger(DatabaseStartupValidator.class);</span>
+
+    private final DataSource dataSource;
+    private final Environment environment;
+
+<span class="nc" id="L30">    public DatabaseStartupValidator(DataSource dataSource, Environment environment) {</span>
+<span class="nc" id="L31">        this.dataSource = dataSource;</span>
+<span class="nc" id="L32">        this.environment = environment;</span>
+<span class="nc" id="L33">    }</span>
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+<span class="nc" id="L37">        String url = environment.getProperty(&quot;spring.datasource.url&quot;);</span>
+<span class="nc" id="L38">        String username = environment.getProperty(&quot;spring.datasource.username&quot;);</span>
+<span class="nc" id="L39">        String password = environment.getProperty(&quot;spring.datasource.password&quot;);</span>
+
+<span class="nc" id="L41">        try (Connection connection = dataSource.getConnection()) {</span>
+<span class="nc" id="L42">            log.info(&quot;Database connection verified: {}&quot;, connection.getMetaData().getURL());</span>
+<span class="nc" id="L43">            applyCompatibleSchemaPatches(connection);</span>
+<span class="nc" id="L44">        } catch (CannotGetJdbcConnectionException e) {</span>
+<span class="nc" id="L45">            logConnectionFailure(url, username, password, e);</span>
+<span class="nc" id="L46">            throw new IllegalStateException(&quot;数据库连接失败，请检查 backend/application-local.yml 或 DB_PASSWORD 配置&quot;, e);</span>
+<span class="nc" id="L47">        } catch (Exception e) {</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            if (contains(e.getMessage(), &quot;Access denied for user&quot;)</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">                    || contains(e.getMessage(), &quot;Communications link failure&quot;)) {</span>
+<span class="nc" id="L50">                logConnectionFailure(url, username, password, e);</span>
+<span class="nc" id="L51">                throw new IllegalStateException(&quot;数据库连接失败，请检查 backend/application-local.yml 或 DB_PASSWORD 配置&quot;, e);</span>
+            }
+<span class="nc" id="L53">            throw e;</span>
+<span class="nc" id="L54">        }</span>
+<span class="nc" id="L55">    }</span>
+
+    private void applyCompatibleSchemaPatches(Connection connection) {
+<span class="nc" id="L58">        executeQuietly(connection,</span>
+                &quot;ALTER TABLE tm_post ADD COLUMN reject_reason VARCHAR(300) DEFAULT NULL COMMENT '审核拒绝原因' AFTER status&quot;);
+<span class="nc" id="L60">        executeQuietly(connection,</span>
+                &quot;ALTER TABLE tm_review_report ADD COLUMN handle_remark VARCHAR(300) DEFAULT NULL COMMENT '处理备注' AFTER status&quot;);
+<span class="nc" id="L62">        executeQuietly(connection,</span>
+                &quot;ALTER TABLE tm_review_report ADD COLUMN handle_time DATETIME DEFAULT NULL COMMENT '处理时间' AFTER handle_remark&quot;);
+<span class="nc" id="L64">        executeQuietly(connection,</span>
+                &quot;ALTER TABLE tm_coupon ADD COLUMN category VARCHAR(20) DEFAULT 'all' COMMENT '使用类别：all=通用, flight=机票, train=火车票, hotel=酒店' AFTER description&quot;);
+<span class="nc" id="L66">        executeQuietly(connection,</span>
+                &quot;ALTER TABLE tm_notification ADD COLUMN action_url VARCHAR(300) DEFAULT NULL COMMENT '点击跳转路径' AFTER content&quot;);
+<span class="nc" id="L68">    }</span>
+
+    private void executeQuietly(Connection connection, String sql) {
+<span class="nc" id="L71">        try (Statement statement = connection.createStatement()) {</span>
+<span class="nc" id="L72">            statement.execute(sql);</span>
+<span class="nc" id="L73">            log.info(&quot;Applied compatible schema patch: {}&quot;, sql);</span>
+<span class="nc" id="L74">        } catch (SQLException e) {</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">            if (!contains(e.getMessage(), &quot;Duplicate column name&quot;)) {</span>
+<span class="nc" id="L76">                log.warn(&quot;Compatible schema patch skipped: {}&quot;, e.getMessage());</span>
+            }
+<span class="nc" id="L78">        }</span>
+<span class="nc" id="L79">    }</span>
+
+    private void logConnectionFailure(String url, String username, String password, Exception exception) {
+<span class="nc" id="L82">        log.error(</span>
+                &quot;Database connection validation failed. Check backend/application-local.yml or DB_PASSWORD. url={}, username={}, passwordLength={}&quot;,
+                url,
+                username,
+<span class="nc bnc" id="L86" title="All 2 branches missed.">                password == null ? 0 : password.length(),</span>
+                exception);
+
+<span class="nc bnc" id="L89" title="All 6 branches missed.">        if (url == null || username == null || password == null) {</span>
+<span class="nc" id="L90">            log.error(&quot;Skipping direct DriverManager probe because datasource properties are incomplete.&quot;);</span>
+<span class="nc" id="L91">            return;</span>
+        }
+
+<span class="nc" id="L94">        try (Connection ignored = DriverManager.getConnection(url, username, password)) {</span>
+<span class="nc" id="L95">            log.info(&quot;Direct DriverManager probe succeeded with runtime datasource properties.&quot;);</span>
+<span class="nc" id="L96">        } catch (SQLException probeException) {</span>
+<span class="nc" id="L97">            log.error(</span>
+                    &quot;Direct DriverManager probe failed with runtime datasource properties. url={}, username={}, passwordLength={}&quot;,
+                    url,
+                    username,
+<span class="nc" id="L101">                    password.length(),</span>
+                    probeException);
+<span class="nc" id="L103">        }</span>
+<span class="nc" id="L104">    }</span>
+
+    private boolean contains(String text, String keyword) {
+<span class="nc bnc" id="L107" title="All 4 branches missed.">        return text != null &amp;&amp; text.contains(keyword);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.backend.controller</a> &gt; <span class="el_source">UserController.java</span></div><h1>UserController.java</h1><pre class="source lang-java linenums">package com.travelmate.backend.controller;
+
+import com.travelmate.backend.config.JwtUtil;
+import com.travelmate.backend.entity.User;
+import com.travelmate.backend.service.AdminBootstrapService;
+import com.travelmate.backend.service.RefreshTokenService;
+import com.travelmate.backend.service.UserService;
+import com.travelmate.common.Result;
+import com.travelmate.annotation.RateLimiter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
+
+@CrossOrigin
+@RestController
+@RequestMapping(&quot;/user&quot;)
+<span class="fc" id="L23">public class UserController {</span>
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private AdminBootstrapService adminBootstrapService;
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
+    @Value(&quot;${app.security.refresh-cookie-secure:false}&quot;)
+    private boolean refreshCookieSecure;
+
+    private static final String REFRESH_COOKIE = &quot;TRAVELMATE_REFRESH&quot;;
+
+    @PostMapping(&quot;/register&quot;)
+    @RateLimiter(maxRequests = 5, timeWindowSeconds = 60)
+    public Result&lt;String&gt; register(
+            @RequestParam String username,
+            @RequestParam String password) {
+<span class="nc" id="L46">        boolean success = userService.register(username, password, 0);</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        return success ? Result.success(&quot;注册成功&quot;) : Result.error(&quot;用户名已存在&quot;);</span>
+    }
+
+    @PostMapping(&quot;/admin-register&quot;)
+    @RateLimiter(maxRequests = 5, timeWindowSeconds = 300)
+    public Result&lt;String&gt; adminRegister(@RequestBody AdminRegisterRequest request, HttpServletRequest servletRequest) {
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if (request == null) {</span>
+<span class="nc" id="L54">            return Result.error(&quot;管理员初始化不可用&quot;);</span>
+        }
+<span class="fc" id="L56">        String error = adminBootstrapService.register(</span>
+<span class="fc" id="L57">                request.username(), request.password(), request.secret(), servletRequest.getRemoteAddr());</span>
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">        return error == null ? Result.success(&quot;管理员注册成功&quot;) : Result.error(error);</span>
+    }
+
+    @PostMapping(&quot;/login&quot;)
+    @RateLimiter(maxRequests = 10, timeWindowSeconds = 60)
+    public Result&lt;String&gt; login(@RequestParam String username, @RequestParam String password,
+                                HttpServletRequest request, HttpServletResponse response) {
+<span class="fc" id="L65">        String token = userService.login(username, password);</span>
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        if (token == null) return Result.error(&quot;用户名或密码错误&quot;);</span>
+<span class="nc" id="L67">        User user = userService.getUserByUsername(username.trim());</span>
+<span class="nc" id="L68">        RefreshTokenService.RefreshGrant grant = refreshTokenService.create(</span>
+<span class="nc" id="L69">                user, request.getRemoteAddr(), request.getHeader(&quot;User-Agent&quot;));</span>
+<span class="nc" id="L70">        setRefreshCookie(response, grant.refreshToken(), refreshTokenService.getRefreshDays());</span>
+<span class="nc" id="L71">        return Result.success(grant.accessToken());</span>
+    }
+
+    @PostMapping(&quot;/refresh&quot;)
+    public Result&lt;String&gt; refresh(@CookieValue(value = REFRESH_COOKIE, required = false) String refreshToken,
+                                  HttpServletRequest request, HttpServletResponse response) {
+<span class="nc" id="L77">        RefreshTokenService.RefreshGrant grant = refreshTokenService.rotate(</span>
+<span class="nc" id="L78">                refreshToken, request.getRemoteAddr(), request.getHeader(&quot;User-Agent&quot;));</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        if (grant == null) {</span>
+<span class="nc" id="L80">            clearRefreshCookie(response);</span>
+<span class="nc" id="L81">            return Result.error(&quot;登录状态已失效&quot;);</span>
+        }
+<span class="nc" id="L83">        setRefreshCookie(response, grant.refreshToken(), refreshTokenService.getRefreshDays());</span>
+<span class="nc" id="L84">        return Result.success(grant.accessToken());</span>
+    }
+
+    @PostMapping(&quot;/logout&quot;)
+    public Result&lt;String&gt; logout(@CookieValue(value = REFRESH_COOKIE, required = false) String refreshToken,
+                                 HttpServletResponse response) {
+<span class="nc" id="L90">        refreshTokenService.revoke(refreshToken);</span>
+<span class="nc" id="L91">        clearRefreshCookie(response);</span>
+<span class="nc" id="L92">        return Result.success(&quot;已退出登录&quot;);</span>
+    }
+
+    @PostMapping(&quot;/password&quot;)
+    public Result&lt;String&gt; changePassword(
+            @RequestHeader(&quot;Authorization&quot;) String authHeader,
+            @RequestParam String oldPassword,
+            @RequestParam String newPassword) {
+<span class="nc" id="L100">        String token = authHeader.substring(7);</span>
+<span class="nc" id="L101">        String username = jwtUtil.extractUsername(token);</span>
+<span class="nc" id="L102">        User user = userService.getUserByUsername(username);</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        if (user == null) return Result.error(&quot;用户不存在&quot;);</span>
+<span class="nc" id="L104">        boolean ok = userService.changePassword(user.getId(), oldPassword, newPassword);</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        return ok ? Result.success(&quot;密码修改成功&quot;) : Result.error(&quot;旧密码错误&quot;);</span>
+    }
+
+    @DeleteMapping(&quot;/account&quot;)
+    public Result&lt;String&gt; deleteAccount(
+            @RequestHeader(&quot;Authorization&quot;) String authHeader,
+            @RequestParam String password) {
+<span class="nc" id="L112">        String token = authHeader.substring(7);</span>
+<span class="nc" id="L113">        String username = jwtUtil.extractUsername(token);</span>
+<span class="nc" id="L114">        User user = userService.getUserByUsername(username);</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        if (user == null) return Result.error(&quot;用户不存在&quot;);</span>
+<span class="nc" id="L116">        boolean ok = userService.deleteAccount(user.getId(), password);</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        return ok ? Result.success(&quot;账户已注销&quot;) : Result.error(&quot;密码错误&quot;);</span>
+    }
+
+    @GetMapping(&quot;/me&quot;)
+    public Result&lt;User&gt; getMe(@RequestHeader(&quot;Authorization&quot;) String authHeader) {
+<span class="nc" id="L122">        String token = authHeader.substring(7);</span>
+<span class="nc" id="L123">        String username = jwtUtil.extractUsername(token);</span>
+<span class="nc" id="L124">        User user = userService.getUserByUsername(username);</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        if (user == null)</span>
+<span class="nc" id="L126">            return Result.error(&quot;用户不存在&quot;);</span>
+<span class="nc" id="L127">        user.setPassword(null); // 不返回密码</span>
+<span class="nc" id="L128">        return Result.success(user);</span>
+    }
+
+<span class="fc" id="L131">    public record AdminRegisterRequest(String username, String password, String secret) {</span>
+    }
+
+    private void setRefreshCookie(HttpServletResponse response, String value, int days) {
+<span class="nc" id="L135">        ResponseCookie cookie = ResponseCookie.from(REFRESH_COOKIE, value)</span>
+<span class="nc" id="L136">                .httpOnly(true)</span>
+<span class="nc" id="L137">                .secure(refreshCookieSecure)</span>
+<span class="nc" id="L138">                .sameSite(&quot;Lax&quot;)</span>
+<span class="nc" id="L139">                .path(&quot;/user&quot;)</span>
+<span class="nc" id="L140">                .maxAge(Duration.ofDays(days))</span>
+<span class="nc" id="L141">                .build();</span>
+<span class="nc" id="L142">        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());</span>
+<span class="nc" id="L143">    }</span>
+
+    private void clearRefreshCookie(HttpServletResponse response) {
+<span class="nc" id="L146">        ResponseCookie cookie = ResponseCookie.from(REFRESH_COOKIE, &quot;&quot;)</span>
+<span class="nc" id="L147">                .httpOnly(true)</span>
+<span class="nc" id="L148">                .secure(refreshCookieSecure)</span>
+<span class="nc" id="L149">                .sameSite(&quot;Lax&quot;)</span>
+<span class="nc" id="L150">                .path(&quot;/user&quot;)</span>
+<span class="nc" id="L151">                .maxAge(Duration.ZERO)</span>
+<span class="nc" id="L152">                .build();</span>
+<span class="nc" id="L153">        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());</span>
+<span class="nc" id="L154">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

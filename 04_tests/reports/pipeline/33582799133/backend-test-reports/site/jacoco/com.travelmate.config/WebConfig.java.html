@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.config</a> &gt; <span class="el_source">WebConfig.java</span></div><h1>WebConfig.java</h1><pre class="source lang-java linenums">package com.travelmate.config;
+
+import com.travelmate.interceptor.RateLimiterInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.NonNull;
+import org.springframework.http.CacheControl;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.nio.file.Path;
+import java.time.Duration;
+
+@Configuration
+<span class="fc" id="L17">public class WebConfig implements WebMvcConfigurer {</span>
+
+    @Autowired
+    @NonNull
+    private RateLimiterInterceptor rateLimiterInterceptor;
+
+    @Value(&quot;${app.upload-dir:uploads}&quot;)
+    private String uploadDir;
+
+    @Override
+    public void addInterceptors(@NonNull InterceptorRegistry registry) {
+<span class="fc" id="L28">        registry.addInterceptor(rateLimiterInterceptor);</span>
+<span class="fc" id="L29">    }</span>
+
+    @Override
+    public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
+<span class="fc" id="L33">        registry.addResourceHandler(&quot;/images/**&quot;)</span>
+<span class="fc" id="L34">                .addResourceLocations(&quot;classpath:/static/images/&quot;, &quot;file:../frontend/public/images/&quot;)</span>
+<span class="fc" id="L35">                .setCacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())</span>
+<span class="fc" id="L36">                .setUseLastModified(true);</span>
+<span class="fc" id="L37">        registry.addResourceHandler(&quot;/uploads/**&quot;)</span>
+<span class="fc" id="L38">                .addResourceLocations(</span>
+<span class="fc" id="L39">                        fileLocation(Path.of(uploadDir)),</span>
+<span class="fc" id="L40">                        fileLocation(Path.of(&quot;uploads&quot;)),</span>
+<span class="fc" id="L41">                        fileLocation(Path.of(&quot;backend&quot;, &quot;uploads&quot;)),</span>
+<span class="fc" id="L42">                        fileLocation(Path.of(&quot;..&quot;, &quot;uploads&quot;)))</span>
+<span class="fc" id="L43">                .setCacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())</span>
+<span class="fc" id="L44">                .setUseLastModified(true);</span>
+<span class="fc" id="L45">    }</span>
+
+    private String fileLocation(Path path) {
+<span class="fc" id="L48">        return path.toAbsolutePath().normalize().toUri().toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

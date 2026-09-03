@@ -82,6 +82,7 @@ Desktop.ini
 !04_tests/fault/results/*.log
 !04_tests/stress/results/performance-*/**/*.log
 !04_tests/migration/results/**/*.log
+!04_tests/reports/pipeline/**/*.log
 /deliverables/*.zip
 /deliverables/archive-manifest.txt
 *.tmp

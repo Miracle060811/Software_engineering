@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StorageObjectNames.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.storage</a> &gt; <span class="el_source">StorageObjectNames.java</span></div><h1>StorageObjectNames.java</h1><pre class="source lang-java linenums">package com.travelmate.storage;
+
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.UUID;
+
+final class StorageObjectNames {
+
+    private StorageObjectNames() {
+    }
+
+    static String newImageKey(String extension) {
+<span class="fc" id="L13">        LocalDate date = LocalDate.now(ZoneOffset.UTC);</span>
+<span class="fc" id="L14">        String fileName = UUID.randomUUID().toString().replace(&quot;-&quot;, &quot;&quot;) + &quot;.&quot; + extension;</span>
+<span class="fc" id="L15">        return &quot;uploads/%04d/%02d/%s&quot;.formatted(date.getYear(), date.getMonthValue(), fileName);</span>
+    }
+
+    static String requireSafeKey(String objectKey) {
+<span class="pc bpc" id="L19" title="1 of 4 branches missed.">        if (objectKey == null || !objectKey.startsWith(&quot;uploads/&quot;)</span>
+<span class="pc bpc" id="L20" title="1 of 4 branches missed.">                || objectKey.contains(&quot;..&quot;) || objectKey.contains(&quot;\\&quot;)</span>
+<span class="pc bpc" id="L21" title="2 of 4 branches missed.">                || objectKey.startsWith(&quot;/&quot;) || objectKey.endsWith(&quot;/&quot;)) {</span>
+<span class="fc" id="L22">            throw new IllegalArgumentException(&quot;Invalid storage object key&quot;);</span>
+        }
+<span class="fc" id="L24">        return objectKey;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

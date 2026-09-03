@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderTimeoutScheduler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.scheduler</a> &gt; <span class="el_source">OrderTimeoutScheduler.java</span></div><h1>OrderTimeoutScheduler.java</h1><pre class="source lang-java linenums">package com.travelmate.scheduler;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.travelmate.entity.HotelOrder;
+import com.travelmate.entity.TrafficOrder;
+import com.travelmate.mapper.FlightMapper;
+import com.travelmate.mapper.HotelOrderMapper;
+import com.travelmate.mapper.HotelRoomMapper;
+import com.travelmate.mapper.TrafficOrderMapper;
+import com.travelmate.mapper.TrainMapper;
+import com.travelmate.service.HotelRoomStockService;
+import com.travelmate.service.NotificationCenterService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Component
+@EnableScheduling
+@ConditionalOnProperty(
+        name = &quot;app.scheduling.enabled&quot;,
+        havingValue = &quot;true&quot;,
+        matchIfMissing = true)
+<span class="fc" id="L31">public class OrderTimeoutScheduler {</span>
+
+    private static final int TIMEOUT_MINUTES = 15;
+<span class="fc" id="L34">    private static final Logger log = LoggerFactory.getLogger(OrderTimeoutScheduler.class);</span>
+
+    @Autowired
+    private TrafficOrderMapper trafficOrderMapper;
+
+    @Autowired
+    private FlightMapper flightMapper;
+
+    @Autowired
+    private TrainMapper trainMapper;
+
+    @Autowired
+    private HotelOrderMapper hotelOrderMapper;
+
+    @Autowired
+    private HotelRoomMapper hotelRoomMapper;
+
+    @Autowired
+    private HotelRoomStockService hotelRoomStockService;
+
+    @Autowired
+    private NotificationCenterService notificationCenterService;
+
+    @Scheduled(fixedDelay = 5 * 60 * 1000) // 每5分钟执行一次
+    public void cancelTimeoutOrders() {
+        try {
+<span class="fc" id="L60">            LocalDateTime deadline = LocalDateTime.now().minusMinutes(TIMEOUT_MINUTES);</span>
+
+            // 处理大交通超时订单
+<span class="fc" id="L63">            LambdaQueryWrapper&lt;TrafficOrder&gt; trafficQuery = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="fc" id="L64">            trafficQuery.eq(TrafficOrder::getStatus, 0)</span>
+<span class="fc" id="L65">                    .lt(TrafficOrder::getCreateTime, deadline);</span>
+<span class="fc" id="L66">            List&lt;TrafficOrder&gt; timeoutTrafficOrders = trafficOrderMapper.selectList(trafficQuery);</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">            for (TrafficOrder order : timeoutTrafficOrders) {</span>
+<span class="fc" id="L68">                int updated = trafficOrderMapper.markCancelledFromPending(order.getUserId(), order.getOrderNo());</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">                if (updated == 0) {</span>
+<span class="fc" id="L70">                    continue;</span>
+                }
+<span class="fc" id="L72">                returnTrafficStock(order);</span>
+<span class="fc" id="L73">                notificationCenterService.createNotification(</span>
+<span class="fc" id="L74">                        order.getUserId(),</span>
+                        &quot;traffic_order&quot;,
+                        &quot;票务订单超时取消&quot;,
+<span class="fc" id="L77">                        String.format(&quot;订单 %s 超过15分钟未支付，系统已自动取消并释放库存。&quot;, order.getOrderNo()),</span>
+                        &quot;/my-orders?tab=traffic&quot;);
+<span class="fc" id="L79">                log.info(&quot;[Timeout] 大交通订单超时取消并归还库存: {}&quot;, order.getOrderNo());</span>
+<span class="fc" id="L80">            }</span>
+
+            // 处理酒店超时订单
+<span class="fc" id="L83">            LambdaQueryWrapper&lt;HotelOrder&gt; hotelQuery = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="fc" id="L84">            hotelQuery.eq(HotelOrder::getStatus, 0)</span>
+<span class="fc" id="L85">                    .lt(HotelOrder::getCreateTime, deadline);</span>
+<span class="fc" id="L86">            List&lt;HotelOrder&gt; timeoutHotelOrders = hotelOrderMapper.selectList(hotelQuery);</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">            for (HotelOrder order : timeoutHotelOrders) {</span>
+<span class="fc" id="L88">                int updated = hotelOrderMapper.markCancelledFromPending(order.getUserId(), order.getOrderNo());</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">                if (updated == 0) {</span>
+<span class="fc" id="L90">                    continue;</span>
+                }
+                // 归还房间库存
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">                hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());</span>
+<span class="fc" id="L94">                hotelRoomStockService.syncWithDatabase(order.getRoomId());</span>
+<span class="fc" id="L95">                notificationCenterService.createNotification(</span>
+<span class="fc" id="L96">                        order.getUserId(),</span>
+                        &quot;hotel_order&quot;,
+                        &quot;酒店订单超时取消&quot;,
+<span class="fc" id="L99">                        String.format(&quot;订单 %s 超过15分钟未支付，系统已自动取消。&quot;, order.getOrderNo()),</span>
+                        &quot;/my-orders?tab=hotel&quot;);
+<span class="fc" id="L101">                log.info(&quot;[Timeout] 酒店订单超时取消: {}&quot;, order.getOrderNo());</span>
+<span class="fc" id="L102">            }</span>
+<span class="nc" id="L103">        } catch (RuntimeException e) {</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">            if (isDatabaseUnavailable(e)) {</span>
+<span class="nc" id="L105">                log.warn(&quot;跳过订单超时扫描：数据库当前不可用。{}&quot;, getRootMessage(e));</span>
+<span class="nc" id="L106">                return;</span>
+            }
+<span class="nc" id="L108">            throw e;</span>
+<span class="fc" id="L109">        }</span>
+<span class="fc" id="L110">    }</span>
+
+    private void returnTrafficStock(TrafficOrder order) {
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        if (order.getOrderType() == null) {</span>
+<span class="nc" id="L114">            return;</span>
+        }
+
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        if (order.getOrderType() == 0) {</span>
+<span class="fc" id="L118">            flightMapper.returnSeat(order.getTicketId(), getTicketCount(order));</span>
+<span class="fc" id="L119">            return;</span>
+        }
+
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        if (order.getOrderType() == 1) {</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">            if (&quot;FirstClass&quot;.equalsIgnoreCase(order.getSeatType())) {</span>
+<span class="fc" id="L124">                trainMapper.returnFirstClassSeat(order.getTicketId(), getTicketCount(order));</span>
+            } else {
+<span class="fc" id="L126">                trainMapper.returnSecondClassSeat(order.getTicketId(), getTicketCount(order));</span>
+            }
+        }
+<span class="fc" id="L129">    }</span>
+
+    private int getTicketCount(TrafficOrder order) {
+<span class="fc bfc" id="L132" title="All 2 branches covered.">        return order.getTicketCount() == null ? 1 : order.getTicketCount();</span>
+    }
+
+    private boolean isDatabaseUnavailable(Throwable throwable) {
+<span class="nc" id="L136">        Throwable root = getRootCause(throwable);</span>
+<span class="nc" id="L137">        String rootMessage = root.getMessage();</span>
+
+<span class="nc bnc" id="L139" title="All 4 branches missed.">        return throwable instanceof CannotGetJdbcConnectionException</span>
+                || root instanceof CannotGetJdbcConnectionException
+<span class="nc bnc" id="L141" title="All 2 branches missed.">                || contains(rootMessage, &quot;Access denied for user&quot;)</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">                || contains(rootMessage, &quot;Communications link failure&quot;)</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">                || contains(rootMessage, &quot;Failed to obtain JDBC Connection&quot;);</span>
+    }
+
+    private String getRootMessage(Throwable throwable) {
+<span class="nc" id="L147">        String message = getRootCause(throwable).getMessage();</span>
+<span class="nc bnc" id="L148" title="All 4 branches missed.">        return message == null || message.isBlank() ? &quot;请检查 MySQL 是否启动以及数据库密码配置。&quot; : message;</span>
+    }
+
+    private Throwable getRootCause(Throwable throwable) {
+<span class="nc" id="L152">        Throwable current = throwable;</span>
+<span class="nc bnc" id="L153" title="All 4 branches missed.">        while (current.getCause() != null &amp;&amp; current.getCause() != current) {</span>
+<span class="nc" id="L154">            current = current.getCause();</span>
+        }
+<span class="nc" id="L156">        return current;</span>
+    }
+
+    private boolean contains(String text, String keyword) {
+<span class="nc bnc" id="L160" title="All 4 branches missed.">        return text != null &amp;&amp; text.contains(keyword);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

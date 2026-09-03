@@ -13,13 +13,13 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 | 管理后台 | RBAC、用户/资源/订单/优惠券管理、CSV 导入、内容与评价审核、系统日志和轻量运行指标 |
 | 工程质量 | 后端 JUnit/MockMvc、前端 ESLint/构建、Mock 与真实后端 Playwright E2E、JaCoCo、SpotBugs、依赖/密钥扫描及 CodeQL |
 
-系统目前处于“核心主链路可运行，验收证据持续加固”的阶段。UC01—UC19 的证据基线由 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json) 与 [`docs/ci/test-quality-policy.json`](docs/ci/test-quality-policy.json) 管理；六微服务的 119 个 HTTP 端点（100 个公开、19 个内部）测试映射由 [`docs/ci/microservice-api-coverage.json`](docs/ci/microservice-api-coverage.json) 管理，不能把“代码已存在”直接视为“场景已被完整自动化覆盖”。
+系统核心主链路可运行，课程验收证据已按源码、文档、DevOps、测试、管理和答辩六类归档。UC01—UC19 的证据基线由 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json) 与 [`docs/ci/test-quality-policy.json`](docs/ci/test-quality-policy.json) 管理；六微服务的 119 个 HTTP 端点（100 个公开、19 个内部）测试映射由 [`docs/ci/microservice-api-coverage.json`](docs/ci/microservice-api-coverage.json) 管理，不能把“代码已存在”直接视为“场景已被完整自动化覆盖”。
 
 ## 微服务迁移状态
 
 `identity-service`、`traffic-service`、`local-service`、`ai-service`、`community-service`、`ops-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。跨域读取改用内部 HTTP 接口，AI 服务覆盖通知、行程、对话和私信；单体 `backend` 继续保留，便于迁移期间做功能回归。
 
-本阶段仍属于渐进式迁移：六服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；正式 Kubernetes 部署统一使用 [`deploy/k8s`](deploy/k8s)，六服务已接入同一 `travelmate` 命名空间，HPA 清单与扩缩容实验也以该环境为准。`microservices/k8s` 仅保留六套独立 MySQL/PVC 的物理隔离实验方案。真实数据切换验收、API Gateway 与生产级编排仍是后续工作。中期设计基线见 [`02_docs/TravelMate中期验收基线.md`](02_docs/TravelMate中期验收基线.md)。
+六服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移验收均已形成证据；Kubernetes 部署统一使用 [`deploy/k8s`](deploy/k8s)，六服务接入同一 `travelmate` 命名空间，HPA 清单与扩缩容实验也以该环境为准。`microservices/k8s` 保存六套独立 MySQL/PVC 的物理隔离实验方案。本课程交付边界是 Docker Desktop Kubernetes 单集群部署，不采用 API Gateway、注册中心或生产多集群编排；中期设计历史基线见 [`02_docs/TravelMate中期验收基线.md`](02_docs/TravelMate中期验收基线.md)。
 
 ## 技术栈
 
@@ -202,7 +202,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -InitDb -Res
 .\scripts\Initialize-TravelMateLocalEnv.ps1
 ```
 
-脚本只补充缺失项，不覆盖已有本机配置，也不会打印生成的密钥。根目录 `.env` 始终只用于本机开发和 Docker Compose，并由 Git 忽略。
+脚本只填写空白配置项，不覆盖已有本机配置，也不会打印生成的密钥。根目录 `.env` 始终只用于本机开发和 Docker Compose，并由 Git 忽略。
 
 手工启动时，后端主类是 `com.travelmate.TravelMateApplication`：
 
@@ -260,7 +260,7 @@ docker compose ps
 ### 账号与安全机制
 
 - 普通用户可直接在登录页注册，后端始终按普通用户角色创建账号。
-- 管理员初始化默认关闭。只有 `ADMIN_REGISTER_ENABLED=true`、`ADMIN_REGISTER_EXPIRES_AT` 尚未到期、系统中尚无有效管理员且密钥正确时，初始化入口才允许创建首个管理员。密钥只保存指纹、成功后只能使用一次，所有尝试都会写入审计表；完成后应立即关闭入口。
+- 管理员初始化默认关闭。只有 `ADMIN_REGISTER_ENABLED=true`、`ADMIN_REGISTER_EXPIRES_AT` 处于有效期内、系统中不存在有效管理员且密钥正确时，初始化入口才允许创建首个管理员。密钥只保存指纹、成功后只能使用一次，所有尝试都会写入审计表；完成后应立即关闭入口。
 - 管理端 `/admin` 同时受前端路由守卫与后端 `/api/admin/**` 的 `ROLE_ADMIN` 校验保护。
 - access token 默认有效 30 分钟，并携带 token 版本；改密、注销或管理员禁用账号后旧 token 失效，后端以数据库当前角色为准。
 - refresh token 默认有效 14 天，只通过 `HttpOnly`、`SameSite=Lax`、`Path=/user` Cookie 传输，数据库仅保存 SHA-256 指纹；每次刷新都会轮换，旧值重放和退出登录后的值都会失效。服务器 HTTPS 环境必须设置 `REFRESH_COOKIE_SECURE=true`，刷新和退出接口继续受 CSRF 校验保护。
@@ -431,7 +431,7 @@ package-lock.json
 2. `kubectl config current-context` 返回 `docker-desktop`；
 3. GitHub Actions Runner 显示 Online，并具有 `self-hosted`、`Windows`、`X64`、`travelmate-deploy` 标签；
 4. Runner 账号能够访问 Docker Desktop、Docker credential store 和 `%USERPROFILE%\.kube\config`；
-5. GHCR 的只读拉取凭据尚未过期。
+5. GHCR 的只读拉取凭据处于有效期内。
 
 首次使用按以下顺序配置：
 
@@ -685,9 +685,9 @@ npm run check:images
 
 - 当前是模块化单体；现有 Kubernetes/CD 面向单机 Docker Desktop 演示环境，不等同于生产级多节点容灾、备份和可观测平台。
 - Redis 不可用时支持降级，但缓存、限流和高并发库存场景不能按完整状态验收。
-- 管理后台的 QPS、延迟和告警来自本地 `sys_log` 的轻量统计，尚未接入真实 APM 或分布式追踪。
+- 管理后台的 QPS、延迟和告警数据源为本地 `sys_log` 轻量统计，不采用外部 APM 或分布式追踪数据。
 - 用例追溯矩阵的 19 个场景均已具备至少一项自动化证据，当前均为 `partial`；新增功能应同步补测试，并逐步将场景提升为完整 `covered`。
-- SQL 包含演示数据和部分外部图片/资料来源；对外发布前仍需复核授权、时效性与稳定性。
+- SQL 包含演示数据和部分外部图片/资料来源；课程验收结论不将这些外部素材视为生产授权或长期可用性保证。
 
 ## 项目结构
 

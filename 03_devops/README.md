@@ -1,29 +1,36 @@
-# 03_devops Docker、流水线、Kubernetes 与数据库脚本
+# 03\_devops Docker、流水线、Kubernetes 与数据库脚本
 
 本目录为课程交付归档副本，与仓库运行位置保持一致（原件保留原位以维持 CI/CD 与 Docker 构建上下文）。
 
 ## 目录内容
 
-| 子目录 | 内容 | 原件位置 |
-| --- | --- | --- |
-| `docker/` | 前后端与六微服务 Dockerfile、单体/服务器/微服务 Compose 编排 | `backend/Dockerfile*`、`frontend/Dockerfile*`、`compose*.yml`、`microservices/services/*/Dockerfile` |
-| `pipeline/` | GitHub Actions 流水线配置（CI/CD 主流水线、安全扫描、CodeQL） | `.github/workflows/` |
-| `kubernetes/` | 单体前后端 K8s 部署清单（含 HPA、MySQL、RBAC） | `deploy/k8s/` |
-| `kubernetes-overlays/` | 本地/服务器 Kustomize 覆盖层 | `deploy/k8s-overlays/` |
-| `kubernetes-microservices/` | 六微服务 K8s 部署清单 | `microservices/k8s/` |
-| `database/init-and-seed/` | 单体数据库建表与种子数据脚本 | `docs/sql/` |
-| `database/flyway-migration/` | 单体 Flyway 迁移 V1–V10（V10 补齐 UC08 本地游预订工作流） | `backend/src/main/resources/db/migration/` |
-| `database/microservices-schema/` | 六微服务分库 Schema 与种子脚本 | `microservices/sql/` |
-| `scripts/` | 部署、备份、恢复、回滚与密钥轮换脚本（PowerShell） | `scripts/cd/` |
-| `部署文档.md` | 环境、端口、部署与运维说明文档 | `02_docs/部署文档.md` |
+| 子目录                              | 内容                                                                       | 原件位置                                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `docker/`                        | 前后端与六微服务 Dockerfile、单体/服务器/微服务 Compose 编排                                | `backend/Dockerfile*`、`frontend/Dockerfile*`、`compose*.yml`、`microservices/services/*/Dockerfile` |
+| `pipeline/`                      | GitHub Actions 流水线配置（CI/CD 主流水线、安全扫描、CodeQL）及成功运行记录副本 `run-33582799133/` | `.github/workflows/`                                                                              |
+| `kubernetes/`                    | 单体前后端 K8s 部署清单（含 HPA、MySQL、RBAC）                                         | `deploy/k8s/`                                                                                     |
+| `kubernetes-overlays/`           | 本地/服务器 Kustomize 覆盖层                                                     | `deploy/k8s-overlays/`                                                                            |
+| `kubernetes-microservices/`      | 六微服务 K8s 部署清单                                                            | `microservices/k8s/`                                                                              |
+| `database/init-and-seed/`        | 单体数据库建表与种子数据脚本                                                           | `docs/sql/`                                                                                       |
+| `database/flyway-migration/`     | 单体 Flyway 迁移 V1–V10（V10 补齐 UC08 本地游预订工作流）                                | `backend/src/main/resources/db/migration/`                                                        |
+| `database/microservices-schema/` | 六微服务分库 Schema 与种子脚本                                                      | `microservices/sql/`                                                                              |
+| `scripts/`                       | 部署、备份、恢复、回滚与密钥轮换脚本（PowerShell）                                           | `scripts/cd/`                                                                                     |
+| `部署文档.md`                        | 环境、端口、部署与运维说明文档                                                          | 本目录正式归档；运行入口另见根 `README.md` 与 `scripts/cd/README.md`                                              |
 
 另：`docker/backend/`、`docker/frontend/` 内的 `.dockerignore` 与 `frontend/nginx.conf` 为前端镜像构建配套文件，原件分别在 `backend/.dockerignore`、`frontend/.dockerignore`、`frontend/nginx.conf`。
 
 ## 部署与回滚入口
 
 - 单体部署/回滚：`scripts/Deploy-TravelMate.ps1`（含 rollout 状态检测与失败回滚）
+
 - 微服务部署：`scripts/Deploy-TravelMateMicroservices.ps1`（支持 `-Service` 单服务定向更新）
+
 - 备份/恢复：`scripts/Backup-TravelMateKubernetes.ps1`、`scripts/Restore-TravelMateKubernetes.ps1`
+
 - 密钥轮换：`scripts/Rotate-TravelMateDatabasePassword.ps1`
 
 镜像发布使用不可变 digest 并带 `sha-<commit>` 版本号，不使用 `latest`；流水线任一步失败即阻断镜像发布与部署。
+
+## 流水线成功记录
+
+GitHub Actions run 33582799133（2026-09-02 成功）的原始证据已归档在本目录 `pipeline/run-33582799133/`，共 330 个原始文件，4 个 Artifact（后端测试报告、真实后端 E2E 证据、微服务 E2E 证据、用例追溯报告）保留原名，便于与远程流水线逐项核对；同一份证据的正本位于 `../04_tests/reports/pipeline/33582799133/`。远程运行页面见 [GitHub Actions run 33582799133](https://github.com/Miracle060811/Software_engineering/actions/runs/33582799133)。

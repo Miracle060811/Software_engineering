@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HotelOrderServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">HotelOrderServiceImpl.java</span></div><h1>HotelOrderServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travelmate.dto.HotelOrderCreateDTO;
+import com.travelmate.entity.Hotel;
+import com.travelmate.entity.HotelOrder;
+import com.travelmate.entity.HotelRoom;
+import com.travelmate.mapper.HotelMapper;
+import com.travelmate.mapper.HotelOrderMapper;
+import com.travelmate.mapper.HotelRoomMapper;
+import com.travelmate.service.CouponService;
+import com.travelmate.service.HotelOrderService;
+import com.travelmate.service.HotelRoomStockService;
+import com.travelmate.integration.NotificationGateway;
+import com.travelmate.service.StockPreDeductResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+<span class="fc" id="L29">public class HotelOrderServiceImpl extends ServiceImpl&lt;HotelOrderMapper, HotelOrder&gt;</span>
+        implements HotelOrderService {
+
+    @Autowired
+    private HotelRoomMapper hotelRoomMapper;
+
+    @Autowired
+    private HotelMapper hotelMapper;
+
+    @Autowired
+    private HotelRoomStockService hotelRoomStockService;
+
+    @Autowired
+    private NotificationGateway notificationGateway;
+
+    @Autowired
+    private CouponService couponService;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String createOrder(Long userId, HotelOrderCreateDTO dto) {
+<span class="fc" id="L50">        validateCreateRequest(dto);</span>
+
+        // 1. 检查日期合法性
+<span class="fc" id="L53">        LocalDate checkIn = dto.getCheckInDate();</span>
+<span class="fc" id="L54">        LocalDate checkOut = dto.getCheckOutDate();</span>
+
+<span class="fc" id="L56">        Hotel hotel = hotelMapper.selectById(dto.getHotelId());</span>
+<span class="pc bpc" id="L57" title="3 of 6 branches missed.">        if (hotel == null || hotel.getStatus() == null || hotel.getStatus() != 1) {</span>
+<span class="nc" id="L58">            throw new RuntimeException(&quot;酒店不存在或已停业&quot;);</span>
+        }
+
+        // 2. 查询房型信息
+<span class="fc" id="L62">        HotelRoom room = hotelRoomMapper.selectById(dto.getRoomId());</span>
+<span class="pc bpc" id="L63" title="3 of 6 branches missed.">        if (room == null || room.getStatus() == null || room.getStatus() != 1) {</span>
+<span class="nc" id="L64">            throw new RuntimeException(&quot;房型不存在或已下线&quot;);</span>
+        }
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        if (!room.getHotelId().equals(dto.getHotelId())) {</span>
+<span class="nc" id="L67">            throw new RuntimeException(&quot;房型与酒店不匹配&quot;);</span>
+        }
+
+<span class="fc" id="L70">        int roomCount = normalizeRoomCount(dto.getRoomCount());</span>
+<span class="fc" id="L71">        StockPreDeductResult preDeductResult = hotelRoomStockService.preDeductRoom(dto.getRoomId(),</span>
+<span class="fc" id="L72">                room.getAvailableRooms(), roomCount);</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        if (preDeductResult == StockPreDeductResult.NO_STOCK) {</span>
+<span class="nc" id="L74">            throw new RuntimeException(&quot;该房型暂无可用房间，预订失败&quot;);</span>
+        }
+
+        try {
+<span class="fc" id="L78">            int updated = hotelRoomMapper.deductRoom(dto.getRoomId(), roomCount);</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">            if (updated == 0) {</span>
+<span class="fc" id="L80">                throw new RuntimeException(&quot;该房型暂无可用房间，预订失败&quot;);</span>
+            }
+
+<span class="fc" id="L83">            long nights = checkOut.toEpochDay() - checkIn.toEpochDay();</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">            if (room.getPrice() == null) {</span>
+<span class="nc" id="L85">                throw new RuntimeException(&quot;房型价格缺失，暂不可预订&quot;);</span>
+            }
+<span class="fc" id="L87">            BigDecimal amount = room.getPrice()</span>
+<span class="fc" id="L88">                    .multiply(BigDecimal.valueOf(nights))</span>
+<span class="fc" id="L89">                    .multiply(BigDecimal.valueOf(roomCount));</span>
+<span class="fc" id="L90">            BigDecimal payableAmount = couponService.useCoupon(userId, dto.getUserCouponId(), amount, &quot;hotel&quot;);</span>
+
+<span class="fc" id="L92">            HotelOrder order = new HotelOrder();</span>
+<span class="fc" id="L93">            String orderNo = &quot;HT&quot; + System.currentTimeMillis()</span>
+<span class="fc" id="L94">                    + UUID.randomUUID().toString().substring(0, 4).toUpperCase();</span>
+<span class="fc" id="L95">            order.setOrderNo(orderNo);</span>
+<span class="fc" id="L96">            order.setUserId(userId);</span>
+<span class="fc" id="L97">            order.setHotelId(dto.getHotelId());</span>
+<span class="fc" id="L98">            order.setRoomId(dto.getRoomId());</span>
+<span class="fc" id="L99">            order.setHotelName(hotel.getName());</span>
+<span class="fc" id="L100">            order.setRoomType(room.getRoomType());</span>
+<span class="fc" id="L101">            order.setRoomCount(roomCount);</span>
+<span class="fc" id="L102">            order.setCheckInDate(checkIn);</span>
+<span class="fc" id="L103">            order.setCheckOutDate(checkOut);</span>
+<span class="fc" id="L104">            order.setNights((int) nights);</span>
+<span class="fc" id="L105">            order.setGuestName(dto.getGuestName());</span>
+<span class="fc" id="L106">            order.setGuestPhone(dto.getGuestPhone());</span>
+<span class="fc" id="L107">            order.setAmount(payableAmount);</span>
+<span class="fc" id="L108">            order.setStatus(0);</span>
+<span class="fc" id="L109">            order.setCreateTime(LocalDateTime.now());</span>
+
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">            if (!save(order)) {</span>
+<span class="nc" id="L112">                throw new RuntimeException(&quot;订单创建失败，请稍后重试&quot;);</span>
+            }
+
+<span class="fc" id="L115">            notificationGateway.publish(</span>
+                    userId,
+                    &quot;hotel_order&quot;,
+                    &quot;酒店订单已创建&quot;,
+<span class="fc" id="L119">                    String.format(&quot;您的酒店订单 %s 已创建，请在15分钟内完成支付。&quot;, orderNo),</span>
+                    &quot;/my-orders?tab=hotel&quot;);
+
+<span class="fc" id="L122">            return orderNo;</span>
+<span class="fc" id="L123">        } catch (Exception e) {</span>
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">            if (preDeductResult == StockPreDeductResult.DEDUCTED_IN_REDIS) {</span>
+<span class="fc" id="L125">                hotelRoomStockService.rollbackPreDeduct(dto.getRoomId(), roomCount);</span>
+            }
+<span class="fc" id="L127">            throw e;</span>
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean payOrder(Long userId, String orderNo) {
+<span class="nc" id="L134">        HotelOrder order = getOne(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="nc" id="L135">                .eq(HotelOrder::getOrderNo, orderNo)</span>
+<span class="nc" id="L136">                .eq(HotelOrder::getUserId, userId));</span>
+
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        if (order == null) {</span>
+<span class="nc" id="L139">            throw new RuntimeException(&quot;订单不存在&quot;);</span>
+        }
+<span class="nc bnc" id="L141" title="All 2 branches missed.">        if (order.getStatus() != 0) {</span>
+<span class="nc" id="L142">            throw new RuntimeException(&quot;订单状态异常，无法支付&quot;);</span>
+        }
+
+<span class="nc" id="L145">        int updated = baseMapper.markPaid(userId, orderNo);</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">        if (updated == 0) {</span>
+<span class="nc" id="L147">            throw new RuntimeException(&quot;订单状态已变化，请刷新后重试&quot;);</span>
+        }
+
+<span class="nc" id="L150">        notificationGateway.publish(</span>
+                userId,
+                &quot;hotel_order&quot;,
+                &quot;酒店订单支付成功&quot;,
+<span class="nc" id="L154">                String.format(&quot;订单 %s 已支付成功，祝您旅途愉快。&quot;, orderNo),</span>
+                &quot;/my-orders?tab=hotel&quot;);
+
+<span class="nc" id="L157">        return true;</span>
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean cancelOrder(Long userId, String orderNo) {
+<span class="fc" id="L163">        HotelOrder order = getOne(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="fc" id="L164">                .eq(HotelOrder::getOrderNo, orderNo)</span>
+<span class="fc" id="L165">                .eq(HotelOrder::getUserId, userId));</span>
+
+<span class="pc bpc" id="L167" title="1 of 2 branches missed.">        if (order == null) {</span>
+<span class="nc" id="L168">            throw new RuntimeException(&quot;订单不存在&quot;);</span>
+        }
+<span class="fc bfc" id="L170" title="All 2 branches covered.">        if (order.getStatus() != 0) {</span>
+<span class="fc" id="L171">            throw new RuntimeException(&quot;只有待支付的订单才能取消&quot;);</span>
+        }
+
+        // 1. 原子修改订单状态为已取消，防止重复取消多次归还库存。
+<span class="fc" id="L175">        int updated = baseMapper.markCancelledFromPending(userId, orderNo);</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">        if (updated == 0) {</span>
+<span class="fc" id="L177">            throw new RuntimeException(&quot;订单状态已变化，请刷新后重试&quot;);</span>
+        }
+
+        // 2. 归还房间库存
+<span class="pc bpc" id="L181" title="1 of 2 branches missed.">        hotelRoomMapper.returnRoom(order.getRoomId(), order.getRoomCount() == null ? 1 : order.getRoomCount());</span>
+<span class="fc" id="L182">        hotelRoomStockService.syncWithDatabase(order.getRoomId());</span>
+<span class="fc" id="L183">        notificationGateway.publish(</span>
+                userId,
+                &quot;hotel_order&quot;,
+                &quot;酒店订单已取消&quot;,
+<span class="fc" id="L187">                String.format(&quot;订单 %s 已取消，库存已自动归还。&quot;, orderNo),</span>
+                &quot;/my-orders?tab=hotel&quot;);
+
+<span class="fc" id="L190">        return true;</span>
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean requestRefund(Long userId, String orderNo) {
+<span class="fc" id="L196">        HotelOrder order = getOne(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="fc" id="L197">                .eq(HotelOrder::getOrderNo, orderNo)</span>
+<span class="fc" id="L198">                .eq(HotelOrder::getUserId, userId));</span>
+
+<span class="pc bpc" id="L200" title="1 of 2 branches missed.">        if (order == null) {</span>
+<span class="nc" id="L201">            throw new RuntimeException(&quot;订单不存在&quot;);</span>
+        }
+<span class="pc bpc" id="L203" title="1 of 2 branches missed.">        if (order.getStatus() != 1) {</span>
+<span class="nc" id="L204">            throw new RuntimeException(&quot;只有已支付且未入住的酒店订单可以申请退款&quot;);</span>
+        }
+
+<span class="fc" id="L207">        int updated = baseMapper.markRefundRequested(userId, orderNo);</span>
+<span class="pc bpc" id="L208" title="1 of 2 branches missed.">        if (updated == 0) {</span>
+<span class="nc" id="L209">            throw new RuntimeException(&quot;订单状态已变化，请刷新后重试&quot;);</span>
+        }
+
+<span class="fc" id="L212">        notificationGateway.publish(</span>
+                userId,
+                &quot;hotel_order&quot;,
+                &quot;酒店退款申请已提交&quot;,
+<span class="fc" id="L216">                String.format(&quot;订单 %s 已提交退款申请，请等待管理员处理。&quot;, orderNo),</span>
+                &quot;/my-orders?tab=hotel&quot;);
+
+<span class="fc" id="L219">        return true;</span>
+    }
+
+    @Override
+    public HotelOrder getOrderDetail(Long userId, String orderNo) {
+<span class="nc" id="L224">        return getOne(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="nc" id="L225">                .eq(HotelOrder::getOrderNo, orderNo)</span>
+<span class="nc" id="L226">                .eq(HotelOrder::getUserId, userId));</span>
+    }
+
+    @Override
+    public List&lt;HotelOrder&gt; getUserOrders(Long userId) {
+<span class="nc" id="L231">        return list(new LambdaQueryWrapper&lt;HotelOrder&gt;()</span>
+<span class="nc" id="L232">                .eq(HotelOrder::getUserId, userId)</span>
+<span class="nc" id="L233">                .orderByDesc(HotelOrder::getCreateTime));</span>
+    }
+
+    private void validateCreateRequest(HotelOrderCreateDTO dto) {
+<span class="pc bpc" id="L237" title="2 of 4 branches missed.">        if (dto == null || dto.getHotelId() == null) {</span>
+<span class="nc" id="L238">            throw new RuntimeException(&quot;请选择酒店&quot;);</span>
+        }
+<span class="pc bpc" id="L240" title="1 of 2 branches missed.">        if (dto.getRoomId() == null) {</span>
+<span class="nc" id="L241">            throw new RuntimeException(&quot;请选择房型&quot;);</span>
+        }
+<span class="pc bpc" id="L243" title="2 of 4 branches missed.">        if (dto.getCheckInDate() == null || dto.getCheckOutDate() == null</span>
+<span class="fc bfc" id="L244" title="All 2 branches covered.">                || !dto.getCheckOutDate().isAfter(dto.getCheckInDate())) {</span>
+<span class="fc" id="L245">            throw new RuntimeException(&quot;入住/退房日期不合法&quot;);</span>
+        }
+<span class="pc bpc" id="L247" title="1 of 2 branches missed.">        if (!StringUtils.hasText(dto.getGuestName())) {</span>
+<span class="nc" id="L248">            throw new RuntimeException(&quot;入住人姓名不能为空&quot;);</span>
+        }
+<span class="pc bpc" id="L250" title="1 of 2 branches missed.">        if (!StringUtils.hasText(dto.getGuestPhone())) {</span>
+<span class="nc" id="L251">            throw new RuntimeException(&quot;联系电话不能为空&quot;);</span>
+        }
+<span class="fc" id="L253">    }</span>
+
+    private int normalizeRoomCount(Integer roomCount) {
+<span class="pc bpc" id="L256" title="1 of 2 branches missed.">        int count = roomCount == null ? 1 : roomCount;</span>
+<span class="pc bpc" id="L257" title="2 of 4 branches missed.">        if (count &lt;= 0 || count &gt; 10) {</span>
+<span class="nc" id="L258">            throw new RuntimeException(&quot;预订房间数必须在1-10之间&quot;);</span>
+        }
+<span class="fc" id="L260">        return count;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

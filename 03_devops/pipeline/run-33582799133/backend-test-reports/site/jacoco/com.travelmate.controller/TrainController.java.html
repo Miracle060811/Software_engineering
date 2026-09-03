@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrainController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.controller</a> &gt; <span class="el_source">TrainController.java</span></div><h1>TrainController.java</h1><pre class="source lang-java linenums">package com.travelmate.controller;
+
+import com.travelmate.common.Result;
+import com.travelmate.common.UserContext;
+import com.travelmate.dto.TrainLiveSyncStatus;
+import com.travelmate.dto.TrainWaitlistCreateDTO;
+import com.travelmate.entity.Train;
+import com.travelmate.service.TrainLiveSyncService;
+import com.travelmate.service.TrainService;
+import com.travelmate.service.TrainWaitlistService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * 成员A负责: 火车票查寻模块
+ */
+@RestController
+@RequestMapping(&quot;/api/train&quot;)
+<span class="fc" id="L21">public class TrainController {</span>
+
+    @Autowired
+    private TrainService trainService;
+
+    @Autowired
+    private TrainLiveSyncService trainLiveSyncService;
+
+    @Autowired
+    private TrainWaitlistService trainWaitlistService;
+
+    @Autowired
+    private UserContext userContext;
+
+    /**
+     * @param depStation 出发点 (如 北京南)
+     * @param arrStation 到达点 (如 上海虹桥)
+     * @param date       出发日期 (如: 2024-05-01)
+     * @return 列车车次列表
+     */
+    @GetMapping(&quot;/search&quot;)
+    public Result&lt;List&lt;Train&gt;&gt; search(
+            @RequestParam(required = false) String depStation,
+            @RequestParam(required = false) String arrStation,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) Integer offset,
+            @RequestParam(required = false) Integer limit) {
+
+<span class="fc" id="L49">        List&lt;Train&gt; list = trainService.searchTrains(depStation, arrStation, date, offset, limit);</span>
+<span class="fc" id="L50">        return Result.success(list);</span>
+    }
+
+    @GetMapping(&quot;/live-sync-status&quot;)
+    public Result&lt;TrainLiveSyncStatus&gt; liveSyncStatus() {
+<span class="nc" id="L55">        return Result.success(trainLiveSyncService.getLastStatus());</span>
+    }
+
+    @PostMapping(&quot;/waitlist&quot;)
+    public Result&lt;Long&gt; createWaitlist(@RequestBody TrainWaitlistCreateDTO dto) {
+<span class="nc" id="L60">        Long userId = userContext.getCurrentUserIdOrNull();</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        if (userId == null) {</span>
+<span class="nc" id="L62">            return Result.error(&quot;用户未登录&quot;);</span>
+        }
+        try {
+<span class="nc" id="L65">            return Result.success(trainWaitlistService.createWaitlist(userId, dto));</span>
+<span class="nc" id="L66">        } catch (Exception ex) {</span>
+<span class="nc" id="L67">            return Result.error(ex.getMessage());</span>
+        }
+    }
+
+    /**
+     * 获取列车详情
+     */
+    @GetMapping(&quot;/{id}&quot;)
+    public Result&lt;Train&gt; getDetail(@PathVariable Long id) {
+<span class="nc" id="L76">        Train train = trainService.getById(id);</span>
+<span class="nc bnc" id="L77" title="All 4 branches missed.">        if (train == null || train.getStatus() == 0) {</span>
+<span class="nc" id="L78">            return Result.error(&quot;车次不存在或已停运&quot;);</span>
+        }
+<span class="nc" id="L80">        return Result.success(train);</span>
+    }
+
+    /**
+     * 加分项: 火车票智能中转路线推荐算法
+     */
+    @GetMapping(&quot;/transfer&quot;)
+    public Result&lt;List&lt;java.util.List&lt;Train&gt;&gt;&gt; getTransfer(
+            @RequestParam String depStation,
+            @RequestParam String arrStation,
+            @RequestParam String date) {
+
+<span class="nc" id="L92">        return Result.success(trainService.getTransferPlan(depStation, arrStation, date));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

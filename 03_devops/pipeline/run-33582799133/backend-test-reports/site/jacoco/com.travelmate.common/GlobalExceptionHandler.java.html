@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.common</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.travelmate.common;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
+
+@RestControllerAdvice
+<span class="fc" id="L12">public class GlobalExceptionHandler {</span>
+
+<span class="fc" id="L14">    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);</span>
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity&lt;Result&lt;?&gt;&gt; handleResponseStatusException(ResponseStatusException e) {
+<span class="pc bpc" id="L18" title="2 of 4 branches missed.">        String message = e.getReason() == null || e.getReason().isBlank()</span>
+<span class="nc" id="L19">                ? &quot;请求处理失败&quot;</span>
+<span class="fc" id="L20">                : e.getReason();</span>
+<span class="fc" id="L21">        Result&lt;?&gt; result = Result.error(message);</span>
+<span class="fc" id="L22">        result.setCode(e.getStatusCode().value());</span>
+<span class="fc" id="L23">        return ResponseEntity.status(e.getStatusCode()).body(result);</span>
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public Result&lt;?&gt; handleRuntimeException(RuntimeException e) {
+<span class="fc" id="L28">        log.error(&quot;Unhandled runtime exception&quot;, e);</span>
+<span class="fc" id="L29">        return Result.error(resolveMessage(e));</span>
+    }
+
+    @ExceptionHandler(Exception.class)
+    public Result&lt;?&gt; handleException(Exception e) {
+<span class="fc" id="L34">        log.error(&quot;Unhandled exception&quot;, e);</span>
+<span class="fc" id="L35">        return Result.error(resolveMessage(e));</span>
+    }
+
+    private String resolveMessage(Throwable throwable) {
+<span class="fc" id="L39">        Throwable root = getRootCause(throwable);</span>
+<span class="fc" id="L40">        String rootMessage = root.getMessage();</span>
+
+<span class="pc bpc" id="L42" title="1 of 4 branches missed.">        if (throwable instanceof CannotGetJdbcConnectionException</span>
+                || root instanceof CannotGetJdbcConnectionException
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">                || contains(rootMessage, &quot;Access denied for user&quot;)</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">                || contains(rootMessage, &quot;Communications link failure&quot;)</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                || contains(rootMessage, &quot;Failed to obtain JDBC Connection&quot;)) {</span>
+<span class="fc" id="L47">            return &quot;数据库连接失败，请检查 backend/application-local.yml 或 DB_PASSWORD 配置&quot;;</span>
+        }
+
+<span class="pc bpc" id="L50" title="1 of 4 branches missed.">        if (contains(rootMessage, &quot;doesn't exist&quot;) || contains(rootMessage, &quot;Unknown table&quot;)) {</span>
+<span class="fc" id="L51">            return &quot;数据库表不存在，请先执行 docs/sql/init.sql 初始化数据库&quot;;</span>
+        }
+
+<span class="pc bpc" id="L54" title="1 of 4 branches missed.">        if (rootMessage != null &amp;&amp; !rootMessage.isBlank()) {</span>
+<span class="fc" id="L55">            return rootMessage;</span>
+        }
+
+<span class="fc" id="L58">        return &quot;操作失败&quot;;</span>
+    }
+
+    private boolean contains(String text, String keyword) {
+<span class="fc bfc" id="L62" title="All 4 branches covered.">        return text != null &amp;&amp; text.contains(keyword);</span>
+    }
+
+    private Throwable getRootCause(Throwable throwable) {
+<span class="fc" id="L66">        Throwable current = throwable;</span>
+<span class="pc bpc" id="L67" title="1 of 4 branches missed.">        while (current.getCause() != null &amp;&amp; current.getCause() != current) {</span>
+<span class="fc" id="L68">            current = current.getCause();</span>
+        }
+<span class="fc" id="L70">        return current;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

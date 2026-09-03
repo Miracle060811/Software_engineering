@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TravelWeatherService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">TravelWeatherService.java</span></div><h1>TravelWeatherService.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDate;
+
+/** Uses Open-Meteo only for dates covered by its forecast window. */
+@Service
+<span class="fc" id="L20">public class TravelWeatherService {</span>
+
+<span class="fc" id="L22">    private final ObjectMapper objectMapper = new ObjectMapper();</span>
+    @Value(&quot;${ai.weather.enabled:true}&quot;)
+    private boolean enabled;
+
+    @Value(&quot;${ai.weather.base-url:https://api.open-meteo.com/v1/forecast}&quot;)
+    private String baseUrl;
+
+    public WeatherSnapshot getForecast(TravelPlaceService.VerifiedPlace place, LocalDate date) {
+<span class="nc bnc" id="L30" title="All 2 branches missed.">        if (!enabled) {</span>
+<span class="nc" id="L31">            throw new IllegalStateException(&quot;实时天气服务未启用&quot;);</span>
+        }
+<span class="nc bnc" id="L33" title="All 4 branches missed.">        if (place == null || !place.hasCoordinates()) {</span>
+<span class="nc" id="L34">            throw new IllegalStateException(&quot;该城市缺少可核验坐标，无法查询天气&quot;);</span>
+        }
+<span class="nc" id="L36">        LocalDate today = LocalDate.now();</span>
+<span class="nc bnc" id="L37" title="All 6 branches missed.">        if (date == null || date.isBefore(today) || date.isAfter(today.plusDays(15))) {</span>
+<span class="nc" id="L38">            throw new IllegalArgumentException(&quot;天气只支持查询今天起 16 天内的日期&quot;);</span>
+        }
+        try {
+<span class="nc" id="L41">            String response = fetch(place, date);</span>
+<span class="nc" id="L42">            return parseForecast(place, date, response);</span>
+<span class="nc" id="L43">        } catch (RuntimeException ex) {</span>
+<span class="nc" id="L44">            throw ex;</span>
+<span class="nc" id="L45">        } catch (Exception ex) {</span>
+<span class="nc" id="L46">            throw new IllegalStateException(&quot;天气服务暂时不可用，请稍后重试&quot;);</span>
+        }
+    }
+
+    WeatherSnapshot parseForecast(TravelPlaceService.VerifiedPlace place, LocalDate date, String responseBody)
+            throws Exception {
+<span class="fc" id="L52">        JsonNode root = objectMapper.readTree(responseBody);</span>
+<span class="fc" id="L53">        JsonNode daily = root.path(&quot;daily&quot;);</span>
+<span class="fc" id="L54">        JsonNode times = daily.path(&quot;time&quot;);</span>
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">        if (!times.isArray()) {</span>
+<span class="nc" id="L56">            throw new IllegalStateException(&quot;天气服务未返回日期数据&quot;);</span>
+        }
+<span class="fc" id="L58">        int index = -1;</span>
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">        for (int i = 0; i &lt; times.size(); i++) {</span>
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">            if (date.toString().equals(times.get(i).asText())) {</span>
+<span class="fc" id="L61">                index = i;</span>
+<span class="fc" id="L62">                break;</span>
+            }
+        }
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">        if (index &lt; 0) {</span>
+<span class="nc" id="L66">            throw new IllegalStateException(&quot;天气服务未覆盖该日期&quot;);</span>
+        }
+<span class="fc" id="L68">        int code = arrayInt(daily, &quot;weather_code&quot;, index, -1);</span>
+<span class="fc" id="L69">        double max = arrayDouble(daily, &quot;temperature_2m_max&quot;, index);</span>
+<span class="fc" id="L70">        double min = arrayDouble(daily, &quot;temperature_2m_min&quot;, index);</span>
+<span class="fc" id="L71">        int rainProbability = arrayInt(daily, &quot;precipitation_probability_max&quot;, index, -1);</span>
+<span class="fc" id="L72">        return new WeatherSnapshot(place.canonicalName(), date, weatherDescription(code), min, max,</span>
+                rainProbability, &quot;Open-Meteo&quot;);
+    }
+
+    private String fetch(TravelPlaceService.VerifiedPlace place, LocalDate date) throws Exception {
+<span class="nc" id="L77">        String url = normalizedBaseUrl()</span>
+<span class="nc" id="L78">                + &quot;?latitude=&quot; + place.latitude()</span>
+<span class="nc" id="L79">                + &quot;&amp;longitude=&quot; + place.longitude()</span>
+                + &quot;&amp;daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&quot;
+<span class="nc" id="L81">                + &quot;&amp;timezone=auto&amp;start_date=&quot; + URLEncoder.encode(date.toString(), StandardCharsets.UTF_8)</span>
+<span class="nc" id="L82">                + &quot;&amp;end_date=&quot; + URLEncoder.encode(date.toString(), StandardCharsets.UTF_8);</span>
+<span class="nc" id="L83">        URI target = URI.create(url);</span>
+<span class="nc" id="L84">        HttpRequest request = HttpRequest.newBuilder()</span>
+<span class="nc" id="L85">                .uri(target)</span>
+<span class="nc" id="L86">                .header(&quot;Accept&quot;, &quot;application/json&quot;)</span>
+<span class="nc" id="L87">                .timeout(Duration.ofSeconds(10))</span>
+<span class="nc" id="L88">                .GET()</span>
+<span class="nc" id="L89">                .build();</span>
+<span class="nc" id="L90">        HttpResponse&lt;String&gt; response = ExternalHttpClientFactory.create(target, Duration.ofSeconds(6))</span>
+<span class="nc" id="L91">                .send(request, HttpResponse.BodyHandlers.ofString());</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (response.statusCode() != 200) {</span>
+<span class="nc" id="L93">            throw new IllegalStateException(&quot;天气服务 HTTP &quot; + response.statusCode());</span>
+        }
+<span class="nc" id="L95">        return response.body();</span>
+    }
+
+    private int arrayInt(JsonNode parent, String field, int index, int fallback) {
+<span class="fc" id="L99">        JsonNode values = parent.path(field);</span>
+<span class="pc bpc" id="L100" title="3 of 6 branches missed.">        return values.isArray() &amp;&amp; index &lt; values.size() &amp;&amp; !values.get(index).isNull()</span>
+<span class="fc" id="L101">                ? values.get(index).asInt(fallback)</span>
+<span class="nc" id="L102">                : fallback;</span>
+    }
+
+    private double arrayDouble(JsonNode parent, String field, int index) {
+<span class="fc" id="L106">        JsonNode values = parent.path(field);</span>
+<span class="pc bpc" id="L107" title="3 of 6 branches missed.">        if (!values.isArray() || index &gt;= values.size() || values.get(index).isNull()) {</span>
+<span class="nc" id="L108">            throw new IllegalStateException(&quot;天气服务缺少温度数据&quot;);</span>
+        }
+<span class="fc" id="L110">        return values.get(index).asDouble();</span>
+    }
+
+    private String weatherDescription(int code) {
+<span class="pc bpc" id="L114" title="8 of 9 branches missed.">        return switch (code) {</span>
+<span class="nc" id="L115">            case 0 -&gt; &quot;晴&quot;;</span>
+<span class="nc" id="L116">            case 1, 2 -&gt; &quot;晴间多云&quot;;</span>
+<span class="nc" id="L117">            case 3 -&gt; &quot;阴&quot;;</span>
+<span class="nc" id="L118">            case 45, 48 -&gt; &quot;雾&quot;;</span>
+<span class="nc" id="L119">            case 51, 53, 55, 56, 57 -&gt; &quot;毛毛雨&quot;;</span>
+<span class="fc" id="L120">            case 61, 63, 65, 66, 67, 80, 81, 82 -&gt; &quot;有雨&quot;;</span>
+<span class="nc" id="L121">            case 71, 73, 75, 77, 85, 86 -&gt; &quot;有雪&quot;;</span>
+<span class="nc" id="L122">            case 95, 96, 99 -&gt; &quot;雷暴&quot;;</span>
+<span class="nc" id="L123">            default -&gt; &quot;天气状况待确认&quot;;</span>
+        };
+    }
+
+    private String normalizedBaseUrl() {
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        String value = StringUtils.hasText(baseUrl) ? baseUrl.trim() : &quot;https://api.open-meteo.com/v1/forecast&quot;;</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        while (value.endsWith(&quot;/&quot;)) {</span>
+<span class="nc" id="L130">            value = value.substring(0, value.length() - 1);</span>
+        }
+<span class="nc" id="L132">        return value;</span>
+    }
+
+<span class="fc" id="L135">    public record WeatherSnapshot(String city, LocalDate date, String condition, double minTemperature,</span>
+                                  double maxTemperature, int precipitationProbability, String source) {
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

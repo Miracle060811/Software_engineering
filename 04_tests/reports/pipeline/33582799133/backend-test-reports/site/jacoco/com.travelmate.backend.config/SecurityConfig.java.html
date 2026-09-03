@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.backend.config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package com.travelmate.backend.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
+
+@Configuration
+<span class="fc" id="L16">public class SecurityConfig {</span>
+
+        @Autowired
+        private JwtFilter jwtFilter;
+
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+<span class="fc" id="L23">                CsrfTokenRequestAttributeHandler csrfRequestHandler = new CsrfTokenRequestAttributeHandler();</span>
+<span class="fc" id="L24">                csrfRequestHandler.setCsrfRequestAttributeName(null);</span>
+
+<span class="fc" id="L26">                http.csrf(csrf -&gt; csrf</span>
+<span class="fc" id="L27">                                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())</span>
+<span class="fc" id="L28">                                .csrfTokenRequestHandler(csrfRequestHandler)</span>
+<span class="fc" id="L29">                                .ignoringRequestMatchers(</span>
+                                                &quot;/user/register&quot;,
+                                                &quot;/user/login&quot;,
+                                                &quot;/user/admin-register&quot;,
+                                                &quot;/internal/**&quot;))
+<span class="fc" id="L34">                                .cors(Customizer.withDefaults())</span>
+<span class="fc" id="L35">                                .formLogin(form -&gt; form.disable())</span>
+<span class="fc" id="L36">                                .httpBasic(basic -&gt; basic.disable())</span>
+<span class="fc" id="L37">                                .authorizeHttpRequests(auth -&gt; auth</span>
+<span class="fc" id="L38">                                                .requestMatchers(HttpMethod.GET,</span>
+                                                                &quot;/&quot;,
+                                                                &quot;/index.html&quot;,
+                                                                &quot;/login&quot;,
+                                                                &quot;/destinations&quot;,
+                                                                &quot;/destination/*&quot;,
+                                                                &quot;/about&quot;,
+                                                                &quot;/terms&quot;,
+                                                                &quot;/privacy&quot;,
+                                                                &quot;/help&quot;,
+                                                                &quot;/flight-search&quot;,
+                                                                &quot;/train-search&quot;,
+                                                                &quot;/hotel-search&quot;,
+                                                                &quot;/hotel/*&quot;,
+                                                                &quot;/attractions&quot;,
+                                                                &quot;/ai-plan&quot;,
+                                                                &quot;/community&quot;,
+                                                                &quot;/post/create&quot;,
+                                                                &quot;/post/*&quot;,
+                                                                &quot;/my-orders&quot;,
+                                                                &quot;/coupons&quot;,
+                                                                &quot;/notifications&quot;,
+                                                                &quot;/messages&quot;,
+                                                                &quot;/collections&quot;,
+                                                                &quot;/profile/*&quot;,
+                                                                &quot;/admin&quot;)
+<span class="fc" id="L64">                                                .permitAll()</span>
+<span class="fc" id="L65">                                                .requestMatchers(</span>
+                                                                &quot;/user/register&quot;, &quot;/user/login&quot;,
+                                                                &quot;/user/admin-register&quot;,
+                                                                &quot;/user/refresh&quot;, &quot;/user/logout&quot;,
+                                                &quot;/internal/**&quot;,
+                                                &quot;/actuator/health&quot;,
+                                                                &quot;/actuator/health/**&quot;,
+                                                                &quot;/favicon.ico&quot;,
+                                                                &quot;/assets/**&quot;,
+                                                                &quot;/images/**&quot;,
+                                                                &quot;/uploads/**&quot;,
+                                                                &quot;/vite.svg&quot;)
+<span class="fc" id="L77">                                                .permitAll()</span>
+<span class="fc" id="L78">                                                .requestMatchers(HttpMethod.GET,</span>
+                                                                &quot;/api/flight/**&quot;,
+                                                                &quot;/api/train/**&quot;,
+                                                                &quot;/api/destinations&quot;,
+                                                                &quot;/api/destinations/**&quot;,
+                                                                &quot;/api/hotel/search&quot;,
+                                                                &quot;/api/attraction/search&quot;,
+                                                                &quot;/api/tour/list&quot;,
+                                                                &quot;/api/review/list&quot;,
+                                                                &quot;/api/coupon/list&quot;,
+                                                                &quot;/api/user/profile/**&quot;,
+                                                                &quot;/api/comment/list&quot;)
+<span class="fc" id="L90">                                                .permitAll()</span>
+<span class="fc" id="L91">                                                .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET,</span>
+                                                                &quot;^/api/hotel/\\d+$&quot;))
+<span class="fc" id="L93">                                                .permitAll()</span>
+<span class="fc" id="L94">                                                .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET,</span>
+                                                                &quot;^/api/hotel/\\d+/rooms$&quot;))
+<span class="fc" id="L96">                                                .permitAll()</span>
+<span class="fc" id="L97">                                                .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET,</span>
+                                                                &quot;^/api/attraction/\\d+$&quot;))
+<span class="fc" id="L99">                                                .permitAll()</span>
+<span class="fc" id="L100">                                                .requestMatchers(HttpMethod.GET, &quot;/api/post/list&quot;)</span>
+<span class="fc" id="L101">                                                .permitAll()</span>
+<span class="fc" id="L102">                                                .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET,</span>
+                                                                &quot;^/api/post/\\d+$&quot;))
+<span class="fc" id="L104">                                                .permitAll()</span>
+<span class="fc" id="L105">                                                .requestMatchers(&quot;/api/admin/**&quot;)</span>
+<span class="fc" id="L106">                                                .hasRole(&quot;ADMIN&quot;)</span>
+<span class="fc" id="L107">                                                .requestMatchers(&quot;/api/private-message/**&quot;)</span>
+<span class="fc" id="L108">                                                .authenticated()</span>
+<span class="fc" id="L109">                                                .requestMatchers(&quot;/api/post/**&quot;)</span>
+<span class="fc" id="L110">                                                .authenticated()</span>
+<span class="fc" id="L111">                                                .anyRequest().authenticated())</span>
+<span class="fc" id="L112">                                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);</span>
+<span class="fc" id="L113">                return http.build();</span>
+        }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PrivateMessageServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">PrivateMessageServiceImpl.java</span></div><h1>PrivateMessageServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.travelmate.backend.entity.User;
+import com.travelmate.backend.mapper.UserMapper;
+import com.travelmate.dto.PrivateMessageSendDTO;
+import com.travelmate.entity.PrivateContact;
+import com.travelmate.entity.PrivateMessage;
+import com.travelmate.mapper.PrivateContactMapper;
+import com.travelmate.mapper.PrivateMessageMapper;
+import com.travelmate.service.PrivateMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L23">public class PrivateMessageServiceImpl implements PrivateMessageService {</span>
+
+    @Autowired
+    private PrivateMessageMapper privateMessageMapper;
+
+    @Autowired
+    private PrivateContactMapper privateContactMapper;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Override
+    public List&lt;Map&lt;String, Object&gt;&gt; listContacts(Long currentUserId) {
+<span class="nc" id="L36">        List&lt;PrivateContact&gt; contacts = privateContactMapper.selectList(new LambdaQueryWrapper&lt;PrivateContact&gt;()</span>
+<span class="nc" id="L37">                .eq(PrivateContact::getUserId, currentUserId)</span>
+<span class="nc" id="L38">                .orderByDesc(PrivateContact::getUpdateTime));</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        if (contacts.isEmpty()) {</span>
+<span class="nc" id="L40">            return Collections.emptyList();</span>
+        }
+
+<span class="nc" id="L43">        Set&lt;Long&gt; userIds = contacts.stream().map(PrivateContact::getContactUserId).collect(Collectors.toSet());</span>
+<span class="nc" id="L44">        Set&lt;Long&gt; messageIds = contacts.stream()</span>
+<span class="nc" id="L45">                .map(PrivateContact::getLastMessageId)</span>
+<span class="nc" id="L46">                .filter(Objects::nonNull)</span>
+<span class="nc" id="L47">                .collect(Collectors.toSet());</span>
+
+<span class="nc" id="L49">        Map&lt;Long, User&gt; userMap = userMapper.selectBatchIds(userIds).stream()</span>
+<span class="nc" id="L50">                .collect(Collectors.toMap(User::getId, Function.identity()));</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        Map&lt;Long, PrivateMessage&gt; messageMap = messageIds.isEmpty()</span>
+<span class="nc" id="L52">                ? Collections.emptyMap()</span>
+<span class="nc" id="L53">                : privateMessageMapper.selectBatchIds(messageIds).stream()</span>
+<span class="nc" id="L54">                        .collect(Collectors.toMap(PrivateMessage::getId, Function.identity()));</span>
+
+<span class="nc" id="L56">        return contacts.stream()</span>
+<span class="nc" id="L57">                .map(contact -&gt; buildContact(contact, userMap.get(contact.getContactUserId()), messageMap.get(contact.getLastMessageId())))</span>
+<span class="nc" id="L58">                .filter(Objects::nonNull)</span>
+<span class="nc" id="L59">                .toList();</span>
+    }
+
+    @Override
+    public List&lt;Map&lt;String, Object&gt;&gt; searchUsers(Long currentUserId, String keyword) {
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        String kw = keyword == null ? &quot;&quot; : keyword.trim();</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        if (kw.isEmpty()) {</span>
+<span class="nc" id="L66">            return Collections.emptyList();</span>
+        }
+<span class="nc" id="L68">        List&lt;User&gt; users = userMapper.selectList(new LambdaQueryWrapper&lt;User&gt;()</span>
+<span class="nc" id="L69">                .ne(User::getId, currentUserId)</span>
+<span class="nc" id="L70">                .eq(User::getStatus, 1)</span>
+<span class="nc" id="L71">                .and(wrapper -&gt; wrapper.eq(User::getDeleted, 0).or().isNull(User::getDeleted))</span>
+<span class="nc" id="L72">                .and(wrapper -&gt; wrapper.like(User::getUsername, kw).or().like(User::getNickname, kw))</span>
+<span class="nc" id="L73">                .last(&quot;LIMIT 20&quot;));</span>
+<span class="nc" id="L74">        return users.stream().map(this::buildUserSummary).toList();</span>
+    }
+
+    @Override
+    @Transactional
+    public List&lt;PrivateMessage&gt; listConversation(Long currentUserId, Long contactUserId) {
+<span class="nc" id="L80">        assertTargetUser(contactUserId);</span>
+<span class="nc" id="L81">        privateMessageMapper.update(null, new LambdaUpdateWrapper&lt;PrivateMessage&gt;()</span>
+<span class="nc" id="L82">                .eq(PrivateMessage::getSenderId, contactUserId)</span>
+<span class="nc" id="L83">                .eq(PrivateMessage::getReceiverId, currentUserId)</span>
+<span class="nc" id="L84">                .eq(PrivateMessage::getReadStatus, 0)</span>
+<span class="nc" id="L85">                .set(PrivateMessage::getReadStatus, 1));</span>
+<span class="nc" id="L86">        privateContactMapper.update(null, new LambdaUpdateWrapper&lt;PrivateContact&gt;()</span>
+<span class="nc" id="L87">                .eq(PrivateContact::getUserId, currentUserId)</span>
+<span class="nc" id="L88">                .eq(PrivateContact::getContactUserId, contactUserId)</span>
+<span class="nc" id="L89">                .set(PrivateContact::getUnreadCount, 0));</span>
+
+<span class="nc" id="L91">        return privateMessageMapper.selectList(new LambdaQueryWrapper&lt;PrivateMessage&gt;()</span>
+<span class="nc" id="L92">                .eq(PrivateMessage::getDeleted, 0)</span>
+<span class="nc" id="L93">                .and(wrapper -&gt; wrapper</span>
+<span class="nc" id="L94">                        .eq(PrivateMessage::getSenderId, currentUserId)</span>
+<span class="nc" id="L95">                        .eq(PrivateMessage::getReceiverId, contactUserId)</span>
+<span class="nc" id="L96">                        .or()</span>
+<span class="nc" id="L97">                        .eq(PrivateMessage::getSenderId, contactUserId)</span>
+<span class="nc" id="L98">                        .eq(PrivateMessage::getReceiverId, currentUserId))</span>
+<span class="nc" id="L99">                .orderByAsc(PrivateMessage::getCreateTime)</span>
+<span class="nc" id="L100">                .orderByAsc(PrivateMessage::getId));</span>
+    }
+
+    @Override
+    @Transactional
+    public PrivateMessage sendMessage(Long currentUserId, PrivateMessageSendDTO dto) {
+<span class="pc bpc" id="L106" title="2 of 4 branches missed.">        if (dto == null || dto.getReceiverId() == null) {</span>
+<span class="nc" id="L107">            throw new RuntimeException(&quot;请选择收信人&quot;);</span>
+        }
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (Objects.equals(currentUserId, dto.getReceiverId())) {</span>
+<span class="fc" id="L110">            throw new RuntimeException(&quot;不能给自己发送私信&quot;);</span>
+        }
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        String content = dto.getContent() == null ? &quot;&quot; : dto.getContent().trim();</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">        if (content.isEmpty()) {</span>
+<span class="fc" id="L114">            throw new RuntimeException(&quot;消息内容不能为空&quot;);</span>
+        }
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        if (content.length() &gt; 1000) {</span>
+<span class="nc" id="L117">            throw new RuntimeException(&quot;消息内容不能超过1000字&quot;);</span>
+        }
+<span class="fc" id="L119">        assertTargetUser(dto.getReceiverId());</span>
+
+<span class="fc" id="L121">        PrivateMessage message = new PrivateMessage();</span>
+<span class="fc" id="L122">        message.setSenderId(currentUserId);</span>
+<span class="fc" id="L123">        message.setReceiverId(dto.getReceiverId());</span>
+<span class="fc" id="L124">        message.setContent(content);</span>
+<span class="fc" id="L125">        message.setReadStatus(0);</span>
+<span class="fc" id="L126">        message.setDeleted(0);</span>
+<span class="fc" id="L127">        message.setCreateTime(LocalDateTime.now());</span>
+<span class="fc" id="L128">        privateMessageMapper.insert(message);</span>
+
+<span class="fc" id="L130">        upsertContact(currentUserId, dto.getReceiverId(), message.getId(), false);</span>
+<span class="fc" id="L131">        upsertContact(dto.getReceiverId(), currentUserId, message.getId(), true);</span>
+<span class="fc" id="L132">        return message;</span>
+    }
+
+    @Override
+    public Integer unreadCount(Long currentUserId) {
+<span class="nc" id="L137">        List&lt;PrivateContact&gt; contacts = privateContactMapper.selectList(new LambdaQueryWrapper&lt;PrivateContact&gt;()</span>
+<span class="nc" id="L138">                .eq(PrivateContact::getUserId, currentUserId));</span>
+<span class="nc" id="L139">        return contacts.stream()</span>
+<span class="nc" id="L140">                .map(PrivateContact::getUnreadCount)</span>
+<span class="nc" id="L141">                .filter(Objects::nonNull)</span>
+<span class="nc" id="L142">                .reduce(0, Integer::sum);</span>
+    }
+
+    private void upsertContact(Long userId, Long contactUserId, Long messageId, boolean incrementUnread) {
+<span class="fc" id="L146">        PrivateContact existing = privateContactMapper.selectOne(new LambdaQueryWrapper&lt;PrivateContact&gt;()</span>
+<span class="fc" id="L147">                .eq(PrivateContact::getUserId, userId)</span>
+<span class="fc" id="L148">                .eq(PrivateContact::getContactUserId, contactUserId));</span>
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">        if (existing == null) {</span>
+<span class="fc" id="L150">            PrivateContact contact = new PrivateContact();</span>
+<span class="fc" id="L151">            contact.setUserId(userId);</span>
+<span class="fc" id="L152">            contact.setContactUserId(contactUserId);</span>
+<span class="fc" id="L153">            contact.setLastMessageId(messageId);</span>
+<span class="fc bfc" id="L154" title="All 2 branches covered.">            contact.setUnreadCount(incrementUnread ? 1 : 0);</span>
+<span class="fc" id="L155">            privateContactMapper.insert(contact);</span>
+<span class="fc" id="L156">            return;</span>
+        }
+
+<span class="nc" id="L159">        LambdaUpdateWrapper&lt;PrivateContact&gt; update = new LambdaUpdateWrapper&lt;PrivateContact&gt;()</span>
+<span class="nc" id="L160">                .eq(PrivateContact::getId, existing.getId())</span>
+<span class="nc" id="L161">                .set(PrivateContact::getLastMessageId, messageId)</span>
+<span class="nc" id="L162">                .set(PrivateContact::getUpdateTime, LocalDateTime.now());</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">        if (incrementUnread) {</span>
+<span class="nc" id="L164">            update.setSql(&quot;unread_count = unread_count + 1&quot;);</span>
+        } else {
+<span class="nc" id="L166">            update.set(PrivateContact::getUnreadCount, 0);</span>
+        }
+<span class="nc" id="L168">        privateContactMapper.update(null, update);</span>
+<span class="nc" id="L169">    }</span>
+
+    private User assertTargetUser(Long userId) {
+<span class="fc" id="L172">        User user = userMapper.selectById(userId);</span>
+<span class="pc bpc" id="L173" title="3 of 6 branches missed.">        if (user == null || Objects.equals(user.getStatus(), 0) || Objects.equals(user.getDeleted(), 1)) {</span>
+<span class="nc" id="L174">            throw new RuntimeException(&quot;用户不存在或不可用&quot;);</span>
+        }
+<span class="fc" id="L176">        return user;</span>
+    }
+
+    private Map&lt;String, Object&gt; buildContact(PrivateContact contact, User user, PrivateMessage lastMessage) {
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L181">            return null;</span>
+        }
+<span class="nc" id="L183">        Map&lt;String, Object&gt; data = buildUserSummary(user);</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        data.put(&quot;lastMessage&quot;, lastMessage == null ? &quot;&quot; : lastMessage.getContent());</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        data.put(&quot;lastMessageTime&quot;, lastMessage == null ? contact.getUpdateTime() : lastMessage.getCreateTime());</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        data.put(&quot;unreadCount&quot;, contact.getUnreadCount() == null ? 0 : contact.getUnreadCount());</span>
+<span class="nc" id="L187">        return data;</span>
+    }
+
+    private Map&lt;String, Object&gt; buildUserSummary(User user) {
+<span class="nc" id="L191">        Map&lt;String, Object&gt; data = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L192">        data.put(&quot;userId&quot;, user.getId());</span>
+<span class="nc" id="L193">        data.put(&quot;username&quot;, user.getUsername());</span>
+<span class="nc" id="L194">        data.put(&quot;nickname&quot;, user.getNickname());</span>
+<span class="nc" id="L195">        data.put(&quot;avatar&quot;, user.getAvatar());</span>
+<span class="nc" id="L196">        data.put(&quot;bio&quot;, user.getBio());</span>
+<span class="nc" id="L197">        return data;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

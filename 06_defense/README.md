@@ -10,3 +10,17 @@
 - 备用材料：[`TravelMate中期检查汇报材料-备用.pdf`](TravelMate中期检查汇报材料-备用.pdf)（中期检查汇报，原件在仓库根目录 `中期检查/`）。
 
 项目管理、个人权重和全员确认材料位于 `05_management/`。
+
+## 最终打包注意事项
+
+答辩 PPT 和视频因超过 GitHub 常规文件大小限制，已由 Git 忽略，但它们是最终课程压缩包的必交内容。打包后必须确认 ZIP 中同时存在：
+
+- `06_defense/杨任宇班-5组-TravelMate-答辩.pptx`
+- `06_defense/答辩.mp4`
+
+可在仓库根目录使用文件资源管理器，将根 `README.md` 与 `01_source`—`06_defense` 七项一起压缩；不要直接依赖只读取 Git 文件清单的脚本。压缩完成后使用以下命令检查：
+
+```powershell
+tar.exe -tf ".\班级-组号-TravelMate-软件工程基础实践.zip" |
+  Select-String '06_defense/.+\.(pptx|mp4)$'
+```

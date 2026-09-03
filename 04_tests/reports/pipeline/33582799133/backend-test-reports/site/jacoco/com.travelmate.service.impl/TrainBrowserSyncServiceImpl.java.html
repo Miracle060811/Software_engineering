@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrainBrowserSyncServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">TrainBrowserSyncServiceImpl.java</span></div><h1>TrainBrowserSyncServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.travelmate.dto.TrainBrowserTicket;
+import com.travelmate.service.TrainBrowserSyncService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class TrainBrowserSyncServiceImpl implements TrainBrowserSyncService {
+    private static final String INIT_URL = &quot;https://kyfw.12306.cn/otn/leftTicket/init&quot;;
+    private static final String QUERY_URL = &quot;https://kyfw.12306.cn/otn/leftTicket/query&quot;;
+    private static final String STATION_URL =
+            &quot;https://kyfw.12306.cn/otn/resources/js/framework/station_name.js&quot;;
+    private static final String USER_AGENT =
+            &quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36&quot;;
+<span class="fc" id="L37">    private static final Duration STATION_CATALOG_TTL = Duration.ofHours(24);</span>
+
+    private final ObjectMapper objectMapper;
+    private final CookieManager cookieManager;
+    private final HttpClient httpClient;
+<span class="fc" id="L42">    private final Object sessionLock = new Object();</span>
+
+    private volatile boolean sessionReady;
+<span class="fc" id="L45">    private volatile StationCatalog stationCatalog = StationCatalog.empty();</span>
+    private volatile LocalDateTime stationCatalogLoadedAt;
+
+    // 外部 12306 服务不可用时必须尽快回退到本地车次数据，不能占满搜索接口超时时间。
+    @Value(&quot;${train.browser-sync.timeout-ms:6000}&quot;)
+    private long timeoutMs;
+
+<span class="fc" id="L52">    public TrainBrowserSyncServiceImpl(ObjectMapper objectMapper) {</span>
+<span class="fc" id="L53">        this.objectMapper = objectMapper;</span>
+<span class="fc" id="L54">        this.cookieManager = new CookieManager(null, CookiePolicy.ACCEPT_ALL);</span>
+<span class="fc" id="L55">        this.httpClient = HttpClient.newBuilder()</span>
+<span class="fc" id="L56">                .cookieHandler(cookieManager)</span>
+<span class="fc" id="L57">                .connectTimeout(Duration.ofSeconds(8))</span>
+<span class="fc" id="L58">                .followRedirects(HttpClient.Redirect.NORMAL)</span>
+<span class="fc" id="L59">                .build();</span>
+<span class="fc" id="L60">    }</span>
+
+    @Override
+    public List&lt;TrainBrowserTicket&gt; readPublicLeftTickets(
+            String depStation,
+            String depCode,
+            String arrStation,
+            String arrCode,
+            LocalDate trainDate) throws Exception {
+<span class="nc" id="L69">        ensureSession(false);</span>
+
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        String resolvedDepCode = StringUtils.hasText(depCode) ? depCode : stationCode(depStation);</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        String resolvedArrCode = StringUtils.hasText(arrCode) ? arrCode : stationCode(arrStation);</span>
+<span class="nc bnc" id="L73" title="All 4 branches missed.">        if (!StringUtils.hasText(resolvedDepCode) || !StringUtils.hasText(resolvedArrCode)) {</span>
+<span class="nc" id="L74">            throw new IllegalArgumentException(&quot;12306 未识别站点：&quot; + depStation + &quot; -&gt; &quot; + arrStation);</span>
+        }
+
+<span class="nc" id="L77">        String responseBody = query(resolvedDepCode, resolvedArrCode, trainDate, false);</span>
+<span class="nc" id="L78">        return parseTickets(responseBody, depStation, arrStation);</span>
+    }
+
+    @Override
+    public List&lt;String&gt; resolveStationCandidates(String input) {
+<span class="nc" id="L83">        String normalized = normalize(input);</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if (!StringUtils.hasText(normalized)) {</span>
+<span class="nc" id="L85">            return List.of();</span>
+        }
+        try {
+<span class="nc" id="L88">            StationCatalog catalog = stationCatalog();</span>
+<span class="nc" id="L89">            List&lt;String&gt; cityStations = catalog.byCity().get(normalized);</span>
+<span class="nc bnc" id="L90" title="All 4 branches missed.">            if (cityStations != null &amp;&amp; !cityStations.isEmpty()) {</span>
+<span class="nc" id="L91">                return cityStations.stream()</span>
+<span class="nc" id="L92">                        .sorted(Comparator.comparingInt(name -&gt; stationPriority(normalized, name)))</span>
+<span class="nc" id="L93">                        .toList();</span>
+            }
+<span class="nc bnc" id="L95" title="All 2 branches missed.">            if (catalog.byName().containsKey(normalized)) {</span>
+<span class="nc" id="L96">                return List.of(normalized);</span>
+            }
+<span class="nc" id="L98">        } catch (Exception ignored) {</span>
+            // The resolver retains a local fallback list when 12306 is temporarily unreachable.
+<span class="nc" id="L100">        }</span>
+<span class="nc" id="L101">        return List.of(normalized);</span>
+    }
+
+    List&lt;TrainBrowserTicket&gt; parseTickets(String responseBody, String depStation, String arrStation) throws Exception {
+<span class="fc" id="L105">        JsonNode root = objectMapper.readTree(stripBom(responseBody));</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        if (root.path(&quot;httpstatus&quot;).asInt(200) != 200) {</span>
+<span class="nc" id="L107">            throw new IllegalStateException(responseMessage(root, &quot;12306 查询失败&quot;));</span>
+        }
+
+<span class="fc" id="L110">        JsonNode data = root.path(&quot;data&quot;);</span>
+<span class="fc" id="L111">        JsonNode results = data.path(&quot;result&quot;);</span>
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        if (!results.isArray()) {</span>
+<span class="nc" id="L113">            throw new IllegalStateException(responseMessage(root, &quot;12306 返回了无法识别的余票数据&quot;));</span>
+        }
+
+<span class="fc" id="L116">        Map&lt;String, String&gt; stationNames = new LinkedHashMap&lt;&gt;(stationCatalog.byCode());</span>
+<span class="fc" id="L117">        JsonNode responseMap = data.path(&quot;map&quot;);</span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        if (responseMap.isObject()) {</span>
+<span class="fc" id="L119">            responseMap.fields().forEachRemaining(entry -&gt; stationNames.put(entry.getKey(), entry.getValue().asText()));</span>
+        }
+
+<span class="fc" id="L122">        List&lt;TrainBrowserTicket&gt; tickets = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        for (JsonNode result : results) {</span>
+<span class="fc" id="L124">            String[] fields = result.asText(&quot;&quot;).split(&quot;\\|&quot;, -1);</span>
+<span class="pc bpc" id="L125" title="2 of 4 branches missed.">            if (fields.length &lt; 33 || !StringUtils.hasText(field(fields, 3))) {</span>
+<span class="nc" id="L126">                continue;</span>
+            }
+
+<span class="fc" id="L129">            TrainBrowserTicket ticket = new TrainBrowserTicket();</span>
+<span class="fc" id="L130">            ticket.setTrainNo(field(fields, 3));</span>
+<span class="fc" id="L131">            ticket.setDepartureStation(stationNames.getOrDefault(field(fields, 6), depStation));</span>
+<span class="fc" id="L132">            ticket.setArrivalStation(stationNames.getOrDefault(field(fields, 7), arrStation));</span>
+<span class="fc" id="L133">            ticket.setDepartureTime(field(fields, 8));</span>
+<span class="fc" id="L134">            ticket.setArrivalTime(field(fields, 9));</span>
+<span class="fc" id="L135">            ticket.setDuration(field(fields, 10));</span>
+<span class="fc" id="L136">            ticket.setBusinessSeat(firstSeat(fields, 32, 25));</span>
+<span class="fc" id="L137">            ticket.setFirstClassSeat(seat(fields, 31));</span>
+<span class="fc" id="L138">            ticket.setSecondClassSeat(seat(fields, 30));</span>
+<span class="fc" id="L139">            ticket.setHardSeat(seat(fields, 29));</span>
+<span class="fc" id="L140">            ticket.setNoSeat(seat(fields, 26));</span>
+<span class="fc" id="L141">            tickets.add(ticket);</span>
+<span class="fc" id="L142">        }</span>
+<span class="fc" id="L143">        return tickets;</span>
+    }
+
+    private String query(String depCode, String arrCode, LocalDate trainDate, boolean retried) throws Exception {
+<span class="nc" id="L147">        String url = QUERY_URL</span>
+<span class="nc" id="L148">                + &quot;?leftTicketDTO.train_date=&quot; + encode(trainDate.toString())</span>
+<span class="nc" id="L149">                + &quot;&amp;leftTicketDTO.from_station=&quot; + encode(depCode)</span>
+<span class="nc" id="L150">                + &quot;&amp;leftTicketDTO.to_station=&quot; + encode(arrCode)</span>
+                + &quot;&amp;purpose_codes=ADULT&quot;;
+<span class="nc" id="L152">        HttpResponse&lt;String&gt; response = send(url, &quot;application/json, text/javascript, */*; q=0.01&quot;);</span>
+<span class="nc" id="L153">        String body = stripBom(response.body());</span>
+<span class="nc bnc" id="L154" title="All 6 branches missed.">        if (response.statusCode() &gt;= 200 &amp;&amp; response.statusCode() &lt; 300 &amp;&amp; body.trim().startsWith(&quot;{&quot;)) {</span>
+<span class="nc" id="L155">            return body;</span>
+        }
+<span class="nc bnc" id="L157" title="All 2 branches missed.">        if (!retried) {</span>
+<span class="nc" id="L158">            ensureSession(true);</span>
+<span class="nc" id="L159">            return query(depCode, arrCode, trainDate, true);</span>
+        }
+<span class="nc" id="L161">        throw new IllegalStateException(&quot;12306 返回了维护页或访问校验页&quot;);</span>
+    }
+
+    private String stationCode(String stationName) throws Exception {
+<span class="nc" id="L165">        StationInfo station = stationCatalog().byName().get(normalize(stationName));</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        return station == null ? &quot;&quot; : station.code();</span>
+    }
+
+    private StationCatalog stationCatalog() throws Exception {
+<span class="nc" id="L170">        StationCatalog current = stationCatalog;</span>
+<span class="nc" id="L171">        LocalDateTime loadedAt = stationCatalogLoadedAt;</span>
+<span class="nc bnc" id="L172" title="All 4 branches missed.">        if (!current.byName().isEmpty() &amp;&amp; loadedAt != null</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">                &amp;&amp; loadedAt.plus(STATION_CATALOG_TTL).isAfter(LocalDateTime.now())) {</span>
+<span class="nc" id="L174">            return current;</span>
+        }
+
+<span class="nc" id="L177">        synchronized (sessionLock) {</span>
+<span class="nc" id="L178">            current = stationCatalog;</span>
+<span class="nc" id="L179">            loadedAt = stationCatalogLoadedAt;</span>
+<span class="nc bnc" id="L180" title="All 4 branches missed.">            if (!current.byName().isEmpty() &amp;&amp; loadedAt != null</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">                    &amp;&amp; loadedAt.plus(STATION_CATALOG_TTL).isAfter(LocalDateTime.now())) {</span>
+<span class="nc" id="L182">                return current;</span>
+            }
+<span class="nc" id="L184">            ensureSession(false);</span>
+<span class="nc" id="L185">            HttpResponse&lt;String&gt; response = send(STATION_URL, &quot;application/javascript, */*; q=0.01&quot;);</span>
+<span class="nc bnc" id="L186" title="All 4 branches missed.">            if (response.statusCode() &lt; 200 || response.statusCode() &gt;= 300) {</span>
+<span class="nc" id="L187">                throw new IllegalStateException(&quot;12306 站点目录读取失败：HTTP &quot; + response.statusCode());</span>
+            }
+<span class="nc" id="L189">            StationCatalog parsed = parseStationCatalog(response.body());</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">            if (parsed.byName().isEmpty()) {</span>
+<span class="nc" id="L191">                throw new IllegalStateException(&quot;12306 站点目录为空&quot;);</span>
+            }
+<span class="nc" id="L193">            stationCatalog = parsed;</span>
+<span class="nc" id="L194">            stationCatalogLoadedAt = LocalDateTime.now();</span>
+<span class="nc" id="L195">            return parsed;</span>
+        }
+    }
+
+    private StationCatalog parseStationCatalog(String script) {
+<span class="nc" id="L200">        int start = script.indexOf('\'');</span>
+<span class="nc" id="L201">        int end = script.lastIndexOf('\'');</span>
+<span class="nc bnc" id="L202" title="All 4 branches missed.">        if (start &lt; 0 || end &lt;= start) {</span>
+<span class="nc" id="L203">            return StationCatalog.empty();</span>
+        }
+
+<span class="nc" id="L206">        Map&lt;String, StationInfo&gt; byName = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L207">        Map&lt;String, String&gt; byCode = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L208">        Map&lt;String, List&lt;String&gt;&gt; byCity = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L209">        String stationData = script.substring(start + 1, end);</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">        for (String entry : stationData.split(&quot;@&quot;)) {</span>
+<span class="nc" id="L211">            String[] parts = entry.split(&quot;\\|&quot;, -1);</span>
+<span class="nc bnc" id="L212" title="All 6 branches missed.">            if (parts.length &lt; 3 || !StringUtils.hasText(parts[1]) || !StringUtils.hasText(parts[2])) {</span>
+<span class="nc" id="L213">                continue;</span>
+            }
+<span class="nc" id="L215">            String name = normalize(parts[1]);</span>
+<span class="nc" id="L216">            String code = parts[2].trim();</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">            String city = parts.length &gt; 7 ? normalize(parts[7]) : &quot;&quot;;</span>
+<span class="nc" id="L218">            StationInfo station = new StationInfo(name, code, city);</span>
+<span class="nc" id="L219">            byName.put(name, station);</span>
+<span class="nc" id="L220">            byCode.put(code, name);</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">            if (StringUtils.hasText(city)) {</span>
+<span class="nc" id="L222">                byCity.computeIfAbsent(city, ignored -&gt; new ArrayList&lt;&gt;()).add(name);</span>
+            }
+        }
+
+<span class="nc" id="L226">        Map&lt;String, List&lt;String&gt;&gt; immutableCities = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L227">        byCity.forEach((city, names) -&gt; immutableCities.put(city, List.copyOf(names)));</span>
+<span class="nc" id="L228">        return new StationCatalog(</span>
+<span class="nc" id="L229">                Collections.unmodifiableMap(byName),</span>
+<span class="nc" id="L230">                Collections.unmodifiableMap(byCode),</span>
+<span class="nc" id="L231">                Collections.unmodifiableMap(immutableCities));</span>
+    }
+
+    private void ensureSession(boolean forceRefresh) throws Exception {
+<span class="nc bnc" id="L235" title="All 4 branches missed.">        if (sessionReady &amp;&amp; !forceRefresh) {</span>
+<span class="nc" id="L236">            return;</span>
+        }
+<span class="nc" id="L238">        synchronized (sessionLock) {</span>
+<span class="nc bnc" id="L239" title="All 4 branches missed.">            if (sessionReady &amp;&amp; !forceRefresh) {</span>
+<span class="nc" id="L240">                return;</span>
+            }
+<span class="nc bnc" id="L242" title="All 2 branches missed.">            if (forceRefresh) {</span>
+<span class="nc" id="L243">                cookieManager.getCookieStore().removeAll();</span>
+<span class="nc" id="L244">                sessionReady = false;</span>
+            }
+<span class="nc" id="L246">            HttpResponse&lt;String&gt; response = send(INIT_URL, &quot;text/html,application/xhtml+xml&quot;);</span>
+<span class="nc bnc" id="L247" title="All 4 branches missed.">            if (response.statusCode() &lt; 200 || response.statusCode() &gt;= 400) {</span>
+<span class="nc" id="L248">                throw new IllegalStateException(&quot;12306 页面初始化失败：HTTP &quot; + response.statusCode());</span>
+            }
+<span class="nc" id="L250">            sessionReady = true;</span>
+<span class="nc" id="L251">        }</span>
+<span class="nc" id="L252">    }</span>
+
+    private HttpResponse&lt;String&gt; send(String url, String accept) throws Exception {
+<span class="nc" id="L255">        HttpRequest request = HttpRequest.newBuilder(URI.create(url))</span>
+<span class="nc" id="L256">                .timeout(Duration.ofMillis(Math.max(timeoutMs, 3000)))</span>
+<span class="nc" id="L257">                .header(&quot;User-Agent&quot;, USER_AGENT)</span>
+<span class="nc" id="L258">                .header(&quot;Accept&quot;, accept)</span>
+<span class="nc" id="L259">                .header(&quot;Referer&quot;, INIT_URL)</span>
+<span class="nc" id="L260">                .GET()</span>
+<span class="nc" id="L261">                .build();</span>
+<span class="nc" id="L262">        return httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));</span>
+    }
+
+    private static String responseMessage(JsonNode root, String fallback) {
+<span class="nc" id="L266">        JsonNode messages = root.path(&quot;messages&quot;);</span>
+<span class="nc bnc" id="L267" title="All 4 branches missed.">        if (messages.isArray() &amp;&amp; !messages.isEmpty()) {</span>
+<span class="nc" id="L268">            return messages.get(0).asText(fallback);</span>
+        }
+<span class="nc" id="L270">        return fallback;</span>
+    }
+
+    private static String firstSeat(String[] fields, int... indexes) {
+<span class="pc bpc" id="L274" title="1 of 2 branches missed.">        for (int index : indexes) {</span>
+<span class="fc" id="L275">            String value = field(fields, index);</span>
+<span class="pc bpc" id="L276" title="1 of 2 branches missed.">            if (StringUtils.hasText(value)) {</span>
+<span class="fc" id="L277">                return value;</span>
+            }
+        }
+<span class="nc" id="L280">        return &quot;--&quot;;</span>
+    }
+
+    private static String seat(String[] fields, int index) {
+<span class="fc" id="L284">        String value = field(fields, index);</span>
+<span class="pc bpc" id="L285" title="1 of 2 branches missed.">        return StringUtils.hasText(value) ? value : &quot;--&quot;;</span>
+    }
+
+    private static String field(String[] fields, int index) {
+<span class="pc bpc" id="L289" title="2 of 4 branches missed.">        return index &gt;= 0 &amp;&amp; index &lt; fields.length ? fields[index].trim() : &quot;&quot;;</span>
+    }
+
+    private static int stationPriority(String city, String station) {
+<span class="nc bnc" id="L293" title="All 2 branches missed.">        if (station.equals(city + &quot;南&quot;)) return 0;</span>
+<span class="nc bnc" id="L294" title="All 2 branches missed.">        if (station.equals(city + &quot;东&quot;)) return 1;</span>
+<span class="nc bnc" id="L295" title="All 2 branches missed.">        if (station.equals(city + &quot;西&quot;)) return 2;</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">        if (station.equals(city + &quot;北&quot;)) return 3;</span>
+<span class="nc bnc" id="L297" title="All 2 branches missed.">        if (station.equals(city)) return 4;</span>
+<span class="nc bnc" id="L298" title="All 2 branches missed.">        if (station.startsWith(city)) return 5;</span>
+<span class="nc" id="L299">        return 6;</span>
+    }
+
+    private static String encode(String value) {
+<span class="nc" id="L303">        return URLEncoder.encode(value, StandardCharsets.UTF_8);</span>
+    }
+
+    private static String stripBom(String value) {
+<span class="pc bpc" id="L307" title="2 of 4 branches missed.">        if (value == null || value.isEmpty()) {</span>
+<span class="nc" id="L308">            return &quot;&quot;;</span>
+        }
+<span class="pc bpc" id="L310" title="1 of 2 branches missed.">        return value.charAt(0) == '\uFEFF' ? value.substring(1) : value;</span>
+    }
+
+    private static String normalize(String value) {
+<span class="nc bnc" id="L314" title="All 2 branches missed.">        return StringUtils.hasText(value) ? value.trim().replace(&quot;　&quot;, &quot;&quot;) : &quot;&quot;;</span>
+    }
+
+<span class="nc" id="L317">    private record StationInfo(String name, String code, String city) {</span>
+    }
+
+<span class="fc" id="L320">    private record StationCatalog(</span>
+            Map&lt;String, StationInfo&gt; byName,
+            Map&lt;String, String&gt; byCode,
+            Map&lt;String, List&lt;String&gt;&gt; byCity) {
+        private static StationCatalog empty() {
+<span class="fc" id="L325">            return new StationCatalog(Map.of(), Map.of(), Map.of());</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

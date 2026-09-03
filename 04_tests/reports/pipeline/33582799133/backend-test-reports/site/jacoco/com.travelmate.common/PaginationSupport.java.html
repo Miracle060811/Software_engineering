@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaginationSupport.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.common</a> &gt; <span class="el_source">PaginationSupport.java</span></div><h1>PaginationSupport.java</h1><pre class="source lang-java linenums">package com.travelmate.common;
+
+public final class PaginationSupport {
+
+    private PaginationSupport() {
+    }
+
+    public static Page normalize(int page, int size, int maximumSize) {
+<span class="fc bfc" id="L9" title="All 2 branches covered.">        if (maximumSize &lt; 1) {</span>
+<span class="fc" id="L10">            throw new IllegalArgumentException(&quot;maximumSize must be positive&quot;);</span>
+        }
+
+<span class="fc" id="L13">        int safePage = Math.max(page, 1);</span>
+<span class="fc" id="L14">        int safeSize = Math.max(1, Math.min(size, maximumSize));</span>
+<span class="fc" id="L15">        long requestedOffset = (long) (safePage - 1) * safeSize;</span>
+<span class="fc bfc" id="L16" title="All 2 branches covered.">        int safeOffset = requestedOffset &gt; Integer.MAX_VALUE</span>
+<span class="fc" id="L17">                ? Integer.MAX_VALUE</span>
+<span class="fc" id="L18">                : (int) requestedOffset;</span>
+<span class="fc" id="L19">        return new Page(safePage, safeSize, safeOffset);</span>
+    }
+
+    public static Window window(int page, int size, int maximumSize, int total) {
+<span class="fc" id="L23">        Page normalized = normalize(page, size, maximumSize);</span>
+<span class="fc" id="L24">        int safeTotal = Math.max(total, 0);</span>
+<span class="fc" id="L25">        int start = Math.min(normalized.offset(), safeTotal);</span>
+<span class="fc" id="L26">        int end = (int) Math.min((long) start + normalized.size(), safeTotal);</span>
+<span class="fc" id="L27">        return new Window(normalized.page(), normalized.size(), start, end);</span>
+    }
+
+<span class="fc" id="L30">    public record Page(int page, int size, int offset) {</span>
+    }
+
+<span class="fc" id="L33">    public record Window(int page, int size, int start, int end) {</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

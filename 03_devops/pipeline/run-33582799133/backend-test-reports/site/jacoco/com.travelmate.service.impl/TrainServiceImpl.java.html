@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrainServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.service.impl</a> &gt; <span class="el_source">TrainServiceImpl.java</span></div><h1>TrainServiceImpl.java</h1><pre class="source lang-java linenums">package com.travelmate.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travelmate.dto.TrainLiveSyncStatus;
+import com.travelmate.entity.Train;
+import com.travelmate.mapper.TrainMapper;
+import com.travelmate.service.TrainLiveSyncService;
+import com.travelmate.service.TrainService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+<span class="fc" id="L23">public class TrainServiceImpl extends ServiceImpl&lt;TrainMapper, Train&gt; implements TrainService {</span>
+    private static final int DEFAULT_RESULT_LIMIT = 10;
+    private static final int MAX_RESULT_LIMIT = 20;
+    private static final int MAX_LIVE_SYNC_ATTEMPTS = 12;
+
+    @Autowired
+    private TrainLiveSyncService trainLiveSyncService;
+
+    @Autowired
+    private TrainStationResolver trainStationResolver;
+
+    @Override
+    public List&lt;Train&gt; searchTrains(String depStation, String arrStation, String depDate) {
+<span class="nc" id="L36">        return searchTrains(depStation, arrStation, depDate, 0, DEFAULT_RESULT_LIMIT);</span>
+    }
+
+    @Override
+    public List&lt;Train&gt; searchTrains(String depStation, String arrStation, String depDate, Integer offset, Integer limit) {
+<span class="nc" id="L41">        int safeOffset = normalizeOffset(offset);</span>
+<span class="nc" id="L42">        int safeLimit = normalizeLimit(limit);</span>
+<span class="nc" id="L43">        int collectTarget = safeOffset + safeLimit;</span>
+
+<span class="nc bnc" id="L45" title="All 6 branches missed.">        if (StringUtils.hasText(depStation) &amp;&amp; StringUtils.hasText(arrStation) &amp;&amp; StringUtils.hasText(depDate)) {</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">            boolean cityInput = trainStationResolver.isCityInput(depStation)</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">                    || trainStationResolver.isCityInput(arrStation);</span>
+            // 本地已有数据时立即返回，避免 12306 页面异常拖慢正常搜索。
+<span class="nc" id="L49">            List&lt;Train&gt; localTrains = queryLocalTrains(depStation, arrStation, depDate);</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">            if (!localTrains.isEmpty()) {</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">                if (cityInput) {</span>
+<span class="nc" id="L52">                    trainLiveSyncService.syncIfSupported(depStation, arrStation, depDate);</span>
+                }
+<span class="nc" id="L54">                return pageList(localTrains, safeOffset, safeLimit);</span>
+            }
+
+            // 当天没有库存时，优先使用本地路线模板换算日期，保证搜索接口不被外部页面阻塞。
+<span class="nc" id="L58">            List&lt;Train&gt; localDemoTrains = demoFallbackTrains(depStation, arrStation, depDate);</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">            if (!localDemoTrains.isEmpty()) {</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">                if (cityInput) {</span>
+<span class="nc" id="L61">                    trainLiveSyncService.syncIfSupported(depStation, arrStation, depDate);</span>
+                }
+<span class="nc" id="L63">                return pageList(localDemoTrains, safeOffset, safeLimit);</span>
+            }
+
+<span class="nc" id="L66">            Map&lt;String, Train&gt; liveMatches = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L67">            int syncAttempts = 0;</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">            for (TrainStationResolver.RouteCandidate route : trainStationResolver.routeCandidates(depStation, arrStation)) {</span>
+<span class="nc" id="L69">                TrainLiveSyncStatus syncStatus = trainLiveSyncService.syncIfSupported(</span>
+<span class="nc" id="L70">                        route.depStation(), route.arrStation(), depDate);</span>
+<span class="nc" id="L71">                syncAttempts++;</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">                if (syncStatus.isSynced()) {</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">                    for (Train train : trainLiveSyncService.getCachedLiveTrains(</span>
+<span class="nc" id="L74">                            route.depStation(), route.arrStation(), depDate)) {</span>
+<span class="nc" id="L75">                        liveMatches.putIfAbsent(trainKey(train), train);</span>
+<span class="nc" id="L76">                    }</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">                    if (liveMatches.size() &gt;= collectTarget) {</span>
+<span class="nc" id="L78">                        return pageLiveResults(liveMatches, safeOffset, safeLimit);</span>
+                    }
+                }
+<span class="nc bnc" id="L81" title="All 2 branches missed.">                if (syncAttempts &gt;= MAX_LIVE_SYNC_ATTEMPTS</span>
+<span class="nc bnc" id="L82" title="All 4 branches missed.">                        || (!liveMatches.isEmpty() &amp;&amp; syncAttempts &gt;= 4)) {</span>
+<span class="nc" id="L83">                    break;</span>
+                }
+<span class="nc" id="L85">            }</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">            if (!liveMatches.isEmpty()) {</span>
+<span class="nc" id="L87">                return pageLiveResults(liveMatches, safeOffset, safeLimit);</span>
+            }
+        }
+
+<span class="nc" id="L91">        List&lt;Train&gt; trains = queryLocalTrains(depStation, arrStation, depDate);</span>
+<span class="nc bnc" id="L92" title="All 6 branches missed.">        if (trains.isEmpty() &amp;&amp; StringUtils.hasText(depStation) &amp;&amp; StringUtils.hasText(arrStation)</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">                &amp;&amp; StringUtils.hasText(depDate)) {</span>
+<span class="nc" id="L94">            return pageList(demoFallbackTrains(depStation, arrStation, depDate), safeOffset, safeLimit);</span>
+        }
+<span class="nc" id="L96">        return pageList(trains, safeOffset, safeLimit);</span>
+    }
+
+    private List&lt;Train&gt; queryLocalTrains(String depStation, String arrStation, String depDate) {
+<span class="nc" id="L100">        LambdaQueryWrapper&lt;Train&gt; wrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L101">        wrapper.eq(Train::getStatus, 1);</span>
+
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        if (StringUtils.hasText(depStation)) {</span>
+<span class="nc" id="L104">            List&lt;String&gt; depStations = trainStationResolver.stationsFor(depStation);</span>
+<span class="nc" id="L105">            wrapper.and(w -&gt; w.in(Train::getDepartureStation, depStations)</span>
+<span class="nc" id="L106">                    .or()</span>
+<span class="nc" id="L107">                    .like(Train::getDepartureStation, depStation.trim()));</span>
+        }
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (StringUtils.hasText(arrStation)) {</span>
+<span class="nc" id="L110">            List&lt;String&gt; arrStations = trainStationResolver.stationsFor(arrStation);</span>
+<span class="nc" id="L111">            wrapper.and(w -&gt; w.in(Train::getArrivalStation, arrStations)</span>
+<span class="nc" id="L112">                    .or()</span>
+<span class="nc" id="L113">                    .like(Train::getArrivalStation, arrStation.trim()));</span>
+        }
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        if (StringUtils.hasText(depDate)) {</span>
+<span class="nc" id="L116">            wrapper.likeRight(Train::getDepartureTime, depDate);</span>
+        }
+
+<span class="nc" id="L119">        return list(wrapper.orderByAsc(Train::getDepartureTime));</span>
+    }
+
+    private List&lt;Train&gt; demoFallbackTrains(String depStation, String arrStation, String depDate) {
+        LocalDate targetDate;
+        try {
+<span class="nc" id="L125">            targetDate = LocalDate.parse(depDate);</span>
+<span class="nc" id="L126">        } catch (Exception ex) {</span>
+<span class="nc" id="L127">            return java.util.List.of();</span>
+<span class="nc" id="L128">        }</span>
+
+<span class="nc" id="L130">        List&lt;Train&gt; cached = this.list(new LambdaQueryWrapper&lt;Train&gt;()</span>
+<span class="nc" id="L131">                .eq(Train::getStatus, 1)</span>
+<span class="nc" id="L132">                .eq(Train::getDepartureStation, depStation)</span>
+<span class="nc" id="L133">                .eq(Train::getArrivalStation, arrStation)</span>
+<span class="nc" id="L134">                .orderByAsc(Train::getDepartureTime)</span>
+<span class="nc" id="L135">                .last(&quot;LIMIT 6&quot;));</span>
+
+<span class="nc" id="L137">        return cached.stream()</span>
+<span class="nc" id="L138">                .map(train -&gt; shiftTrainDate(train, targetDate))</span>
+<span class="nc" id="L139">                .toList();</span>
+    }
+
+    private Train shiftTrainDate(Train source, LocalDate targetDate) {
+<span class="nc" id="L143">        Train copy = new Train();</span>
+<span class="nc" id="L144">        copy.setId(source.getId());</span>
+<span class="nc" id="L145">        copy.setTrainNo(source.getTrainNo());</span>
+<span class="nc" id="L146">        copy.setTrainType(source.getTrainType());</span>
+<span class="nc" id="L147">        copy.setDepartureStation(source.getDepartureStation());</span>
+<span class="nc" id="L148">        copy.setArrivalStation(source.getArrivalStation());</span>
+
+<span class="nc" id="L150">        LocalDateTime sourceDeparture = source.getDepartureTime();</span>
+<span class="nc" id="L151">        LocalDateTime sourceArrival = source.getArrivalTime();</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        if (sourceDeparture != null) {</span>
+<span class="nc" id="L153">            LocalDateTime shiftedDeparture = LocalDateTime.of(targetDate, sourceDeparture.toLocalTime());</span>
+<span class="nc" id="L154">            copy.setDepartureTime(shiftedDeparture);</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">            if (sourceArrival != null) {</span>
+<span class="nc" id="L156">                copy.setArrivalTime(shiftedDeparture.plusMinutes(java.time.Duration.between(sourceDeparture, sourceArrival).toMinutes()));</span>
+            }
+        }
+
+<span class="nc" id="L160">        copy.setDurationMinutes(source.getDurationMinutes());</span>
+<span class="nc" id="L161">        copy.setFirstClassPrice(source.getFirstClassPrice());</span>
+<span class="nc" id="L162">        copy.setSecondClassPrice(source.getSecondClassPrice());</span>
+<span class="nc" id="L163">        copy.setFirstClassSeats(source.getFirstClassSeats());</span>
+<span class="nc" id="L164">        copy.setSecondClassSeats(source.getSecondClassSeats());</span>
+<span class="nc" id="L165">        copy.setBusinessClassSeats(source.getBusinessClassSeats());</span>
+<span class="nc" id="L166">        copy.setHardSeatSeats(source.getHardSeatSeats());</span>
+<span class="nc" id="L167">        copy.setNoSeatSeats(source.getNoSeatSeats());</span>
+<span class="nc" id="L168">        copy.setBusinessSeatText(source.getBusinessSeatText());</span>
+<span class="nc" id="L169">        copy.setFirstClassSeatText(source.getFirstClassSeatText());</span>
+<span class="nc" id="L170">        copy.setSecondClassSeatText(source.getSecondClassSeatText());</span>
+<span class="nc" id="L171">        copy.setHardSeatText(source.getHardSeatText());</span>
+<span class="nc" id="L172">        copy.setNoSeatText(source.getNoSeatText());</span>
+<span class="nc" id="L173">        copy.setLiveOnly(source.getLiveOnly());</span>
+<span class="nc" id="L174">        copy.setDataSource(source.getDataSource());</span>
+<span class="nc" id="L175">        copy.setStatus(source.getStatus());</span>
+<span class="nc" id="L176">        return copy;</span>
+    }
+
+    private static String trainKey(Train train) {
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        return (train.getTrainNo() == null ? &quot;&quot; : train.getTrainNo()) + &quot;|&quot;</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">                + (train.getDepartureStation() == null ? &quot;&quot; : train.getDepartureStation()) + &quot;|&quot;</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">                + (train.getArrivalStation() == null ? &quot;&quot; : train.getArrivalStation()) + &quot;|&quot;</span>
+<span class="nc bnc" id="L183" title="All 2 branches missed.">                + (train.getDepartureTime() == null ? &quot;&quot; : train.getDepartureTime());</span>
+    }
+
+    private static List&lt;Train&gt; pageLiveResults(Map&lt;String, Train&gt; liveMatches, int offset, int limit) {
+<span class="nc" id="L187">        return liveMatches.values().stream()</span>
+<span class="nc" id="L188">                .sorted(Comparator.comparing(Train::getDepartureTime,</span>
+<span class="nc" id="L189">                        Comparator.nullsLast(Comparator.naturalOrder())))</span>
+<span class="nc" id="L190">                .skip(offset)</span>
+<span class="nc" id="L191">                .limit(limit)</span>
+<span class="nc" id="L192">                .toList();</span>
+    }
+
+    private static List&lt;Train&gt; pageList(List&lt;Train&gt; trains, int offset, int limit) {
+<span class="nc bnc" id="L196" title="All 6 branches missed.">        if (trains == null || trains.isEmpty() || offset &gt;= trains.size()) {</span>
+<span class="nc" id="L197">            return List.of();</span>
+        }
+<span class="nc" id="L199">        return trains.stream()</span>
+<span class="nc" id="L200">                .skip(offset)</span>
+<span class="nc" id="L201">                .limit(limit)</span>
+<span class="nc" id="L202">                .toList();</span>
+    }
+
+    private static int normalizeOffset(Integer offset) {
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        return Math.max(0, offset == null ? 0 : offset);</span>
+    }
+
+    private static int normalizeLimit(Integer limit) {
+<span class="nc bnc" id="L210" title="All 2 branches missed.">        int value = limit == null ? DEFAULT_RESULT_LIMIT : limit;</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">        if (value &lt;= 0) {</span>
+<span class="nc" id="L212">            return DEFAULT_RESULT_LIMIT;</span>
+        }
+<span class="nc" id="L214">        return Math.min(value, MAX_RESULT_LIMIT);</span>
+    }
+
+    /**
+     * 算法难点加分项 - &quot;智能中转方案拼接&quot;
+     * 如果直达票没票，或者干脆没有班次，给用户一条可以拆分成两段买的车票。
+     */
+    @Override
+    public List&lt;java.util.List&lt;Train&gt;&gt; getTransferPlan(String depStation, String arrStation, String depDate) {
+<span class="nc" id="L223">        List&lt;java.util.List&lt;Train&gt;&gt; result = new java.util.ArrayList&lt;&gt;();</span>
+
+        // 1. 获取所有&quot;从出发地&quot;出去的第一程车
+<span class="nc" id="L226">        List&lt;Train&gt; firstLegMatches = this.searchTrains(depStation, null, depDate);</span>
+
+        // 2. 根据这些第一程的到达地去找是否有去&quot;最终目的地&quot;的第二程
+        // 条件：接驳等待时间合理比如 &gt;= 30分钟且 &lt;= 5小时。
+<span class="nc bnc" id="L230" title="All 2 branches missed.">        for (Train leg1 : firstLegMatches) {</span>
+<span class="nc" id="L231">            String midStation = leg1.getArrivalStation();</span>
+
+            // 为了防止无限长或者死循环只找发车时间 &gt; 第一段到达时间 30分钟 的车 (给乘车换乘余量)
+<span class="nc" id="L234">            List&lt;Train&gt; leg2Matches = this.list(new LambdaQueryWrapper&lt;Train&gt;()</span>
+<span class="nc" id="L235">                    .eq(Train::getDepartureStation, midStation)</span>
+<span class="nc" id="L236">                    .eq(Train::getArrivalStation, arrStation)</span>
+<span class="nc" id="L237">                    .gt(Train::getDepartureTime, leg1.getArrivalTime().plusMinutes(30))</span>
+<span class="nc" id="L238">                    .lt(Train::getDepartureTime, leg1.getArrivalTime().plusHours(5))</span>
+                    // 同理保证余票
+<span class="nc" id="L240">                    .and(w -&gt; w.gt(Train::getFirstClassSeats, 0).or().gt(Train::getSecondClassSeats, 0)));</span>
+
+<span class="nc bnc" id="L242" title="All 4 branches missed.">            if (leg2Matches != null &amp;&amp; !leg2Matches.isEmpty()) {</span>
+                // 每抓到满足条件的一段，就拼成一个List装进方案库
+<span class="nc bnc" id="L244" title="All 2 branches missed.">                for (Train leg2 : leg2Matches) {</span>
+<span class="nc" id="L245">                    List&lt;Train&gt; plan = new java.util.ArrayList&lt;&gt;();</span>
+<span class="nc" id="L246">                    plan.add(leg1);</span>
+<span class="nc" id="L247">                    plan.add(leg2);</span>
+<span class="nc" id="L248">                    result.add(plan);</span>
+<span class="nc" id="L249">                }</span>
+            }
+<span class="nc" id="L251">        }</span>
+<span class="nc" id="L252">        return result;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

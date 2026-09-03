@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PrivateMessageController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">travelmate</a> &gt; <a href="index.source.html" class="el_package">com.travelmate.controller</a> &gt; <span class="el_source">PrivateMessageController.java</span></div><h1>PrivateMessageController.java</h1><pre class="source lang-java linenums">package com.travelmate.controller;
+
+import com.travelmate.common.Result;
+import com.travelmate.common.UserContext;
+import com.travelmate.dto.PrivateMessageSendDTO;
+import com.travelmate.entity.PrivateMessage;
+import com.travelmate.service.PrivateMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/private-message&quot;)
+<span class="fc" id="L16">public class PrivateMessageController {</span>
+
+    @Autowired
+    private PrivateMessageService privateMessageService;
+
+    @Autowired
+    private UserContext userContext;
+
+    @GetMapping(&quot;/contacts&quot;)
+    public Result&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; contacts() {
+<span class="nc" id="L26">        return Result.success(privateMessageService.listContacts(userContext.getCurrentUserId()));</span>
+    }
+
+    @GetMapping(&quot;/users&quot;)
+    public Result&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; searchUsers(@RequestParam String keyword) {
+<span class="nc" id="L31">        return Result.success(privateMessageService.searchUsers(userContext.getCurrentUserId(), keyword));</span>
+    }
+
+    @GetMapping(&quot;/conversation/{userId}&quot;)
+    public Result&lt;List&lt;PrivateMessage&gt;&gt; conversation(@PathVariable Long userId) {
+<span class="nc" id="L36">        return Result.success(privateMessageService.listConversation(userContext.getCurrentUserId(), userId));</span>
+    }
+
+    @PostMapping(&quot;/send&quot;)
+    public Result&lt;PrivateMessage&gt; send(@RequestBody PrivateMessageSendDTO dto) {
+<span class="nc" id="L41">        return Result.success(privateMessageService.sendMessage(userContext.getCurrentUserId(), dto));</span>
+    }
+
+    @GetMapping(&quot;/unread-count&quot;)
+    public Result&lt;Integer&gt; unreadCount() {
+<span class="nc" id="L46">        return Result.success(privateMessageService.unreadCount(userContext.getCurrentUserId()));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
