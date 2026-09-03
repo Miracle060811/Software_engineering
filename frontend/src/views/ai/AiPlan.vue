@@ -557,7 +557,7 @@ const chatDrawerVisible = ref(false);
 const chatMessages = ref([
   {
     role: "assistant",
-    content: "你好，我是 TravelMate 旅行助手。有任何路线、交通或住宿问题都可以问我。",
+    content: "你好，我是 TravelMate 智能旅行助手。有任何路线、交通或住宿问题都可以问我。",
   },
 ]);
 const chatInput = ref("");
