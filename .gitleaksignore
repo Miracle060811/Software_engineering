@@ -1,0 +1,17 @@
+# gitleaks:allow
+# 以下 13 处为流水线 run 33582799133 中 Spring Boot 测试启动时随机生成的
+# 临时开发密码（Using generated security password），并非真实泄漏，予以忽略。
+# 格式：<commit>:<file>:<rule-id>:<startline>
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:03_devops/pipeline/run-33582799133/backend-test-reports/surefire-reports/TEST-com.travelmate.backend.BackendApplicationTests.xml:generic-api-key:95
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:03_devops/pipeline/run-33582799133/backend-test-reports/surefire-reports/TEST-com.travelmate.PublicApiSmokeTests.xml:generic-api-key:95
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:03_devops/pipeline/run-33582799133/backend-test-reports/surefire-reports/TEST-com.travelmate.SecurityConfigTests.xml:generic-api-key:95
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:04_tests/reports/pipeline/33582799133/backend-test-reports/surefire-reports/TEST-com.travelmate.backend.BackendApplicationTests.xml:generic-api-key:95
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:04_tests/reports/pipeline/33582799133/backend-test-reports/surefire-reports/TEST-com.travelmate.PublicApiSmokeTests.xml:generic-api-key:95
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:04_tests/reports/pipeline/33582799133/backend-test-reports/surefire-reports/TEST-com.travelmate.SecurityConfigTests.xml:generic-api-key:95
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:04_tests/reports/pipeline/33582799133/microservice-e2e-evidence-4850f4805db158522bdd5a952b0be4efb827cf66/microservice-e2e-logs/ai-service.log:generic-api-key:24
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:04_tests/reports/pipeline/33582799133/microservice-e2e-evidence-4850f4805db158522bdd5a952b0be4efb827cf66/microservice-e2e-logs/community-service.log:generic-api-key:27
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:04_tests/reports/pipeline/33582799133/microservice-e2e-evidence-4850f4805db158522bdd5a952b0be4efb827cf66/microservice-e2e-logs/identity-service.log:generic-api-key:24
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:04_tests/reports/pipeline/33582799133/microservice-e2e-evidence-4850f4805db158522bdd5a952b0be4efb827cf66/microservice-e2e-logs/local-service.log:generic-api-key:27
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:04_tests/reports/pipeline/33582799133/microservice-e2e-evidence-4850f4805db158522bdd5a952b0be4efb827cf66/microservice-e2e-logs/ops-service.log:generic-api-key:24
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:04_tests/reports/pipeline/33582799133/microservice-e2e-evidence-4850f4805db158522bdd5a952b0be4efb827cf66/microservice-e2e-logs/traffic-service.log:generic-api-key:27
+7fde549d684e5ce1c8e0ce6e9eeb9caae0671434:04_tests/reports/pipeline/33582799133/real-backend-e2e-evidence/backend-ci.log:generic-api-key:538
