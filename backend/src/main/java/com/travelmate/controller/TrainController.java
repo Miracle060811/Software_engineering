@@ -68,6 +68,29 @@ public class TrainController {
         }
     }
 
+    @GetMapping("/waitlist/mine")
+    public Result<List<com.travelmate.entity.TrainWaitlist>> listMyWaitlists() {
+        Long userId = userContext.getCurrentUserIdOrNull();
+        if (userId == null) {
+            return Result.error("用户未登录");
+        }
+        return Result.success(trainWaitlistService.listWaitlists(userId));
+    }
+
+    @PostMapping("/waitlist/{id}/cancel")
+    public Result<Void> cancelWaitlist(@PathVariable Long id) {
+        Long userId = userContext.getCurrentUserIdOrNull();
+        if (userId == null) {
+            return Result.error("用户未登录");
+        }
+        try {
+            trainWaitlistService.cancelWaitlist(userId, id);
+            return Result.success();
+        } catch (Exception ex) {
+            return Result.error(ex.getMessage());
+        }
+    }
+
     /**
      * 获取列车详情
      */

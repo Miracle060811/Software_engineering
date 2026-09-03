@@ -1,5 +1,6 @@
 package com.travelmate.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travelmate.dto.TrainWaitlistCreateDTO;
 import com.travelmate.entity.Train;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class TrainWaitlistServiceImpl extends ServiceImpl<TrainWaitlistMapper, TrainWaitlist>
@@ -57,6 +59,37 @@ public class TrainWaitlistServiceImpl extends ServiceImpl<TrainWaitlistMapper, T
 
         save(item);
         return item.getId();
+    }
+
+    @Override
+    public List<TrainWaitlist> listWaitlists(Long userId) {
+        if (userId == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        return list(new LambdaQueryWrapper<TrainWaitlist>()
+                .eq(TrainWaitlist::getUserId, userId)
+                .orderByDesc(TrainWaitlist::getCreateTime));
+    }
+
+    @Override
+    public void cancelWaitlist(Long userId, Long waitlistId) {
+        if (userId == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        if (waitlistId == null) {
+            throw new RuntimeException("候补记录不能为空");
+        }
+        TrainWaitlist item = getById(waitlistId);
+        if (item == null || !userId.equals(item.getUserId())) {
+            throw new RuntimeException("候补记录不存在");
+        }
+        if (!Integer.valueOf(0).equals(item.getStatus())) {
+            throw new RuntimeException("只有候补中的申请可以取消");
+        }
+        item.setStatus(2);
+        if (!updateById(item)) {
+            throw new RuntimeException("候补取消失败，请稍后重试");
+        }
     }
 
     private static String firstText(String preferred, String fallback) {

@@ -1,5 +1,6 @@
 package com.travelmate.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -21,6 +22,7 @@ public class TrainWaitlist {
     private String seatType;
     private Integer ticketCount;
     private String passengerName;
+    @JsonIgnore
     private String passengerIdCard;
     private Integer status;
     private LocalDateTime createTime;

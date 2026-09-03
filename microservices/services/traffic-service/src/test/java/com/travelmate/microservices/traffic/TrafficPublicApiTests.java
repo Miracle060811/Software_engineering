@@ -10,6 +10,7 @@ import com.travelmate.entity.Flight;
 import com.travelmate.entity.PriceHistory;
 import com.travelmate.entity.TrafficOrder;
 import com.travelmate.entity.Train;
+import com.travelmate.entity.TrainWaitlist;
 import com.travelmate.service.FlightService;
 import com.travelmate.service.PriceHistoryService;
 import com.travelmate.service.TrafficOrderService;
@@ -185,6 +186,14 @@ class TrafficPublicApiTests {
         when(trainService.getById(21L)).thenReturn(train);
         when(trainService.getTransferPlan("北京南", "上海虹桥", "2026-09-01")).thenReturn(List.of(List.of(train)));
         when(trainWaitlistService.createWaitlist(org.mockito.ArgumentMatchers.eq(7L), any())).thenReturn(31L);
+        TrainWaitlist waitlist = new TrainWaitlist();
+        waitlist.setId(31L);
+        waitlist.setUserId(7L);
+        waitlist.setTrainNo("G101");
+        waitlist.setPassengerName("测试旅客");
+        waitlist.setPassengerIdCard("MUST-NOT-BE-RETURNED");
+        waitlist.setStatus(0);
+        when(trainWaitlistService.listWaitlists(7L)).thenReturn(List.of(waitlist));
         when(trafficOrderService.createFlightOrder(org.mockito.ArgumentMatchers.eq(7L), any())).thenReturn("FL-ORDER-1");
         when(trafficOrderService.payOrder(7L, "TM-ORDER-1")).thenReturn(true);
         when(trafficOrderService.cancelOrder(7L, "TM-ORDER-1")).thenReturn(true);
@@ -201,6 +210,14 @@ class TrafficPublicApiTests {
         mockMvc.perform(post("/api/train/waitlist").contentType("application/json")
                         .content("{\"trainId\":21,\"seatType\":\"SecondClass\",\"ticketCount\":1,\"passengerId\":9}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data").value(31));
+        mockMvc.perform(get("/api/train/waitlist/mine"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].id").value(31))
+                .andExpect(jsonPath("$.data[0].trainNo").value("G101"))
+                .andExpect(jsonPath("$.data[0].passengerIdCard").doesNotExist());
+        mockMvc.perform(post("/api/train/waitlist/31/cancel"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(200));
+        verify(trainWaitlistService).cancelWaitlist(7L, 31L);
         mockMvc.perform(post("/api/order/flight/create").contentType("application/json")
                         .content("{\"flightId\":11,\"seatType\":\"Economy\",\"ticketCount\":1,\"passengerId\":9}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data").value("FL-ORDER-1"));
@@ -235,6 +252,10 @@ class TrafficPublicApiTests {
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/price/trend").param("type", "0").param("id", "11")).andExpect(status().isOk());
         mockMvc.perform(post("/api/train/waitlist").contentType("application/json").content("{}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
+        mockMvc.perform(get("/api/train/waitlist/mine"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
+        mockMvc.perform(post("/api/train/waitlist/31/cancel"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
         mockMvc.perform(post("/api/order/flight/create").contentType("application/json").content("{}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
