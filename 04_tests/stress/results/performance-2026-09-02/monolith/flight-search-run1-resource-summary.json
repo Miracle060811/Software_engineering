@@ -1,0 +1,13 @@
+{
+  "scenario": "flight-search",
+  "run": 1,
+  "baseUrl": "http://127.0.0.1:18080",
+  "metricSource": "Process",
+  "metricTarget": "34900",
+  "sampleCount": 68,
+  "averageCpuPercent": 1.559,
+  "maximumCpuPercent": 5.47,
+  "averageMemoryMiB": 375.382,
+  "maximumMemoryMiB": 405.469,
+  "k6ExitCode": 0
+}

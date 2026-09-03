@@ -1,0 +1,13 @@
+{
+  "scenario": "flight-search",
+  "run": 1,
+  "baseUrl": "http://127.0.0.1:8082",
+  "metricSource": "Docker",
+  "metricTarget": "travelmate-perf-ms-traffic-service-1",
+  "sampleCount": 41,
+  "averageCpuPercent": 16.943,
+  "maximumCpuPercent": 41.91,
+  "averageMemoryMiB": 300.746,
+  "maximumMemoryMiB": 328.0,
+  "k6ExitCode": 0
+}

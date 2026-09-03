@@ -119,7 +119,7 @@ Compose 会创建六套独立 MySQL 数据卷、六个独立应用账号和一�
 - 六个 JAR 已完成当前业务切片的源码物理拆分；各服务只编译自己目录中的 Controller、Service、Entity 和 Mapper，不再从单体源码目录选择性编译。
 - `travelmate-contract` 只保留 `Result`、`AuthenticatedUser` 以及旅客、优惠券、通知三个跨服务接口契约，不包含业务 Controller、Service 或 Mapper。
 - 订单通知在订单事务内写入服务自己的 Outbox 表；定时投递器使用 `eventId` 作为 `Idempotency-Key` 调用 AI 服务 `/internal/notifications/events`，支持并发认领、指数退避、卡住认领恢复和死信。AI 消费端用 `tm_ai_consumed_event` 去重，并在同一事务内写通知。
-- 默认数据库名分别为 `travelmate_identity`、`travelmate_traffic`、`travelmate_local`、`travelmate_ai`、`travelmate_community`、`travelmate_ops`；DDL 与本地 E2E 种子数据可由 `scripts/Generate-MicroserviceSchemas.ps1` 按表归属从事实源自动生成。历史数据迁移工具已提供，但尚未对真实目标库执行迁移验收。
+- 默认数据库名分别为 `travelmate_identity`、`travelmate_traffic`、`travelmate_local`、`travelmate_ai`、`travelmate_community`、`travelmate_ops`；DDL 与本地 E2E 种子数据可由 `scripts/Generate-MicroserviceSchemas.ps1` 按表归属从事实源自动生成。2026-09-02 已在 7 个隔离 MySQL 8.4 容器中执行历史数据迁移验收，31/31 张迁移表行数一致，证据位于 `04_tests/migration/results/data-migration-2026-09-02/`；该结果不代表生产数据库切换。
 - AI 服务已覆盖通知、行程、对话和私信切片；COMMUNITY 与 OPS 已按冻结边界完成源码、Compose、CI 与 Kubernetes 编排。
 - API Gateway、注册中心、配置中心属于六服务业务迁移完成后的后续阶段。
 

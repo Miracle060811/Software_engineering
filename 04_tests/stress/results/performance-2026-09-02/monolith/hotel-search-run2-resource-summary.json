@@ -1,0 +1,13 @@
+{
+  "scenario": "hotel-search",
+  "run": 2,
+  "baseUrl": "http://127.0.0.1:18080",
+  "metricSource": "Process",
+  "metricTarget": "34900",
+  "sampleCount": 69,
+  "averageCpuPercent": 0.953,
+  "maximumCpuPercent": 3.188,
+  "averageMemoryMiB": 416.834,
+  "maximumMemoryMiB": 435.949,
+  "k6ExitCode": 0
+}

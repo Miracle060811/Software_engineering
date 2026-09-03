@@ -1,0 +1,458 @@
+
+         /\      Grafana   /‾‾/
+    /\  /  \     |\  __   /  /
+   /  \/    \    | |/ /  /   ‾‾\
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/
+
+
+     execution: local
+        script: D:\Campus\grade2\26Spring\Software_engineering\04_tests\stress\flight-search.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 50 max VUs, 2m25s max duration (incl. graceful stop):
+              * flight_search: Up to 50 looping VUs for 2m15s over 5 stages (gracefulRampDown: 10s, gracefulStop: 30s)
+
+
+running (0m01.0s), 01/50 VUs, 1 complete and 0 interrupted iterations
+flight_search   [   1% ] 01/50 VUs  0m01.0s/2m15.0s
+
+running (0m02.0s), 01/50 VUs, 3 complete and 0 interrupted iterations
+flight_search   [   1% ] 01/50 VUs  0m02.0s/2m15.0s
+
+running (0m03.0s), 01/50 VUs, 5 complete and 0 interrupted iterations
+flight_search   [   2% ] 01/50 VUs  0m03.0s/2m15.0s
+
+running (0m04.0s), 01/50 VUs, 7 complete and 0 interrupted iterations
+flight_search   [   3% ] 01/50 VUs  0m04.0s/2m15.0s
+
+running (0m05.0s), 01/50 VUs, 9 complete and 0 interrupted iterations
+flight_search   [   4% ] 01/50 VUs  0m05.0s/2m15.0s
+
+running (0m06.0s), 01/50 VUs, 11 complete and 0 interrupted iterations
+flight_search   [   4% ] 01/50 VUs  0m06.0s/2m15.0s
+
+running (0m07.0s), 01/50 VUs, 13 complete and 0 interrupted iterations
+flight_search   [   5% ] 01/50 VUs  0m07.0s/2m15.0s
+
+running (0m08.0s), 02/50 VUs, 15 complete and 0 interrupted iterations
+flight_search   [   6% ] 02/50 VUs  0m08.0s/2m15.0s
+
+running (0m09.0s), 02/50 VUs, 19 complete and 0 interrupted iterations
+flight_search   [   7% ] 02/50 VUs  0m09.0s/2m15.0s
+
+running (0m10.0s), 02/50 VUs, 23 complete and 0 interrupted iterations
+flight_search   [   7% ] 02/50 VUs  0m10.0s/2m15.0s
+
+running (0m11.0s), 02/50 VUs, 27 complete and 0 interrupted iterations
+flight_search   [   8% ] 02/50 VUs  0m11.0s/2m15.0s
+
+running (0m12.0s), 02/50 VUs, 31 complete and 0 interrupted iterations
+flight_search   [   9% ] 02/50 VUs  0m12.0s/2m15.0s
+
+running (0m13.0s), 02/50 VUs, 34 complete and 0 interrupted iterations
+flight_search   [  10% ] 02/50 VUs  0m13.0s/2m15.0s
+
+running (0m14.0s), 02/50 VUs, 38 complete and 0 interrupted iterations
+flight_search   [  10% ] 02/50 VUs  0m14.0s/2m15.0s
+
+running (0m15.0s), 02/50 VUs, 42 complete and 0 interrupted iterations
+flight_search   [  11% ] 02/50 VUs  0m15.0s/2m15.0s
+
+running (0m16.0s), 03/50 VUs, 47 complete and 0 interrupted iterations
+flight_search   [  12% ] 03/50 VUs  0m16.0s/2m15.0s
+
+running (0m17.0s), 03/50 VUs, 53 complete and 0 interrupted iterations
+flight_search   [  13% ] 03/50 VUs  0m17.0s/2m15.0s
+
+running (0m18.0s), 03/50 VUs, 59 complete and 0 interrupted iterations
+flight_search   [  13% ] 03/50 VUs  0m18.0s/2m15.0s
+
+running (0m19.0s), 03/50 VUs, 65 complete and 0 interrupted iterations
+flight_search   [  14% ] 03/50 VUs  0m19.0s/2m15.0s
+
+running (0m20.0s), 03/50 VUs, 71 complete and 0 interrupted iterations
+flight_search   [  15% ] 03/50 VUs  0m20.0s/2m15.0s
+
+running (0m21.0s), 03/50 VUs, 76 complete and 0 interrupted iterations
+flight_search   [  16% ] 03/50 VUs  0m21.0s/2m15.0s
+
+running (0m22.0s), 03/50 VUs, 82 complete and 0 interrupted iterations
+flight_search   [  16% ] 03/50 VUs  0m22.0s/2m15.0s
+
+running (0m23.0s), 04/50 VUs, 88 complete and 0 interrupted iterations
+flight_search   [  17% ] 04/50 VUs  0m23.0s/2m15.0s
+
+running (0m24.0s), 04/50 VUs, 96 complete and 0 interrupted iterations
+flight_search   [  18% ] 04/50 VUs  0m24.0s/2m15.0s
+
+running (0m25.0s), 04/50 VUs, 104 complete and 0 interrupted iterations
+flight_search   [  19% ] 04/50 VUs  0m25.0s/2m15.0s
+
+running (0m26.0s), 04/50 VUs, 112 complete and 0 interrupted iterations
+flight_search   [  19% ] 04/50 VUs  0m26.0s/2m15.0s
+
+running (0m27.0s), 04/50 VUs, 119 complete and 0 interrupted iterations
+flight_search   [  20% ] 04/50 VUs  0m27.0s/2m15.0s
+
+running (0m28.0s), 04/50 VUs, 127 complete and 0 interrupted iterations
+flight_search   [  21% ] 04/50 VUs  0m28.0s/2m15.0s
+
+running (0m29.0s), 04/50 VUs, 134 complete and 0 interrupted iterations
+flight_search   [  21% ] 04/50 VUs  0m29.0s/2m15.0s
+
+running (0m30.0s), 04/50 VUs, 142 complete and 0 interrupted iterations
+flight_search   [  22% ] 04/50 VUs  0m30.0s/2m15.0s
+
+running (0m31.0s), 05/50 VUs, 151 complete and 0 interrupted iterations
+flight_search   [  23% ] 05/50 VUs  0m31.0s/2m15.0s
+
+running (0m32.0s), 05/50 VUs, 161 complete and 0 interrupted iterations
+flight_search   [  24% ] 05/50 VUs  0m32.0s/2m15.0s
+
+running (0m33.0s), 05/50 VUs, 171 complete and 0 interrupted iterations
+flight_search   [  24% ] 05/50 VUs  0m33.0s/2m15.0s
+
+running (0m34.0s), 05/50 VUs, 181 complete and 0 interrupted iterations
+flight_search   [  25% ] 05/50 VUs  0m34.0s/2m15.0s
+
+running (0m35.0s), 05/50 VUs, 191 complete and 0 interrupted iterations
+flight_search   [  26% ] 05/50 VUs  0m35.0s/2m15.0s
+
+running (0m36.0s), 05/50 VUs, 201 complete and 0 interrupted iterations
+flight_search   [  27% ] 05/50 VUs  0m36.0s/2m15.0s
+
+running (0m37.0s), 06/50 VUs, 210 complete and 0 interrupted iterations
+flight_search   [  27% ] 06/50 VUs  0m37.0s/2m15.0s
+
+running (0m38.0s), 06/50 VUs, 222 complete and 0 interrupted iterations
+flight_search   [  28% ] 06/50 VUs  0m38.0s/2m15.0s
+
+running (0m39.0s), 06/50 VUs, 234 complete and 0 interrupted iterations
+flight_search   [  29% ] 06/50 VUs  0m39.0s/2m15.0s
+
+running (0m40.0s), 06/50 VUs, 246 complete and 0 interrupted iterations
+flight_search   [  30% ] 06/50 VUs  0m40.0s/2m15.0s
+
+running (0m41.0s), 06/50 VUs, 258 complete and 0 interrupted iterations
+flight_search   [  30% ] 06/50 VUs  0m41.0s/2m15.0s
+
+running (0m42.0s), 06/50 VUs, 270 complete and 0 interrupted iterations
+flight_search   [  31% ] 06/50 VUs  0m42.0s/2m15.0s
+
+running (0m43.0s), 07/50 VUs, 282 complete and 0 interrupted iterations
+flight_search   [  32% ] 07/50 VUs  0m43.0s/2m15.0s
+
+running (0m44.0s), 07/50 VUs, 296 complete and 0 interrupted iterations
+flight_search   [  33% ] 07/50 VUs  0m44.0s/2m15.0s
+
+running (0m45.0s), 07/50 VUs, 310 complete and 0 interrupted iterations
+flight_search   [  33% ] 07/50 VUs  0m45.0s/2m15.0s
+
+running (0m46.0s), 07/50 VUs, 322 complete and 0 interrupted iterations
+flight_search   [  34% ] 07/50 VUs  0m46.0s/2m15.0s
+
+running (0m47.0s), 07/50 VUs, 336 complete and 0 interrupted iterations
+flight_search   [  35% ] 07/50 VUs  0m47.0s/2m15.0s
+
+running (0m48.0s), 07/50 VUs, 350 complete and 0 interrupted iterations
+flight_search   [  36% ] 07/50 VUs  0m48.0s/2m15.0s
+
+running (0m49.0s), 08/50 VUs, 365 complete and 0 interrupted iterations
+flight_search   [  36% ] 08/50 VUs  0m49.0s/2m15.0s
+
+running (0m50.0s), 08/50 VUs, 381 complete and 0 interrupted iterations
+flight_search   [  37% ] 08/50 VUs  0m50.0s/2m15.0s
+
+running (0m51.0s), 08/50 VUs, 397 complete and 0 interrupted iterations
+flight_search   [  38% ] 08/50 VUs  0m51.0s/2m15.0s
+
+running (0m52.0s), 08/50 VUs, 413 complete and 0 interrupted iterations
+flight_search   [  39% ] 08/50 VUs  0m52.0s/2m15.0s
+
+running (0m53.0s), 08/50 VUs, 426 complete and 0 interrupted iterations
+flight_search   [  39% ] 08/50 VUs  0m53.0s/2m15.0s
+
+running (0m54.0s), 08/50 VUs, 442 complete and 0 interrupted iterations
+flight_search   [  40% ] 08/50 VUs  0m54.0s/2m15.0s
+
+running (0m55.0s), 09/50 VUs, 459 complete and 0 interrupted iterations
+flight_search   [  41% ] 09/50 VUs  0m55.0s/2m15.0s
+
+running (0m56.0s), 09/50 VUs, 477 complete and 0 interrupted iterations
+flight_search   [  41% ] 09/50 VUs  0m56.0s/2m15.0s
+
+running (0m57.0s), 09/50 VUs, 495 complete and 0 interrupted iterations
+flight_search   [  42% ] 09/50 VUs  0m57.0s/2m15.0s
+
+running (0m58.0s), 09/50 VUs, 513 complete and 0 interrupted iterations
+flight_search   [  43% ] 09/50 VUs  0m58.0s/2m15.0s
+
+running (0m59.0s), 09/50 VUs, 531 complete and 0 interrupted iterations
+flight_search   [  44% ] 09/50 VUs  0m59.0s/2m15.0s
+
+running (1m00.0s), 09/50 VUs, 549 complete and 0 interrupted iterations
+flight_search   [  44% ] 09/50 VUs  1m00.0s/2m15.0s
+
+running (1m01.0s), 10/50 VUs, 568 complete and 0 interrupted iterations
+flight_search   [  45% ] 10/50 VUs  1m01.0s/2m15.0s
+
+running (1m02.0s), 10/50 VUs, 584 complete and 0 interrupted iterations
+flight_search   [  46% ] 10/50 VUs  1m02.0s/2m15.0s
+
+running (1m03.0s), 10/50 VUs, 604 complete and 0 interrupted iterations
+flight_search   [  47% ] 10/50 VUs  1m03.0s/2m15.0s
+
+running (1m04.0s), 11/50 VUs, 625 complete and 0 interrupted iterations
+flight_search   [  47% ] 11/50 VUs  1m04.0s/2m15.0s
+
+running (1m05.0s), 11/50 VUs, 647 complete and 0 interrupted iterations
+flight_search   [  48% ] 11/50 VUs  1m05.0s/2m15.0s
+
+running (1m06.0s), 11/50 VUs, 668 complete and 0 interrupted iterations
+flight_search   [  49% ] 11/50 VUs  1m06.0s/2m15.0s
+
+running (1m07.0s), 12/50 VUs, 691 complete and 0 interrupted iterations
+flight_search   [  50% ] 12/50 VUs  1m07.0s/2m15.0s
+
+running (1m08.0s), 12/50 VUs, 715 complete and 0 interrupted iterations
+flight_search   [  50% ] 12/50 VUs  1m08.0s/2m15.0s
+
+running (1m09.0s), 12/50 VUs, 739 complete and 0 interrupted iterations
+flight_search   [  51% ] 12/50 VUs  1m09.0s/2m15.0s
+
+running (1m10.0s), 13/50 VUs, 760 complete and 0 interrupted iterations
+flight_search   [  52% ] 13/50 VUs  1m10.0s/2m15.0s
+
+running (1m11.0s), 13/50 VUs, 786 complete and 0 interrupted iterations
+flight_search   [  53% ] 13/50 VUs  1m11.0s/2m15.0s
+
+running (1m12.0s), 13/50 VUs, 812 complete and 0 interrupted iterations
+flight_search   [  53% ] 13/50 VUs  1m12.0s/2m15.0s
+
+running (1m13.0s), 14/50 VUs, 839 complete and 0 interrupted iterations
+flight_search   [  54% ] 14/50 VUs  1m13.0s/2m15.0s
+
+running (1m14.0s), 14/50 VUs, 867 complete and 0 interrupted iterations
+flight_search   [  55% ] 14/50 VUs  1m14.0s/2m15.0s
+
+running (1m15.0s), 14/50 VUs, 895 complete and 0 interrupted iterations
+flight_search   [  56% ] 14/50 VUs  1m15.0s/2m15.0s
+
+running (1m16.0s), 15/50 VUs, 924 complete and 0 interrupted iterations
+flight_search   [  56% ] 15/50 VUs  1m16.0s/2m15.0s
+
+running (1m17.0s), 15/50 VUs, 954 complete and 0 interrupted iterations
+flight_search   [  57% ] 15/50 VUs  1m17.0s/2m15.0s
+
+running (1m18.0s), 15/50 VUs, 984 complete and 0 interrupted iterations
+flight_search   [  58% ] 15/50 VUs  1m18.0s/2m15.0s
+
+running (1m19.0s), 16/50 VUs, 1015 complete and 0 interrupted iterations
+flight_search   [  59% ] 16/50 VUs  1m19.0s/2m15.0s
+
+running (1m20.0s), 16/50 VUs, 1043 complete and 0 interrupted iterations
+flight_search   [  59% ] 16/50 VUs  1m20.0s/2m15.0s
+
+running (1m21.0s), 16/50 VUs, 1075 complete and 0 interrupted iterations
+flight_search   [  60% ] 16/50 VUs  1m21.0s/2m15.0s
+
+running (1m22.0s), 17/50 VUs, 1106 complete and 0 interrupted iterations
+flight_search   [  61% ] 17/50 VUs  1m22.0s/2m15.0s
+
+running (1m23.0s), 17/50 VUs, 1140 complete and 0 interrupted iterations
+flight_search   [  61% ] 17/50 VUs  1m23.0s/2m15.0s
+
+running (1m24.0s), 17/50 VUs, 1174 complete and 0 interrupted iterations
+flight_search   [  62% ] 17/50 VUs  1m24.0s/2m15.0s
+
+running (1m25.0s), 18/50 VUs, 1204 complete and 0 interrupted iterations
+flight_search   [  63% ] 18/50 VUs  1m25.0s/2m15.0s
+
+running (1m26.0s), 18/50 VUs, 1238 complete and 0 interrupted iterations
+flight_search   [  64% ] 18/50 VUs  1m26.0s/2m15.0s
+
+running (1m27.0s), 18/50 VUs, 1274 complete and 0 interrupted iterations
+flight_search   [  64% ] 18/50 VUs  1m27.0s/2m15.0s
+
+running (1m28.0s), 19/50 VUs, 1311 complete and 0 interrupted iterations
+flight_search   [  65% ] 19/50 VUs  1m28.0s/2m15.0s
+
+running (1m29.0s), 19/50 VUs, 1349 complete and 0 interrupted iterations
+flight_search   [  66% ] 19/50 VUs  1m29.0s/2m15.0s
+
+running (1m30.0s), 19/50 VUs, 1387 complete and 0 interrupted iterations
+flight_search   [  67% ] 19/50 VUs  1m30.0s/2m15.0s
+
+running (1m31.0s), 20/50 VUs, 1425 complete and 0 interrupted iterations
+flight_search   [  67% ] 20/50 VUs  1m31.0s/2m15.0s
+
+running (1m32.0s), 21/50 VUs, 1466 complete and 0 interrupted iterations
+flight_search   [  68% ] 21/50 VUs  1m32.0s/2m15.0s
+
+running (1m33.0s), 22/50 VUs, 1509 complete and 0 interrupted iterations
+flight_search   [  69% ] 22/50 VUs  1m33.0s/2m15.0s
+
+running (1m34.0s), 23/50 VUs, 1553 complete and 0 interrupted iterations
+flight_search   [  70% ] 23/50 VUs  1m34.0s/2m15.0s
+
+running (1m35.0s), 24/50 VUs, 1600 complete and 0 interrupted iterations
+flight_search   [  70% ] 24/50 VUs  1m35.0s/2m15.0s
+
+running (1m36.0s), 25/50 VUs, 1644 complete and 0 interrupted iterations
+flight_search   [  71% ] 25/50 VUs  1m36.0s/2m15.0s
+
+running (1m37.0s), 26/50 VUs, 1695 complete and 0 interrupted iterations
+flight_search   [  72% ] 26/50 VUs  1m37.0s/2m15.0s
+
+running (1m38.0s), 27/50 VUs, 1748 complete and 0 interrupted iterations
+flight_search   [  73% ] 27/50 VUs  1m38.0s/2m15.0s
+
+running (1m39.0s), 28/50 VUs, 1803 complete and 0 interrupted iterations
+flight_search   [  73% ] 28/50 VUs  1m39.0s/2m15.0s
+
+running (1m40.0s), 29/50 VUs, 1860 complete and 0 interrupted iterations
+flight_search   [  74% ] 29/50 VUs  1m40.0s/2m15.0s
+
+running (1m41.0s), 30/50 VUs, 1916 complete and 0 interrupted iterations
+flight_search   [  75% ] 30/50 VUs  1m41.0s/2m15.0s
+
+running (1m42.0s), 31/50 VUs, 1977 complete and 0 interrupted iterations
+flight_search   [  76% ] 31/50 VUs  1m42.0s/2m15.0s
+
+running (1m43.0s), 32/50 VUs, 2035 complete and 0 interrupted iterations
+flight_search   [  76% ] 32/50 VUs  1m43.0s/2m15.0s
+
+running (1m44.0s), 33/50 VUs, 2099 complete and 0 interrupted iterations
+flight_search   [  77% ] 33/50 VUs  1m44.0s/2m15.0s
+
+running (1m45.0s), 34/50 VUs, 2164 complete and 0 interrupted iterations
+flight_search   [  78% ] 34/50 VUs  1m45.0s/2m15.0s
+
+running (1m46.0s), 35/50 VUs, 2232 complete and 0 interrupted iterations
+flight_search   [  79% ] 35/50 VUs  1m46.0s/2m15.0s
+
+running (1m47.0s), 36/50 VUs, 2303 complete and 0 interrupted iterations
+flight_search   [  79% ] 36/50 VUs  1m47.0s/2m15.0s
+
+running (1m48.0s), 37/50 VUs, 2376 complete and 0 interrupted iterations
+flight_search   [  80% ] 37/50 VUs  1m48.0s/2m15.0s
+
+running (1m49.0s), 38/50 VUs, 2451 complete and 0 interrupted iterations
+flight_search   [  81% ] 38/50 VUs  1m49.0s/2m15.0s
+
+running (1m50.0s), 39/50 VUs, 2528 complete and 0 interrupted iterations
+flight_search   [  81% ] 39/50 VUs  1m50.0s/2m15.0s
+
+running (1m51.0s), 40/50 VUs, 2604 complete and 0 interrupted iterations
+flight_search   [  82% ] 40/50 VUs  1m51.0s/2m15.0s
+
+running (1m52.0s), 41/50 VUs, 2685 complete and 0 interrupted iterations
+flight_search   [  83% ] 41/50 VUs  1m52.0s/2m15.0s
+
+running (1m53.0s), 42/50 VUs, 2760 complete and 0 interrupted iterations
+flight_search   [  84% ] 42/50 VUs  1m53.0s/2m15.0s
+
+running (1m54.0s), 43/50 VUs, 2842 complete and 0 interrupted iterations
+flight_search   [  84% ] 43/50 VUs  1m54.0s/2m15.0s
+
+running (1m55.0s), 44/50 VUs, 2929 complete and 0 interrupted iterations
+flight_search   [  85% ] 44/50 VUs  1m55.0s/2m15.0s
+
+running (1m56.0s), 45/50 VUs, 3018 complete and 0 interrupted iterations
+flight_search   [  86% ] 45/50 VUs  1m56.0s/2m15.0s
+
+running (1m57.0s), 46/50 VUs, 3109 complete and 0 interrupted iterations
+flight_search   [  87% ] 46/50 VUs  1m57.0s/2m15.0s
+
+running (1m58.0s), 47/50 VUs, 3202 complete and 0 interrupted iterations
+flight_search   [  87% ] 47/50 VUs  1m58.0s/2m15.0s
+
+running (1m59.0s), 48/50 VUs, 3297 complete and 0 interrupted iterations
+flight_search   [  88% ] 48/50 VUs  1m59.0s/2m15.0s
+
+running (2m00.0s), 49/50 VUs, 3389 complete and 0 interrupted iterations
+flight_search   [  89% ] 49/50 VUs  2m00.0s/2m15.0s
+
+running (2m01.0s), 49/50 VUs, 3482 complete and 0 interrupted iterations
+flight_search   [  90% ] 49/50 VUs  2m01.0s/2m15.0s
+
+running (2m02.0s), 45/50 VUs, 3573 complete and 0 interrupted iterations
+flight_search   [  90% ] 45/50 VUs  2m02.0s/2m15.0s
+
+running (2m03.0s), 41/50 VUs, 3657 complete and 0 interrupted iterations
+flight_search   [  91% ] 41/50 VUs  2m03.0s/2m15.0s
+
+running (2m04.0s), 38/50 VUs, 3737 complete and 0 interrupted iterations
+flight_search   [  92% ] 38/50 VUs  2m04.0s/2m15.0s
+
+running (2m05.0s), 35/50 VUs, 3811 complete and 0 interrupted iterations
+flight_search   [  93% ] 35/50 VUs  2m05.0s/2m15.0s
+
+running (2m06.0s), 32/50 VUs, 3880 complete and 0 interrupted iterations
+flight_search   [  93% ] 32/50 VUs  2m06.0s/2m15.0s
+
+running (2m07.0s), 28/50 VUs, 3942 complete and 0 interrupted iterations
+flight_search   [  94% ] 28/50 VUs  2m07.0s/2m15.0s
+
+running (2m08.0s), 24/50 VUs, 3995 complete and 0 interrupted iterations
+flight_search   [  95% ] 24/50 VUs  2m08.0s/2m15.0s
+
+running (2m09.0s), 21/50 VUs, 4039 complete and 0 interrupted iterations
+flight_search   [  96% ] 21/50 VUs  2m09.0s/2m15.0s
+
+running (2m10.0s), 19/50 VUs, 4080 complete and 0 interrupted iterations
+flight_search   [  96% ] 19/50 VUs  2m10.0s/2m15.0s
+
+running (2m11.0s), 15/50 VUs, 4111 complete and 0 interrupted iterations
+flight_search   [  97% ] 15/50 VUs  2m11.0s/2m15.0s
+
+running (2m12.0s), 11/50 VUs, 4139 complete and 0 interrupted iterations
+flight_search   [  98% ] 11/50 VUs  2m12.0s/2m15.0s
+
+running (2m13.0s), 08/50 VUs, 4160 complete and 0 interrupted iterations
+flight_search   [  99% ] 08/50 VUs  2m13.0s/2m15.0s
+
+running (2m14.0s), 04/50 VUs, 4175 complete and 0 interrupted iterations
+flight_search   [  99% ] 04/50 VUs  2m14.0s/2m15.0s
+
+running (2m15.0s), 01/50 VUs, 4182 complete and 0 interrupted iterations
+flight_search   [ 100% ] 01/50 VUs  2m15.0s/2m15.0s
+
+
+  █ THRESHOLDS
+
+    http_req_failed
+    ✓ 'rate==0' rate=0.00%
+
+
+  █ TOTAL RESULTS
+
+    checks_total.......: 8366    61.927667/s
+    checks_succeeded...: 100.00% 8366 out of 8366
+    checks_failed......: 0.00%   0 out of 8366
+
+    ✓ status is 200
+    ✓ body is success
+
+    HTTP
+    http_req_duration..............: avg=13.62ms  min=7.48ms   med=12.83ms  max=74.54ms  p(90)=18ms     p(95)=20.53ms
+      { expected_response:true }...: avg=13.62ms  min=7.48ms   med=12.83ms  max=74.54ms  p(90)=18ms     p(95)=20.53ms
+    http_req_failed................: 0.00%  0 out of 4183
+    http_reqs......................: 4183   30.963833/s
+
+    EXECUTION
+    iteration_duration.............: avg=514.13ms min=507.82ms med=513.33ms max=574.94ms p(90)=518.62ms p(95)=521.03ms
+    iterations.....................: 4183   30.963833/s
+    vus............................: 1      min=1         max=49
+    vus_max........................: 50     min=50        max=50
+
+    NETWORK
+    data_received..................: 3.6 MB 27 kB/s
+    data_sent......................: 594 kB 4.4 kB/s
+
+
+
+
+running (2m15.1s), 00/50 VUs, 4183 complete and 0 interrupted iterations
+flight_search ✓ [ 100% ] 00/50 VUs  2m15s
