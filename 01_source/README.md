@@ -1,9 +1,12 @@
 # 01_source 代码与仓库清单
 
+> 本目录采用"仓库地址 + 文件清单"方式交付源码：代码本体不在此重复存放（避免与工程/CI 双份维护），请通过下方 Git 地址与标签获取完整可构建工程。
+
 ## 仓库地址
 
 - **远程仓库**：<https://github.com/Miracle060811/Software_engineering>
 - **默认分支**：`main`（完整提交历史，含改造前后全部记录）
+- **源码文件清单**：[`source-file-list.txt`](source-file-list.txt)（由 `git ls-files backend frontend microservices` 导出，共 918 个被 Git 跟踪的源码文件，已自动排除 `node_modules/`、`target/`、`dist/` 等构建产物）
 
 ## 版本基线（性能对比与验收口径）
 

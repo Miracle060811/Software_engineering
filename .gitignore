@@ -22,7 +22,7 @@ test-results/
 coverage/
 .nyc_output/
 blob-report/
-/04_tests/reports/ci/
+# 04_tests/reports/ci/ 为 CI 报告交付副本（原件在 docs/ci/，已随仓库提交），需要随压缩包交付，故不忽略
 /04_tests/stress/results/*.json
 /04_tests/stress/results/hpa-*
 /frontend/playwright-report-real/

@@ -1,0 +1,33 @@
+{
+  "_verification": {
+    "local": {
+      "date": "2026-09-01",
+      "command": "cd frontend && npm run test:e2e:microservices",
+      "result": "17/17 passed"
+    },
+    "ci": {
+      "job": "microservice-e2e",
+      "artifact": "microservice-e2e-evidence-<commit>",
+      "status": "configured_pending_run"
+    }
+  },
+  "UC01": { "status": "runnable", "services": ["identity-service"], "routes": ["/user/register", "/user/login"] },
+  "UC02": { "status": "runnable", "services": ["traffic-service", "identity-service", "local-service"], "routes": ["/api/flight/search", "/api/order/flight/create"] },
+  "UC03": { "status": "runnable", "services": ["traffic-service", "identity-service"], "routes": ["/api/train/search", "/api/order/train/create", "/api/train/waitlist"] },
+  "UC04": { "status": "runnable", "services": ["traffic-service"], "routes": ["/api/order/{orderNo}/pay", "/api/order/{orderNo}/cancel", "/api/order/{orderNo}/refund"] },
+  "UC05": { "status": "runnable", "services": ["local-service"], "routes": ["/api/hotel/search", "/api/hotel/order/create"] },
+  "UC06": { "status": "runnable", "services": ["local-service"], "routes": ["/api/hotel/order/{orderNo}/pay", "/api/hotel/order/{orderNo}/cancel", "/api/hotel/order/{orderNo}/refund"] },
+  "UC07": { "status": "runnable", "services": ["local-service"], "routes": ["/api/attraction/search", "/api/attraction/{id}/ticket"] },
+  "UC08": { "status": "runnable", "services": ["local-service"], "routes": ["/api/tour/list"] },
+  "UC09": { "status": "runnable", "services": ["local-service", "ops-service"], "routes": ["/api/review/add", "/api/review/report", "/api/admin/review-reports/{id}/resolve"] },
+  "UC10": { "status": "runnable", "services": ["local-service", "traffic-service"], "routes": ["/api/coupon/claim/{id}", "/api/order/flight/create"] },
+  "UC11": { "status": "runnable", "services": ["ai-service"], "routes": ["/api/ai/plan/generate", "/api/ai/plan/list"] },
+  "UC12": { "status": "runnable", "services": ["ai-service"], "routes": ["/api/ai/chat"] },
+  "UC13": { "status": "runnable", "services": ["ai-service"], "routes": ["/api/notification/list", "/api/private-message/send"] },
+  "UC14": { "status": "runnable", "services": ["community-service", "ops-service"], "routes": ["/api/post/create", "/api/post/{id}", "/api/admin/posts/{id}/approve"] },
+  "UC15": { "status": "runnable", "services": ["community-service"], "routes": ["/api/like/toggle", "/api/comment/add"] },
+  "UC16": { "status": "runnable", "services": ["identity-service"], "routes": ["/api/passenger/add", "/api/passenger/list", "/api/passenger/{id}"] },
+  "UC17": { "status": "runnable", "services": ["identity-service", "community-service"], "routes": ["/api/follow/{userId}", "/api/user/profile/{username}", "/api/post/my"] },
+  "UC18": { "status": "runnable", "services": ["ops-service"], "routes": ["/api/admin/users", "/api/admin/orders", "/api/admin/flights"] },
+  "UC19": { "status": "runnable", "services": ["ops-service", "community-service"], "routes": ["/api/admin/review-reports", "/api/admin/sensitive-words", "/api/admin/logs"] }
+}

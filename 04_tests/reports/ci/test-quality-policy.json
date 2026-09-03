@@ -1,0 +1,11 @@
+{
+  "maximumPlanned": 0,
+  "minimumEvidenceScore": 38,
+  "scoring": {
+    "covered": 2,
+    "partial": 1,
+    "planned": 0
+  },
+  "coveredRequiresBothLayers": true,
+  "rationale": "当前基线为 19 个 covered、0 个 partial、0 个 planned，证据分 38。covered 必须同时具备后端 UNIT/INT 测试与真实 E2E 测试证据，防止仅添加空文件绕过检查。门槛提升至 38 防止任一业务场景退化。"
+}

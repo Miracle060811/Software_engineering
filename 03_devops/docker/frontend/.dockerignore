@@ -1,0 +1,11 @@
+*
+!Dockerfile
+!Dockerfile.compose
+!nginx.conf
+!dist/**
+!package.json
+!package-lock.json
+!index.html
+!vite.config.js
+!src/**
+!public/**

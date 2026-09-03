@@ -15,6 +15,9 @@
 | `database/flyway-migration/` | 单体 Flyway 迁移 V1–V9 | `backend/src/main/resources/db/migration/` |
 | `database/microservices-schema/` | 六微服务分库 Schema 与种子脚本 | `microservices/sql/` |
 | `scripts/` | 部署、备份、恢复、回滚与密钥轮换脚本（PowerShell） | `scripts/cd/` |
+| `部署文档.md` | 环境、端口、部署与运维说明文档 | `02_docs/部署文档.md` |
+
+另：`docker/backend/`、`docker/frontend/` 内的 `.dockerignore` 与 `frontend/nginx.conf` 为前端镜像构建配套文件，原件分别在 `backend/.dockerignore`、`frontend/.dockerignore`、`frontend/nginx.conf`。
 
 ## 部署与回滚入口
 
