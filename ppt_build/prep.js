@@ -6,12 +6,12 @@ const out = path.join(root, 'ppt_build/assets');
 fs.mkdirSync(out, { recursive: true });
 
 const jobs = [
-  ['document/详细设计说明/01_系统总体架构图.png'],
-  ['document/详细设计说明/05_AI行程生成流程图.png'],
-  ['document/详细设计说明/06_库存防超卖流程图.png'],
-  ['document/详细设计说明/09_社区内容审核流程图.png'],
-  ['document/详细设计说明/28_容器化与CI-CD流水线拓扑图.png'],
-  ['document/中期验收/TravelMate服务划分图.svg', 'svc.png'],
+  ['02_docs/详细设计说明/01_系统总体架构图.png'],
+  ['02_docs/详细设计说明/05_AI行程生成流程图.png'],
+  ['02_docs/详细设计说明/06_库存防超卖流程图.png'],
+  ['02_docs/详细设计说明/09_社区内容审核流程图.png'],
+  ['02_docs/详细设计说明/28_容器化与CI-CD流水线拓扑图.png'],
+  ['02_docs/中期验收/TravelMate服务划分图.svg', 'svc.png'],
   ['05_management/CI-CD验收截图/01-流水线总览成功.png'],
   ['05_management/CI-CD验收截图/03-Kubernetes部署与健康检查成功.png'],
   ['05_management/CI-CD验收截图/02-Docker镜像构建与Trivy扫描成功.png'],

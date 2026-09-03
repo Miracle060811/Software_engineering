@@ -1,4 +1,4 @@
-// 将 document/ 下关键交付文档导出为 PDF（与 Markdown 源文件同目录）
+// 将 02_docs/ 下关键交付文档导出为 PDF（与 Markdown 源文件同目录）
 // 用法：node scripts/docs/export-pdfs.mjs
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -36,7 +36,7 @@ img { max-width: 100%; }
 blockquote { border-left: 3px solid #999; padding-left: 10px; color: #444; }
 </style>`;
 
-const docDir = join(repoRoot, 'document');
+const docDir = join(repoRoot, '02_docs');
 const tmpDir = join(docDir, '.pdf-tmp');
 mkdirSync(tmpDir, { recursive: true });
 const headerPath = join(tmpDir, 'header.html');

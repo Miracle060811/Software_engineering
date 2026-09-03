@@ -134,11 +134,11 @@ tags: [feature, microservices, migration, testing, kubernetes]
 - **RISK-002**: 当前分支与 `origin/main` 各有独立提交；合并冲突必须保留 Docker digest 修复和 HPA/部署实现。
 - **RISK-003**: 真实迁移和 HPA 需要外部运行环境；缺少 context 或 Metrics Server 时只能标记为阻塞，不能报告通过。
 - **RISK-004**: Compose 全量 E2E 会创建独立数据卷；不得复用项目现有 MySQL 密码或数据库。
-- **ASSUMPTION-001**: 单体行为是迁移的功能事实源，UC 定义以 `document/业务场景清单与用例说明.md` 为准。
+- **ASSUMPTION-001**: 单体行为是迁移的功能事实源，UC 定义以 `02_docs/业务场景清单与用例说明.md` 为准。
 
 ## 8. Related Specifications / Further Reading
 
-- `document/业务场景清单与用例说明.md`
+- `02_docs/业务场景清单与用例说明.md`
 - `docs/ci/microservice-use-case-matrix.json`
 - `microservices/README.md`
 - `microservices/MIGRATION.md`

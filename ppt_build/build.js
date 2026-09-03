@@ -2,7 +2,7 @@ const pptxgen = require('C:/Users/28603/AppData/Roaming/npm/node_modules/pptxgen
 const path = require('path');
 
 const A = f => path.join('E:/SoftEngneeringHomework/Software_engineering/ppt_build/assets', f);
-const OUT = 'E:/SoftEngneeringHomework/Software_engineering/document/TravelMate项目展示.pptx';
+const OUT = 'E:/SoftEngneeringHomework/Software_engineering/02_docs/TravelMate项目展示.pptx';
 
 // palette: ocean-teal travel theme
 const BG_DARK = '0B2B2A';   // deep teal-black (cover/closing)

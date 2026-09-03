@@ -19,7 +19,7 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 
 `identity-service`、`traffic-service`、`local-service`、`ai-service`、`community-service`、`ops-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。跨域读取改用内部 HTTP 接口，AI 服务覆盖通知、行程、对话和私信；单体 `backend` 继续保留，便于迁移期间做功能回归。
 
-本阶段仍属于渐进式迁移：六服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；正式 Kubernetes 部署统一使用 [`deploy/k8s`](deploy/k8s)，六服务已接入同一 `travelmate` 命名空间，HPA 清单与扩缩容实验也以该环境为准。`microservices/k8s` 仅保留六套独立 MySQL/PVC 的物理隔离实验方案。真实数据切换验收、API Gateway 与生产级编排仍是后续工作。中期设计基线见 [`document/TravelMate中期验收基线.md`](document/TravelMate中期验收基线.md)。
+本阶段仍属于渐进式迁移：六服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移工具已完成；正式 Kubernetes 部署统一使用 [`deploy/k8s`](deploy/k8s)，六服务已接入同一 `travelmate` 命名空间，HPA 清单与扩缩容实验也以该环境为准。`microservices/k8s` 仅保留六套独立 MySQL/PVC 的物理隔离实验方案。真实数据切换验收、API Gateway 与生产级编排仍是后续工作。中期设计基线见 [`02_docs/TravelMate中期验收基线.md`](02_docs/TravelMate中期验收基线.md)。
 
 ## 技术栈
 
@@ -645,7 +645,7 @@ Software_engineering/
 ├── docs/
 │   ├── sql/init.sql                    # 数据库结构与演示数据
 │   └── ci/                             # 用例测试矩阵与质量策略
-├── document/                           # 需求、用例、系统级/对象级模型与详细设计
+├── 02_docs/                           # 需求、用例、系统级/对象级模型与详细设计
 ├── scripts/                            # 测试、追溯与图片检查脚本
 ├── 05_management/pipeline-records/     # CI/CD 运行证据
 ├── .github/workflows/                  # CI、安全与 CodeQL
@@ -656,10 +656,10 @@ Software_engineering/
 
 ## 相关文档
 
-- [软件需求规格说明书](document/5组-软件需求规格说明.md)
-- [软件详细设计说明](document/5组-软件详细设计说明.md)
-- [微服务改造中期验收基线](document/TravelMate中期验收基线.md)
-- [业务场景清单与用例说明](document/业务场景清单与用例说明.md)
+- [软件需求规格说明书](02_docs/5组-软件需求规格说明.md)
+- [软件详细设计说明](02_docs/5组-软件详细设计说明.md)
+- [微服务改造中期验收基线](02_docs/TravelMate中期验收基线.md)
+- [业务场景清单与用例说明](02_docs/业务场景清单与用例说明.md)
 - [版本日志](CHANGELOG.md)
 - [用例测试矩阵](docs/ci/use-case-test-matrix.json)
 - [CI 质量策略](docs/ci/test-quality-policy.json)

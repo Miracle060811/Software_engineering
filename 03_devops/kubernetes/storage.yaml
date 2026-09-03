@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: travelmate-uploads
+  labels:
+    app.kubernetes.io/name: travelmate-backend
+    app.kubernetes.io/part-of: travelmate
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

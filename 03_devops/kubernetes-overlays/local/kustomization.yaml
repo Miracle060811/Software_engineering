@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: travelmate
+resources:
+  - ../../k8s
+  - minio.yaml
+images:
+  - name: ghcr.io/miracle060811/travelmate-backend
+    newName: travelmate-backend
+    newTag: local-v6-refresh-jti
+  - name: ghcr.io/miracle060811/travelmate-frontend
+    newName: travelmate-frontend
+    newTag: local-v6-memory
+patches:
+  - path: backend-object-storage-patch.yaml
+  - path: configmap-object-storage-patch.yaml
+  - path: local-image-pull-policy-patch.yaml
+  - path: uploads-pvc-delete.yaml

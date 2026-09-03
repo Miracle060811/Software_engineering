@@ -1,0 +1,1481 @@
+name: TravelMate CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # PR 只保留最新提交；main 发布/部署必须串行完成，避免在 rollout 中途被取消。
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    name: Detect code changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.detect.outputs.code }}
+      full: ${{ steps.detect.outputs.full }}
+      backend: ${{ steps.detect.outputs.backend }}
+      frontend: ${{ steps.detect.outputs.frontend }}
+      microservices: ${{ steps.detect.outputs.microservices }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes that require build and tests
+        id: detect
+        shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "full=true" >> "$GITHUB_OUTPUT"
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            echo "microservices=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          base="$BEFORE_SHA"
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base="$PR_BASE_SHA"
+          fi
+          if [[ -z "$base" || "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base="$(git rev-list --max-parents=0 HEAD)"
+          fi
+
+          files="$(git diff --name-only "$base" "$GITHUB_SHA")"
+          printf '%s\n' "$files"
+
+          matches() {
+            printf '%s\n' "$files" | grep -Eq "$1"
+          }
+
+          backend=false
+          frontend=false
+          microservices=false
+          full=false
+
+          matches '^backend/' && backend=true
+          matches '^frontend/' && frontend=true
+          matches '^microservices/' && microservices=true
+
+          if matches '^\.github/workflows/'; then
+            full=true
+          fi
+
+          code=false
+          if matches '^(backend/|frontend/|microservices/|deploy/|docs/sql/|scripts/|package(-lock)?\.json$|compose(\.server)?\.ya?ml$|\.env(\.server)?\.example$|\.github/workflows/)'; then
+            code=true
+          fi
+
+          # main 的代码提交仍执行完整发布链；纯文档提交继续跳过构建和部署。
+          if [[ "$code" == "true" && "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            full=true
+          fi
+
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "full=$full" >> "$GITHUB_OUTPUT"
+          echo "backend=$backend" >> "$GITHUB_OUTPUT"
+          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
+          echo "microservices=$microservices" >> "$GITHUB_OUTPUT"
+
+  validation:
+    name: Repository and use-case validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      - name: Reject tracked generated artifacts
+        shell: bash
+        run: |
+          tracked="$(git ls-files -ci --exclude-standard)"
+          if [[ -n "$tracked" ]]; then
+            echo "The following ignored build artifacts are still tracked:"
+            echo "$tracked"
+            exit 1
+          fi
+
+      - name: Validate UC01-UC19 traceability
+        env:
+          TRACEABILITY_REPORT: 04_tests/reports/ci/use-case-traceability.md
+        run: npm run check:traceability
+
+      - name: Validate microservice UC01-UC19 E2E structure
+        run: npm run check:microservice-e2e
+
+      - name: Validate database migrations and Kubernetes manifests
+        run: npm run check:deployment
+
+      - name: Render Kubernetes manifests
+        run: |
+          kubectl kustomize deploy/k8s > /tmp/travelmate-k8s.yaml
+          kubectl kustomize microservices/k8s > /tmp/travelmate-microservices-k8s.yaml
+
+      - name: Validate deployment PowerShell syntax
+        shell: pwsh
+        run: |
+          $hasErrors = $false
+          Get-ChildItem scripts/cd -Filter *.ps1 | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $hasErrors = $true
+              Write-Error "$($_.Name): $($errors.Message -join '; ')"
+            }
+          }
+          if ($hasErrors) { exit 1 }
+
+      - name: Upload traceability report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: use-case-traceability-report
+          path: 04_tests/reports/ci/use-case-traceability.md
+          if-no-files-found: error
+          retention-days: 30
+
+  backend:
+    name: Backend integration tests and package
+    needs: changes
+    if: >-
+      needs.changes.outputs.full == 'true' ||
+      needs.changes.outputs.backend == 'true' ||
+      needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mysql:
+        image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+        env:
+          MYSQL_ROOT_PASSWORD: travelmate-ci
+          MYSQL_DATABASE: travelmate
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptravelmate-ci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      SPRING_DATASOURCE_PASSWORD: travelmate-ci
+      JWT_SECRET: YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=
+      DEEPSEEK_API_KEY: ""
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Java 21
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Run backend tests and package
+        working-directory: backend
+        run: |
+          chmod +x mvnw
+          ./mvnw --batch-mode --no-transfer-progress verify -DskipITs
+
+      - name: Run MySQL integration tests
+        working-directory: backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/travelmate?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: travelmate-ci
+          SPRING_DATA_REDIS_HOST: 127.0.0.1
+          SPRING_DATA_REDIS_PORT: "6379"
+        run: |
+          chmod +x mvnw
+          ./mvnw --batch-mode --no-transfer-progress failsafe:integration-test failsafe:verify -Dspring.profiles.active=mysql-test
+
+      - name: Start packaged backend against empty MySQL
+        shell: bash
+        run: |
+          java -jar backend/target/*.jar > backend-flyway-ci.log 2>&1 &
+          echo $! > backend-flyway-ci.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent "http://127.0.0.1:8080/actuator/health" > /dev/null; then
+              echo "Backend is ready after applying Flyway migrations"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat backend-flyway-ci.log
+          exit 1
+
+      - name: Verify Flyway initialized the empty database
+        shell: bash
+        run: |
+          migration_files=(backend/src/main/resources/db/migration/V*__*.sql)
+          expected_count="${#migration_files[@]}"
+          expected_latest="$(printf '%s\n' "${migration_files[@]}" | sed -E 's#^.*/V([0-9]+)__.*#\1#' | sort -n | tail -n1)"
+          applied="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate -e "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1;")"
+          latest="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate -e "SELECT MAX(CAST(version AS UNSIGNED)) FROM flyway_schema_history WHERE success = 1;")"
+          echo "Successful Flyway migrations: $applied/$expected_count; latest version: $latest (expected $expected_latest)"
+          [[ "$applied" -eq "$expected_count" ]]
+          [[ "$latest" == "$expected_latest" ]]
+
+      - name: Stop Flyway verification backend
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f backend-flyway-ci.pid ]]; then
+            kill "$(cat backend-flyway-ci.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload Flyway startup log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backend-flyway-startup-log
+          path: backend-flyway-ci.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload backend test reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backend-test-reports
+          path: |
+            backend/target/surefire-reports/
+            backend/target/site/jacoco/
+            backend/target/spotbugsXml.xml
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload backend package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backend-package
+          path: backend/target/*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+  microservices:
+    name: Six microservices tests and package
+    needs: changes
+    if: >-
+      needs.changes.outputs.full == 'true' ||
+      needs.changes.outputs.microservices == 'true' ||
+      needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Java 21
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: |
+            microservices/**/pom.xml
+
+      - name: Run six-service reactor tests and package
+        working-directory: microservices
+        shell: bash
+        run: |
+          set -o pipefail
+          evidence_dir="$GITHUB_WORKSPACE/microservices/ci-evidence"
+          mkdir -p "$evidence_dir"
+          mvn --batch-mode --no-transfer-progress --fail-at-end \
+            verify \
+            2>&1 | tee "$evidence_dir/maven-verify.log"
+
+      - name: Validate packaged JARs and Dockerfile paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          services=(identity-service traffic-service local-service ai-service community-service ops-service)
+          for service in "${services[@]}"; do
+            service_dir="microservices/services/$service"
+            evidence_dir="microservices/ci-evidence/$service"
+            mkdir -p "$evidence_dir"
+            mapfile -d '' jars < <(find "$service_dir/target" -maxdepth 1 -type f -name "$service-*.jar" -print0)
+            [[ "${#jars[@]}" -eq 1 ]]
+            grep -Fq "COPY target/$service-*.jar app.jar" "$service_dir/Dockerfile"
+            printf 'service=%s\njar=%s\ndockerfile=%s\n' \
+              "$service" "${jars[0]}" "$service_dir/Dockerfile" \
+              > "$evidence_dir/package-layout.txt"
+          done
+
+      - name: Build service images without publishing on PR
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          services=(identity-service traffic-service local-service ai-service community-service ops-service)
+          for service in "${services[@]}"; do
+            image="travelmate-ci/$service:sha-$RELEASE_SHA"
+            build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            docker build --pull \
+              --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+              --label "org.opencontainers.image.revision=$RELEASE_SHA" \
+              --label "org.opencontainers.image.created=$build_date" \
+              --label "org.opencontainers.image.version=sha-$RELEASE_SHA" \
+              --tag "$image" \
+              "microservices/services/$service" \
+              2>&1 | tee "microservices/ci-evidence/$service/docker-build.log"
+          done
+
+      - name: Remove PR validation images
+        if: always() && github.event_name == 'pull_request'
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          for service in identity-service traffic-service local-service ai-service community-service ops-service; do
+            docker image rm "travelmate-ci/$service:sha-$RELEASE_SHA" >/dev/null 2>&1 || true
+          done
+
+      - name: Upload six-service test and build evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-ci-${{ github.sha }}
+          path: |
+            microservices/services/*/target/surefire-reports/
+            microservices/travelmate-contract/target/surefire-reports/
+            microservices/ci-evidence/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload tested identity-service package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-package-identity-service-${{ github.sha }}
+          path: microservices/services/identity-service/target/identity-service-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload tested traffic-service package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-package-traffic-service-${{ github.sha }}
+          path: microservices/services/traffic-service/target/traffic-service-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload tested local-service package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-package-local-service-${{ github.sha }}
+          path: microservices/services/local-service/target/local-service-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload tested ai-service package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-package-ai-service-${{ github.sha }}
+          path: microservices/services/ai-service/target/ai-service-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload tested community-service package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-package-community-service-${{ github.sha }}
+          path: microservices/services/community-service/target/community-service-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload tested ops-service package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-package-ops-service-${{ github.sha }}
+          path: microservices/services/ops-service/target/ops-service-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+  frontend:
+    name: Frontend build and mocked smoke E2E
+    needs: changes
+    if: >-
+      needs.changes.outputs.full == 'true' ||
+      needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint frontend source
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Run frontend unit tests
+        working-directory: frontend
+        run: npm run test:unit
+
+      - name: Cache Playwright Chromium
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E tests
+        working-directory: frontend
+        run: npx playwright test --reporter=list,html --workers=1
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: frontend-playwright-report
+          path: frontend/playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload frontend build
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          if-no-files-found: error
+          retention-days: 14
+
+  real-e2e:
+    name: Real backend E2E
+    needs:
+      - changes
+      - validation
+      - backend
+    if: >-
+      always() &&
+      needs.changes.result == 'success' &&
+      (needs.changes.outputs.full == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') &&
+      needs.validation.result == 'success' &&
+      needs.backend.result == 'success' &&
+      (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      mysql:
+        image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+        env:
+          MYSQL_ROOT_PASSWORD: travelmate-ci
+          MYSQL_DATABASE: travelmate
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptravelmate-ci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      CI: "true"
+      SPRING_DATASOURCE_PASSWORD: travelmate-ci
+      JWT_SECRET: YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=
+      ADMIN_REGISTER_ENABLED: "true"
+      ADMIN_REGISTER_SECRET: travelmate-ci-admin-register
+      ADMIN_REGISTER_EXPIRES_AT: "2099-12-31T23:59:59Z"
+      RATE_LIMIT_ENABLED: "false"
+      DEEPSEEK_API_KEY: ""
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Java 21
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Download tested backend package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: backend-package
+          path: ci-artifacts/backend
+
+      - name: Start tested backend package
+        shell: bash
+        run: |
+          java -jar ci-artifacts/backend/*.jar > backend-ci.log 2>&1 &
+          echo $! > backend-ci.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent "http://127.0.0.1:8080/actuator/health" > /dev/null; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat backend-ci.log
+          exit 1
+
+      - name: Prepare isolated admin bootstrap state
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec ${{ job.services.mysql.id }} mysql -uroot -ptravelmate-ci travelmate \
+            -e "UPDATE tm_user SET role = 0 WHERE role = 1 AND deleted = 0;"
+          remaining_admins="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate \
+            -e "SELECT COUNT(*) FROM tm_user WHERE role = 1 AND status = 1 AND deleted = 0;")"
+          [[ "$remaining_admins" -eq 0 ]]
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Cache Playwright Chromium
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run real backend E2E tests
+        working-directory: frontend
+        run: npx playwright test --config=playwright.real.config.js --workers=1
+
+      - name: Upload real E2E report and backend log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: real-backend-e2e-evidence
+          path: |
+            frontend/playwright-report-real/
+            frontend/test-results-real/
+            backend-ci.log
+          if-no-files-found: warn
+          retention-days: 30
+
+  ci-gate:
+    name: CI quality gate
+    if: always()
+    needs:
+      - changes
+      - validation
+      - backend
+      - microservices
+      - frontend
+      - real-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Require every CI stage to pass
+        shell: bash
+        run: |
+          echo "validation=${{ needs.validation.result }}"
+          echo "changes=${{ needs.changes.result }}"
+          echo "backend=${{ needs.backend.result }}"
+          echo "microservices=${{ needs.microservices.result }}"
+          echo "frontend=${{ needs.frontend.result }}"
+          echo "real-e2e=${{ needs.real-e2e.result }}"
+          [[ "${{ needs.changes.result }}" == "success" ]]
+          [[ "${{ needs.validation.result }}" == "success" ]]
+
+          full="${{ needs.changes.outputs.full }}"
+          backend_required=false
+          frontend_required=false
+          microservices_required=false
+          if [[ "$full" == "true" || "${{ needs.changes.outputs.backend }}" == "true" || "${{ needs.changes.outputs.frontend }}" == "true" ]]; then
+            backend_required=true
+          fi
+          if [[ "$full" == "true" || "${{ needs.changes.outputs.frontend }}" == "true" ]]; then
+            frontend_required=true
+          fi
+          if [[ "$full" == "true" || "${{ needs.changes.outputs.microservices }}" == "true" || "${{ needs.changes.outputs.frontend }}" == "true" ]]; then
+            microservices_required=true
+          fi
+
+          if [[ "$backend_required" == "true" ]]; then
+            [[ "${{ needs.backend.result }}" == "success" ]]
+          else
+            [[ "${{ needs.backend.result }}" == "skipped" ]]
+          fi
+          if [[ "$microservices_required" == "true" ]]; then
+            [[ "${{ needs.microservices.result }}" == "success" ]]
+          else
+            [[ "${{ needs.microservices.result }}" == "skipped" ]]
+          fi
+          if [[ "$frontend_required" == "true" ]]; then
+            [[ "${{ needs.frontend.result }}" == "success" ]]
+          else
+            [[ "${{ needs.frontend.result }}" == "skipped" ]]
+          fi
+
+          if [[ "$backend_required" == "true" ]]; then
+            [[ "${{ needs.real-e2e.result }}" == "success" ]]
+          else
+            [[ "${{ needs.real-e2e.result }}" == "skipped" ]]
+          fi
+
+  release-security-gate:
+    name: Release security gate
+    needs:
+      - changes
+      - ci-gate
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.code == 'true' &&
+      needs.ci-gate.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      checks: read
+      contents: read
+
+    steps:
+      - name: Require security gates for the same commit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          required=(
+            "CodeQL quality gate"
+            "Secret scan"
+            "Maven dependency audit"
+            "Node.js dependency audit"
+          )
+
+          for attempt in {1..80}; do
+            echo "Security gate check attempt $attempt/80"
+            payload="$(gh api "repos/$GITHUB_REPOSITORY/commits/$RELEASE_SHA/check-runs?per_page=100")"
+            all_success=true
+            for check_name in "${required[@]}"; do
+              check="$(jq -c --arg name "$check_name" '
+                [.check_runs[] | select(.name == $name)]
+                | sort_by(.started_at // .created_at)
+                | last // empty
+              ' <<<"$payload")"
+              if [[ -z "$check" ]]; then
+                echo "$check_name: not created yet"
+                all_success=false
+                continue
+              fi
+
+              status="$(jq -r .status <<<"$check")"
+              conclusion="$(jq -r '.conclusion // ""' <<<"$check")"
+              echo "$check_name: status=$status conclusion=$conclusion"
+              if [[ "$status" == "completed" && "$conclusion" != "success" ]]; then
+                echo "Required check failed: $check_name ($conclusion)"
+                exit 1
+              fi
+              if [[ "$status" != "completed" || "$conclusion" != "success" ]]; then
+                all_success=false
+              fi
+            done
+
+            if [[ "$all_success" == "true" ]]; then
+              exit 0
+            fi
+            sleep 15
+          done
+
+          echo "Timed out waiting for security checks on $RELEASE_SHA"
+          exit 1
+
+  microservice-publish:
+    name: Publish ${{ matrix.service }} image to GHCR
+    needs:
+      - changes
+      - ci-gate
+      - release-security-gate
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.code == 'true' &&
+      needs.ci-gate.result == 'success' &&
+      needs.release-security-gate.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: identity-service
+            image: ghcr.io/miracle060811/travelmate-identity-service
+          - service: traffic-service
+            image: ghcr.io/miracle060811/travelmate-traffic-service
+          - service: local-service
+            image: ghcr.io/miracle060811/travelmate-local-service
+          - service: ai-service
+            image: ghcr.io/miracle060811/travelmate-ai-service
+          - service: community-service
+            image: ghcr.io/miracle060811/travelmate-community-service
+          - service: ops-service
+            image: ghcr.io/miracle060811/travelmate-ops-service
+
+    env:
+      SERVICE: ${{ matrix.service }}
+      IMAGE: ${{ matrix.image }}
+      RELEASE_SHA: ${{ github.sha }}
+      IMAGE_TAG: sha-${{ github.sha }}
+      EVIDENCE_DIR: microservice-release-evidence/${{ matrix.service }}
+
+    steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize release evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          : > "$EVIDENCE_DIR/docker-build-push.log"
+          printf 'service=%s\nimage=%s\ntag=%s\ncommit=%s\nrun_id=%s\n' \
+            "$SERVICE" "$IMAGE" "$IMAGE_TAG" "$RELEASE_SHA" "$GITHUB_RUN_ID" \
+            > "$EVIDENCE_DIR/release-context.txt"
+
+      - name: Download tested service package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: microservice-package-${{ matrix.service }}-${{ github.sha }}
+          path: microservices/services/${{ matrix.service }}/target
+
+      - name: Validate tested package
+        shell: bash
+        run: |
+          set -euo pipefail
+          service_dir="microservices/services/$SERVICE"
+          mapfile -d '' jars < <(find "$service_dir/target" -maxdepth 1 -type f -name "$SERVICE-*.jar" -print0)
+          [[ "${#jars[@]}" -eq 1 ]]
+          grep -Fq "COPY target/$SERVICE-*.jar app.jar" "$service_dir/Dockerfile"
+
+      - name: Log in to GHCR
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+
+      - name: Build and push immutable service image
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          image_ref="$IMAGE:$IMAGE_TAG"
+          build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          docker buildx build --pull --push \
+            --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=$RELEASE_SHA" \
+            --label "org.opencontainers.image.created=$build_date" \
+            --label "org.opencontainers.image.version=$IMAGE_TAG" \
+            --tag "$image_ref" \
+            "microservices/services/$SERVICE" \
+            2>&1 | tee "$EVIDENCE_DIR/docker-build-push.log"
+          echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Record immutable image digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          image_ref="$IMAGE:$IMAGE_TAG"
+          descriptor="$(docker buildx imagetools inspect "$image_ref" --format '{{json .Manifest}}')"
+          digest="$(jq -r '.digest // empty' <<<"$descriptor")"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          jq -n \
+            --arg service "$SERVICE" \
+            --arg image "$IMAGE" \
+            --arg tag "$IMAGE_TAG" \
+            --arg digest "$digest" \
+            --arg commit "$RELEASE_SHA" \
+            --arg source_run "$GITHUB_RUN_ID" \
+            '{service:$service,image:$image,tag:$tag,digest:$digest,commit:$commit,source_run_id:$source_run}' \
+            > "$EVIDENCE_DIR/$SERVICE-image-release.json"
+
+      - name: Scan published service image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ matrix.image }}:${{ steps.build.outputs.image_tag }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: json
+          output: microservice-release-evidence/${{ matrix.service }}/trivy-image.json
+
+      - name: Remove local release image
+        if: always()
+        shell: bash
+        run: docker image rm "$IMAGE:$IMAGE_TAG" >/dev/null 2>&1 || true
+
+      - name: Upload service release evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-release-${{ matrix.service }}-${{ github.sha }}
+          path: microservice-release-evidence/${{ matrix.service }}/
+          if-no-files-found: error
+          retention-days: 30
+
+  microservice-release-evidence:
+    name: Aggregate six-service release evidence
+    needs:
+      - changes
+      - microservice-publish
+    if: >-
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.code == 'true' &&
+      needs.microservice-publish.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Download service release evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: microservice-release-*-${{ github.sha }}
+          path: microservice-release-evidence
+          merge-multiple: true
+
+      - name: Validate and aggregate six image digests
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+          PUBLISH_RESULT: ${{ needs.microservice-publish.result }}
+        run: |
+          set -euo pipefail
+          mapfile -t records < <(find microservice-release-evidence -type f -name '*-image-release.json' | sort)
+          [[ "${#records[@]}" -eq 6 ]]
+          jq -s \
+            --arg commit "$RELEASE_SHA" \
+            --arg tag "sha-$RELEASE_SHA" \
+            '{commit:$commit,tag:$tag,images:sort_by(.service)}' \
+            "${records[@]}" \
+            > "microservice-release-$RELEASE_SHA.json"
+          jq -e \
+            --arg commit "$RELEASE_SHA" \
+            --arg tag "sha-$RELEASE_SHA" '
+              (.images | length) == 6 and
+              (all(.images[]; .commit == $commit and .tag == $tag and (.digest | test("^sha256:[0-9a-f]{64}$")))) and
+              ([.images[].service] | sort) == ["ai-service","community-service","identity-service","local-service","ops-service","traffic-service"]
+            ' "microservice-release-$RELEASE_SHA.json"
+          [[ "$PUBLISH_RESULT" == "success" ]]
+
+      - name: Upload aggregate release evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-release-${{ github.sha }}
+          path: microservice-release-${{ github.sha }}.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  images:
+    name: Build and publish deployment images
+    needs:
+      - changes
+      - ci-gate
+      - release-security-gate
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.code == 'true' &&
+      needs.ci-gate.result == 'success' &&
+      needs.release-security-gate.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      backend_digest: ${{ steps.release.outputs.backend_digest }}
+      frontend_digest: ${{ steps.release.outputs.frontend_digest }}
+
+    env:
+      BACKEND_IMAGE: ghcr.io/miracle060811/travelmate-backend
+      FRONTEND_IMAGE: ghcr.io/miracle060811/travelmate-frontend
+
+    steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download tested backend package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: backend-package
+          path: backend/target
+
+      - name: Download tested frontend build
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Validate tested artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' jars < <(find backend/target -maxdepth 1 -type f -name '*.jar' -print0)
+          [[ "${#jars[@]}" -eq 1 ]]
+          test -s frontend/dist/index.html
+
+      - name: Log in to GHCR
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+
+      - name: Build and push immutable commit images
+        id: build
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          image_tag="sha-$RELEASE_SHA"
+          build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          docker buildx build --pull --push \
+            --build-arg "GIT_SHA=$RELEASE_SHA" \
+            --build-arg "BUILD_DATE=$build_date" \
+            --build-arg "IMAGE_VERSION=$image_tag" \
+            --tag "$BACKEND_IMAGE:$image_tag" \
+            backend
+          docker buildx build --pull --push \
+            --build-arg "GIT_SHA=$RELEASE_SHA" \
+            --build-arg "BUILD_DATE=$build_date" \
+            --build-arg "IMAGE_VERSION=$image_tag" \
+            --tag "$FRONTEND_IMAGE:$image_tag" \
+            frontend
+
+          echo "image_tag=$image_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Scan backend image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.BACKEND_IMAGE }}:${{ steps.build.outputs.image_tag }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: json
+          output: trivy-backend-image.json
+
+      - name: Scan frontend image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.FRONTEND_IMAGE }}:${{ steps.build.outputs.image_tag }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: json
+          output: trivy-frontend-image.json
+
+      - name: Promote image pair and record digests
+        id: release
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          image_tag="${{ steps.build.outputs.image_tag }}"
+          backend_sha="$BACKEND_IMAGE:$image_tag"
+          frontend_sha="$FRONTEND_IMAGE:$image_tag"
+
+          for channel in main deploy; do
+            docker buildx imagetools create \
+              "$backend_sha" --tag "$BACKEND_IMAGE:$channel"
+            docker buildx imagetools create \
+              "$frontend_sha" --tag "$FRONTEND_IMAGE:$channel"
+          done
+
+          backend_digest="$(docker buildx imagetools inspect "$backend_sha" --format '{{json .Manifest}}' \
+            | jq -r '.digest // empty')"
+          frontend_digest="$(docker buildx imagetools inspect "$frontend_sha" --format '{{json .Manifest}}' \
+            | jq -r '.digest // empty')"
+          test -n "$backend_digest"
+          test -n "$frontend_digest"
+          echo "backend_digest=$backend_digest" >> "$GITHUB_OUTPUT"
+          echo "frontend_digest=$frontend_digest" >> "$GITHUB_OUTPUT"
+
+          jq -n \
+            --arg commit "$RELEASE_SHA" \
+            --arg source_run "${{ github.run_id }}" \
+            --arg backend "$backend_digest" \
+            --arg frontend "$frontend_digest" \
+            '{commit:$commit,source_run_id:$source_run,backend:$backend,frontend:$frontend}' \
+            > deployment-release.json
+
+      - name: Upload image scan and release evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: deployment-release-${{ github.sha }}
+          path: |
+            deployment-release.json
+            trivy-backend-image.json
+            trivy-frontend-image.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  deploy:
+    name: Deploy to Docker Desktop Kubernetes
+    needs:
+      - changes
+      - images
+      - microservice-release-evidence
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.code == 'true' &&
+      needs.images.result == 'success' &&
+      needs.microservice-release-evidence.result == 'success'
+    runs-on:
+      - self-hosted
+      - Windows
+      - X64
+      - travelmate-deploy
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout released commit over HTTPS
+        timeout-minutes: 5
+        shell: powershell
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sourceDirectory = Join-Path $env:RUNNER_TEMP "travelmate-source-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          [System.IO.Directory]::CreateDirectory($sourceDirectory) | Out-Null
+
+          git -C $sourceDirectory init
+          if ($LASTEXITCODE -ne 0) { throw "Unable to initialize the deployment source directory" }
+
+          git -C $sourceDirectory remote add origin "https://github.com/Miracle060811/Software_engineering.git"
+          if ($LASTEXITCODE -ne 0) { throw "Unable to configure the deployment repository" }
+
+          $fetched = $false
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            Write-Output "Fetching released commit over HTTPS: attempt $attempt/3"
+            git -C $sourceDirectory `
+              -c http.version=HTTP/1.1 `
+              -c http.lowSpeedLimit=1024 `
+              -c http.lowSpeedTime=30 `
+              fetch --depth=1 origin $env:RELEASE_SHA
+            if ($LASTEXITCODE -eq 0) {
+              $fetched = $true
+              break
+            }
+
+            if ($attempt -lt 3) {
+              Start-Sleep -Seconds 10
+            }
+          }
+          if (-not $fetched) { throw "Unable to fetch released commit $env:RELEASE_SHA over HTTPS after 3 attempts" }
+
+          git -C $sourceDirectory checkout --detach FETCH_HEAD
+          if ($LASTEXITCODE -ne 0) { throw "Unable to check out released commit $env:RELEASE_SHA" }
+
+          $checkedOutSha = (git -C $sourceDirectory rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $checkedOutSha -ne $env:RELEASE_SHA) {
+            throw "Deployment source SHA mismatch: expected $env:RELEASE_SHA, got $checkedOutSha"
+          }
+
+          [System.IO.File]::AppendAllText(
+            $env:GITHUB_ENV,
+            "TRAVELMATE_SOURCE=$sourceDirectory`n",
+            [System.Text.UTF8Encoding]::new($false)
+          )
+
+      - name: Download six-service release evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: microservice-release-${{ github.sha }}
+          path: ${{ runner.temp }}/travelmate-microservice-release
+
+      - name: Verify deployment host
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          if ((kubectl config current-context) -ne "docker-desktop") {
+            throw "The self-hosted runner is not using the docker-desktop Kubernetes context"
+          }
+          docker info --format "Docker Server {{.ServerVersion}}" | Write-Output
+          kubectl get nodes
+
+      - name: Deploy immutable application images
+        shell: powershell
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $evidenceDirectory = Join-Path $env:RUNNER_TEMP "travelmate-deployment-evidence"
+          [IO.Directory]::CreateDirectory($evidenceDirectory) | Out-Null
+          $releaseEvidence = Join-Path $env:RUNNER_TEMP "travelmate-microservice-release\microservice-release-$env:RELEASE_SHA.json"
+          & (Join-Path $env:TRAVELMATE_SOURCE "scripts\cd\Deploy-TravelMateMicroservices.ps1") `
+            -ReleaseEvidencePath $releaseEvidence `
+            -ExpectedCommit $env:RELEASE_SHA `
+            -KubeContext docker-desktop `
+            -EvidenceDirectory $evidenceDirectory
+          & (Join-Path $env:TRAVELMATE_SOURCE "scripts\cd\Deploy-TravelMate.ps1") -KubeContext docker-desktop
+
+      - name: Verify deployed digests and health
+        shell: powershell
+        env:
+          EXPECTED_BACKEND_IMAGE: ${{ needs.images.outputs.backend_digest }}
+          EXPECTED_FRONTEND_IMAGE: ${{ needs.images.outputs.frontend_digest }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $evidenceDirectory = Join-Path $env:RUNNER_TEMP "travelmate-deployment-evidence"
+          [IO.Directory]::CreateDirectory($evidenceDirectory) | Out-Null
+
+          function Test-ProxiedHealth {
+            param(
+              [string]$Name,
+              [string]$Service,
+              [int]$ServicePort,
+              [int]$LocalPort,
+              [string]$Path
+            )
+
+            $forwardOut = Join-Path $evidenceDirectory "$Name-port-forward.out.log"
+            $forwardErr = Join-Path $evidenceDirectory "$Name-port-forward.err.log"
+            $portForward = Start-Process -FilePath "kubectl" `
+              -ArgumentList @("port-forward", "service/$Service", "${LocalPort}:${ServicePort}", "-n", "travelmate") `
+              -WindowStyle Hidden `
+              -RedirectStandardOutput $forwardOut `
+              -RedirectStandardError $forwardErr `
+              -PassThru
+            try {
+              for ($attempt = 0; $attempt -lt 20; $attempt++) {
+                try {
+                  $response = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:${LocalPort}${Path}" -TimeoutSec 5
+                  if ($response.StatusCode -eq 200) {
+                    return $response.StatusCode
+                  }
+                }
+                catch {
+                  Start-Sleep -Seconds 2
+                }
+              }
+              throw "$Name health endpoint did not return HTTP 200"
+            }
+            finally {
+              if (-not $portForward.HasExited) {
+                Stop-Process -Id $portForward.Id -Force
+              }
+            }
+          }
+
+          $backendImage = (& kubectl get deployment travelmate-backend -n travelmate -o "jsonpath={.spec.template.spec.containers[0].image}").Trim()
+          $frontendImage = (& kubectl get deployment travelmate-frontend -n travelmate -o "jsonpath={.spec.template.spec.containers[0].image}").Trim()
+          $backendDigest = $backendImage -replace '^.*@',''
+          $frontendDigest = $frontendImage -replace '^.*@',''
+          if ($backendDigest -ne $env:EXPECTED_BACKEND_IMAGE) {
+            throw "Backend digest mismatch: expected $env:EXPECTED_BACKEND_IMAGE, found $backendDigest (image: $backendImage)"
+          }
+          if ($frontendDigest -ne $env:EXPECTED_FRONTEND_IMAGE) {
+            throw "Frontend digest mismatch: expected $env:EXPECTED_FRONTEND_IMAGE, found $frontendDigest (image: $frontendImage)"
+          }
+
+          $frontendHealth = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:30080/healthz" -TimeoutSec 15
+          if ($frontendHealth.StatusCode -ne 200) {
+            throw "Frontend health check failed with HTTP $($frontendHealth.StatusCode)"
+          }
+
+          $backendHealth = Test-ProxiedHealth `
+            -Name "backend" -Service "travelmate-backend" -ServicePort 8080 -LocalPort 18080 `
+            -Path "/actuator/health/readiness"
+
+          $releasePath = Join-Path $env:RUNNER_TEMP "travelmate-microservice-release\microservice-release-${{ github.sha }}.json"
+          $microserviceRelease = Get-Content -LiteralPath $releasePath -Raw | ConvertFrom-Json
+          $microservices = @(
+            @{ Name = "identity-service"; ServicePort = 8081; LocalPort = 18081 },
+            @{ Name = "traffic-service"; ServicePort = 8082; LocalPort = 18082 },
+            @{ Name = "local-service"; ServicePort = 8083; LocalPort = 18083 },
+            @{ Name = "ai-service"; ServicePort = 8084; LocalPort = 18084 },
+            @{ Name = "community-service"; ServicePort = 8085; LocalPort = 18085 },
+            @{ Name = "ops-service"; ServicePort = 8086; LocalPort = 18086 }
+          )
+          $microserviceSummary = [System.Collections.Generic.List[string]]::new()
+          foreach ($service in $microservices) {
+            $record = @($microserviceRelease.images | Where-Object { $_.service -eq $service.Name })
+            if ($record.Count -ne 1) {
+              throw "Release evidence does not contain one image for $($service.Name)"
+            }
+            $expectedImage = "$($record[0].image)@$($record[0].digest)"
+            $actualImage = (& kubectl get deployment $service.Name -n travelmate -o "jsonpath={.spec.template.spec.containers[0].image}").Trim()
+            if ($actualImage -ne $expectedImage) {
+              throw "$($service.Name) digest mismatch: expected $expectedImage, found $actualImage"
+            }
+            $health = Test-ProxiedHealth `
+              -Name $service.Name -Service $service.Name `
+              -ServicePort $service.ServicePort -LocalPort $service.LocalPort `
+              -Path "/actuator/health"
+            $microserviceSummary.Add("$($service.Name)=$actualImage")
+            $microserviceSummary.Add("$($service.Name)_health_port=$($service.ServicePort)")
+            $microserviceSummary.Add("$($service.Name)_health=$health")
+          }
+
+          $microserviceNames = @($microservices | ForEach-Object { $_.Name })
+          $activePods = @()
+          $expectedPodTotal = 0
+          $replicaSummary = [System.Collections.Generic.List[string]]::new()
+          for ($attempt = 0; $attempt -lt 12; $attempt++) {
+            $deploymentState = kubectl get deployments -n travelmate -l app.kubernetes.io/component=microservice -o json | ConvertFrom-Json
+            $podState = kubectl get pods -n travelmate -l app.kubernetes.io/component=microservice -o json | ConvertFrom-Json
+            $activePods = @($podState.items | Where-Object { $null -eq $_.metadata.deletionTimestamp })
+            $validationErrors = [System.Collections.Generic.List[string]]::new()
+            $replicaSummary = [System.Collections.Generic.List[string]]::new()
+            $expectedPodTotal = 0
+
+            $deployedNames = @($deploymentState.items | ForEach-Object { $_.metadata.name })
+            foreach ($name in $microserviceNames) {
+              if ($name -notin $deployedNames) {
+                $validationErrors.Add("Missing microservice Deployment $name")
+              }
+            }
+            foreach ($name in $deployedNames) {
+              if ($name -notin $microserviceNames) {
+                $validationErrors.Add("Unexpected microservice Deployment $name")
+              }
+            }
+
+            foreach ($service in $microservices) {
+              $deployment = @($deploymentState.items | Where-Object { $_.metadata.name -eq $service.Name })
+              if ($deployment.Count -ne 1) {
+                continue
+              }
+
+              $desiredReplicas = [int]$deployment[0].spec.replicas
+              $readyReplicas = if ($null -eq $deployment[0].status.readyReplicas) { 0 } else { [int]$deployment[0].status.readyReplicas }
+              $availableReplicas = if ($null -eq $deployment[0].status.availableReplicas) { 0 } else { [int]$deployment[0].status.availableReplicas }
+              $servicePods = @($activePods | Where-Object { $_.metadata.labels.'app.kubernetes.io/name' -eq $service.Name })
+              $expectedPodTotal += $desiredReplicas
+              $replicaSummary.Add("$($service.Name)_replicas=$readyReplicas/$desiredReplicas")
+
+              if ($desiredReplicas -lt 1) {
+                $validationErrors.Add("$($service.Name) has no desired replicas")
+              }
+              if ($readyReplicas -ne $desiredReplicas -or $availableReplicas -ne $desiredReplicas) {
+                $validationErrors.Add("$($service.Name) replicas are not ready: desired=$desiredReplicas ready=$readyReplicas available=$availableReplicas")
+              }
+              if ($servicePods.Count -ne $desiredReplicas) {
+                $validationErrors.Add("$($service.Name) Pod count mismatch: desired=$desiredReplicas active=$($servicePods.Count)")
+              }
+            }
+
+            $unexpectedPods = @($activePods | Where-Object {
+              $_.metadata.labels.'app.kubernetes.io/name' -notin $microserviceNames
+            })
+            if ($unexpectedPods.Count -gt 0) {
+              $validationErrors.Add("Unexpected microservice Pods: $(@($unexpectedPods | ForEach-Object { $_.metadata.name }) -join ', ')")
+            }
+            if ($activePods.Count -ne $expectedPodTotal) {
+              $validationErrors.Add("Microservice Pod total mismatch: expected=$expectedPodTotal active=$($activePods.Count)")
+            }
+
+            if ($validationErrors.Count -eq 0) {
+              break
+            }
+            if ($attempt -eq 11) {
+              throw "Microservice replicas did not stabilize: $($validationErrors -join '; ')"
+            }
+            Start-Sleep -Seconds 5
+          }
+
+          foreach ($pod in $activePods) {
+            $readyCondition = @($pod.status.conditions | Where-Object { $_.type -eq "Ready" -and $_.status -eq "True" })
+            if ($readyCondition.Count -ne 1) {
+              throw "Pod $($pod.metadata.name) is not Ready"
+            }
+            foreach ($container in @($pod.status.containerStatuses)) {
+              if (-not $container.ready) {
+                throw "Container $($container.name) in Pod $($pod.metadata.name) is not Ready"
+              }
+              if ([int]$container.restartCount -ne 0) {
+                throw "Container $($container.name) in Pod $($pod.metadata.name) restarted $($container.restartCount) time(s)"
+              }
+            }
+          }
+
+          kubectl get pods,services,pvc -n travelmate -o wide | Set-Content -LiteralPath (Join-Path $evidenceDirectory "kubernetes-status.txt") -Encoding utf8
+          kubectl get deployment,statefulset,job -n travelmate -o json | Set-Content -LiteralPath (Join-Path $evidenceDirectory "workloads.json") -Encoding utf8
+          kubectl get pods -n travelmate -o json | Set-Content -LiteralPath (Join-Path $evidenceDirectory "pods.json") -Encoding utf8
+          $summary = @(
+            "commit=${{ github.sha }}"
+            "backend=$backendImage"
+            "frontend=$frontendImage"
+            "frontend_health=$($frontendHealth.StatusCode)"
+            "backend_health=$backendHealth"
+            "microservice_deployments_ready=6/6"
+            "microservice_pods_ready=$($activePods.Count)"
+            "microservice_container_restarts=0"
+          )
+          $summary + $microserviceSummary + $replicaSummary | Set-Content -LiteralPath (Join-Path $evidenceDirectory "deployment-summary.txt") -Encoding utf8
+
+      - name: Capture deployment state and logs
+        if: always()
+        shell: powershell
+        run: |
+          $evidenceDirectory = Join-Path $env:RUNNER_TEMP "travelmate-deployment-evidence"
+          [IO.Directory]::CreateDirectory($evidenceDirectory) | Out-Null
+          kubectl get pods,services,pvc -n travelmate -o wide 2>&1 | Set-Content -LiteralPath (Join-Path $evidenceDirectory "kubernetes-status-final.txt") -Encoding utf8
+          kubectl get events -n travelmate --sort-by=.lastTimestamp 2>&1 | Set-Content -LiteralPath (Join-Path $evidenceDirectory "kubernetes-events.txt") -Encoding utf8
+          kubectl describe deployments -n travelmate -l app.kubernetes.io/component=microservice 2>&1 | Set-Content -LiteralPath (Join-Path $evidenceDirectory "microservice-deployments-describe.txt") -Encoding utf8
+          $microservicePods = @(kubectl get pods -n travelmate -l app.kubernetes.io/component=microservice -o name 2>$null)
+          foreach ($pod in $microservicePods) {
+            $fileName = ($pod -replace "[/\\]", "-") + ".log"
+            kubectl logs $pod -n travelmate --all-containers=true 2>&1 | Set-Content -LiteralPath (Join-Path $evidenceDirectory $fileName) -Encoding utf8
+          }
+          $deployLog = Join-Path $env:USERPROFILE "TravelMateCD\deploy.log"
+          if (Test-Path -LiteralPath $deployLog -PathType Leaf) {
+            Copy-Item -LiteralPath $deployLog -Destination (Join-Path $evidenceDirectory "deploy.log") -Force
+          }
+
+      - name: Upload Kubernetes deployment evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kubernetes-deployment-${{ github.sha }}
+          path: ${{ runner.temp }}/travelmate-deployment-evidence/
+          if-no-files-found: warn
+          retention-days: 30
+
+  delivery-gate:
+    name: CI/CD delivery gate
+    if: always()
+    needs:
+      - changes
+      - images
+      - deploy
+      - microservice-release-evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Require delivery stages for main code pushes
+        shell: bash
+        run: |
+          set -euo pipefail
+          delivery_required=false
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" && "${{ needs.changes.outputs.code }}" == "true" ]]; then
+            delivery_required=true
+          fi
+
+          echo "delivery_required=$delivery_required"
+          echo "images=${{ needs.images.result }}"
+          echo "deploy=${{ needs.deploy.result }}"
+          echo "microservice_release_evidence=${{ needs.microservice-release-evidence.result }}"
+          if [[ "$delivery_required" == "true" ]]; then
+            [[ "${{ needs.images.result }}" == "success" ]]
+            [[ "${{ needs.deploy.result }}" == "success" ]]
+            [[ "${{ needs.microservice-release-evidence.result }}" == "success" ]]
+          else
+            [[ "${{ needs.images.result }}" == "skipped" ]]
+            [[ "${{ needs.deploy.result }}" == "skipped" ]]
+            [[ "${{ needs.microservice-release-evidence.result }}" == "skipped" ]]
+          fi

@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: travelmate-microservices
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - databases.yaml
+  - redis.yaml
+  - identity-service.yaml
+  - traffic-service.yaml
+  - local-service.yaml
+  - ai-service.yaml
+  - community-service.yaml
+  - ops-service.yaml
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: travelmate
+      travelmate.io/deployment-mode: microservices
+    includeSelectors: true

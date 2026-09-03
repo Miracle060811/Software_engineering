@@ -1,0 +1,105 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: travelmate-microservice-db-bootstrap
+  labels:
+    app.kubernetes.io/name: travelmate-microservice-db-bootstrap
+    app.kubernetes.io/component: database-bootstrap
+    app.kubernetes.io/part-of: travelmate
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: travelmate-microservice-db-bootstrap
+        app.kubernetes.io/part-of: travelmate
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mysql-client
+          image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -ec
+          args:
+            - |
+              for service in identity traffic local ai community ops; do
+                database="travelmate_${service}"
+                existing_database="$(mysql --host=travelmate-mysql --user=root --batch --skip-column-names --execute="SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${database}'")"
+                mysql --host=travelmate-mysql --user=root < "/schemas/${service}-schema.sql"
+                if [ -z "${existing_database}" ]; then
+                  mysql --host=travelmate-mysql --user=root < "/schemas/${service}-seed.sql"
+                fi
+              done
+              mysql --host=travelmate-mysql --user=root <<SQL
+              CREATE USER IF NOT EXISTS 'travelmate_identity_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              CREATE USER IF NOT EXISTS 'travelmate_traffic_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              CREATE USER IF NOT EXISTS 'travelmate_local_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              CREATE USER IF NOT EXISTS 'travelmate_ai_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              CREATE USER IF NOT EXISTS 'travelmate_community_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              CREATE USER IF NOT EXISTS 'travelmate_ops_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              ALTER USER 'travelmate_identity_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              ALTER USER 'travelmate_traffic_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              ALTER USER 'travelmate_local_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              ALTER USER 'travelmate_ai_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              ALTER USER 'travelmate_community_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              ALTER USER 'travelmate_ops_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
+              REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_identity_app'@'%';
+              REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_traffic_app'@'%';
+              REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_local_app'@'%';
+              REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_ai_app'@'%';
+              REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_community_app'@'%';
+              REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'travelmate_ops_app'@'%';
+              GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_identity.* TO 'travelmate_identity_app'@'%';
+              GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_traffic.* TO 'travelmate_traffic_app'@'%';
+              GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_local.* TO 'travelmate_local_app'@'%';
+              GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_ai.* TO 'travelmate_ai_app'@'%';
+              GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_community.* TO 'travelmate_community_app'@'%';
+              GRANT SELECT, INSERT, UPDATE, DELETE ON travelmate_ops.* TO 'travelmate_ops_app'@'%';
+              FLUSH PRIVILEGES;
+              SQL
+          env:
+            - name: MYSQL_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-secrets
+                  key: mysql-root-password
+            - name: SERVICE_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-secrets
+                  key: mysql-password
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: schemas
+              mountPath: /schemas
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: schemas
+          configMap:
+            name: travelmate-microservice-schemas
+        - name: tmp
+          emptyDir: {}

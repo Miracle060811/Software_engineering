@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: traffic-service
+spec:
+  selector:
+    app.kubernetes.io/name: traffic-service
+  ports:
+    - name: http
+      port: 8082
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traffic-service
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traffic-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: traffic-service
+        app.kubernetes.io/part-of: travelmate
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: traffic-service
+          image: travelmate/traffic-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8082
+          envFrom:
+            - configMapRef:
+                name: travelmate-microservices-config
+          env:
+            - name: DB_HOST
+              value: traffic-db
+            - name: DB_NAME
+              value: travelmate_traffic
+            - name: DB_USERNAME
+              value: travelmate_traffic_app
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-microservices-secrets
+                  key: traffic-db-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-microservices-secrets
+                  key: jwt-secret
+            - name: INTERNAL_SERVICE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-microservices-secrets
+                  key: internal-service-token
+            - name: JAVA_TOOL_OPTIONS
+              value: -XX:MaxRAMPercentage=75.0
+          startupProbe: &trafficProbe
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            <<: *trafficProbe
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
