@@ -1,11 +1,13 @@
 package com.travelmate.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @TableName("tm_tour_product")
@@ -34,4 +36,10 @@ public class TourProduct {
     private Integer status;
 
     private LocalDateTime createTime;
+
+    @TableField(exist = false)
+    private List<TourProductStep> steps;
+
+    @TableField(exist = false)
+    private List<TourSchedule> schedules;
 }

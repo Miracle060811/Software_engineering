@@ -24,8 +24,10 @@ class OpsPublicApiTests {
         OpsAggregationGateway gateway = mock(OpsAggregationGateway.class);
         OpsLocalService local = mock(OpsLocalService.class);
         UserContext userContext = mock(UserContext.class);
+        AdminDashboardService dashboardService = mock(AdminDashboardService.class);
         when(gateway.stats()).thenReturn(Map.of("totalUsers", 2, "totalOrders", 3, "pendingPosts", 1));
-        MockMvc mvc = MockMvcBuilders.standaloneSetup(new AdminOpsController(gateway, local, userContext)).build();
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(
+                new AdminOpsController(gateway, local, userContext, dashboardService)).build();
 
         mvc.perform(get("/api/admin/stats")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalUsers").value(2))
@@ -37,10 +39,12 @@ class OpsPublicApiTests {
         OpsAggregationGateway gateway = mock(OpsAggregationGateway.class);
         OpsLocalService local = mock(OpsLocalService.class);
         UserContext userContext = mock(UserContext.class);
+        AdminDashboardService dashboardService = mock(AdminDashboardService.class);
         when(userContext.getCurrentUserId()).thenReturn(1L);
         SysSensitiveWord word = new SysSensitiveWord(); word.setId(9L); word.setWord("风险词"); word.setLevel(2);
         when(local.addSensitiveWord("  风险词  ", 2, 1L)).thenReturn(word);
-        MockMvc mvc = MockMvcBuilders.standaloneSetup(new AdminOpsController(gateway, local, userContext)).build();
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(
+                new AdminOpsController(gateway, local, userContext, dashboardService)).build();
 
         mvc.perform(post("/api/admin/sensitive-words").contentType("application/json")
                         .content("{\"word\":\"  风险词  \",\"level\":2}"))
@@ -52,10 +56,12 @@ class OpsPublicApiTests {
         OpsAggregationGateway gateway = mock(OpsAggregationGateway.class);
         OpsLocalService local = mock(OpsLocalService.class);
         UserContext userContext = mock(UserContext.class);
+        AdminDashboardService dashboardService = mock(AdminDashboardService.class);
         when(userContext.getCurrentUserId()).thenReturn(1L);
         when(gateway.resolveReport(org.mockito.ArgumentMatchers.eq(4L), any()))
                 .thenReturn(Map.of("id", 4L, "status", 1));
-        MockMvc mvc = MockMvcBuilders.standaloneSetup(new AdminOpsController(gateway, local, userContext)).build();
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(
+                new AdminOpsController(gateway, local, userContext, dashboardService)).build();
 
         mvc.perform(post("/api/admin/review-reports/4/resolve").contentType("application/json")
                         .content("{\"remark\":\"复核完成\"}"))
@@ -67,9 +73,10 @@ class OpsPublicApiTests {
     void logContractContainsRecordsAndRequestedSize() throws Exception {
         OpsAggregationGateway gateway = mock(OpsAggregationGateway.class);
         OpsLocalService local = mock(OpsLocalService.class);
+        AdminDashboardService dashboardService = mock(AdminDashboardService.class);
         when(local.logs(1, 20)).thenReturn(Map.of("records", List.of(), "total", 0, "page", 1, "size", 20));
         MockMvc mvc = MockMvcBuilders.standaloneSetup(
-                new AdminOpsController(gateway, local, mock(UserContext.class))).build();
+                new AdminOpsController(gateway, local, mock(UserContext.class), dashboardService)).build();
         mvc.perform(get("/api/admin/logs?page=1&size=20")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.records").isArray()).andExpect(jsonPath("$.data.size").value(20));
     }

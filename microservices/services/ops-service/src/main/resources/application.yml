@@ -12,6 +12,8 @@ app:
   security.jwt-secret: ${JWT_SECRET:}
   internal-service-token: ${INTERNAL_SERVICE_TOKEN}
   services:
+    connect-timeout-ms: ${OPS_INTERNAL_CONNECT_TIMEOUT_MS:1000}
+    read-timeout-ms: ${OPS_INTERNAL_READ_TIMEOUT_MS:2000}
     identity-url: ${IDENTITY_SERVICE_URL:http://127.0.0.1:8081}
     traffic-url: ${TRAFFIC_SERVICE_URL:http://127.0.0.1:8082}
     local-url: ${LOCAL_SERVICE_URL:http://127.0.0.1:8083}

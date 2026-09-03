@@ -21,14 +21,18 @@ public class AdminOpsController {
     private final OpsAggregationGateway gateway;
     private final OpsLocalService localService;
     private final UserContext userContext;
+    private final AdminDashboardService dashboardService;
 
-    public AdminOpsController(OpsAggregationGateway gateway, OpsLocalService localService, UserContext userContext) {
+    public AdminOpsController(OpsAggregationGateway gateway, OpsLocalService localService, UserContext userContext,
+                              AdminDashboardService dashboardService) {
         this.gateway = gateway;
         this.localService = localService;
         this.userContext = userContext;
+        this.dashboardService = dashboardService;
     }
 
     @GetMapping("/stats") public Result<Map<String, Object>> stats() { return Result.success(gateway.stats()); }
+    @GetMapping("/dashboard/data") public Result<Map<String, Object>> dashboard() { return Result.success(dashboardService.dashboard()); }
     @GetMapping("/users") public Result<List<Map<String, Object>>> users() { return Result.success(gateway.users()); }
     @GetMapping("/orders") public Result<List<Map<String, Object>>> orders() { return Result.success(gateway.orders()); }
     @GetMapping("/flights") public Result<List<Map<String, Object>>> flights() { return Result.success(gateway.flights()); }

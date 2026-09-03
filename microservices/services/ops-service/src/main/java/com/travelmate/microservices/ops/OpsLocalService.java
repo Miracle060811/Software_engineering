@@ -8,9 +8,14 @@ import com.travelmate.mapper.SysSensitiveWordMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class OpsLocalService {
@@ -67,6 +72,57 @@ public class OpsLocalService {
         result.put("page", normalizedPage);
         result.put("size", normalizedSize);
         return result;
+    }
+
+    public Map<String, Object> dashboardMetrics() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime recentStart = now.minusMinutes(15).withSecond(0).withNano(0);
+        List<SysLog> recentLogs = logMapper.selectList(new LambdaQueryWrapper<SysLog>()
+                .ge(SysLog::getCreateTime, recentStart));
+        List<SysLog> recentErrors = logMapper.selectList(new LambdaQueryWrapper<SysLog>()
+                .eq(SysLog::getStatus, 0)
+                .orderByDesc(SysLog::getCreateTime)
+                .last("LIMIT 10"));
+        long errorLogsToday = logMapper.selectCount(new LambdaQueryWrapper<SysLog>()
+                .eq(SysLog::getStatus, 0)
+                .ge(SysLog::getCreateTime, LocalDate.now().atStartOfDay()));
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("onlineUsers", recentLogs.stream()
+                .filter(log -> log.getCreateTime() != null && !log.getCreateTime().isBefore(now.minusMinutes(15)))
+                .map(SysLog::getUserId).filter(Objects::nonNull).distinct().count());
+        result.put("qpsTrend", buildLogTrend(recentLogs, now, false));
+        result.put("latencyTrend", buildLogTrend(recentLogs, now, true));
+        result.put("recentErrors", recentErrors.stream().map(this::errorRow).toList());
+        result.put("errorLogsToday", errorLogsToday);
+        return result;
+    }
+
+    private List<Map<String, Object>> buildLogTrend(List<SysLog> logs, LocalDateTime now, boolean latency) {
+        LocalDateTime start = now.minusMinutes(11).withSecond(0).withNano(0);
+        Map<LocalDateTime, List<SysLog>> grouped = logs.stream()
+                .filter(log -> log.getCreateTime() != null && !log.getCreateTime().isBefore(start))
+                .collect(Collectors.groupingBy(log -> log.getCreateTime().withSecond(0).withNano(0)));
+        List<Map<String, Object>> trend = new ArrayList<>();
+        for (int offset = 0; offset < 12; offset++) {
+            LocalDateTime minute = start.plusMinutes(offset);
+            List<SysLog> bucket = grouped.getOrDefault(minute, List.of());
+            long value = latency
+                    ? Math.round(bucket.stream().map(SysLog::getTimeMs).filter(Objects::nonNull)
+                            .mapToLong(Long::longValue).average().orElse(0D))
+                    : bucket.size();
+            trend.add(Map.of("time", minute.format(DateTimeFormatter.ofPattern("HH:mm")), "value", value));
+        }
+        return trend;
+    }
+
+    private Map<String, Object> errorRow(SysLog log) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("method", log.getMethod());
+        row.put("errorMsg", log.getErrorMsg());
+        row.put("timeMs", log.getTimeMs());
+        row.put("createTime", log.getCreateTime());
+        return row;
     }
 
     public void log(Long userId, String operation, int status, String error) {

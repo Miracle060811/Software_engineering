@@ -39,6 +39,8 @@ class OpsAdminSecurityTests {
     @MockitoBean
     private UserContext userContext;
     @MockitoBean
+    private AdminDashboardService dashboardService;
+    @MockitoBean
     private JwtUtil jwtUtil;
     @MockitoBean
     private SysLogMapper sysLogMapper;
@@ -55,6 +57,7 @@ class OpsAdminSecurityTests {
     void allAdminEndpointsRejectAnonymousAndNonAdmin() throws Exception {
         List<Endpoint> endpoints = List.of(
                 new Endpoint("GET", "/api/admin/stats"),
+                new Endpoint("GET", "/api/admin/dashboard/data"),
                 new Endpoint("GET", "/api/admin/users"),
                 new Endpoint("GET", "/api/admin/orders"),
                 new Endpoint("GET", "/api/admin/flights"),

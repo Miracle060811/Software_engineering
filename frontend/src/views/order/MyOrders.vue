@@ -251,6 +251,45 @@
           </div>
         </el-card>
       </el-tab-pane>
+
+      <el-tab-pane label="本地游订单" name="tour">
+        <div v-if="tourLoading">
+          <SkeletonBox type="list" :count="3" />
+        </div>
+
+        <EmptyState
+          v-else-if="tourOrders.length === 0"
+          icon="location"
+          title="暂无本地游订单"
+          description="还没有预订一日游或周边游产品"
+          action-text="去选产品"
+          @action="$router.push('/attractions')"
+        />
+
+        <el-card
+          v-else
+          v-for="order in tourOrders"
+          :key="order.orderNo"
+          class="order-card"
+        >
+          <div class="order-header">
+            <el-tag type="success" effect="light" round>
+              {{ order.tourType === 0 ? "一日游" : "周边游" }}
+            </el-tag>
+            <span class="order-no">{{ order.orderNo }}</span>
+            <el-tag type="success" round size="small">{{ getTourStatusLabel(order.status) }}</el-tag>
+          </div>
+          <div class="order-body">
+            <div class="hotel-name-row">{{ order.productName }}</div>
+            <div class="order-detail">出行日期：{{ order.travelDate }} | 人数：{{ order.participantCount }}</div>
+            <div class="order-detail">联系人：{{ order.contactName }} | 电话：{{ order.contactPhone }}</div>
+          </div>
+          <div class="order-footer">
+            <span class="order-amount">¥{{ order.amount }}</span>
+            <el-button size="small" round @click="openOrderDetail(order.orderNo, 'tour')">详情</el-button>
+          </div>
+        </el-card>
+      </el-tab-pane>
     </el-tabs>
 
     <!-- 校验码弹窗 -->
@@ -273,10 +312,10 @@
       <el-descriptions v-if="detailOrder" :column="1" border>
         <el-descriptions-item label="订单号">{{ detailOrder.orderNo }}</el-descriptions-item>
         <el-descriptions-item label="订单类型">
-          {{ detailType === "traffic" ? (detailOrder.orderType === 0 ? "机票" : "火车票") : detailType === "hotel" ? "酒店" : "景点门票" }}
+          {{ detailType === "traffic" ? (detailOrder.orderType === 0 ? "机票" : "火车票") : detailType === "hotel" ? "酒店" : detailType === "tour" ? (detailOrder.tourType === 0 ? "一日游" : "周边游") : "景点门票" }}
         </el-descriptions-item>
         <el-descriptions-item label="状态">
-          {{ detailType === "traffic" ? getTrafficStatusLabel(detailOrder.status) : detailType === "hotel" ? getHotelStatusLabel(detailOrder.status) : getAttractionStatusLabel(detailOrder.status) }}
+          {{ detailType === "traffic" ? getTrafficStatusLabel(detailOrder.status) : detailType === "hotel" ? getHotelStatusLabel(detailOrder.status) : detailType === "tour" ? getTourStatusLabel(detailOrder.status) : getAttractionStatusLabel(detailOrder.status) }}
         </el-descriptions-item>
         <el-descriptions-item label="金额">¥{{ detailOrder.amount }}</el-descriptions-item>
         <el-descriptions-item v-if="detailType === 'traffic'" label="路线">
@@ -297,6 +336,15 @@
         <el-descriptions-item v-if="detailType === 'attraction'" label="门票">
           成人票 {{ detailOrder.adultCount || 0 }}，儿童票 {{ detailOrder.childCount || 0 }}，共 {{ detailOrder.ticketCount || 1 }} 张
         </el-descriptions-item>
+        <el-descriptions-item v-if="detailType === 'tour'" label="产品">
+          {{ detailOrder.productName }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="detailType === 'tour'" label="出行">
+          {{ detailOrder.travelDate }}，{{ detailOrder.participantCount }} 人
+        </el-descriptions-item>
+        <el-descriptions-item v-if="detailType === 'tour'" label="联系人">
+          {{ detailOrder.contactName }}，{{ detailOrder.contactPhone }}
+        </el-descriptions-item>
         <el-descriptions-item label="创建时间">{{ detailOrder.createTime }}</el-descriptions-item>
         <el-descriptions-item label="支付时间">{{ detailOrder.payTime || "未支付" }}</el-descriptions-item>
       </el-descriptions>
@@ -316,7 +364,7 @@ import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 
 const route = useRoute();
-const initialTab = ["traffic", "waitlist", "hotel", "attraction"].includes(route.query.tab)
+const initialTab = ["traffic", "waitlist", "hotel", "attraction", "tour"].includes(route.query.tab)
   ? route.query.tab
   : "traffic";
 const activeTab = ref(initialTab);
@@ -324,10 +372,12 @@ const trafficOrders = ref([]);
 const waitlistOrders = ref([]);
 const hotelOrders = ref([]);
 const attractionOrders = ref([]);
+const tourOrders = ref([]);
 const trafficLoading = ref(false);
 const waitlistLoading = ref(false);
 const hotelLoading = ref(false);
 const attractionLoading = ref(false);
+const tourLoading = ref(false);
 const qrVisible = ref(false);
 const qrOrderNo = ref("");
 const detailVisible = ref(false);
@@ -361,6 +411,11 @@ const getHotelStatusLabel = (status) => {
 
 const getAttractionStatusLabel = (status) => {
   const map = { 1: "待核销", 2: "已核销", 4: "已取消/已退款" };
+  return map[status] ?? "未知";
+};
+
+const getTourStatusLabel = (status) => {
+  const map = { 1: "已预订/待出行", 2: "已完成", 4: "已取消" };
   return map[status] ?? "未知";
 };
 
@@ -417,6 +472,18 @@ const fetchAttractionOrders = async () => {
   }
 };
 
+const fetchTourOrders = async () => {
+  tourLoading.value = true;
+  try {
+    const data = await request.get("/api/tour/orders");
+    tourOrders.value = Array.isArray(data) ? data : [];
+  } catch (e) {
+    tourOrders.value = [];
+  } finally {
+    tourLoading.value = false;
+  }
+};
+
 const handleTabChange = (tab) => {
   if (tab === "waitlist") {
     fetchWaitlistOrders();
@@ -426,6 +493,9 @@ const handleTabChange = (tab) => {
   }
   if (tab === "attraction" && attractionOrders.value.length === 0) {
     fetchAttractionOrders();
+  }
+  if (tab === "tour" && tourOrders.value.length === 0) {
+    fetchTourOrders();
   }
 };
 
@@ -525,7 +595,9 @@ const openOrderDetail = async (orderNo, type) => {
         ? `/api/order/${orderNo}/receipt`
         : type === "hotel"
           ? `/api/hotel/order/${orderNo}/receipt`
-          : `/api/attraction/order/${orderNo}/receipt`,
+          : type === "tour"
+            ? `/api/tour/orders/${orderNo}`
+            : `/api/attraction/order/${orderNo}/receipt`,
     );
     detailVisible.value = true;
   } catch (e) {}
@@ -578,6 +650,8 @@ onMounted(() => {
     fetchHotelOrders();
   } else if (activeTab.value === "attraction") {
     fetchAttractionOrders();
+  } else if (activeTab.value === "tour") {
+    fetchTourOrders();
   } else {
     fetchTrafficOrders();
   }

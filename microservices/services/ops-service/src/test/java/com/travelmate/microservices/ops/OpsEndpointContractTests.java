@@ -26,6 +26,7 @@ class OpsEndpointContractTests {
     private OpsAggregationGateway gateway;
     private OpsLocalService localService;
     private UserContext userContext;
+    private AdminDashboardService dashboardService;
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -33,7 +34,9 @@ class OpsEndpointContractTests {
         gateway = mock(OpsAggregationGateway.class);
         localService = mock(OpsLocalService.class);
         userContext = mock(UserContext.class);
-        mockMvc = MockMvcBuilders.standaloneSetup(new AdminOpsController(gateway, localService, userContext))
+        dashboardService = mock(AdminDashboardService.class);
+        mockMvc = MockMvcBuilders.standaloneSetup(
+                        new AdminOpsController(gateway, localService, userContext, dashboardService))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
     }
 
@@ -41,6 +44,13 @@ class OpsEndpointContractTests {
     void adminOpsEndpointsExposeNormalContracts() throws Exception {
         when(userContext.getCurrentUserId()).thenReturn(1L);
         when(gateway.stats()).thenReturn(Map.of("totalUsers", 2L, "totalOrders", 3L));
+        when(dashboardService.dashboard()).thenReturn(Map.ofEntries(
+                Map.entry("totalUsers", 2L), Map.entry("totalOrders", 3L), Map.entry("todayOrders", 1L),
+                Map.entry("pendingPosts", 0L), Map.entry("todayGmv", 99), Map.entry("onlineUsers", 1L),
+                Map.entry("dailyTrend", List.of()), Map.entry("hotDestinations", List.of()),
+                Map.entry("orderTypeDist", List.of()), Map.entry("userGrowth", List.of()),
+                Map.entry("qpsTrend", List.of()), Map.entry("latencyTrend", List.of()),
+                Map.entry("recentErrors", List.of()), Map.entry("alerts", List.of())));
         when(gateway.users()).thenReturn(List.of(Map.of("id", 1L)));
         when(gateway.orders()).thenReturn(List.of(Map.of("id", 2L)));
         when(gateway.flights()).thenReturn(List.of(Map.of("id", 3L)));
@@ -54,6 +64,10 @@ class OpsEndpointContractTests {
         when(localService.logs(1, 20)).thenReturn(Map.of("records", List.of(), "total", 0, "page", 1, "size", 20));
 
         mockMvc.perform(get("/api/admin/stats")).andExpect(status().isOk()).andExpect(jsonPath("$.data.totalUsers").value(2));
+        mockMvc.perform(get("/api/admin/dashboard/data")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalUsers").value(2))
+                .andExpect(jsonPath("$.data.dailyTrend").isArray())
+                .andExpect(jsonPath("$.data.alerts").isArray());
         mockMvc.perform(get("/api/admin/users")).andExpect(status().isOk()).andExpect(jsonPath("$.data[0].id").value(1));
         mockMvc.perform(get("/api/admin/orders")).andExpect(status().isOk()).andExpect(jsonPath("$.data[0].id").value(2));
         mockMvc.perform(get("/api/admin/flights")).andExpect(status().isOk()).andExpect(jsonPath("$.data[0].id").value(3));
@@ -75,12 +89,13 @@ class OpsEndpointContractTests {
     void adminOpsEndpointsRejectMalformedParameters() throws Exception {
         when(userContext.getCurrentUserId()).thenReturn(1L);
         when(gateway.stats()).thenReturn(Map.of());
+        when(dashboardService.dashboard()).thenReturn(Map.of());
         when(gateway.users()).thenReturn(List.of());
         when(gateway.orders()).thenReturn(List.of());
         when(gateway.flights()).thenReturn(List.of());
         when(gateway.posts()).thenReturn(List.of());
         when(localService.listSensitiveWords()).thenReturn(List.of());
-        for (String path : List.of("/api/admin/stats", "/api/admin/users", "/api/admin/orders", "/api/admin/flights",
+        for (String path : List.of("/api/admin/stats", "/api/admin/dashboard/data", "/api/admin/users", "/api/admin/orders", "/api/admin/flights",
                 "/api/admin/posts", "/api/admin/sensitive-words")) {
             mockMvc.perform(get(path).param("unexpected", "ignored")).andExpect(status().isOk());
         }
