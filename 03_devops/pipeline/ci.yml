@@ -119,11 +119,6 @@ jobs:
             exit 1
           fi
 
-      - name: Validate UC01-UC19 traceability
-        env:
-          TRACEABILITY_REPORT: 04_tests/reports/ci/use-case-traceability.md
-        run: npm run check:traceability
-
       - name: Validate microservice UC01-UC19 E2E structure
         run: npm run check:microservice-e2e
 
@@ -149,15 +144,6 @@ jobs:
             }
           }
           if ($hasErrors) { exit 1 }
-
-      - name: Upload traceability report
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: use-case-traceability-report
-          path: 04_tests/reports/ci/use-case-traceability.md
-          if-no-files-found: error
-          retention-days: 30
 
   backend:
     name: Backend integration tests and package

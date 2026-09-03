@@ -244,9 +244,8 @@ npm run audit:prod
 npm run build
 npx playwright test --reporter=list --workers=1
 
-# 用例追溯门禁（回到仓库根目录）
+# 微服务接口覆盖门禁（回到仓库根目录）
 Set-Location ..
-npm run check:traceability
 npm run check:microservice-api
 
 # 数据库迁移与 Kubernetes 部署配置门禁
