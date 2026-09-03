@@ -187,6 +187,65 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="resetDialogVisible"
+      title="重置密码"
+      width="420px"
+      class="reset-dialog"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="resetFormRef"
+        :model="resetForm"
+        :rules="resetRules"
+        label-width="0"
+        class="auth-form"
+      >
+        <el-form-item prop="username">
+          <el-input
+            v-model="resetForm.username"
+            placeholder="请输入用户名"
+            size="large"
+            :prefix-icon="User"
+            class="auth-input"
+          />
+        </el-form-item>
+        <el-form-item prop="password">
+          <el-input
+            v-model="resetForm.password"
+            type="password"
+            placeholder="请输入新密码（至少6位）"
+            size="large"
+            :prefix-icon="Lock"
+            show-password
+            class="auth-input"
+          />
+        </el-form-item>
+        <el-form-item prop="confirmPassword">
+          <el-input
+            v-model="resetForm.confirmPassword"
+            type="password"
+            placeholder="请再次输入新密码"
+            size="large"
+            :prefix-icon="Lock"
+            show-password
+            class="auth-input"
+            @keyup.enter="handleResetPassword"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="resetDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="resetLoading"
+          @click="handleResetPassword"
+        >
+          重置密码
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -205,15 +264,19 @@ const activeTab = ref("login");
 const loading = ref(false);
 const adminLoading = ref(false);
 const adminDialogVisible = ref(false);
+const resetLoading = ref(false);
+const resetDialogVisible = ref(false);
 const blankRegisterClickCount = ref(0);
 
 const loginFormRef = ref(null);
 const registerFormRef = ref(null);
 const adminFormRef = ref(null);
+const resetFormRef = ref(null);
 
 const loginForm = ref({ username: "", password: "" });
 const registerForm = ref({ username: "", password: "", confirmPassword: "" });
 const adminForm = ref({ username: "", password: "", confirmPassword: "", secret: "" });
+const resetForm = ref({ username: "", password: "", confirmPassword: "" });
 
 const loginRules = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
@@ -269,8 +332,30 @@ const adminRules = {
   secret: [{ required: true, message: "请输入管理员注册密钥", trigger: "blur" }],
 };
 
+const resetRules = {
+  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+  password: [
+    { required: true, message: "请输入新密码", trigger: "blur" },
+    { min: 6, message: "密码至少6位", trigger: "blur" },
+  ],
+  confirmPassword: [
+    { required: true, message: "请确认新密码", trigger: "blur" },
+    {
+      validator: (_rule, value, callback) => {
+        if (value !== resetForm.value.password) {
+          callback(new Error("两次密码不一致"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
+  ],
+};
+
 const openResetDialog = () => {
-  ElMessage.warning("自助密码重置已关闭，请联系管理员核验身份后处理");
+  resetForm.value = { username: "", password: "", confirmPassword: "" };
+  resetDialogVisible.value = true;
 };
 
 const handleLogin = async () => {
@@ -346,6 +431,28 @@ const handleAdminRegister = async () => {
     // error handled in request.js
   } finally {
     adminLoading.value = false;
+  }
+};
+
+const handleResetPassword = async () => {
+  const valid = await resetFormRef.value?.validate().catch(() => false);
+  if (!valid) return;
+  resetLoading.value = true;
+  try {
+    await request.post("/user/reset-password", null, {
+      params: {
+        username: resetForm.value.username.trim(),
+        newPassword: resetForm.value.password,
+      },
+    });
+    ElMessage.success("密码重置成功，请使用新密码登录");
+    resetDialogVisible.value = false;
+    resetForm.value = { username: "", password: "", confirmPassword: "" };
+    activeTab.value = "login";
+  } catch (e) {
+    // error handled in request.js
+  } finally {
+    resetLoading.value = false;
   }
 };
 

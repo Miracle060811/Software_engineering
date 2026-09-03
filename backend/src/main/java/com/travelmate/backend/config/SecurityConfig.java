@@ -30,6 +30,7 @@ public class SecurityConfig {
                                                 "/user/register",
                                                 "/user/login",
                                                 "/user/admin-register",
+                                                "/user/reset-password",
                                                 "/internal/**"))
                                 .cors(Customizer.withDefaults())
                                 .formLogin(form -> form.disable())
@@ -65,6 +66,7 @@ public class SecurityConfig {
                                                 .requestMatchers(
                                                                 "/user/register", "/user/login",
                                                                 "/user/admin-register",
+                                                                "/user/reset-password",
                                                                 "/user/refresh", "/user/logout",
                                                 "/internal/**",
                                                 "/actuator/health",

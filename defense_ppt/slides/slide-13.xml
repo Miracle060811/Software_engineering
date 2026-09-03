@@ -1,0 +1,101 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgb(242,244,248)"/>
+    </fill>
+  </style>
+  <data>
+    <shape type="text" topLeftX="56" topLeftY="26" width="500" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(37,99,235,1)" wrap="false">
+        <p>10 / TEST RESULTS</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="848" topLeftY="26" width="56" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(140,150,166,1)" textAlign="right" wrap="false">
+        <p>13 / 17</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="56" topLeftY="46" width="848" height="36">
+      <content textType="title" fontSize="22" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>测试结果：六层共 276 项自动化测试全部通过，零失败零跳过</p>
+      </content>
+    </shape>
+    <line startX="56" startY="92" endX="904" endY="92">
+      <border color="rgb(217,222,231)" width="1"/>
+    </line>
+    <table topLeftX="56" topLeftY="106" width="848" height="270">
+      <colgroup><col width="190"/><col width="208"/><col width="120"/><col width="120"/><col width="210"/></colgroup>
+      <tr height="30">
+        <td><fill><fillColor color="rgba(13,19,38,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(255,255,255,1)" textAlign="left"><p>　测试层</p></content></td>
+        <td><fill><fillColor color="rgba(13,19,38,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(255,255,255,1)" textAlign="left"><p>　工具与范围</p></content></td>
+        <td><fill><fillColor color="rgba(13,19,38,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(255,255,255,1)" textAlign="center"><p>用例数</p></content></td>
+        <td><fill><fillColor color="rgba(13,19,38,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(255,255,255,1)" textAlign="center"><p>结果</p></content></td>
+        <td><fill><fillColor color="rgba(13,19,38,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(255,255,255,1)" textAlign="left"><p>　执行位置</p></content></td>
+      </tr>
+      <tr height="40">
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(13,19,38,1)" textAlign="left"><p>　单体后端单元 / 集成</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　JUnit 5 + MockMvc</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="11" fontFamily="Roboto Mono" bold="true" color="rgba(13,19,38,1)" textAlign="center"><p>161</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(30,126,69,1)" textAlign="center"><p>全部通过</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　本地 + CI backend Job</p></content></td>
+      </tr>
+      <tr height="40">
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(13,19,38,1)" textAlign="left"><p>　前端组件单元</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　Vitest + Vue Test Utils</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="11" fontFamily="Roboto Mono" bold="true" color="rgba(13,19,38,1)" textAlign="center"><p>24</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(30,126,69,1)" textAlign="center"><p>全部通过</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　本地 + CI frontend Job</p></content></td>
+      </tr>
+      <tr height="40">
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(13,19,38,1)" textAlign="left"><p>　单体端到端（Mock 后端）</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　Playwright 路由拦截</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="11" fontFamily="Roboto Mono" bold="true" color="rgba(13,19,38,1)" textAlign="center"><p>6</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(30,126,69,1)" textAlign="center"><p>全部通过</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　CI frontend Job</p></content></td>
+      </tr>
+      <tr height="40">
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(13,19,38,1)" textAlign="left"><p>　单体端到端（真实数据库）</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　Playwright + 容器化 MySQL</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="11" fontFamily="Roboto Mono" bold="true" color="rgba(13,19,38,1)" textAlign="center"><p>16</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(30,126,69,1)" textAlign="center"><p>全部通过</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　CI real-e2e Job</p></content></td>
+      </tr>
+      <tr height="40">
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(13,19,38,1)" textAlign="left"><p>　六服务单元 / 集成</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　JUnit 5 + MockRestServiceServer</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="11" fontFamily="Roboto Mono" bold="true" color="rgba(13,19,38,1)" textAlign="center"><p>52</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(30,126,69,1)" textAlign="center"><p>全部通过</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　CI microservices Job</p></content></td>
+      </tr>
+      <tr height="40">
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(13,19,38,1)" textAlign="left"><p>　六服务端到端（UC01–19）</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　Playwright 路由到 8081–8086</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="11" fontFamily="Roboto Mono" bold="true" color="rgba(13,19,38,1)" textAlign="center"><p>17</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(30,126,69,1)" textAlign="center"><p>全部通过</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(46,52,60,1)" textAlign="left"><p>　本地真实库 + CI 证据</p></content></td>
+      </tr>
+    </table>
+    <line startX="56" startY="394" endX="904" endY="394">
+      <border color="rgb(217,222,231)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="56" topLeftY="406" width="410" height="110">
+      <content textType="body" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.7">
+        <p><strong>关键业务断言（节选）</strong></p>
+        <p>UC06 并发抢房：Redis 锁加数据库事务，库存不出现负值、不超卖；</p>
+        <p>UC02 越权访问被拦截；UC14 订单状态机完整流转、退改可回滚。</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="496" topLeftY="406" width="408" height="110">
+      <content textType="body" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.7">
+        <p><strong>质量闭环</strong></p>
+        <p>19 个用例在追溯矩阵中全部 covered；每次提交 CI 必跑六层测试，</p>
+        <p>失败即阻断合并；测试执行报告按日期归档于 document/ 与 docs/ci。</p>
+      </content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>测试分六层：单体后端 161 个、前端组件 24 个、Mock 端到端 6 个、真实数据库端到端 16 个，拆分后六服务新增 52 个后端测试和 17 个微服务端到端，合计 276 项，全部通过、零失败零跳过。下方是两个值得展开的点：一是关键业务断言，比如并发抢房防超卖和越权拦截；二是质量闭环，19 个用例全部可追溯，每次提交 CI 必跑，失败直接阻断合并。</p>
+    </content>
+  </note>
+</slide>

@@ -1,0 +1,85 @@
+=== identity-service（故障前） ===
+--- pod: identity-service-5ffc7669f9-67hlj ---
+--- pod: identity-service-5ffc7669f9-s7blw ---
+=== traffic-service ===
+--- pod: traffic-service-c6cbd7b94-ggc4z ---
+--- pod: traffic-service-c6cbd7b94-rcbt5 ---
+=== identity-service（恢复后） ===
+--- pod: identity-service-5ffc7669f9-jf9pc ---
+Picked up JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70.0 -XX:+ExitOnOutOfMemoryError
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.15)
+
+2026-09-02T14:23:11.439Z  INFO 1 --- [identity-service] [           main] c.t.m.i.IdentityServiceApplication       : Starting IdentityServiceApplication v0.1.0-SNAPSHOT using Java 21.0.12 with PID 1 (/app/app.jar started by ? in /app)
+2026-09-02T14:23:11.441Z  INFO 1 --- [identity-service] [           main] c.t.m.i.IdentityServiceApplication       : No active profile set, falling back to 1 default profile: "default"
+2026-09-02T14:23:15.426Z  INFO 1 --- [identity-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8081 (http)
+2026-09-02T14:23:15.437Z  INFO 1 --- [identity-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-02T14:23:15.438Z  INFO 1 --- [identity-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-09-02T14:23:15.632Z  INFO 1 --- [identity-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-09-02T14:23:15.633Z  INFO 1 --- [identity-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4085 ms
+ _ _   |_  _ _|_. ___ _ |    _
+| | |\/|_)(_| | |_\  |_)||_|_\
+     /               |
+                        3.5.7
+2026-09-02T14:23:17.645Z  WARN 1 --- [identity-service] [           main] .s.s.UserDetailsServiceAutoConfiguration :
+
+Using generated security password: [REDACTED]
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-09-02T14:23:17.649Z  INFO 1 --- [identity-service] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-09-02T14:23:18.353Z  INFO 1 --- [identity-service] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-09-02T14:23:19.334Z  INFO 1 --- [identity-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8081 (http) with context path '/'
+2026-09-02T14:23:19.345Z  INFO 1 --- [identity-service] [           main] c.t.m.i.IdentityServiceApplication       : Started IdentityServiceApplication in 9.128 seconds (process running for 10.223)
+2026-09-02T14:23:23.919Z  INFO 1 --- [identity-service] [nio-8081-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-02T14:23:23.920Z  INFO 1 --- [identity-service] [nio-8081-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-02T14:23:23.923Z  INFO 1 --- [identity-service] [nio-8081-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+2026-09-02T14:23:24.246Z  INFO 1 --- [identity-service] [nio-8081-exec-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-02T14:23:25.042Z  INFO 1 --- [identity-service] [nio-8081-exec-2] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@fee14d
+2026-09-02T14:23:25.045Z  INFO 1 --- [identity-service] [nio-8081-exec-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+--- pod: identity-service-5ffc7669f9-s8xch ---
+Picked up JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70.0 -XX:+ExitOnOutOfMemoryError
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.15)
+
+2026-09-02T14:23:11.660Z  INFO 1 --- [identity-service] [           main] c.t.m.i.IdentityServiceApplication       : Starting IdentityServiceApplication v0.1.0-SNAPSHOT using Java 21.0.12 with PID 1 (/app/app.jar started by ? in /app)
+2026-09-02T14:23:11.662Z  INFO 1 --- [identity-service] [           main] c.t.m.i.IdentityServiceApplication       : No active profile set, falling back to 1 default profile: "default"
+2026-09-02T14:23:15.723Z  INFO 1 --- [identity-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8081 (http)
+2026-09-02T14:23:15.763Z  INFO 1 --- [identity-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-02T14:23:15.764Z  INFO 1 --- [identity-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-09-02T14:23:15.964Z  INFO 1 --- [identity-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-09-02T14:23:15.966Z  INFO 1 --- [identity-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4146 ms
+ _ _   |_  _ _|_. ___ _ |    _
+| | |\/|_)(_| | |_\  |_)||_|_\
+     /               |
+                        3.5.7
+2026-09-02T14:23:17.971Z  WARN 1 --- [identity-service] [           main] .s.s.UserDetailsServiceAutoConfiguration :
+
+Using generated security password: [REDACTED]
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-09-02T14:23:17.976Z  INFO 1 --- [identity-service] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-09-02T14:23:18.672Z  INFO 1 --- [identity-service] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-09-02T14:23:19.670Z  INFO 1 --- [identity-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8081 (http) with context path '/'
+2026-09-02T14:23:19.721Z  INFO 1 --- [identity-service] [           main] c.t.m.i.IdentityServiceApplication       : Started IdentityServiceApplication in 9.498 seconds (process running for 10.6)
+2026-09-02T14:23:24.022Z  INFO 1 --- [identity-service] [nio-8081-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-02T14:23:24.022Z  INFO 1 --- [identity-service] [nio-8081-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-02T14:23:24.024Z  INFO 1 --- [identity-service] [nio-8081-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-09-02T14:23:24.422Z  INFO 1 --- [identity-service] [nio-8081-exec-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-02T14:23:25.328Z  INFO 1 --- [identity-service] [nio-8081-exec-2] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@fee14d
+2026-09-02T14:23:25.331Z  INFO 1 --- [identity-service] [nio-8081-exec-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.

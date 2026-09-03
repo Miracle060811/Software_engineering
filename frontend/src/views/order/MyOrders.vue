@@ -81,6 +81,65 @@
         </el-card>
       </el-tab-pane>
 
+      <!-- 火车候补 -->
+      <el-tab-pane label="候补订单" name="waitlist">
+        <div v-if="waitlistLoading">
+          <SkeletonBox type="list" :count="2" />
+        </div>
+
+        <EmptyState
+          v-else-if="waitlistOrders.length === 0"
+          icon="tickets"
+          title="暂无候补订单"
+          description="提交火车票候补后，可以在这里查看进度"
+          action-text="去搜索火车票"
+          @action="$router.push('/train-search')"
+        />
+
+        <el-card
+          v-else
+          v-for="order in waitlistOrders"
+          :key="order.id"
+          class="order-card"
+        >
+          <div class="order-header">
+            <el-tag type="warning" effect="light" round>火车候补</el-tag>
+            <span class="order-no">候补编号：{{ order.id }}</span>
+            <el-tag :type="getWaitlistStatusType(order.status)" round size="small">
+              {{ getWaitlistStatusLabel(order.status) }}
+            </el-tag>
+          </div>
+          <div class="order-body">
+            <div class="order-route">
+              <span class="route-city">{{ order.departureStation }}</span>
+              <span class="route-arrow">→</span>
+              <span class="route-city">{{ order.arrivalStation }}</span>
+            </div>
+            <div class="order-detail">
+              车次：{{ order.trainNo }} | 出发：{{ formatDateTime(order.departureTime) }}
+            </div>
+            <div class="order-detail">
+              乘客：{{ order.passengerName }} | 席位：{{ order.seatType }} | 数量：{{ order.ticketCount || 1 }}
+            </div>
+          </div>
+          <div class="order-footer">
+            <span class="order-detail">提交时间：{{ formatDateTime(order.createTime) }}</span>
+            <div class="order-actions">
+              <el-button
+                v-if="order.status === 0"
+                type="danger"
+                plain
+                size="small"
+                round
+                @click="cancelWaitlist(order.id)"
+              >
+                取消候补
+              </el-button>
+            </div>
+          </div>
+        </el-card>
+      </el-tab-pane>
+
       <!-- 酒店订单 -->
       <el-tab-pane label="酒店订单" name="hotel">
         <div v-if="hotelLoading">
@@ -257,14 +316,16 @@ import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 
 const route = useRoute();
-const initialTab = ["traffic", "hotel", "attraction"].includes(route.query.tab)
+const initialTab = ["traffic", "waitlist", "hotel", "attraction"].includes(route.query.tab)
   ? route.query.tab
   : "traffic";
 const activeTab = ref(initialTab);
 const trafficOrders = ref([]);
+const waitlistOrders = ref([]);
 const hotelOrders = ref([]);
 const attractionOrders = ref([]);
 const trafficLoading = ref(false);
+const waitlistLoading = ref(false);
 const hotelLoading = ref(false);
 const attractionLoading = ref(false);
 const qrVisible = ref(false);
@@ -276,6 +337,21 @@ const detailType = ref("traffic");
 const getTrafficStatusLabel = (status) => {
   const map = { 0: "待支付", 1: "出票中", 2: "已出票", 3: "已取消", 4: "已退票", 5: "退票申请中" };
   return map[status] ?? "未知";
+};
+
+const getWaitlistStatusLabel = (status) => {
+  const map = { 0: "候补中", 1: "已兑现", 2: "已取消" };
+  return map[status] ?? "未知";
+};
+
+const getWaitlistStatusType = (status) => {
+  const map = { 0: "warning", 1: "success", 2: "info" };
+  return map[status] ?? "info";
+};
+
+const formatDateTime = (value) => {
+  if (!value) return "--";
+  return new Date(value).toLocaleString("zh-CN", { hour12: false });
 };
 
 const getHotelStatusLabel = (status) => {
@@ -305,6 +381,18 @@ const fetchTrafficOrders = async () => {
   }
 };
 
+const fetchWaitlistOrders = async () => {
+  waitlistLoading.value = true;
+  try {
+    const data = await request.get("/api/train/waitlist/mine");
+    waitlistOrders.value = Array.isArray(data) ? data : [];
+  } catch (e) {
+    waitlistOrders.value = [];
+  } finally {
+    waitlistLoading.value = false;
+  }
+};
+
 const fetchHotelOrders = async () => {
   hotelLoading.value = true;
   try {
@@ -330,12 +418,28 @@ const fetchAttractionOrders = async () => {
 };
 
 const handleTabChange = (tab) => {
+  if (tab === "waitlist") {
+    fetchWaitlistOrders();
+  }
   if (tab === "hotel" && hotelOrders.value.length === 0) {
     fetchHotelOrders();
   }
   if (tab === "attraction" && attractionOrders.value.length === 0) {
     fetchAttractionOrders();
   }
+};
+
+const cancelWaitlist = async (id) => {
+  await ElMessageBox.confirm("确认取消这条候补申请？取消后不能恢复。", "取消候补", {
+    type: "warning",
+    confirmButtonText: "确认取消",
+    cancelButtonText: "暂不取消",
+  });
+  try {
+    await request.post(`/api/train/waitlist/${id}/cancel`);
+    ElMessage.success("候补申请已取消");
+    await fetchWaitlistOrders();
+  } catch (e) {}
 };
 
 const payOrder = async (orderNo, type) => {
@@ -468,7 +572,9 @@ const cancelOrder = async (orderNo, type) => {
 };
 
 onMounted(() => {
-  if (activeTab.value === "hotel") {
+  if (activeTab.value === "waitlist") {
+    fetchWaitlistOrders();
+  } else if (activeTab.value === "hotel") {
     fetchHotelOrders();
   } else if (activeTab.value === "attraction") {
     fetchAttractionOrders();

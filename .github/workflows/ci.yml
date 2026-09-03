@@ -955,6 +955,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+
       - name: Build and push immutable service image
         id: build
         shell: bash
@@ -962,7 +965,7 @@ jobs:
           set -euo pipefail
           image_ref="$IMAGE:$IMAGE_TAG"
           build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          docker build --pull \
+          docker buildx build --pull --push \
             --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
             --label "org.opencontainers.image.revision=$RELEASE_SHA" \
             --label "org.opencontainers.image.created=$build_date" \
@@ -970,8 +973,6 @@ jobs:
             --tag "$image_ref" \
             "microservices/services/$SERVICE" \
             2>&1 | tee "$EVIDENCE_DIR/docker-build-push.log"
-          docker push "$image_ref" \
-            2>&1 | tee -a "$EVIDENCE_DIR/docker-build-push.log"
           echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Record immutable image digest
@@ -1181,6 +1182,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+
       - name: Build and push immutable commit images
         id: build
         shell: bash
@@ -1191,21 +1195,19 @@ jobs:
           image_tag="sha-$RELEASE_SHA"
           build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
-          docker build --pull \
+          docker buildx build --pull --push \
             --build-arg "GIT_SHA=$RELEASE_SHA" \
             --build-arg "BUILD_DATE=$build_date" \
             --build-arg "IMAGE_VERSION=$image_tag" \
             --tag "$BACKEND_IMAGE:$image_tag" \
             backend
-          docker build --pull \
+          docker buildx build --pull --push \
             --build-arg "GIT_SHA=$RELEASE_SHA" \
             --build-arg "BUILD_DATE=$build_date" \
             --build-arg "IMAGE_VERSION=$image_tag" \
             --tag "$FRONTEND_IMAGE:$image_tag" \
             frontend
 
-          docker push "$BACKEND_IMAGE:$image_tag"
-          docker push "$FRONTEND_IMAGE:$image_tag"
           echo "image_tag=$image_tag" >> "$GITHUB_OUTPUT"
 
       - name: Scan backend image
@@ -1242,18 +1244,16 @@ jobs:
           frontend_sha="$FRONTEND_IMAGE:$image_tag"
 
           for channel in main deploy; do
-            docker tag "$backend_sha" "$BACKEND_IMAGE:$channel"
-            docker tag "$frontend_sha" "$FRONTEND_IMAGE:$channel"
-            docker push "$BACKEND_IMAGE:$channel"
-            docker push "$FRONTEND_IMAGE:$channel"
+            docker buildx imagetools create \
+              "$backend_sha" --tag "$BACKEND_IMAGE:$channel"
+            docker buildx imagetools create \
+              "$frontend_sha" --tag "$FRONTEND_IMAGE:$channel"
           done
 
-          backend_digest="$(docker image inspect "$backend_sha" --format '{{json .RepoDigests}}' \
-            | jq -r --arg prefix "$BACKEND_IMAGE@sha256:" '.[] | select(startswith($prefix))' \
-            | head -n1)"
-          frontend_digest="$(docker image inspect "$frontend_sha" --format '{{json .RepoDigests}}' \
-            | jq -r --arg prefix "$FRONTEND_IMAGE@sha256:" '.[] | select(startswith($prefix))' \
-            | head -n1)"
+          backend_digest="$(docker buildx imagetools inspect "$backend_sha" --format '{{json .Manifest}}' \
+            | jq -r '.digest // empty')"
+          frontend_digest="$(docker buildx imagetools inspect "$frontend_sha" --format '{{json .Manifest}}' \
+            | jq -r '.digest // empty')"
           test -n "$backend_digest"
           test -n "$frontend_digest"
           echo "backend_digest=$backend_digest" >> "$GITHUB_OUTPUT"
@@ -1296,7 +1296,7 @@ jobs:
       - Windows
       - X64
       - travelmate-deploy
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       actions: read
       contents: read
@@ -1433,11 +1433,13 @@ jobs:
 
           $backendImage = (& kubectl get deployment travelmate-backend -n travelmate -o "jsonpath={.spec.template.spec.containers[0].image}").Trim()
           $frontendImage = (& kubectl get deployment travelmate-frontend -n travelmate -o "jsonpath={.spec.template.spec.containers[0].image}").Trim()
-          if ($backendImage -ne $env:EXPECTED_BACKEND_IMAGE) {
-            throw "Backend digest mismatch: expected $env:EXPECTED_BACKEND_IMAGE, found $backendImage"
+          $backendDigest = $backendImage -replace '^.*@',''
+          $frontendDigest = $frontendImage -replace '^.*@',''
+          if ($backendDigest -ne $env:EXPECTED_BACKEND_IMAGE) {
+            throw "Backend digest mismatch: expected $env:EXPECTED_BACKEND_IMAGE, found $backendDigest (image: $backendImage)"
           }
-          if ($frontendImage -ne $env:EXPECTED_FRONTEND_IMAGE) {
-            throw "Frontend digest mismatch: expected $env:EXPECTED_FRONTEND_IMAGE, found $frontendImage"
+          if ($frontendDigest -ne $env:EXPECTED_FRONTEND_IMAGE) {
+            throw "Frontend digest mismatch: expected $env:EXPECTED_FRONTEND_IMAGE, found $frontendDigest (image: $frontendImage)"
           }
 
           $frontendHealth = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:30080/healthz" -TimeoutSec 15
@@ -1479,11 +1481,73 @@ jobs:
             $microserviceSummary.Add("$($service.Name)_health=$health")
           }
 
-          $podState = kubectl get pods -n travelmate -l app.kubernetes.io/component=microservice -o json | ConvertFrom-Json
-          $activePods = @($podState.items | Where-Object { $null -eq $_.metadata.deletionTimestamp })
-          if ($activePods.Count -ne 6) {
-            throw "Expected six active microservice Pods, found $($activePods.Count)"
+          $microserviceNames = @($microservices | ForEach-Object { $_.Name })
+          $activePods = @()
+          $expectedPodTotal = 0
+          $replicaSummary = [System.Collections.Generic.List[string]]::new()
+          for ($attempt = 0; $attempt -lt 12; $attempt++) {
+            $deploymentState = kubectl get deployments -n travelmate -l app.kubernetes.io/component=microservice -o json | ConvertFrom-Json
+            $podState = kubectl get pods -n travelmate -l app.kubernetes.io/component=microservice -o json | ConvertFrom-Json
+            $activePods = @($podState.items | Where-Object { $null -eq $_.metadata.deletionTimestamp })
+            $validationErrors = [System.Collections.Generic.List[string]]::new()
+            $replicaSummary = [System.Collections.Generic.List[string]]::new()
+            $expectedPodTotal = 0
+
+            $deployedNames = @($deploymentState.items | ForEach-Object { $_.metadata.name })
+            foreach ($name in $microserviceNames) {
+              if ($name -notin $deployedNames) {
+                $validationErrors.Add("Missing microservice Deployment $name")
+              }
+            }
+            foreach ($name in $deployedNames) {
+              if ($name -notin $microserviceNames) {
+                $validationErrors.Add("Unexpected microservice Deployment $name")
+              }
+            }
+
+            foreach ($service in $microservices) {
+              $deployment = @($deploymentState.items | Where-Object { $_.metadata.name -eq $service.Name })
+              if ($deployment.Count -ne 1) {
+                continue
+              }
+
+              $desiredReplicas = [int]$deployment[0].spec.replicas
+              $readyReplicas = if ($null -eq $deployment[0].status.readyReplicas) { 0 } else { [int]$deployment[0].status.readyReplicas }
+              $availableReplicas = if ($null -eq $deployment[0].status.availableReplicas) { 0 } else { [int]$deployment[0].status.availableReplicas }
+              $servicePods = @($activePods | Where-Object { $_.metadata.labels.'app.kubernetes.io/name' -eq $service.Name })
+              $expectedPodTotal += $desiredReplicas
+              $replicaSummary.Add("$($service.Name)_replicas=$readyReplicas/$desiredReplicas")
+
+              if ($desiredReplicas -lt 1) {
+                $validationErrors.Add("$($service.Name) has no desired replicas")
+              }
+              if ($readyReplicas -ne $desiredReplicas -or $availableReplicas -ne $desiredReplicas) {
+                $validationErrors.Add("$($service.Name) replicas are not ready: desired=$desiredReplicas ready=$readyReplicas available=$availableReplicas")
+              }
+              if ($servicePods.Count -ne $desiredReplicas) {
+                $validationErrors.Add("$($service.Name) Pod count mismatch: desired=$desiredReplicas active=$($servicePods.Count)")
+              }
+            }
+
+            $unexpectedPods = @($activePods | Where-Object {
+              $_.metadata.labels.'app.kubernetes.io/name' -notin $microserviceNames
+            })
+            if ($unexpectedPods.Count -gt 0) {
+              $validationErrors.Add("Unexpected microservice Pods: $(@($unexpectedPods | ForEach-Object { $_.metadata.name }) -join ', ')")
+            }
+            if ($activePods.Count -ne $expectedPodTotal) {
+              $validationErrors.Add("Microservice Pod total mismatch: expected=$expectedPodTotal active=$($activePods.Count)")
+            }
+
+            if ($validationErrors.Count -eq 0) {
+              break
+            }
+            if ($attempt -eq 11) {
+              throw "Microservice replicas did not stabilize: $($validationErrors -join '; ')"
+            }
+            Start-Sleep -Seconds 5
           }
+
           foreach ($pod in $activePods) {
             $readyCondition = @($pod.status.conditions | Where-Object { $_.type -eq "Ready" -and $_.status -eq "True" })
             if ($readyCondition.Count -ne 1) {
@@ -1508,10 +1572,11 @@ jobs:
             "frontend=$frontendImage"
             "frontend_health=$($frontendHealth.StatusCode)"
             "backend_health=$backendHealth"
+            "microservice_deployments_ready=6/6"
             "microservice_pods_ready=$($activePods.Count)"
             "microservice_container_restarts=0"
           )
-          $summary + $microserviceSummary | Set-Content -LiteralPath (Join-Path $evidenceDirectory "deployment-summary.txt") -Encoding utf8
+          $summary + $microserviceSummary + $replicaSummary | Set-Content -LiteralPath (Join-Path $evidenceDirectory "deployment-summary.txt") -Encoding utf8
 
       - name: Capture deployment state and logs
         if: always()

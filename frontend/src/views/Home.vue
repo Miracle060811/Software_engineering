@@ -2947,8 +2947,17 @@ const quickSearch = (hint) => {
 
 .section-link-btn {
   flex: 0 0 auto;
-  color: var(--tm-deep);
+  color: var(--tm-deep) !important;
   font-weight: 760;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.section-link-btn:hover,
+.section-link-btn:focus-visible {
+  color: var(--tm-primary) !important;
+  background: transparent !important;
 }
 
 .editorial-dest-grid {

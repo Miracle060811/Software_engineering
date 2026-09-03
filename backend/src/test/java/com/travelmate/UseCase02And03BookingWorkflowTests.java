@@ -27,6 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -169,6 +170,44 @@ class UseCase02And03BookingWorkflowTests {
         assertThat(captor.getValue().getTrainNo()).isEqualTo("G101");
         assertThat(captor.getValue().getPassengerIdCard()).isEqualTo("TEST-ID");
         assertThat(captor.getValue().getStatus()).isZero();
+    }
+
+    @Test
+    void intTc103ListsOnlyCurrentUsersWaitlistsAndAllowsOwnerToCancel() {
+        TrainWaitlistMapper waitlistMapper = mock(TrainWaitlistMapper.class);
+        TrainWaitlistServiceImpl waitlistService = new TrainWaitlistServiceImpl(trainMapper,
+                new LocalPassengerGateway(passengerMapper));
+        ReflectionTestUtils.setField(waitlistService, "baseMapper", waitlistMapper);
+        TrainWaitlist item = new TrainWaitlist();
+        item.setId(81L);
+        item.setUserId(7L);
+        item.setStatus(0);
+        when(waitlistMapper.selectList(any())).thenReturn(List.of(item));
+        when(waitlistMapper.selectById(81L)).thenReturn(item);
+        when(waitlistMapper.updateById(any(TrainWaitlist.class))).thenReturn(1);
+
+        assertThat(waitlistService.listWaitlists(7L)).containsExactly(item);
+        waitlistService.cancelWaitlist(7L, 81L);
+
+        assertThat(item.getStatus()).isEqualTo(2);
+        verify(waitlistMapper).updateById(item);
+    }
+
+    @Test
+    void unitTc103RejectsCancellingAnotherUsersWaitlist() {
+        TrainWaitlistMapper waitlistMapper = mock(TrainWaitlistMapper.class);
+        TrainWaitlistServiceImpl waitlistService = new TrainWaitlistServiceImpl(trainMapper,
+                new LocalPassengerGateway(passengerMapper));
+        ReflectionTestUtils.setField(waitlistService, "baseMapper", waitlistMapper);
+        TrainWaitlist item = new TrainWaitlist();
+        item.setId(81L);
+        item.setUserId(8L);
+        item.setStatus(0);
+        when(waitlistMapper.selectById(81L)).thenReturn(item);
+
+        assertThatThrownBy(() -> waitlistService.cancelWaitlist(7L, 81L))
+                .hasMessage("候补记录不存在");
+        verify(waitlistMapper, never()).updateById(any(TrainWaitlist.class));
     }
 
     private FlightOrderCreateDTO flightDto(Long flightId, Long passengerId, int count) {

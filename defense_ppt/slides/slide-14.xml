@@ -1,0 +1,125 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgb(242,244,248)"/>
+    </fill>
+  </style>
+  <data>
+    <shape type="text" topLeftX="56" topLeftY="26" width="500" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(37,99,235,1)" wrap="false">
+        <p>11 / AUTOSCALING</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="848" topLeftY="26" width="56" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(140,150,166,1)" textAlign="right" wrap="false">
+        <p>14 / 17</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="56" topLeftY="46" width="848" height="36">
+      <content textType="title" fontSize="22" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>自动扩缩容：六个 HPA 按 CPU 60% 在 2 到 6 副本间弹性伸缩</p>
+      </content>
+    </shape>
+    <line startX="56" startY="92" endX="904" endY="92">
+      <border color="rgb(217,222,231)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="56" topLeftY="106" width="424" height="22">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>HPA 策略（hpa.yaml 已入库的真实配置）</p>
+      </content>
+    </shape>
+    <line startX="56" startY="134" endX="480" endY="134">
+      <border color="rgb(37,99,235)" width="2"/>
+    </line>
+    <table topLeftX="56" topLeftY="146" width="424" height="278">
+      <colgroup><col width="150"/><col width="274"/></colgroup>
+      <tr height="34">
+        <td><fill><fillColor color="rgba(13,19,38,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(255,255,255,1)" textAlign="left"><p>　参数</p></content></td>
+        <td><fill><fillColor color="rgba(13,19,38,1)"/></fill><content textType="caption" fontSize="10" bold="true" color="rgba(255,255,255,1)" textAlign="left"><p>　取值（autoscaling/v2）</p></content></td>
+      </tr>
+      <tr height="40">
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" color="rgba(83,97,116,1)" textAlign="left"><p>　绑定对象</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="left"><p>　6 个业务 Deployment 各 1 个 HPA</p></content></td>
+      </tr>
+      <tr height="40">
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" color="rgba(83,97,116,1)" textAlign="left"><p>　触发指标</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(13,19,38,1)" textAlign="left"><p>　CPU averageUtilization = 60%</p></content></td>
+      </tr>
+      <tr height="40">
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" color="rgba(83,97,116,1)" textAlign="left"><p>　副本区间</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" fontFamily="Roboto Mono" bold="true" color="rgba(37,99,235,1)" textAlign="left"><p>　minReplicas 2 → maxReplicas 6</p></content></td>
+      </tr>
+      <tr height="49">
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="10" color="rgba(83,97,116,1)" textAlign="left"><p>　扩容策略</p></content></td>
+        <td><fill><fillColor color="rgba(247,249,252,1)"/></fill><content textType="caption" fontSize="9" color="rgba(46,52,60,1)" textAlign="left" lineSpacing="multiple:1.4"><p>　稳定窗口 0s；每 30s 最多 +100% 或</p><p>　+2 Pod，selectPolicy 取较快者</p></content></td>
+      </tr>
+      <tr height="49">
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="10" color="rgba(83,97,116,1)" textAlign="left"><p>　缩容策略</p></content></td>
+        <td><fill><fillColor color="rgba(255,255,255,1)"/></fill><content textType="caption" fontSize="9" color="rgba(46,52,60,1)" textAlign="left" lineSpacing="multiple:1.4"><p>　稳定窗口 120s；每 60s 最多 -50%，</p><p>　避免负载抖动导致频繁伸缩</p></content></td>
+      </tr>
+    </table>
+    <shape type="text" topLeftX="504" topLeftY="106" width="400" height="22">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>现场实验五步（脚本自动留存三态）</p>
+      </content>
+    </shape>
+    <line startX="504" startY="134" endX="904" endY="134">
+      <border color="rgb(37,99,235)" width="2"/>
+    </line>
+    <shape type="text" topLeftX="504" topLeftY="150" width="34" height="24">
+      <content textType="body" fontSize="14" fontFamily="Roboto Mono" bold="true" color="rgba(37,99,235,1)" wrap="false"><p>1</p></content>
+    </shape>
+    <shape type="text" topLeftX="536" topLeftY="148" width="368" height="38">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.5"><p>记录扩容前副本数、CPU 基线与 HPA 状态</p></content>
+    </shape>
+    <shape type="text" topLeftX="504" topLeftY="196" width="34" height="24">
+      <content textType="body" fontSize="14" fontFamily="Roboto Mono" bold="true" color="rgba(37,99,235,1)" wrap="false"><p>2</p></content>
+    </shape>
+    <shape type="text" topLeftX="536" topLeftY="194" width="368" height="38">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.5"><p>k6 三场景持续加压：航班查询、酒店查询、并发下单</p></content>
+    </shape>
+    <shape type="text" topLeftX="504" topLeftY="242" width="34" height="24">
+      <content textType="body" fontSize="14" fontFamily="Roboto Mono" bold="true" color="rgba(37,99,235,1)" wrap="false"><p>3</p></content>
+    </shape>
+    <shape type="text" topLeftX="536" topLeftY="240" width="368" height="38">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.5"><p>watch kubectl get hpa、get pods，观察副本 2 → N</p></content>
+    </shape>
+    <shape type="text" topLeftX="504" topLeftY="288" width="34" height="24">
+      <content textType="body" fontSize="14" fontFamily="Roboto Mono" bold="true" color="rgba(37,99,235,1)" wrap="false"><p>4</p></content>
+    </shape>
+    <shape type="text" topLeftX="536" topLeftY="286" width="368" height="38">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.5"><p>停止加压，经过 120s 稳定窗口后观察逐步回落</p></content>
+    </shape>
+    <shape type="text" topLeftX="504" topLeftY="334" width="34" height="24">
+      <content textType="body" fontSize="14" fontFamily="Roboto Mono" bold="true" color="rgba(37,99,235,1)" wrap="false"><p>5</p></content>
+    </shape>
+    <shape type="text" topLeftX="536" topLeftY="332" width="368" height="38">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.5"><p>扩容前 / 中 / 后三态存档，回填实验记录表</p></content>
+    </shape>
+    <line startX="504" startY="386" endX="904" endY="386">
+      <border color="rgb(217,222,231)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="504" topLeftY="396" width="400" height="30">
+      <content textType="caption" fontSize="9" fontFamily="Roboto Mono" color="rgba(83,97,116,1)" wrap="false">
+        <p>scripts/experiments/Invoke-MicroserviceHpaExperiment.ps1</p>
+      </content>
+    </shape>
+    <shape type="rect" topLeftX="56" topLeftY="440" width="848" height="62">
+      <fill><fillColor color="rgba(252,247,235,1)"/></fill>
+      <border color="rgb(214,178,120)" width="1"/>
+    </shape>
+    <shape type="text" topLeftX="72" topLeftY="448" width="110" height="46">
+      <content textType="body" fontSize="11" fontFamily="思源黑体" bold="true" color="rgba(176,118,16,1)" verticalAlign="middle" wrap="false"><p>待现场实测</p></content>
+    </shape>
+    <shape type="text" topLeftX="190" topLeftY="448" width="700" height="46">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(120,88,20,1)" verticalAlign="middle" lineSpacing="multiple:1.5">
+        <p>HPA 清单、实验脚本与记录模板已入库；扩缩容实测曲线在答辩现场加压触发，副本变化与耗时当场展示并补入记录，不预设结论。</p>
+      </content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>扩缩容分两部分讲：左边是已经入库的真实配置，六个服务各绑一个 HPA，CPU 平均利用率超过 60% 就扩容，副本下限 2、上限 6；扩容零等待、每 30 秒最多翻倍或加两个 Pod，缩容有 120 秒稳定窗口防抖。右边是现场实验的五个步骤，用 k6 加压、用 kubectl 观察副本爬升和回落，前中后三态自动存档。底部如实说明：实测曲线在答辩现场触发，我们不提前编造数字。</p>
+    </content>
+  </note>
+</slide>

@@ -126,11 +126,12 @@ class SecurityConfigTests {
     }
 
     @Test
-    void unauthenticatedPasswordResetIsRejected() throws Exception {
+    void unauthenticatedPasswordResetRequiresValidParameters() throws Exception {
         mockMvc.perform(post("/user/reset-password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500));
     }
 
     @Test

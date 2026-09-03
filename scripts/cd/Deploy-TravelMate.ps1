@@ -17,6 +17,7 @@ $stateDirectory = Join-Path $env:USERPROFILE "TravelMateCD"
 $logPath = Join-Path $stateDirectory "deploy.log"
 [IO.Directory]::CreateDirectory($stateDirectory) | Out-Null
 $dockerDesktopStartedByScript = $false
+$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 
 function Write-DeployLog {
     param([string]$Message)
@@ -165,7 +166,9 @@ function Get-LocalImageIdentity {
         [string]$Repository
     )
 
+    Write-DeployLog "Pulling deployment image $Image." | Write-Host
     Invoke-Checked -Command docker -Arguments @("pull", $Image) | Out-Null
+    Write-DeployLog "Deployment image $Image is available locally." | Write-Host
     $inspect = (Invoke-Checked -Command docker -Arguments @("image", "inspect", $Image)) -join [Environment]::NewLine
     $imageInfo = @($inspect | ConvertFrom-Json)[0]
     $revision = [string]$imageInfo.Config.Labels."org.opencontainers.image.revision"
@@ -368,6 +371,23 @@ try {
     Write-DeployLog "Deploying commit $($backend.Revision); backend=$($backend.Digest), frontend=$($frontend.Digest)."
 
     try {
+        $rbacManifest = Join-Path $repositoryRoot "deploy\k8s\rbac-secret-admin.yaml"
+        Invoke-Checked -Command kubectl -Arguments @("apply", "-f", $rbacManifest) | Out-Null
+        Write-DeployLog "Applied secret-admin RBAC."
+        $serviceAccountPatch = '{"spec":{"template":{"spec":{"serviceAccountName":"secret-admin"}}}}'
+        $serviceAccountPatchPath = Join-Path ([IO.Path]::GetTempPath()) ("travelmate-service-account-" + [guid]::NewGuid() + ".json")
+        try {
+            [IO.File]::WriteAllText($serviceAccountPatchPath, $serviceAccountPatch, [Text.UTF8Encoding]::new($false))
+            Invoke-Checked -Command kubectl -Arguments @(
+                "patch", "deployment", "travelmate-backend", "-n", $Namespace,
+                "--type", "merge", "--patch-file=$serviceAccountPatchPath"
+            ) | Out-Null
+        }
+        finally {
+            Remove-Item -LiteralPath $serviceAccountPatchPath -Force -ErrorAction SilentlyContinue
+        }
+        Write-DeployLog "Patched backend deployment to use secret-admin service account."
+
         Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-backend", "backend=$($backend.Digest)", "-n", $Namespace) | Out-Null
         Invoke-Checked -Command kubectl -Arguments @("set", "image", "deployment/travelmate-frontend", "frontend=$($frontend.Digest)", "-n", $Namespace) | Out-Null
         Invoke-Checked -Command kubectl -Arguments @(

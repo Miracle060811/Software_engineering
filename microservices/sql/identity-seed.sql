@@ -4,3 +4,8 @@
 
 SET NAMES utf8mb4;
 USE `travelmate_identity`;
+
+-- 默认超级管理员账号: admin；默认密码: 123456（BCrypt加密，rounds=10）
+-- 首次登录后请立即修改默认密码
+INSERT IGNORE INTO `tm_user` (`id`, `username`, `password`, `nickname`, `role`, `status`) VALUES
+(1, 'admin', '$2a$10$EqXcym8OtggJIwHYz1TkMOzw0RoZYxzv6m9Ge7tGk64gdbghNlKhG', '超级管理员', 1, 1);

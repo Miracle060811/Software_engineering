@@ -542,7 +542,7 @@ const confirmWaitlist = async () => {
       ticketCount: waitlistForm.value.ticketCount,
       passengerId: waitlistForm.value.passengerId,
     });
-    ElMessage.success("候补申请已提交");
+    ElMessage.success("候补申请已提交，可在“我的订单—候补订单”中查看");
     waitlistDialogVisible.value = false;
   } catch (e) {
   } finally {

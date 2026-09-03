@@ -71,6 +71,23 @@ public class UserService {
         return true;
     }
 
+    public boolean resetPassword(String username, String newPassword) {
+        if (username == null || username.trim().isEmpty()
+                || newPassword == null || newPassword.length() < 6) {
+            return false;
+        }
+        User user = userMapper.selectOne(new QueryWrapper<User>()
+                .eq("username", username.trim())
+                .eq("status", 1)
+                .eq("deleted", 0));
+        if (user == null) return false;
+        if (Integer.valueOf(1).equals(user.getRole())) return false;
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setTokenVersion(tokenVersion(user) + 1);
+        userMapper.updateById(user);
+        return true;
+    }
+
     public boolean hasAdministrator() {
         return userMapper.selectCount(new QueryWrapper<User>()
                 .eq("role", 1)

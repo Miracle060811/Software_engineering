@@ -43,29 +43,39 @@ public class TrainServiceImpl extends ServiceImpl<TrainMapper, Train> implements
         int collectTarget = safeOffset + safeLimit;
 
         if (StringUtils.hasText(depStation) && StringUtils.hasText(arrStation) && StringUtils.hasText(depDate)) {
-            boolean cityInput = trainStationResolver.isCityInput(depStation)
-                    || trainStationResolver.isCityInput(arrStation);
-            // 本地已有数据时立即返回，避免 12306 页面异常拖慢正常搜索。
+            List<TrainStationResolver.RouteCandidate> routeCandidates =
+                    trainStationResolver.routeCandidates(depStation, arrStation);
+
+            // 优先尝试首选的具体车站组合。此前本地有数据时会直接返回，导致具体站点搜索
+            // 永远不会触发 12306；失败结果由同步服务短期缓存，因此仍能快速回退。
+            if (!routeCandidates.isEmpty()) {
+                TrainStationResolver.RouteCandidate preferredRoute = routeCandidates.getFirst();
+                TrainLiveSyncStatus preferredStatus = trainLiveSyncService.syncIfSupported(
+                        preferredRoute.depStation(), preferredRoute.arrStation(), depDate);
+                if (preferredStatus.isSynced()) {
+                    List<Train> preferredLiveTrains = trainLiveSyncService.getCachedLiveTrains(
+                            preferredRoute.depStation(), preferredRoute.arrStation(), depDate);
+                    if (!preferredLiveTrains.isEmpty()) {
+                        return pageList(preferredLiveTrains, safeOffset, safeLimit);
+                    }
+                }
+            }
+
+            // 外部页面不可用时返回本地数据，保证正常搜索不被 12306 故障阻塞。
             List<Train> localTrains = queryLocalTrains(depStation, arrStation, depDate);
             if (!localTrains.isEmpty()) {
-                if (cityInput) {
-                    trainLiveSyncService.syncIfSupported(depStation, arrStation, depDate);
-                }
                 return pageList(localTrains, safeOffset, safeLimit);
             }
 
             // 当天没有库存时，优先使用本地路线模板换算日期，保证搜索接口不被外部页面阻塞。
             List<Train> localDemoTrains = demoFallbackTrains(depStation, arrStation, depDate);
             if (!localDemoTrains.isEmpty()) {
-                if (cityInput) {
-                    trainLiveSyncService.syncIfSupported(depStation, arrStation, depDate);
-                }
                 return pageList(localDemoTrains, safeOffset, safeLimit);
             }
 
             Map<String, Train> liveMatches = new LinkedHashMap<>();
             int syncAttempts = 0;
-            for (TrainStationResolver.RouteCandidate route : trainStationResolver.routeCandidates(depStation, arrStation)) {
+            for (TrainStationResolver.RouteCandidate route : routeCandidates) {
                 TrainLiveSyncStatus syncStatus = trainLiveSyncService.syncIfSupported(
                         route.depStation(), route.arrStation(), depDate);
                 syncAttempts++;

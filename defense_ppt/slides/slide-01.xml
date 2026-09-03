@@ -1,0 +1,57 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="linear-gradient(135deg,rgba(13,19,38,1) 0%,rgba(20,34,68,1) 100%)"/>
+    </fill>
+  </style>
+  <data>
+    <line startX="56" startY="96" endX="116" endY="96">
+      <border color="rgb(37,99,235)" width="3"/>
+    </line>
+    <shape type="text" topLeftX="56" topLeftY="54" width="500" height="28">
+      <content textType="caption" fontSize="12" fontFamily="思源黑体" color="rgba(191,215,255,1)" wrap="false">
+        <p>软件工程基础实践 · 2026 夏季学期 · 最终答辩</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="56" topLeftY="110" width="462" height="150">
+      <content textType="title" fontSize="36" fontFamily="思源黑体" bold="true" color="rgba(255,255,255,1)" lineSpacing="multiple:1.28">
+        <p>TravelMate</p>
+        <p>从单体到六服务微服务</p>
+        <p>的云原生改造实践</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="56" topLeftY="282" width="452" height="66">
+      <content textType="body" fontSize="14" fontFamily="思源黑体" color="rgba(191,215,255,1)" lineSpacing="multiple:1.6">
+        <p>单体复活与容器化 → Kubernetes 六服务部署</p>
+        <p>自动扩缩容 · 故障隔离 · 同口径性能对比</p>
+      </content>
+    </shape>
+    <line startX="56" startY="374" endX="486" endY="374">
+      <border color="rgba(255,255,255,0.18)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="56" topLeftY="388" width="452" height="26">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" color="rgba(220,228,242,1)" wrap="false">
+        <p>第 5 组 · Miracle 小组　|　全栈旅行服务平台</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="56" topLeftY="416" width="452" height="24">
+      <content textType="caption" fontSize="12" fontFamily="Roboto Mono" color="rgba(150,166,192,1)" wrap="false">
+        <p>2026-09-04　final defense</p>
+      </content>
+    </shape>
+    <img src="IYLbb2MsMoaA00xlnv1c7nhtn5S" topLeftX="540" topLeftY="110" width="364" height="243">
+      <border color="rgba(255,255,255,0.22)" width="1"/>
+    </img>
+    <shape type="text" topLeftX="540" topLeftY="362" width="364" height="44">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(150,166,192,1)" lineSpacing="multiple:1.5">
+        <p>系统总体架构：Vue 3 + Spring Boot 3.5 + Java 21</p>
+        <p>MySQL 8 + Redis 7 + Docker + Kubernetes（kind）</p>
+      </content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>各位老师好，我们是第 5 组 Miracle 小组，答辩项目是旅行服务平台 TravelMate。本次实践我们先复活并补齐了上学期的前后端单体，再把后端物理拆分为六个独立微服务，完成了容器化、CI/CD 流水线、Kubernetes 部署、自动扩缩容、故障隔离和性能对比。接下来四分钟先介绍项目与架构，随后进行七分钟现场演示。</p>
+    </content>
+  </note>
+</slide>

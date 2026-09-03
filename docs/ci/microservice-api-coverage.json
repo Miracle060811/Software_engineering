@@ -991,6 +991,23 @@
         ]
       }
     },
+    "GET /api/train/waitlist/mine": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrainController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrainController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
     "GET /api/user/profile/{username}": {
       "service": "identity-service",
       "visibility": "public",
@@ -1758,6 +1775,23 @@
       }
     },
     "POST /api/train/waitlist": {
+      "service": "traffic-service",
+      "visibility": "public",
+      "controller": "TrainController",
+      "source": "microservices/services/traffic-service/src/main/java/com/travelmate/controller/TrainController.java",
+      "tests": {
+        "normal": [
+          "TrafficPublicApiTests#trafficEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TrafficPublicApiTests#trafficEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "TrafficPublicApiTests#trafficEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/train/waitlist/{id}/cancel": {
       "service": "traffic-service",
       "visibility": "public",
       "controller": "TrainController",

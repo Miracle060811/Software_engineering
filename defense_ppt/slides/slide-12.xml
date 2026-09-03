@@ -1,0 +1,72 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgb(242,244,248)"/>
+    </fill>
+  </style>
+  <data>
+    <shape type="text" topLeftX="56" topLeftY="26" width="500" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(37,99,235,1)" wrap="false">
+        <p>09 / KUBERNETES</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="848" topLeftY="26" width="56" height="18">
+      <content textType="caption" fontSize="10" fontFamily="Roboto Mono" color="rgba(140,150,166,1)" textAlign="right" wrap="false">
+        <p>12 / 17</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="56" topLeftY="46" width="848" height="36">
+      <content textType="title" fontSize="22" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>Kubernetes 实证：六服务部署、探针、PVC 与 Pod 状态全部就绪</p>
+      </content>
+    </shape>
+    <line startX="56" startY="92" endX="904" endY="92">
+      <border color="rgb(217,222,231)" width="1"/>
+    </line>
+    <img src="LQZtb7Kl5ocrwYxKQGwcxZN7n4g" topLeftX="56" topLeftY="106" width="440" height="225">
+      <border color="rgb(217,222,231)" width="1"/>
+    </img>
+    <shape type="text" topLeftX="56" topLeftY="331" width="440" height="15">
+      <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(140,150,166,1)" wrap="false">
+        <p>流水线内部署日志与部署后健康检查（截图 03）</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="516" topLeftY="106" width="388" height="22">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" bold="true" color="rgba(13,19,38,1)" wrap="false">
+        <p>集群工作负载清单</p>
+      </content>
+    </shape>
+    <line startX="516" startY="134" endX="904" endY="134">
+      <border color="rgb(37,99,235)" width="2"/>
+    </line>
+    <shape type="text" topLeftX="516" topLeftY="146" width="388" height="190">
+      <content textType="body" fontSize="10" fontFamily="思源黑体" color="rgba(46,52,60,1)" lineSpacing="multiple:1.75">
+        <ul>
+          <li><p>6 个业务 Deployment，启动 / 就绪 / 存活三类探针齐全</p></li>
+          <li><p>每个容器声明 CPU 与内存 requests、limits</p></li>
+          <li><p>6 个 MySQL StatefulSet，各自独立 5Gi PVC</p></li>
+          <li><p>1 个 Redis StatefulSet，1Gi PVC</p></li>
+          <li><p>6 个 Service 提供集群内服务发现</p></li>
+          <li><p>6 个 HPA 绑定业务 Deployment（下页展开）</p></li>
+        </ul>
+      </content>
+    </shape>
+    <img src="N6aWbE17oo2oVux3kdqcN2VTnYg" topLeftX="56" topLeftY="348" width="618" height="186">
+      <border color="rgb(217,222,231)" width="1"/>
+    </img>
+    <shape type="text" topLeftX="690" topLeftY="348" width="214" height="186">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(83,97,116,1)" lineSpacing="multiple:1.7">
+        <p><strong>kubectl 现场</strong></p>
+        <p> </p>
+        <p>六服务与数据层 Pod 全部 Running / Ready；</p>
+        <p> </p>
+        <p>多时间点集群清单脱敏后备份于 backups/kubernetes。</p>
+      </content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>微服务不是只在本地能跑，而是真正部署到了 Kubernetes。左上是流水线里的部署日志和部署后健康检查；右侧是集群工作负载清单：六个业务 Deployment 都配了三类健康探针和资源配额，六个 MySQL 用 StatefulSet 加独立存储卷，六个 Service 做服务发现，六个 HPA 负责扩缩容。下方宽截图是 kubectl 看到的工作负载和 Pod 状态，全部 Running、Ready，现场演示我们会直接在集群里操作。</p>
+    </content>
+  </note>
+</slide>
