@@ -64,10 +64,6 @@ npx playwright test --workers=1
 
 # 真实后端 E2E（需要后端运行在 localhost:8080）
 npx playwright test --config=playwright.real.config.js --workers=1
-
-# 追溯门禁
-cd ..
-npm run check:traceability
 ```
 
 ## 3. 测试层级说明
@@ -159,18 +155,6 @@ npx playwright test --debug --workers=1
 - MySQL/Redis 未运行：检查 Docker 或本地服务
 - 测试数据残留：重新执行 `docs/sql/init.sql`
 
-### 5.4 追溯门禁失败
-
-```powershell
-# 查看详细错误
-npm run check:traceability
-```
-
-常见原因：
-- 证据分低于门槛（当前 27）：检查是否有 covered 用例降级
-- 测试文件缺失：检查 `docs/ci/use-case-test-matrix.json` 引用的路径是否存在
-- 结构错误：检查 SYS/COMP/OBJ 图文件是否完整
-
 ## 6. CI 运行
 
 ### 6.1 触发条件
@@ -181,7 +165,7 @@ npm run check:traceability
 
 ### 6.2 CI 流程
 
-1. `validation` — 追溯门禁 + 格式检查
+1. `validation` — 仓库结构、微服务 E2E 结构与部署配置检查
 2. `backend` — 后端单元测试 + MySQL 集成测试 + 打包
 3. `frontend` — lint + audit + build + 单元测试 + Mock E2E
 4. `real-e2e` — 真实 MySQL/Redis E2E（仅 PR/main 触发）
