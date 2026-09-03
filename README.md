@@ -32,6 +32,67 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 | 外部能力 | DeepSeek API、12306 公开余票接口、OpenStreetMap Nominatim、Open-Meteo |
 | CI/CD | GitHub Actions、Playwright、JaCoCo、SpotBugs、Gitleaks、Trivy、CodeQL |
 
+## 运行与验收速览（正式部署：Kubernetes）
+
+> 项目的正式演示与持续部署环境是 **Docker Desktop Kubernetes**：context 为 `docker-desktop`，namespace 为 `travelmate`，资源清单统一使用 [`deploy/k8s`](deploy/k8s) 及其 overlay。根目录 `compose.yml` 和 `microservices/compose.yml` 仅用于本地联调，不是正式部署方式。
+
+### 环境版本
+
+| 组件 | 项目要求 / 已验收版本 |
+| --- | --- |
+| 操作系统 | Windows 10/11 + PowerShell |
+| Docker Desktop / Engine | 4.88.1 / 29.7.2，必须启用 Kubernetes |
+| Kubernetes / kubectl | 1.36.1 / 1.36.1；context `docker-desktop` |
+| JDK / Maven | JDK 21；Maven Wrapper 3.9.14 |
+| Node.js / npm | Node.js 22.12+；CI 与验收机使用 Node.js 24（验收机 npm 11.12.1） |
+| 数据组件 | MySQL 8.0、Redis 7 Alpine、MinIO `RELEASE.2025-04-22T22-12-26Z` |
+
+### 端口
+
+| 环境 | 服务 | 端口与访问范围 |
+| --- | --- | --- |
+| Kubernetes | 前端 `travelmate-frontend` | `30080`，local overlay 下由 `LoadBalancer` 暴露，演示机访问 <http://localhost:30080> |
+| Kubernetes | 单体后端 / 六个微服务 | `8080` / `8081`–`8086`，均为集群内 `ClusterIP`，不直接暴露到宿主机 |
+| Kubernetes | MySQL / Redis / MinIO | `3306` / `6379` / `9000`，均为集群内端口；local overlay 另将 MinIO 暴露为 `30900` |
+| 可选本地开发 | 前端 / 单体后端 / MySQL / Redis | `3000` / `8080` / `3306` / `6379` |
+| 可选微服务 Compose | 六服务 / 六套 MySQL | `8081`–`8086` / `3307`–`3312` |
+
+`server` overlay 会把前端改为 `ClusterIP` 并通过 Ingress 提供入口，因此服务器地址与端口以实际 Ingress 配置为准。本地开发和 Compose 端口可通过对应 `.env` 调整；Kubernetes Pod 不读取根目录 `.env`。
+
+### 启动方法
+
+首次配置演示机时，在仓库根目录执行：
+
+```powershell
+.\scripts\cd\Configure-TravelMateGhcrCredential.ps1
+.\scripts\cd\Initialize-TravelMateKubernetes.ps1 -Environment local
+```
+
+初始化脚本负责创建 `travelmate` namespace、Secret、数据库初始化 ConfigMap，并应用 local overlay。随后合并到 `main` 或手动运行 GitHub Actions 的 `TravelMate CI/CD`，由带 `travelmate-deploy` 标签的 self-hosted Runner 部署前后端和六个微服务。已经完成初始化与部署的演示机，只需启动 Docker Desktop，等待下列资源恢复 Ready：
+
+```powershell
+kubectl config use-context docker-desktop
+kubectl -n travelmate get deploy,pod,hpa,pvc
+```
+
+本地开发备用启动命令为 `.\start.bat`（或 `.\start.ps1`）；它不代表正式 Kubernetes 部署。
+
+### 健康检查地址
+
+| 检查对象 | 命令 / 地址 |
+| --- | --- |
+| Kubernetes 前端 | <http://localhost:30080/healthz> |
+| Kubernetes 后端 readiness | `kubectl get --raw "/api/v1/namespaces/travelmate/services/http:travelmate-backend:8080/proxy/actuator/health/readiness"` |
+| Kubernetes 六微服务 | 将下面命令中的 `<service>` 与 `<port>` 分别替换为 `identity-service:8081`、`traffic-service:8082`、`local-service:8083`、`ai-service:8084`、`community-service:8085` 或 `ops-service:8086`：`kubectl get --raw "/api/v1/namespaces/travelmate/services/http:<service>:<port>/proxy/actuator/health"` |
+
+健康响应应为前端 `ok`、后端及六微服务 `{"status":"UP"}`。本地开发模式的单体后端健康地址为 <http://localhost:8080/actuator/health>。
+
+### 测试账号与初始数据
+
+- 管理员：`admin` / `123456`；普通用户：`test` / `123456`、`alice` / `123456`、`bob` / `123456`。这些账号只用于课程演示，首次登录后应修改默认密码，详见 [账号与权限](#账号与权限)。
+- Kubernetes 首次初始化会把 [`docs/sql/init.sql`](docs/sql/init.sql) 挂载到 MySQL 的 `/docker-entrypoint-initdb.d/`；**仅当 MySQL PVC 为空时**自动建立 `travelmate` 库并写入测试账号、航班、火车、酒店、景点、游记等演示数据，已有 PVC 不会被重复导入或清空。
+- 六微服务首次整体部署时，`Deploy-TravelMateMicroservices.ps1` 会通过数据库 bootstrap Job 建立 `travelmate_identity`、`travelmate_traffic`、`travelmate_local`、`travelmate_ai`、`travelmate_community`、`travelmate_ops` 六个逻辑库；对应 schema 与 seed 位于 [`microservices/sql`](microservices/sql)，只对首次创建的库导入 seed。
+
 ## 快速开始
 
 ### 1. 准备环境
