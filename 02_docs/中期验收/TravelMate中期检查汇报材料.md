@@ -69,7 +69,7 @@ TravelMate 是面向综合旅行服务场景的智慧旅行平台，覆盖用户
 | UC05 | 搜索酒店并完成订房 | covered |
 | UC06 | 酒店订单支付、取消、退款与库存回补 | covered |
 | UC07 | 景点浏览与购票 | covered |
-| UC08 | 浏览一日游或周边游产品 | covered |
+| UC08 | 选择并预订一日游或周边游产品 | covered |
 | UC09 | 提交评价、回复评价与举报处理 | covered |
 | UC10 | 优惠券领取与订单核销 | covered |
 | UC11 | 生成并保存 AI 行程 | covered |

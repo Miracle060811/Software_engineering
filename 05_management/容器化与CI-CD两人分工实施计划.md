@@ -107,7 +107,7 @@
 - Kubernetes 清单可以通过 `kubectl kustomize deploy/k8s` 渲染；
 - 所有 `scripts/cd/*.ps1` 均通过 PowerShell 语法解析。
 
-### 5.2 尚未完成或证据不足
+### 5.2 当时缺口或证据不足
 
 - 当前演示机没有 Kubernetes context；
 - 尚未安装 `TravelMate-CD` 计划任务；

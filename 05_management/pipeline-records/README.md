@@ -21,3 +21,7 @@
 - 测试报告、镜像版本和部署版本（相应阶段启用后填写）
 
 截图只是辅助证据，不能代替仓库中的 workflow 配置、测试代码、日志和原始报告。
+
+## 本地离线复核
+
+当任务明确禁止查询远程平台时，可使用 `04_tests/pipeline/Invoke-FinalLocalValidation.ps1` 对固定 HEAD 与当前协调工作树做最终本地等价复跑。结果必须标记为本地证据并保存 `sourceHead`、步骤日志、Surefire/Failsafe XML 和校验清单，不能把它写成 GitHub Actions Run 或远程 Artifact。2026-09-03 的最终结果见 `04_tests/pipeline/results/final-local-validation-20260903-d31bc6b2/`。

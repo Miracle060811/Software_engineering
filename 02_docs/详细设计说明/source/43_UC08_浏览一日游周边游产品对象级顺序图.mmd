@@ -1,15 +1,30 @@
 sequenceDiagram
-    title UC08 浏览一日游周边游产品——对象级顺序图
-    participant P0 as 游客
-    participant P1 as AttractionList.vue
-    participant P2 as TourProductController
-    participant P3 as TourProductServiceImpl
-    participant P4 as TourProductMapper
-    P0->>P1: 进入本地游列表
-    P1->>P2: GET /api/tour/list?tourType=
-    P2->>P3: listByType(tourType)
-    P3->>P4: selectList()
-    P4-->>P3: 返回产品摘要
-    P3-->>P2: 返回列表
-    P2-->>P1: Result<List<TourProduct>>
-    Note over P0,P4: 当前仅覆盖浏览目标，不包含购买闭环；正文和追溯状态均标记为部分实现、待确认用例。
+    title UC08 选择并预订一日游或周边游产品——对象级顺序图
+    actor U as 用户
+    participant Page as AttractionList.vue / MyOrders.vue
+    participant Controller as TourProductController
+    participant Service as TourProductServiceImpl
+    participant Product as TourProductMapper / TourProductStepMapper
+    participant Booking as TourScheduleMapper / TourOrderMapper
+    U->>Page: 选择产品、班期、人数和联系人
+    Page->>Controller: POST /api/tour/orders + Idempotency-Key
+    Controller->>Service: createBooking(userId,dto)
+    Service->>Booking: selectByIdempotencyKey(userId,key)
+    alt 首次有效请求
+        Service->>Product: getById(productId)
+        Service->>Booking: select schedule；deductStock(scheduleId,count)
+        Booking-->>Service: 条件更新行数 1
+        Service->>Booking: insert TourOrder
+        Booking-->>Service: 返回持久化订单
+    else 相同幂等请求
+        Booking-->>Service: 返回原订单
+    else 输入无效或库存不足
+        Service-->>Controller: 抛出业务错误并回滚
+    end
+    Service-->>Controller: TourOrder
+    Controller-->>Page: Result<TourOrder>
+    Page->>Controller: GET /api/tour/orders 或 /{orderNo}
+    Controller->>Service: listUserOrders/getUserOrder(userId,...)
+    Service->>Booking: 按 userId 查询
+    Booking-->>Page: 返回本人订单详情
+    Note over U,Booking: 金额由服务端按班期单价×人数计算；失败无脏订单、无库存损失

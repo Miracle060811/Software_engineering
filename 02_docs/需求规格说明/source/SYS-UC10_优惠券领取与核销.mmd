@@ -14,4 +14,4 @@ sequenceDiagram
         S-->>U: 拒绝且不减少库存
     end
     A->>S: 维护优惠券和查看领取记录
-    Note over U,S: 订单核销仍需真实测试证明
+    Note over U,S: 真实 MySQL 与 E2E 已验证订单抵扣、一次性核销和重复核销拦截

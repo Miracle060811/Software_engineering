@@ -120,6 +120,26 @@
         ]
       }
     },
+    "GET /api/admin/dashboard/data": {
+      "service": "ops-service",
+      "visibility": "public",
+      "controller": "AdminOpsController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/AdminOpsController.java",
+      "tests": {
+        "normal": [
+          "OpsEndpointContractTests#adminOpsEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "OpsAdminSecurityTests#allAdminEndpointsRejectAnonymousAndNonAdmin"
+        ],
+        "validation": [
+          "OpsEndpointContractTests#adminOpsEndpointsRejectMalformedParameters"
+        ],
+        "dependencyFailure": [
+          "OpsDashboardIntegrationTests#dashboardEnforcesJwtRoleAndKeepsHttp200ForPartialDownstreamData"
+        ]
+      }
+    },
     "GET /api/admin/flights": {
       "service": "ops-service",
       "visibility": "public",
@@ -920,6 +940,40 @@
         ],
         "validation": [
           "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "GET /api/tour/orders": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "TourProductController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/TourProductController.java",
+      "tests": {
+        "normal": [
+          "TourBookingApiContractTests#tourOrderEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TourBookingApiContractTests#tourOrderEndpointsEnforceAuthentication"
+        ],
+        "validation": [
+          "TourBookingApiContractTests#tourOrderEndpointsRejectInvalidPayloadAndOutsiderDetail"
+        ]
+      }
+    },
+    "GET /api/tour/orders/{orderNo}": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "TourProductController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/TourProductController.java",
+      "tests": {
+        "normal": [
+          "TourBookingApiContractTests#tourOrderEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TourBookingApiContractTests#tourOrderEndpointsEnforceAuthentication"
+        ],
+        "validation": [
+          "TourBookingApiContractTests#tourOrderEndpointsRejectInvalidPayloadAndOutsiderDetail"
         ]
       }
     },
@@ -1737,6 +1791,23 @@
         ],
         "validation": [
           "LocalEndpointContractTests#localEndpointsRejectMalformedParameters"
+        ]
+      }
+    },
+    "POST /api/tour/orders": {
+      "service": "local-service",
+      "visibility": "public",
+      "controller": "TourProductController",
+      "source": "microservices/services/local-service/src/main/java/com/travelmate/controller/TourProductController.java",
+      "tests": {
+        "normal": [
+          "TourBookingApiContractTests#tourOrderEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "TourBookingApiContractTests#tourOrderEndpointsEnforceAuthentication"
+        ],
+        "validation": [
+          "TourBookingApiContractTests#tourOrderEndpointsRejectInvalidPayloadAndOutsiderDetail"
         ]
       }
     },

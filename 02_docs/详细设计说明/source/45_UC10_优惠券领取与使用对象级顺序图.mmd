@@ -14,4 +14,4 @@ sequenceDiagram
     P5->>P3: 下单时 useCoupon()
     P3->>P4: 校验门槛并更新 used_time
     P4-->>P3: 返回减免金额
-    Note over P0,P5: 领取逻辑已实现；订单核销调用和测试证据仍需补齐，不能标记已验证。
+    Note over P0,P5: 领取、订单抵扣、一次性核销与重复核销拦截均已由真实 MySQL 和 E2E 验证。
