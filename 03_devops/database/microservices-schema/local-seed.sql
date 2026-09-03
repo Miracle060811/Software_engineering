@@ -396,10 +396,6 @@ ON DUPLICATE KEY UPDATE
   `source_name`       = VALUES(`source_name`),
   `data_checked_date` = VALUES(`data_checked_date`);
 
-UPDATE `tm_attraction`
-SET `cover_img` = CONCAT('/images/real/attractions/attraction-', LPAD(`id`, 2, '0'), '.webp')
-WHERE `id` BETWEEN 1 AND 48;
-
 INSERT IGNORE INTO `tm_tour_product` (`id`, `name`, `description`, `tour_type`, `departure_city`, `destination`, `duration`, `price`, `cover_img`, `source_name`, `source_url`, `data_checked_date`) VALUES
 (1, '故宫博物院官方导览一日', '基于故宫博物院开放时间与官方导览信息整理，适合首次到访的中轴线游览。价格为演示服务费，不代表官方票价。', 0, '北京', '故宫博物院', '1天', 128.00, '/images/seed/beijing.svg', '故宫博物院官网', 'https://www.dpm.org.cn/Visit.html', '2026-05-19'),
 (2, '颐和园昆明湖半日游', '基于颐和园开放时间与园区导览整理，覆盖东宫门、仁寿殿、长廊、昆明湖等节点。价格为演示服务费。', 0, '北京', '颐和园', '0.5天', 98.00, '/images/seed/beijing.svg', '颐和园官网', 'https://www.summerpalace.net.cn/visit.html', '2026-05-19'),
@@ -449,6 +445,30 @@ INSERT IGNORE INTO `tm_tour_product_step` (`id`, `product_id`, `day_no`, `sequen
 (30, 10, 1, 1, '拙政园', 23, 150, '早到避开客流高峰', 'https://www.szzzy.cn/'),
 (31, 10, 1, 2, '平江路', NULL, 120, '古城步行街区', 'https://you.ctrip.com/place/%E8%8B%8F%E5%B7%9E14.html'),
 (32, 10, 1, 3, '山塘街夜游', NULL, 120, '傍晚后游览更适合拍照', 'https://you.ctrip.com/sight/%E8%8B%8F%E5%B7%9E14/8168464.html');
+
+INSERT INTO `tm_tour_schedule`
+  (`product_id`, `travel_date`, `unit_price`, `total_stock`, `available_stock`, `status`)
+SELECT
+  seed.`product_id`, seed.`travel_date`, seed.`unit_price`, seed.`total_stock`, seed.`available_stock`, seed.`status`
+FROM (
+  SELECT 1 AS `product_id`, DATE_ADD(CURRENT_DATE, INTERVAL 7 DAY) AS `travel_date`, 128.00 AS `unit_price`, 30 AS `total_stock`, 30 AS `available_stock`, 1 AS `status`
+  UNION ALL SELECT 1, DATE_ADD(CURRENT_DATE, INTERVAL 14 DAY), 138.00, 30, 30, 1
+  UNION ALL SELECT 3, DATE_ADD(CURRENT_DATE, INTERVAL 8 DAY), 118.00, 25, 25, 1
+  UNION ALL SELECT 3, DATE_ADD(CURRENT_DATE, INTERVAL 15 DAY), 128.00, 25, 25, 1
+  UNION ALL SELECT 4, DATE_ADD(CURRENT_DATE, INTERVAL 9 DAY), 398.00, 20, 20, 1
+  UNION ALL SELECT 4, DATE_ADD(CURRENT_DATE, INTERVAL 16 DAY), 428.00, 20, 20, 1
+  UNION ALL SELECT 7, DATE_ADD(CURRENT_DATE, INTERVAL 10 DAY), 468.00, 20, 20, 1
+  UNION ALL SELECT 8, DATE_ADD(CURRENT_DATE, INTERVAL 11 DAY), 498.00, 20, 20, 1
+  UNION ALL SELECT 9, DATE_ADD(CURRENT_DATE, INTERVAL 12 DAY), 158.00, 30, 30, 1
+  UNION ALL SELECT 10, DATE_ADD(CURRENT_DATE, INTERVAL 13 DAY), 168.00, 30, 30, 1
+) AS seed
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM `tm_tour_schedule` AS existing
+  WHERE existing.`product_id` = seed.`product_id`
+    AND existing.`travel_date` >= CURRENT_DATE
+    AND existing.`status` = 1
+);
 
 INSERT IGNORE INTO `tm_coupon` (`name`, `description`, `category`, `discount_type`, `discount_value`, `min_amount`, `expire_date`, `stock`, `status`) VALUES
 ('新用户专享', '新用户首单立减50元', 'all', 0, 50.00, 200.00, '2026-12-31 23:59:59', 200, 0),

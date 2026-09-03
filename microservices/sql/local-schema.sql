@@ -212,6 +212,56 @@ CREATE TABLE IF NOT EXISTS `tm_tour_product_step` (
   KEY `idx_tour_step_product` (`product_id`, `day_no`, `sequence_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='一日游/周边游行程节点表';
 
+-- tm_tour_schedule
+CREATE TABLE IF NOT EXISTS `tm_tour_schedule` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `product_id` BIGINT NOT NULL COMMENT '旅游产品ID',
+  `travel_date` DATE NOT NULL COMMENT '出行日期',
+  `unit_price` DECIMAL(10,2) NOT NULL COMMENT '班期单人价格',
+  `total_stock` INT NOT NULL COMMENT '班期总库存',
+  `available_stock` INT NOT NULL COMMENT '班期可售库存',
+  `status` TINYINT(1) NOT NULL DEFAULT '1' COMMENT '0=停售, 1=可售',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tour_schedule_product_date` (`product_id`, `travel_date`),
+  KEY `idx_tour_schedule_sale` (`product_id`, `status`, `travel_date`),
+  CONSTRAINT `fk_tour_schedule_product` FOREIGN KEY (`product_id`) REFERENCES `tm_tour_product` (`id`),
+  CONSTRAINT `chk_tour_schedule_stock` CHECK (`total_stock` >= 0 AND `available_stock` >= 0 AND `available_stock` <= `total_stock`),
+  CONSTRAINT `chk_tour_schedule_price` CHECK (`unit_price` > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='一日游/周边游可售班期';
+
+-- tm_tour_order
+CREATE TABLE IF NOT EXISTS `tm_tour_order` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `order_no` VARCHAR(50) NOT NULL COMMENT '订单编号',
+  `user_id` BIGINT NOT NULL COMMENT '下单用户ID',
+  `product_id` BIGINT NOT NULL COMMENT '旅游产品ID',
+  `schedule_id` BIGINT NOT NULL COMMENT '班期ID',
+  `product_name` VARCHAR(100) NOT NULL COMMENT '产品名称快照',
+  `tour_type` TINYINT(1) NOT NULL COMMENT '0=一日游, 1=周边游',
+  `travel_date` DATE NOT NULL COMMENT '出行日期快照',
+  `participant_count` INT NOT NULL COMMENT '出行人数',
+  `contact_name` VARCHAR(50) NOT NULL COMMENT '联系人姓名',
+  `contact_phone` VARCHAR(20) NOT NULL COMMENT '联系人手机号',
+  `unit_price` DECIMAL(10,2) NOT NULL COMMENT '单人价格快照',
+  `amount` DECIMAL(10,2) NOT NULL COMMENT '订单总金额',
+  `idempotency_key` VARCHAR(64) NOT NULL COMMENT '客户端幂等键',
+  `status` TINYINT(1) NOT NULL DEFAULT '1' COMMENT '1=已预订/待出行, 2=已完成, 4=已取消',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted` TINYINT(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tour_order_no` (`order_no`),
+  UNIQUE KEY `uk_tour_order_user_idempotency` (`user_id`, `idempotency_key`),
+  KEY `idx_tour_order_user_create` (`user_id`, `create_time`),
+  KEY `idx_tour_order_schedule` (`schedule_id`),
+  CONSTRAINT `fk_tour_order_product` FOREIGN KEY (`product_id`) REFERENCES `tm_tour_product` (`id`),
+  CONSTRAINT `fk_tour_order_schedule` FOREIGN KEY (`schedule_id`) REFERENCES `tm_tour_schedule` (`id`),
+  CONSTRAINT `chk_tour_order_count` CHECK (`participant_count` > 0),
+  CONSTRAINT `chk_tour_order_amount` CHECK (`unit_price` > 0 AND `amount` > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='一日游/周边游订单';
+
 -- tm_coupon
 CREATE TABLE IF NOT EXISTS `tm_coupon` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,

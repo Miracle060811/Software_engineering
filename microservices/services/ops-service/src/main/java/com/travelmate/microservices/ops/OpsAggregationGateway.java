@@ -3,6 +3,7 @@ package com.travelmate.microservices.ops;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -25,11 +26,13 @@ public class OpsAggregationGateway {
                                  @Value("${app.services.traffic-url}") String trafficUrl,
                                  @Value("${app.services.local-url}") String localUrl,
                                  @Value("${app.services.community-url}") String communityUrl,
-                                 @Value("${app.internal-service-token}") String token) {
-        this.identity = builder.clone().baseUrl(identityUrl).build();
-        this.traffic = builder.clone().baseUrl(trafficUrl).build();
-        this.local = builder.clone().baseUrl(localUrl).build();
-        this.community = builder.clone().baseUrl(communityUrl).build();
+                                 @Value("${app.internal-service-token}") String token,
+                                 @Value("${app.services.connect-timeout-ms:1000}") int connectTimeoutMs,
+                                 @Value("${app.services.read-timeout-ms:2000}") int readTimeoutMs) {
+        this.identity = buildClient(builder, identityUrl, connectTimeoutMs, readTimeoutMs);
+        this.traffic = buildClient(builder, trafficUrl, connectTimeoutMs, readTimeoutMs);
+        this.local = buildClient(builder, localUrl, connectTimeoutMs, readTimeoutMs);
+        this.community = buildClient(builder, communityUrl, connectTimeoutMs, readTimeoutMs);
         this.token = token;
     }
 
@@ -37,6 +40,7 @@ public class OpsAggregationGateway {
     public List<Map<String, Object>> orders() { return list(traffic, "/internal/traffic/admin/orders"); }
     public List<Map<String, Object>> flights() { return list(traffic, "/internal/traffic/admin/flights"); }
     public List<Map<String, Object>> posts() { return list(community, "/internal/community/admin/posts"); }
+    public long pendingPostCount() { return scalar(community, "/internal/community/admin/pending-post-count"); }
     public List<Map<String, Object>> reviewReports(Integer status) {
         String path = status == null ? "/internal/local/admin/review-reports"
                 : "/internal/local/admin/review-reports?status=" + status;
@@ -86,5 +90,15 @@ public class OpsAggregationGateway {
 
     private ResponseStatusException unavailable(RestClientException cause) {
         return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "业务服务暂不可用，请稍后重试", cause);
+    }
+
+    private RestClient buildClient(RestClient.Builder builder, String baseUrl, int connectTimeoutMs, int readTimeoutMs) {
+        if (connectTimeoutMs <= 0 || readTimeoutMs <= 0) {
+            throw new IllegalArgumentException("内部服务超时时间必须大于 0");
+        }
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(connectTimeoutMs);
+        requestFactory.setReadTimeout(readTimeoutMs);
+        return builder.clone().requestFactory(requestFactory).baseUrl(baseUrl).build();
     }
 }

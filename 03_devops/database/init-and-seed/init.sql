@@ -587,10 +587,13 @@ CREATE TABLE IF NOT EXISTS `tm_ai_consumed_event` (
 -- =============================================
 
 -- 管理员和测试用户
--- 默认管理员账号: admin；默认密码: 123456（BCrypt加密，rounds=10）
+-- MICROSERVICE-SEED: identity
+-- 默认超级管理员账号: admin；默认密码: 123456（BCrypt加密，rounds=10）
 -- 首次登录后请立即修改默认密码
+INSERT IGNORE INTO `tm_user` (`id`, `username`, `password`, `nickname`, `role`, `status`) VALUES
+(1, 'admin', '$2a$10$EqXcym8OtggJIwHYz1TkMOzw0RoZYxzv6m9Ge7tGk64gdbghNlKhG', '超级管理员', 1, 1);
+
 INSERT IGNORE INTO `tm_user` (`id`, `username`, `password`, `nickname`, `avatar`, `role`, `status`) VALUES
-(1, 'admin', '$2a$10$EqXcym8OtggJIwHYz1TkMOzw0RoZYxzv6m9Ge7tGk64gdbghNlKhG', '超级管理员', NULL, 1, 1),
 (2, 'test', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTpSn4DZe6m', '测试用户', NULL, 0, 1),
 (3, 'alice', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTpSn4DZe6m', '爱旅行的Alice', NULL, 0, 1),
 (4, 'bob', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTpSn4DZe6m', '旅行博主Bob', NULL, 0, 1);
@@ -1027,6 +1030,56 @@ CREATE TABLE IF NOT EXISTS `tm_tour_product_step` (
   KEY `idx_tour_step_product` (`product_id`, `day_no`, `sequence_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='一日游/周边游行程节点表';
 
+-- 一日游/周边游可售班期表
+CREATE TABLE IF NOT EXISTS `tm_tour_schedule` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `product_id` BIGINT NOT NULL COMMENT '旅游产品ID',
+  `travel_date` DATE NOT NULL COMMENT '出行日期',
+  `unit_price` DECIMAL(10,2) NOT NULL COMMENT '班期单人价格',
+  `total_stock` INT NOT NULL COMMENT '班期总库存',
+  `available_stock` INT NOT NULL COMMENT '班期可售库存',
+  `status` TINYINT(1) NOT NULL DEFAULT '1' COMMENT '0=停售, 1=可售',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tour_schedule_product_date` (`product_id`, `travel_date`),
+  KEY `idx_tour_schedule_sale` (`product_id`, `status`, `travel_date`),
+  CONSTRAINT `fk_tour_schedule_product` FOREIGN KEY (`product_id`) REFERENCES `tm_tour_product` (`id`),
+  CONSTRAINT `chk_tour_schedule_stock` CHECK (`total_stock` >= 0 AND `available_stock` >= 0 AND `available_stock` <= `total_stock`),
+  CONSTRAINT `chk_tour_schedule_price` CHECK (`unit_price` > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='一日游/周边游可售班期';
+
+-- 一日游/周边游订单表
+CREATE TABLE IF NOT EXISTS `tm_tour_order` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `order_no` VARCHAR(50) NOT NULL COMMENT '订单编号',
+  `user_id` BIGINT NOT NULL COMMENT '下单用户ID',
+  `product_id` BIGINT NOT NULL COMMENT '旅游产品ID',
+  `schedule_id` BIGINT NOT NULL COMMENT '班期ID',
+  `product_name` VARCHAR(100) NOT NULL COMMENT '产品名称快照',
+  `tour_type` TINYINT(1) NOT NULL COMMENT '0=一日游, 1=周边游',
+  `travel_date` DATE NOT NULL COMMENT '出行日期快照',
+  `participant_count` INT NOT NULL COMMENT '出行人数',
+  `contact_name` VARCHAR(50) NOT NULL COMMENT '联系人姓名',
+  `contact_phone` VARCHAR(20) NOT NULL COMMENT '联系人手机号',
+  `unit_price` DECIMAL(10,2) NOT NULL COMMENT '单人价格快照',
+  `amount` DECIMAL(10,2) NOT NULL COMMENT '订单总金额',
+  `idempotency_key` VARCHAR(64) NOT NULL COMMENT '客户端幂等键',
+  `status` TINYINT(1) NOT NULL DEFAULT '1' COMMENT '1=已预订/待出行, 2=已完成, 4=已取消',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted` TINYINT(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tour_order_no` (`order_no`),
+  UNIQUE KEY `uk_tour_order_user_idempotency` (`user_id`, `idempotency_key`),
+  KEY `idx_tour_order_user_create` (`user_id`, `create_time`),
+  KEY `idx_tour_order_schedule` (`schedule_id`),
+  CONSTRAINT `fk_tour_order_product` FOREIGN KEY (`product_id`) REFERENCES `tm_tour_product` (`id`),
+  CONSTRAINT `fk_tour_order_schedule` FOREIGN KEY (`schedule_id`) REFERENCES `tm_tour_schedule` (`id`),
+  CONSTRAINT `chk_tour_order_count` CHECK (`participant_count` > 0),
+  CONSTRAINT `chk_tour_order_amount` CHECK (`unit_price` > 0 AND `amount` > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='一日游/周边游订单';
+
 INSERT IGNORE INTO `tm_tour_product_step` (`id`, `product_id`, `day_no`, `sequence_no`, `place_name`, `attraction_id`, `stay_minutes`, `transport_note`, `source_url`) VALUES
 (1, 1, 1, 1, '午门入院', 1, 30, '建议按预约时段入院', 'https://www.dpm.org.cn/Visit.html'),
 (2, 1, 1, 2, '太和殿-中和殿-保和殿', 1, 90, '沿中轴线步行游览', 'https://www.dpm.org.cn/Visit.html'),
@@ -1225,6 +1278,31 @@ INSERT IGNORE INTO `tm_tour_product` (`id`, `name`, `description`, `tour_type`, 
 (8, '厦门鼓浪屿三日慢游', '结合鼓浪屿管委会公开信息和厦门经典慢游动线整理，覆盖鼓浪屿、沙坡尾、环岛路等节点。价格为演示服务费。', 1, '厦门', '厦门', '3天2晚', 498.00, '/images/seed/coast.svg', '鼓浪屿管委会公开信息/路线场景整理', 'https://gly.xm.gov.cn/', '2026-05-21'),
 (9, '南京博物馆中山陵一日游', '基于携程南京目的地联想和南京钟山风景区公开信息整理，适合城市历史文化轻量游。价格为演示服务费。', 0, '南京', '南京', '1天', 158.00, '/images/seed/nanjing.svg', '携程目的地搜索/南京钟山风景区官网', 'https://zschina.nanjing.gov.cn/', '2026-05-21'),
 (10, '苏州园林平江路一日游', '基于携程苏州目的地联想和拙政园公开信息整理，覆盖古典园林、平江路和山塘街。价格为演示服务费。', 0, '苏州', '苏州古城', '1天', 168.00, '/images/seed/garden.svg', '携程目的地搜索/拙政园官网', 'https://www.szzzy.cn/', '2026-05-21');
+
+-- 动态演示班期：每个产品已有未来可售班期时保持不变，全部过期后才补充新班期。
+INSERT INTO `tm_tour_schedule`
+  (`product_id`, `travel_date`, `unit_price`, `total_stock`, `available_stock`, `status`)
+SELECT
+  seed.`product_id`, seed.`travel_date`, seed.`unit_price`, seed.`total_stock`, seed.`available_stock`, seed.`status`
+FROM (
+  SELECT 1 AS `product_id`, DATE_ADD(CURRENT_DATE, INTERVAL 7 DAY) AS `travel_date`, 128.00 AS `unit_price`, 30 AS `total_stock`, 30 AS `available_stock`, 1 AS `status`
+  UNION ALL SELECT 1, DATE_ADD(CURRENT_DATE, INTERVAL 14 DAY), 138.00, 30, 30, 1
+  UNION ALL SELECT 3, DATE_ADD(CURRENT_DATE, INTERVAL 8 DAY), 118.00, 25, 25, 1
+  UNION ALL SELECT 3, DATE_ADD(CURRENT_DATE, INTERVAL 15 DAY), 128.00, 25, 25, 1
+  UNION ALL SELECT 4, DATE_ADD(CURRENT_DATE, INTERVAL 9 DAY), 398.00, 20, 20, 1
+  UNION ALL SELECT 4, DATE_ADD(CURRENT_DATE, INTERVAL 16 DAY), 428.00, 20, 20, 1
+  UNION ALL SELECT 7, DATE_ADD(CURRENT_DATE, INTERVAL 10 DAY), 468.00, 20, 20, 1
+  UNION ALL SELECT 8, DATE_ADD(CURRENT_DATE, INTERVAL 11 DAY), 498.00, 20, 20, 1
+  UNION ALL SELECT 9, DATE_ADD(CURRENT_DATE, INTERVAL 12 DAY), 158.00, 30, 30, 1
+  UNION ALL SELECT 10, DATE_ADD(CURRENT_DATE, INTERVAL 13 DAY), 168.00, 30, 30, 1
+) AS seed
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM `tm_tour_schedule` AS existing
+  WHERE existing.`product_id` = seed.`product_id`
+    AND existing.`travel_date` >= CURRENT_DATE
+    AND existing.`status` = 1
+);
 
 INSERT IGNORE INTO `tm_tour_product_step` (`id`, `product_id`, `day_no`, `sequence_no`, `place_name`, `attraction_id`, `stay_minutes`, `transport_note`, `source_url`) VALUES
 (21, 7, 1, 1, '解放碑-八一好吃街', NULL, 120, '市中心步行，适合抵达日', 'https://whlyw.cq.gov.cn/'),
