@@ -1,5 +1,7 @@
-// 将 02_docs/ 下关键交付文档导出为 PDF（与 Markdown 源文件同目录）
-// 用法：node scripts/docs/export-pdfs.mjs
+// 将关键交付文档导出为 PDF（与 Markdown 源文件同目录）
+// 用法：node scripts/docs/export-pdfs.mjs [文件名片段]
+//   不带参数导出全部；传入文件名片段可仅导出匹配文档，例如：
+//   node scripts/docs/export-pdfs.mjs 技术总结报告
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -12,15 +14,19 @@ const require = createRequire(join(repoRoot, 'frontend', 'package.json'));
 const { chromium } = require('playwright');
 
 const docs = [
-  '5组-软件需求规格说明.md',
-  '软件概要设计说明书.md',
-  '5组-软件详细设计说明.md',
-  '测试计划.md',
-  '测试报告.md',
-  '测试执行报告-2026-09-02.md',
-  '需求设计代码测试追溯表.md',
-  '业务场景清单与用例说明.md',
+  { dir: '02_docs', name: '5组-软件需求规格说明.md' },
+  { dir: '02_docs', name: '软件概要设计说明书.md' },
+  { dir: '02_docs', name: '5组-软件详细设计说明.md' },
+  { dir: '02_docs', name: '测试计划.md' },
+  { dir: '02_docs', name: '测试报告.md' },
+  { dir: '02_docs', name: '测试执行报告-2026-09-02.md' },
+  { dir: '02_docs', name: '需求设计代码测试追溯表.md' },
+  { dir: '02_docs', name: '业务场景清单与用例说明.md' },
+  { dir: '06_defense', name: '技术总结报告.md' },
 ];
+
+const onlyFilter = process.argv[2];
+const selected = docs.filter((doc) => !onlyFilter || doc.name.includes(onlyFilter));
 
 const headerHtml = `<style>
 body { font-family: "Microsoft YaHei", "SimSun", sans-serif; font-size: 11pt; line-height: 1.6; max-width: 100%; margin: 0; }
@@ -36,8 +42,7 @@ img { max-width: 100%; }
 blockquote { border-left: 3px solid #999; padding-left: 10px; color: #444; }
 </style>`;
 
-const docDir = join(repoRoot, '02_docs');
-const tmpDir = join(docDir, '.pdf-tmp');
+const tmpDir = join(repoRoot, '.pdf-tmp');
 mkdirSync(tmpDir, { recursive: true });
 const headerPath = join(tmpDir, 'header.html');
 writeFileSync(headerPath, headerHtml, 'utf8');
@@ -45,15 +50,16 @@ writeFileSync(headerPath, headerHtml, 'utf8');
 const browser = await chromium.launch();
 const page = await browser.newPage();
 
-for (const doc of docs) {
-  const mdPath = join(docDir, doc);
-  const htmlPath = join(tmpDir, basename(doc, '.md') + '.html');
+for (const doc of selected) {
+  const docDir = join(repoRoot, doc.dir);
+  const mdPath = join(docDir, doc.name);
+  const htmlPath = join(tmpDir, basename(doc.name, '.md') + '.html');
   const html = execFileSync('pandoc', ['-f', 'gfm', '-t', 'html5', '-s', '--embed-resources', `--resource-path=${docDir}`, '-H', headerPath, mdPath], {
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
   });
   writeFileSync(htmlPath, html, 'utf8');
-  const pdfPath = join(docDir, basename(doc, '.md') + '.pdf');
+  const pdfPath = join(docDir, basename(doc.name, '.md') + '.pdf');
   await page.goto('file:///' + htmlPath.replace(/\\/g, '/'), { waitUntil: 'networkidle' });
   await page.pdf({
     path: pdfPath,
@@ -61,7 +67,7 @@ for (const doc of docs) {
     margin: { top: '18mm', bottom: '18mm', left: '14mm', right: '14mm' },
     printBackground: true,
   });
-  console.log('OK', basename(doc, '.md') + '.pdf');
+  console.log('OK', `${doc.dir}/${basename(doc.name, '.md')}.pdf`);
 }
 
 await browser.close();

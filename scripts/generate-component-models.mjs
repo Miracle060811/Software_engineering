@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const outputDir = path.join(root, "document", "概要设计说明");
+const outputDir = path.join(root, "02_docs", "概要设计说明");
 const sourceDir = path.join(outputDir, "source");
 
 const models = [
