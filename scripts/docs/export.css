@@ -1,0 +1,11 @@
+body { font-family: "Microsoft YaHei", "SimSun", sans-serif; font-size: 11pt; line-height: 1.6; max-width: 100%; margin: 0; }
+h1 { font-size: 20pt; border-bottom: 2px solid #333; padding-bottom: 6px; }
+h2 { font-size: 15pt; margin-top: 1.4em; }
+h3 { font-size: 13pt; }
+table { border-collapse: collapse; width: 100%; font-size: 9pt; margin: 1em 0; }
+th, td { border: 1px solid #888; padding: 4px 6px; text-align: left; }
+th { background: #eee; }
+code { font-family: Consolas, monospace; font-size: 9pt; background: #f4f4f4; padding: 0 2px; }
+pre { background: #f4f4f4; padding: 8px; font-size: 8.5pt; white-space: pre-wrap; word-break: break-all; }
+img { max-width: 100%; }
+blockquote { border-left: 3px solid #999; padding-left: 10px; color: #444; }
