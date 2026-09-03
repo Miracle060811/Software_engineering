@@ -1,10 +1,14 @@
 [CmdletBinding()]
 param(
-    [string]$Path = (Join-Path (Split-Path -Parent $PSScriptRoot) ".env")
+    [string]$Path
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if (-not $Path) {
+    $Path = Join-Path (Split-Path -Parent $PSScriptRoot) ".env"
+}
 
 function New-RandomBytes {
     param([int]$Length)
@@ -32,7 +36,7 @@ function Get-ConfiguredKeys {
             $null = $keys.Add($Matches[1])
         }
     }
-    return $keys
+    return ,$keys
 }
 
 $fullPath = [IO.Path]::GetFullPath($Path)
@@ -70,9 +74,9 @@ if (-not $keys.Contains("MINIO_API_PORT")) { $additions.MINIO_API_PORT = "9000" 
 if (-not $keys.Contains("MINIO_CONSOLE_PORT")) { $additions.MINIO_CONSOLE_PORT = "19001" }
 
 if ($additions.Count -gt 0) {
-    $append = @("", "# 由 scripts/Initialize-TravelMateLocalEnv.ps1 补充的本机配置")
+    $append = @("", "# Added by scripts/Initialize-TravelMateLocalEnv.ps1")
     foreach ($entry in $additions.GetEnumerator()) {
-        $append += "$($entry.Key)=`"$($entry.Value)`""
+        $append += ('{0}="{1}"' -f $entry.Key, $entry.Value)
     }
     $appendText = ($append -join [Environment]::NewLine) + [Environment]::NewLine
     [IO.File]::AppendAllText($fullPath, $appendText, [Text.UTF8Encoding]::new($false))

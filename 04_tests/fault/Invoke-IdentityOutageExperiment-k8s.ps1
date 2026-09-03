@@ -2,6 +2,8 @@ param(
     [string]$Namespace = "travelmate",
     [int]$IdentityLocalPort = 18081,
     [int]$TrafficLocalPort = 18082,
+    [ValidateRange(0, 600)]
+    [int]$OutageHoldSeconds = 0,
     [string]$ResultDirectory = (Join-Path $PSScriptRoot "results")
 )
 
@@ -355,6 +357,16 @@ try {
     )) {
         $otherServiceHealth[$service.Name] = Get-ServiceHealth $service.Name $service.Port
     }
+
+    if ($OutageHoldSeconds -gt 0) {
+        Write-Host "      故障验证完成，继续保持 identity-service 为 0 副本 $OutageHoldSeconds 秒，供录屏观察 ..."
+        for ($remaining = $OutageHoldSeconds; $remaining -gt 0) {
+            Write-Host "      identity-service 故障保持中：剩余 $remaining 秒"
+            $sleepSeconds = [Math]::Min(5, $remaining)
+            Start-Sleep -Seconds $sleepSeconds
+            $remaining -= $sleepSeconds
+        }
+    }
 } catch {
     $failureMessage = $_.Exception.Message
 } finally {
@@ -447,25 +459,54 @@ try {
 }
 [IO.File]::WriteAllLines($logPath, [string[]]$logLines, [Text.UTF8Encoding]::new($false))
 
+$orderHttpStatusValue = if ($null -ne $orderResponse) { [int]$orderResponse.StatusCode } else { $null }
+$orderBusinessCodeValue = if ($null -ne $orderResult) { [int]$orderResult.code } else { $null }
+$orderMessageValue = if ($null -ne $orderResult) { $orderResult.msg } else { $null }
+$trafficSearchCodeValue = if ($null -ne $searchDuringOutage) { [int]$searchDuringOutage.code } else { $null }
+
+$identityStatusDescription = if (
+    $null -ne $identityDesiredReplicasDuringOutage -and
+    $null -ne $identityReadyEndpointsDuringOutage
+) {
+    "identity-service 故障期间实际为 $identityDesiredReplicasDuringOutage 副本、$identityReadyEndpointsDuringOutage 个就绪端点"
+} else {
+    "未完整取得 identity-service 故障期间的副本与就绪端点状态"
+}
+$systemResponseDescription = if ($null -ne $orderHttpStatusValue) {
+    "下单接口实际返回 HTTP $orderHttpStatusValue、业务码 $orderBusinessCodeValue：$orderMessageValue"
+} else {
+    "未取得下单接口的故障响应"
+}
+$otherServiceStatesText = if ($otherServiceHealth.Count -gt 0) {
+    @($otherServiceHealth.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join "，"
+} else {
+    "未取得其他服务状态"
+}
+$otherServicesDescription = "交通查询实际返回 $trafficSearchCodeValue；$otherServiceStatesText"
+
 $evidence = [ordered]@{
     experiment = "TRAFFIC_TO_IDENTITY_OUTAGE_K8S"
     executedAt = $startedAt.ToString("o")
     kubernetesContext = $contextName
     namespace = $Namespace
+    outageHoldSeconds = $OutageHoldSeconds
     identityConnectTimeoutMs = 1000
     identityReadTimeoutMs = 2000
     originalIdentityReplicas = $originalIdentityReplicas
     identityPodsBefore = @($identityPodsBefore).Count
     identityDesiredReplicasDuringOutage = $identityDesiredReplicasDuringOutage
     identityReadyEndpointsDuringOutage = $identityReadyEndpointsDuringOutage
+    identityStatusDescription = $identityStatusDescription
     identityHpaExisted = $hpaExisted
     identityHpaRestored = $hpaRestored
-    orderHttpStatus = if ($null -ne $orderResponse) { [int]$orderResponse.StatusCode } else { $null }
-    orderBusinessCode = if ($null -ne $orderResult) { [int]$orderResult.code } else { $null }
-    orderMessage = if ($null -ne $orderResult) { $orderResult.msg } else { $null }
+    orderHttpStatus = $orderHttpStatusValue
+    orderBusinessCode = $orderBusinessCodeValue
+    orderMessage = $orderMessageValue
+    systemResponseDescription = $systemResponseDescription
     trafficHealthDuringOutage = if ($null -ne $trafficHealth) { $trafficHealth.status } else { $null }
-    trafficSearchDuringOutage = if ($null -ne $searchDuringOutage) { [int]$searchDuringOutage.code } else { $null }
+    trafficSearchDuringOutage = $trafficSearchCodeValue
     otherServiceHealthDuringOutage = $otherServiceHealth
+    otherServicesDescription = $otherServicesDescription
     ordersBefore = if ($null -ne $ordersBefore) { @($ordersBefore.data).Count } else { $null }
     ordersAfter = if ($null -ne $ordersAfter) { @($ordersAfter.data).Count } else { $null }
     inventoryBefore = $inventoryBefore
