@@ -17,14 +17,12 @@ node_modules/
 .vite/
 
 # 测试报告与覆盖率
+# 04_tests 下的报告与实验数据属交付证据，全部纳入版本管理
 playwright-report/
 test-results/
 coverage/
 .nyc_output/
 blob-report/
-# 04_tests/reports/ci/ 为 CI 报告交付副本（原件在 docs/ci/，已随仓库提交），需要随压缩包交付，故不忽略
-/04_tests/stress/results/*.json
-/04_tests/stress/results/hpa-*
 /frontend/playwright-report-real/
 /frontend/test-results-real/
 /frontend/playwright-report-microservices/
@@ -34,6 +32,9 @@ blob-report/
 uploads/
 
 # 本地文档、截图与临时交付包
+# 答辩大文件（超 GitHub 100MB 上限）：保留在本地 06_defense 供打包交付，不进版本库
+/06_defense/答辩.mp4
+/06_defense/杨任宇班-5组-TravelMate-答辩.pptx
 /docs/前五天四人小组任务安排.md
 /说明书/
 /前端截图(1)/

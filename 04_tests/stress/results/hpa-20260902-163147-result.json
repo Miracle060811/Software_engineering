@@ -1,0 +1,15 @@
+{
+    "experiment":  "TRAFFIC_HPA",
+    "executedAt":  "2026-09-02T16:34:10.5775337+08:00",
+    "context":  "docker-desktop",
+    "namespace":  "travelmate",
+    "initialReplicas":  2,
+    "maximumReplicas":  2,
+    "finalReplicas":  2,
+    "scaledUp":  false,
+    "scaledDown":  true,
+    "k6ExitCode":  0,
+    "passed":  false,
+    "sampleLog":  "hpa-20260902-163147-samples.log",
+    "k6Summary":  "hpa-20260902-163147-k6.json"
+}
