@@ -5,7 +5,7 @@
 
 ## 1. 当前情况与中期结论
 
-TravelMate 以单个 `backend` Maven 工程作为现有功能回归基线；在中期设计冻结后，已经新增 `microservices` 多模块工程，第一批 `SVC-IDENTITY`、`SVC-TRAFFIC`、`SVC-LOCAL`、`SVC-AI` 可独立构建、启动和制作镜像。当前仍是渐进式迁移：四服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和数据迁移工具已完成，新服务仍选择性复用单体领域源码；真实数据切换、AI 其余业务、API Gateway 与生产部署编排尚未完成。
+TravelMate 以单个 `backend` Maven 工程作为现有功能回归基线；在中期设计冻结后，已经新增 `microservices` 多模块工程，第一批 `SVC-IDENTITY`、`SVC-TRAFFIC`、`SVC-LOCAL`、`SVC-AI` 可独立构建、启动和制作镜像。中期时点仍是渐进式迁移：四服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和数据迁移工具已完成，新服务仍选择性复用单体领域源码；当时真实数据切换、AI 其余业务、API Gateway 与生产部署编排仍在后续阶段，最终验收状态以 9 月 3 日材料为准。
 
 本次中期阶段已经形成以下三项可验收成果：
 

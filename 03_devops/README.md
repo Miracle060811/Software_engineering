@@ -12,7 +12,7 @@
 | `kubernetes-overlays/` | 本地/服务器 Kustomize 覆盖层 | `deploy/k8s-overlays/` |
 | `kubernetes-microservices/` | 六微服务 K8s 部署清单 | `microservices/k8s/` |
 | `database/init-and-seed/` | 单体数据库建表与种子数据脚本 | `docs/sql/` |
-| `database/flyway-migration/` | 单体 Flyway 迁移 V1–V9 | `backend/src/main/resources/db/migration/` |
+| `database/flyway-migration/` | 单体 Flyway 迁移 V1–V10（V10 补齐 UC08 本地游预订工作流） | `backend/src/main/resources/db/migration/` |
 | `database/microservices-schema/` | 六微服务分库 Schema 与种子脚本 | `microservices/sql/` |
 | `scripts/` | 部署、备份、恢复、回滚与密钥轮换脚本（PowerShell） | `scripts/cd/` |
 | `部署文档.md` | 环境、端口、部署与运维说明文档 | `02_docs/部署文档.md` |

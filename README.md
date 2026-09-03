@@ -13,7 +13,7 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 | 管理后台 | RBAC、用户/资源/订单/优惠券管理、CSV 导入、内容与评价审核、系统日志和轻量运行指标 |
 | 工程质量 | 后端 JUnit/MockMvc、前端 ESLint/构建、Mock 与真实后端 Playwright E2E、JaCoCo、SpotBugs、依赖/密钥扫描及 CodeQL |
 
-系统目前处于“核心主链路可运行，验收证据持续加固”的阶段。UC01—UC19 的证据基线由 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json) 与 [`docs/ci/test-quality-policy.json`](docs/ci/test-quality-policy.json) 管理；六微服务的 113 个 HTTP 端点测试映射由 [`docs/ci/microservice-api-coverage.json`](docs/ci/microservice-api-coverage.json) 管理，不能把“代码已存在”直接视为“场景已被完整自动化覆盖”。
+系统目前处于“核心主链路可运行，验收证据持续加固”的阶段。UC01—UC19 的证据基线由 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json) 与 [`docs/ci/test-quality-policy.json`](docs/ci/test-quality-policy.json) 管理；六微服务的 119 个 HTTP 端点（100 个公开、19 个内部）测试映射由 [`docs/ci/microservice-api-coverage.json`](docs/ci/microservice-api-coverage.json) 管理，不能把“代码已存在”直接视为“场景已被完整自动化覆盖”。
 
 ## 微服务迁移状态
 

@@ -21,7 +21,7 @@ sequenceDiagram
       API-->>Page: 更新页面状态
       Page-->>User: 展示可验证结果
     else 关键失败
-      Note over Service,Data: 库存、有效期或重复领取校验失败时拒绝；核销证据待补
+      Note over Service,Data: 库存、有效期、重复领取、门槛或重复核销校验失败时拒绝
       Service-->>Controller: 抛出/返回业务失败
       Controller-->>API: Result.error(...)
       API-->>Page: 展示错误且不伪造成功状态

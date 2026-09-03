@@ -18,7 +18,7 @@
   "UC05": { "status": "runnable", "services": ["local-service"], "routes": ["/api/hotel/search", "/api/hotel/order/create"] },
   "UC06": { "status": "runnable", "services": ["local-service"], "routes": ["/api/hotel/order/{orderNo}/pay", "/api/hotel/order/{orderNo}/cancel", "/api/hotel/order/{orderNo}/refund"] },
   "UC07": { "status": "runnable", "services": ["local-service"], "routes": ["/api/attraction/search", "/api/attraction/{id}/ticket"] },
-  "UC08": { "status": "runnable", "services": ["local-service"], "routes": ["/api/tour/list"] },
+  "UC08": { "status": "runnable", "services": ["local-service"], "routes": ["/api/tour/list", "/api/tour/orders", "/api/tour/orders/{orderNo}"] },
   "UC09": { "status": "runnable", "services": ["local-service", "ops-service"], "routes": ["/api/review/add", "/api/review/report", "/api/admin/review-reports/{id}/resolve"] },
   "UC10": { "status": "runnable", "services": ["local-service", "traffic-service"], "routes": ["/api/coupon/claim/{id}", "/api/order/flight/create"] },
   "UC11": { "status": "runnable", "services": ["ai-service"], "routes": ["/api/ai/plan/generate", "/api/ai/plan/list"] },

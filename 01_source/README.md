@@ -6,7 +6,7 @@
 
 - **远程仓库**：<https://github.com/Miracle060811/Software_engineering>
 - **默认分支**：`main`（完整提交历史，含改造前后全部记录）
-- **源码文件清单**：[`source-file-list.txt`](source-file-list.txt)（由 `git ls-files backend frontend microservices` 导出，共 918 个被 Git 跟踪的源码文件，已自动排除 `node_modules/`、`target/`、`dist/` 等构建产物）
+- **源码文件清单**：[`source-file-list.txt`](source-file-list.txt)（由 `git ls-files --cached --others --exclude-standard -- backend frontend microservices` 导出，共 942 个当前源码文件，包含本地尚未提交的最终实现，已自动排除 `node_modules/`、`target/`、`dist/` 等构建产物）
 
 ## 版本基线（性能对比与验收口径）
 
