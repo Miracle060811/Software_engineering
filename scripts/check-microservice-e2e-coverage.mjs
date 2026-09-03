@@ -47,7 +47,7 @@ for (const requiredWorkflowFragment of [
   }
 }
 
-const ciGateBlock = workflow.match(/\n  ci-gate:[\s\S]*?\n  microservice-release-gate:/)?.[0] ?? "";
+const ciGateBlock = workflow.match(/\n  ci-gate:[\s\S]*?\n  release-security-gate:/)?.[0] ?? "";
 const deliveryGateBlock = workflow.match(/\n  delivery-gate:[\s\S]*$/)?.[0] ?? "";
 if (!ciGateBlock.includes("needs.microservice-e2e.result")) failures.push("ci-gate 未校验微服务 E2E 结果");
 if (!deliveryGateBlock.includes("needs.microservice-e2e.result")) failures.push("delivery-gate 未校验微服务 E2E 结果");

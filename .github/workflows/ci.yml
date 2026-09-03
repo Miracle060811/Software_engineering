@@ -2,6 +2,8 @@ name: TravelMate CI/CD
 
 on:
   push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -12,7 +14,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # PR 只保留最新提交；main 发布/部署必须串行完成，避免在 rollout 中途被取消。
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   changes:
@@ -21,6 +24,10 @@ jobs:
     timeout-minutes: 5
     outputs:
       code: ${{ steps.detect.outputs.code }}
+      full: ${{ steps.detect.outputs.full }}
+      backend: ${{ steps.detect.outputs.backend }}
+      frontend: ${{ steps.detect.outputs.frontend }}
+      microservices: ${{ steps.detect.outputs.microservices }}
 
     steps:
       - name: Checkout repository
@@ -37,6 +44,10 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "full=true" >> "$GITHUB_OUTPUT"
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            echo "microservices=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -50,11 +61,39 @@ jobs:
 
           files="$(git diff --name-only "$base" "$GITHUB_SHA")"
           printf '%s\n' "$files"
-          if printf '%s\n' "$files" | grep -Eq '^(backend/|frontend/|microservices/|deploy/|docs/sql/|scripts/|package(-lock)?\.json$|\.github/workflows/)'; then
-            echo "code=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "code=false" >> "$GITHUB_OUTPUT"
+
+          matches() {
+            printf '%s\n' "$files" | grep -Eq "$1"
+          }
+
+          backend=false
+          frontend=false
+          microservices=false
+          full=false
+
+          matches '^backend/' && backend=true
+          matches '^frontend/' && frontend=true
+          matches '^microservices/' && microservices=true
+
+          if matches '^\.github/workflows/'; then
+            full=true
           fi
+
+          code=false
+          if matches '^(backend/|frontend/|microservices/|deploy/|docs/sql/|scripts/|package(-lock)?\.json$|compose(\.server)?\.ya?ml$|\.env(\.server)?\.example$|\.github/workflows/)'; then
+            code=true
+          fi
+
+          # main 的代码提交仍执行完整发布链；纯文档提交继续跳过构建和部署。
+          if [[ "$code" == "true" && "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            full=true
+          fi
+
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "full=$full" >> "$GITHUB_OUTPUT"
+          echo "backend=$backend" >> "$GITHUB_OUTPUT"
+          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
+          echo "microservices=$microservices" >> "$GITHUB_OUTPUT"
 
   validation:
     name: Repository and use-case validation
@@ -130,7 +169,10 @@ jobs:
   backend:
     name: Backend integration tests and package
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: >-
+      needs.changes.outputs.full == 'true' ||
+      needs.changes.outputs.backend == 'true' ||
+      needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -258,21 +300,14 @@ jobs:
           retention-days: 14
 
   microservices:
-    name: ${{ matrix.service }} tests, package, and image build
+    name: Six microservices tests and package
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: >-
+      needs.changes.outputs.full == 'true' ||
+      needs.changes.outputs.microservices == 'true' ||
+      needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        service:
-          - identity-service
-          - traffic-service
-          - local-service
-          - ai-service
-          - community-service
-          - ops-service
 
     steps:
       - name: Checkout repository
@@ -287,83 +322,137 @@ jobs:
           cache-dependency-path: |
             microservices/**/pom.xml
 
-      - name: Run service tests and package
+      - name: Run six-service reactor tests and package
         working-directory: microservices
         shell: bash
-        env:
-          SERVICE: ${{ matrix.service }}
         run: |
           set -o pipefail
-          evidence_dir="$GITHUB_WORKSPACE/microservices/ci-evidence/$SERVICE"
+          evidence_dir="$GITHUB_WORKSPACE/microservices/ci-evidence"
           mkdir -p "$evidence_dir"
-          mvn --batch-mode --no-transfer-progress \
-            -pl "services/$SERVICE" -am verify \
+          mvn --batch-mode --no-transfer-progress --fail-at-end \
+            verify \
             2>&1 | tee "$evidence_dir/maven-verify.log"
 
-      - name: Validate packaged JAR and Dockerfile path
+      - name: Validate packaged JARs and Dockerfile paths
         shell: bash
-        env:
-          SERVICE: ${{ matrix.service }}
         run: |
           set -euo pipefail
-          service_dir="microservices/services/$SERVICE"
-          mapfile -d '' jars < <(find "$service_dir/target" -maxdepth 1 -type f -name "$SERVICE-*.jar" -print0)
-          [[ "${#jars[@]}" -eq 1 ]]
-          grep -Fq "COPY target/$SERVICE-*.jar app.jar" "$service_dir/Dockerfile"
-          printf 'service=%s\njar=%s\ndockerfile=%s\n' \
-            "$SERVICE" "${jars[0]}" "$service_dir/Dockerfile" \
-            > "microservices/ci-evidence/$SERVICE/package-layout.txt"
+          services=(identity-service traffic-service local-service ai-service community-service ops-service)
+          for service in "${services[@]}"; do
+            service_dir="microservices/services/$service"
+            evidence_dir="microservices/ci-evidence/$service"
+            mkdir -p "$evidence_dir"
+            mapfile -d '' jars < <(find "$service_dir/target" -maxdepth 1 -type f -name "$service-*.jar" -print0)
+            [[ "${#jars[@]}" -eq 1 ]]
+            grep -Fq "COPY target/$service-*.jar app.jar" "$service_dir/Dockerfile"
+            printf 'service=%s\njar=%s\ndockerfile=%s\n' \
+              "$service" "${jars[0]}" "$service_dir/Dockerfile" \
+              > "$evidence_dir/package-layout.txt"
+          done
 
-      - name: Build service image without publishing
+      - name: Build service images without publishing on PR
+        if: github.event_name == 'pull_request'
         shell: bash
         env:
-          SERVICE: ${{ matrix.service }}
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          set -o pipefail
-          image="travelmate-ci/$SERVICE:sha-$RELEASE_SHA"
-          build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          docker build --pull \
-            --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
-            --label "org.opencontainers.image.revision=$RELEASE_SHA" \
-            --label "org.opencontainers.image.created=$build_date" \
-            --label "org.opencontainers.image.version=sha-$RELEASE_SHA" \
-            --tag "$image" \
-            "microservices/services/$SERVICE" \
-            2>&1 | tee "microservices/ci-evidence/$SERVICE/docker-build.log"
+          set -euo pipefail
+          services=(identity-service traffic-service local-service ai-service community-service ops-service)
+          for service in "${services[@]}"; do
+            image="travelmate-ci/$service:sha-$RELEASE_SHA"
+            build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            docker build --pull \
+              --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+              --label "org.opencontainers.image.revision=$RELEASE_SHA" \
+              --label "org.opencontainers.image.created=$build_date" \
+              --label "org.opencontainers.image.version=sha-$RELEASE_SHA" \
+              --tag "$image" \
+              "microservices/services/$service" \
+              2>&1 | tee "microservices/ci-evidence/$service/docker-build.log"
+          done
 
-      - name: Remove CI validation image
-        if: always()
+      - name: Remove PR validation images
+        if: always() && github.event_name == 'pull_request'
         shell: bash
         env:
-          SERVICE: ${{ matrix.service }}
           RELEASE_SHA: ${{ github.sha }}
-        run: docker image rm "travelmate-ci/$SERVICE:sha-$RELEASE_SHA" >/dev/null 2>&1 || true
+        run: |
+          for service in identity-service traffic-service local-service ai-service community-service ops-service; do
+            docker image rm "travelmate-ci/$service:sha-$RELEASE_SHA" >/dev/null 2>&1 || true
+          done
 
-      - name: Upload service test and build evidence
+      - name: Upload six-service test and build evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: microservice-ci-${{ matrix.service }}-${{ github.sha }}
+          name: microservice-ci-${{ github.sha }}
           path: |
-            microservices/services/${{ matrix.service }}/target/surefire-reports/
-            microservices/ci-evidence/${{ matrix.service }}/
+            microservices/services/*/target/surefire-reports/
+            microservices/travelmate-contract/target/surefire-reports/
+            microservices/ci-evidence/
           if-no-files-found: error
           retention-days: 30
 
-      - name: Upload tested service package
+      - name: Upload tested identity-service package
         if: success()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: microservice-package-${{ matrix.service }}-${{ github.sha }}
-          path: microservices/services/${{ matrix.service }}/target/${{ matrix.service }}-*.jar
+          name: microservice-package-identity-service-${{ github.sha }}
+          path: microservices/services/identity-service/target/identity-service-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload tested traffic-service package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-package-traffic-service-${{ github.sha }}
+          path: microservices/services/traffic-service/target/traffic-service-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload tested local-service package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-package-local-service-${{ github.sha }}
+          path: microservices/services/local-service/target/local-service-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload tested ai-service package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-package-ai-service-${{ github.sha }}
+          path: microservices/services/ai-service/target/ai-service-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload tested community-service package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-package-community-service-${{ github.sha }}
+          path: microservices/services/community-service/target/community-service-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload tested ops-service package
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: microservice-package-ops-service-${{ github.sha }}
+          path: microservices/services/ops-service/target/ops-service-*.jar
           if-no-files-found: error
           retention-days: 14
 
   frontend:
     name: Frontend build and mocked smoke E2E
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: >-
+      needs.changes.outputs.full == 'true' ||
+      needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -385,10 +474,6 @@ jobs:
       - name: Lint frontend source
         working-directory: frontend
         run: npm run lint
-
-      - name: Audit production dependencies
-        working-directory: frontend
-        run: npm run audit:prod
 
       - name: Build frontend
         working-directory: frontend
@@ -436,14 +521,12 @@ jobs:
       - changes
       - validation
       - backend
-      - frontend
     if: >-
       always() &&
       needs.changes.result == 'success' &&
-      needs.changes.outputs.code == 'true' &&
+      (needs.changes.outputs.full == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') &&
       needs.validation.result == 'success' &&
       needs.backend.result == 'success' &&
-      needs.frontend.result == 'success' &&
       (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -520,18 +603,6 @@ jobs:
           cat backend-ci.log
           exit 1
 
-      - name: Verify packaged backend applied Flyway migrations
-        shell: bash
-        run: |
-          migration_files=(backend/src/main/resources/db/migration/V*__*.sql)
-          expected_count="${#migration_files[@]}"
-          expected_latest="$(printf '%s\n' "${migration_files[@]}" | sed -E 's#^.*/V([0-9]+)__.*#\1#' | sort -n | tail -n1)"
-          applied="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate -e "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1;")"
-          latest="$(docker exec ${{ job.services.mysql.id }} mysql -N -uroot -ptravelmate-ci travelmate -e "SELECT MAX(CAST(version AS UNSIGNED)) FROM flyway_schema_history WHERE success = 1;")"
-          echo "Packaged backend Flyway migrations: $applied/$expected_count; latest version: $latest (expected $expected_latest)"
-          [[ "$applied" -eq "$expected_count" ]]
-          [[ "$latest" == "$expected_latest" ]]
-
       - name: Prepare isolated admin bootstrap state
         shell: bash
         run: |
@@ -578,14 +649,12 @@ jobs:
       - changes
       - validation
       - microservices
-      - frontend
     if: >-
       always() &&
       needs.changes.result == 'success' &&
-      needs.changes.outputs.code == 'true' &&
+      (needs.changes.outputs.full == 'true' || needs.changes.outputs.microservices == 'true' || needs.changes.outputs.frontend == 'true') &&
       needs.validation.result == 'success' &&
       needs.microservices.result == 'success' &&
-      needs.frontend.result == 'success' &&
       (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -786,31 +855,49 @@ jobs:
           [[ "${{ needs.changes.result }}" == "success" ]]
           [[ "${{ needs.validation.result }}" == "success" ]]
 
-          code="${{ needs.changes.outputs.code }}"
-          if [[ "$code" == "true" ]]; then
+          full="${{ needs.changes.outputs.full }}"
+          backend_required=false
+          frontend_required=false
+          microservices_required=false
+          if [[ "$full" == "true" || "${{ needs.changes.outputs.backend }}" == "true" || "${{ needs.changes.outputs.frontend }}" == "true" ]]; then
+            backend_required=true
+          fi
+          if [[ "$full" == "true" || "${{ needs.changes.outputs.frontend }}" == "true" ]]; then
+            frontend_required=true
+          fi
+          if [[ "$full" == "true" || "${{ needs.changes.outputs.microservices }}" == "true" || "${{ needs.changes.outputs.frontend }}" == "true" ]]; then
+            microservices_required=true
+          fi
+
+          if [[ "$backend_required" == "true" ]]; then
             [[ "${{ needs.backend.result }}" == "success" ]]
-            [[ "${{ needs.microservices.result }}" == "success" ]]
-            [[ "${{ needs.frontend.result }}" == "success" ]]
           else
             [[ "${{ needs.backend.result }}" == "skipped" ]]
+          fi
+          if [[ "$microservices_required" == "true" ]]; then
+            [[ "${{ needs.microservices.result }}" == "success" ]]
+          else
             [[ "${{ needs.microservices.result }}" == "skipped" ]]
+          fi
+          if [[ "$frontend_required" == "true" ]]; then
+            [[ "${{ needs.frontend.result }}" == "success" ]]
+          else
             [[ "${{ needs.frontend.result }}" == "skipped" ]]
           fi
 
-          real_required=false
-          if [[ "$code" == "true" ]] && { [[ "${{ github.event_name }}" == "pull_request" ]] || [[ "${{ github.event_name }}" == "workflow_dispatch" ]] || [[ "${{ github.ref }}" == "refs/heads/main" ]]; }; then
-            real_required=true
-          fi
-          if [[ "$real_required" == "true" ]]; then
+          if [[ "$backend_required" == "true" ]]; then
             [[ "${{ needs.real-e2e.result }}" == "success" ]]
-            [[ "${{ needs.microservice-e2e.result }}" == "success" ]]
           else
             [[ "${{ needs.real-e2e.result }}" == "skipped" ]]
+          fi
+          if [[ "$microservices_required" == "true" ]]; then
+            [[ "${{ needs.microservice-e2e.result }}" == "success" ]]
+          else
             [[ "${{ needs.microservice-e2e.result }}" == "skipped" ]]
           fi
 
-  microservice-release-gate:
-    name: Microservice release quality gate
+  release-security-gate:
+    name: Release security gate
     needs:
       - changes
       - ci-gate
@@ -882,13 +969,13 @@ jobs:
     needs:
       - changes
       - ci-gate
-      - microservice-release-gate
+      - release-security-gate
     if: >-
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
       needs.changes.outputs.code == 'true' &&
       needs.ci-gate.result == 'success' &&
-      needs.microservice-release-gate.result == 'success'
+      needs.release-security-gate.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -1080,16 +1167,16 @@ jobs:
     needs:
       - changes
       - ci-gate
+      - release-security-gate
     if: >-
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
       needs.changes.outputs.code == 'true' &&
-      needs.ci-gate.result == 'success'
+      needs.ci-gate.result == 'success' &&
+      needs.release-security-gate.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
-      actions: read
-      checks: read
       contents: read
       packages: write
     outputs:
@@ -1105,56 +1192,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      - name: Require security gates for the same commit
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          required=(
-            "CodeQL quality gate"
-            "Secret scan"
-            "Maven dependency audit"
-            "Node.js dependency audit"
-          )
-
-          for attempt in {1..80}; do
-            payload="$(gh api "repos/$GITHUB_REPOSITORY/commits/$RELEASE_SHA/check-runs?per_page=100")"
-            all_success=true
-            for check_name in "${required[@]}"; do
-              check="$(jq -c --arg name "$check_name" '
-                [.check_runs[] | select(.name == $name)]
-                | sort_by(.started_at // .created_at)
-                | last // empty
-              ' <<<"$payload")"
-              if [[ -z "$check" ]]; then
-                echo "$check_name: not created yet"
-                all_success=false
-                continue
-              fi
-
-              status="$(jq -r .status <<<"$check")"
-              conclusion="$(jq -r '.conclusion // ""' <<<"$check")"
-              echo "$check_name: status=$status conclusion=$conclusion"
-              if [[ "$status" == "completed" && "$conclusion" != "success" ]]; then
-                echo "Required check failed: $check_name ($conclusion)"
-                exit 1
-              fi
-              if [[ "$status" != "completed" || "$conclusion" != "success" ]]; then
-                all_success=false
-              fi
-            done
-
-            if [[ "$all_success" == "true" ]]; then
-              exit 0
-            fi
-            sleep 15
-          done
-
-          echo "Timed out waiting for security checks on $RELEASE_SHA"
-          exit 1
 
       - name: Download tested backend package
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1

@@ -4,9 +4,33 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "microservices/**"
+      - "deploy/**"
+      - "docs/sql/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "compose*.yml"
+      - ".env*.example"
+      - ".github/workflows/**"
   pull_request:
     branches:
       - main
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "microservices/**"
+      - "deploy/**"
+      - "docs/sql/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "compose*.yml"
+      - ".env*.example"
+      - ".github/workflows/**"
   schedule:
     - cron: "23 18 * * 1"
   workflow_dispatch:
@@ -18,7 +42,7 @@ permissions:
 
 concurrency:
   group: codeql-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   analyze:
@@ -45,7 +69,9 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-          cache-dependency-path: backend/pom.xml
+          cache-dependency-path: |
+            backend/pom.xml
+            microservices/**/pom.xml
 
       - name: Prepare Maven Wrapper
         if: matrix.language == 'java-kotlin'
@@ -59,10 +85,12 @@ jobs:
           queries: security-extended
           dependency-caching: true
 
-      - name: Build Java and tests for CodeQL
+      - name: Build backend and microservices for CodeQL
         if: matrix.language == 'java-kotlin'
-        working-directory: backend
-        run: ./mvnw --batch-mode --no-transfer-progress -DskipTests test-compile
+        shell: bash
+        run: |
+          ./backend/mvnw --batch-mode --no-transfer-progress -f backend/pom.xml -DskipTests test-compile
+          mvn --batch-mode --no-transfer-progress -f microservices/pom.xml -DskipTests test-compile
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@4c0873ef8656cb3c50b3f42fb63bc1ade0cfa827 # v4

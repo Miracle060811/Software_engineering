@@ -245,13 +245,14 @@ kubectl kustomize deploy/k8s-overlays/server | Out-Null
 正式 CI/CD 位于 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)：
 
 - 所有提交都执行仓库清洁度、UC01—UC19 追溯、Flyway 迁移规则、Kubernetes 清单和部署脚本校验；
-- 代码、SQL、脚本或工作流变更执行后端 `verify`、前端 lint/审计/构建和 Mock E2E；
+- Pull Request 按 backend、frontend、microservices 变更范围选择性执行构建与 E2E；合并到 `main` 后仍执行完整发布验收；
+- 六个微服务使用一次 Maven reactor 完成测试与打包，避免在矩阵 Job 中重复构建共享 contract；PR 验证 Dockerfile，main 直接构建并发布最终镜像；
 - 后端 CI 从空的 `travelmate` 数据库启动，由 Flyway 自动执行全部迁移，并核对迁移历史表的最新版本；
-- `main`、面向 `main` 的 Pull Request 和手动运行还执行真实后端 E2E；
+- 功能分支不再同时触发 push 与 Pull Request 两套重复流水线；手动运行仍执行完整验证；
 - `main` 的代码 push 在质量与安全门禁成功后，继续制作镜像、部署 Kubernetes、执行健康检查并上传证据；
 - Markdown 等纯文档改动跳过无关构建和部署，但仍经过总质量门禁。
 
-安全流水线位于 [`.github/workflows/security.yml`](.github/workflows/security.yml) 与 [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)，覆盖密钥、依赖漏洞和 Java/JavaScript 静态安全分析。流水线证据记录规则见 [`05_management/pipeline-records/README.md`](05_management/pipeline-records/README.md)。
+安全流水线位于 [`.github/workflows/security.yml`](.github/workflows/security.yml) 与 [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)，覆盖密钥、Node.js 依赖、backend/六微服务 Maven 依赖，以及 backend、六微服务和 JavaScript/TypeScript 静态安全分析。CodeQL 仅在源码、依赖、部署脚本或工作流变化时触发，纯文档/证据更新不再重复分析。正式发布只等待一个统一安全门禁；main 的发布与部署不会因后续提交而在 rollout 中途取消。流水线证据记录规则见 [`05_management/pipeline-records/README.md`](05_management/pipeline-records/README.md)。
 
 ### 数据库版本迁移
 

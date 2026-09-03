@@ -66,7 +66,7 @@ const props = defineProps({
   },
   referrerpolicy: {
     type: String,
-    default: "origin-when-cross-origin",
+    default: "no-referrer",
   },
 });
 
