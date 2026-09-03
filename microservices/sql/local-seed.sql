@@ -396,6 +396,10 @@ ON DUPLICATE KEY UPDATE
   `source_name`       = VALUES(`source_name`),
   `data_checked_date` = VALUES(`data_checked_date`);
 
+UPDATE `tm_attraction`
+SET `cover_img` = CONCAT('/images/real/attractions/attraction-', LPAD(`id`, 2, '0'), '.webp')
+WHERE `id` BETWEEN 1 AND 48;
+
 INSERT IGNORE INTO `tm_tour_product` (`id`, `name`, `description`, `tour_type`, `departure_city`, `destination`, `duration`, `price`, `cover_img`, `source_name`, `source_url`, `data_checked_date`) VALUES
 (1, '故宫博物院官方导览一日', '基于故宫博物院开放时间与官方导览信息整理，适合首次到访的中轴线游览。价格为演示服务费，不代表官方票价。', 0, '北京', '故宫博物院', '1天', 128.00, '/images/seed/beijing.svg', '故宫博物院官网', 'https://www.dpm.org.cn/Visit.html', '2026-05-19'),
 (2, '颐和园昆明湖半日游', '基于颐和园开放时间与园区导览整理，覆盖东宫门、仁寿殿、长廊、昆明湖等节点。价格为演示服务费。', 0, '北京', '颐和园', '0.5天', 98.00, '/images/seed/beijing.svg', '颐和园官网', 'https://www.summerpalace.net.cn/visit.html', '2026-05-19'),

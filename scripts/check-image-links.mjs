@@ -37,6 +37,15 @@ const walk = async (directory) => {
 };
 
 const sourceFiles = (await walk(sourceRoot)).filter((file) => rasterPattern.test(file));
+for (let id = 1; id <= 48; id += 1) {
+  const fileName = `attraction-${String(id).padStart(2, "0")}.webp`;
+  try {
+    await access(path.join(sourceRoot, "attractions", fileName));
+  } catch {
+    errors.push(`Missing packaged attraction image: ${fileName}`);
+  }
+}
+
 for (const sourceFile of sourceFiles) {
   const relative = path.relative(sourceRoot, sourceFile);
   const extension = path.extname(relative);
