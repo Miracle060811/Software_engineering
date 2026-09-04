@@ -21,7 +21,7 @@
 | 目录 | 内容 |
 | --- | --- |
 | `backend/` | 单体后端（Spring Boot，改造前基线同时作为回归对照保留） |
-| `frontend/` | Vue 3 前端 |
+| `frontend/` | Vue 3 前端；正式镜像中的 Nginx 按业务路径直接代理六个微服务，不回落到单体后端 |
 | `microservices/` | 六个业务微服务（identity / traffic / local / ai / community / ops）+ travelmate-contract 共享契约 + 各服务 SQL 与 K8s 配置 |
 | `deploy/` | Kubernetes 部署清单（见 03_devops） |
 

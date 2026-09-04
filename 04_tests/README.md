@@ -9,7 +9,7 @@
 | 后端单体单元 + 集成测试 | `backend/src/test/`         | `mvn verify`（Failsafe 在真实 MySQL 容器中跑集成测试）           | 47 个测试类 205 个测试方法；覆盖重复支付拒绝、库存竞态回滚、越权隔离等异常分支                                                             |
 | 六微服务单元 + 契约测试 | `microservices/*/src/test/` | 在 `microservices/` 下 `mvn verify`（单次 Maven reactor） | 覆盖矩阵登记 119 个端点（100 公开 + 19 内部）；`npm run check:microservice-api` 已于 2026-09-04 通过                        |
 | 前端单元测试        | `frontend/`                 | `npm run test:unit`（Vitest）                         | 26 个用例                                                                                                  |
-| 端到端 E2E       | `frontend/tests/e2e-real/`  | `npm run test:e2e:microservices`（Playwright 真实浏览器）  | 17 个场景联合覆盖 UC01–UC19；微服务版于 2026-09-02 在流水线跑通 17/17（GitHub Actions run 33582799133），原始报告见 `reports/e2e/` |
+| 端到端 E2E       | `frontend/tests/e2e-real/`  | `npm run test:e2e:microservices`（Playwright 真实浏览器）  | 17 个场景联合覆盖 UC01–UC19；历史流水线 run 33582799133 为 17/17。2026-09-04 已补强为构建正式前端镜像并穿过生产 Nginx 调用六服务，本地隔离环境复测 17/17；远程新流水线结果须待修改提交后取得 |
 
 ## 实验与原始数据
 
@@ -33,4 +33,3 @@
 - 压测与实验脚本均带自动断言（如防超卖断言"成功订单数 ≤ 初始库存"），结果由机器判定。
 
 - 性能对比口径：同一台机器、同批数据、同一脚本、每场景每版本 3 次取中位数；详见 `stress/README.md`。
-
