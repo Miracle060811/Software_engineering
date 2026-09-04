@@ -70,7 +70,7 @@ jobs:
   node-dependency-audit:
     name: Node.js dependency audit
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -86,13 +86,51 @@ jobs:
             frontend/package-lock.json
 
       - name: Test audit retry and failure handling
-        run: node --test scripts/ci/audit-npm.test.mjs
+        run: node --test scripts/ci/*.test.mjs
 
-      - name: Audit root tooling dependencies
-        run: node scripts/ci/audit-npm.mjs .
+      - name: Prepare production dependency manifests
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/node-audit/frontend"
+          cp package.json package-lock.json "$RUNNER_TEMP/node-audit/"
+          cp frontend/package.json frontend/package-lock.json "$RUNNER_TEMP/node-audit/frontend/"
 
-      - name: Audit frontend production dependencies
-        run: node scripts/ci/audit-npm.mjs frontend
+      - name: Scan Node production dependencies independently
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: ${{ runner.temp }}/node-audit
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          exit-code: "1"
+          format: json
+          output: trivy-node.json
+
+      - name: Require both lockfiles in the independent scan
+        run: node scripts/ci/verify-node-audit.mjs trivy-node.json
+
+      - name: Audit with npm and classify registry outages
+        shell: bash
+        run: |
+          for directory in . frontend; do
+            status=0
+            node scripts/ci/audit-npm.mjs "$directory" || status=$?
+            if [[ "$status" == 75 ]]; then
+              echo "::warning::npm registry unavailable for $directory; the mandatory Trivy production scan passed."
+            elif [[ "$status" != 0 ]]; then
+              exit "$status"
+            fi
+          done
+
+      - name: Upload Node dependency audit report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: node-dependency-audit
+          path: trivy-node.json
+          if-no-files-found: error
+          retention-days: 30
 
   dependency-review:
     name: Review dependency changes

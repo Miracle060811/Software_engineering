@@ -19,7 +19,7 @@ test('503 retries then requires an actual successful audit', async () => {
   assert.deepEqual(await scenario([unavailable, clean]), { status: 0, calls: 2, waits: [10000] });
 });
 test('persistent registry outage still fails the security gate', async () => {
-  assert.deepEqual(await scenario([unavailable]), { status: 1, calls: 3, waits: [10000, 20000] });
+  assert.deepEqual(await scenario([unavailable]), { status: 75, calls: 3, waits: [10000, 20000] });
 });
 test('high vulnerability is not retried or bypassed', async () => {
   const result = { status: 1, stdout: '{"metadata":{"vulnerabilities":{"high":1}},"vulnerabilities":{"pkg":{}}}', stderr: 'E503' };

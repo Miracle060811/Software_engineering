@@ -23,7 +23,9 @@ export async function auditWithRetry({ cwd, run = runNpm, sleep = delay, log = c
     if (result.stderr) log(result.stderr);
     if (result.error) log(`npm audit process error: ${result.error.code || result.error.message}`);
     if (result.status === 0 && !result.error) return 0;
-    if (!isTransientAuditFailure(result) || attempt === 3) return result.status || 1;
+    if (!isTransientAuditFailure(result)) return result.status || 1;
+    // EX_TEMPFAIL: still nonzero; CI may use it only after an independent scan passed.
+    if (attempt === 3) return 75;
     log(`Temporary npm registry failure; retrying in ${attempt * 10} seconds.`);
     await sleep(attempt * 10_000);
   }
