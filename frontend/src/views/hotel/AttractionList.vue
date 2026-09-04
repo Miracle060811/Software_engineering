@@ -43,7 +43,12 @@
       <el-row v-else :gutter="20">
         <el-col :span="8" v-for="attr in attractions" :key="attr.id" style="margin-bottom:20px">
           <el-card class="attr-card" :body-style="{ padding: 0 }">
-            <SafeImage :src="resolveAttractionCover(attr)" image-class="attr-img" :alt="attr.name" />
+            <SafeImage
+              :src="resolveAttractionCover(attr)"
+              :fallback="getAttractionImageFallback(attr)"
+              image-class="attr-img"
+              :alt="attr.name"
+            />
             <div class="attr-info">
               <div class="attr-name">{{ attr.name }}</div>
               <div class="attr-desc">{{ attr.description }}</div>
@@ -215,6 +220,7 @@ import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import SafeImage from "@/components/SafeImage.vue";
 import { addBrowseHistory } from "@/utils/browseHistory";
+import { getAttractionImageFallback, resolveAttractionCover } from "@/utils/attractionImage";
 
 const route = useRoute();
 const router = useRouter();
@@ -238,10 +244,6 @@ const tourForm = ref({
   contactPhone: "",
   idempotencyKey: "",
 });
-
-const resolveAttractionCover = (attr) => {
-  return attr?.coverImg || "";
-};
 
 const totalTicketPrice = computed(() => {
   if (!selectedAttraction.value) return 0;
