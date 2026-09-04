@@ -58,6 +58,19 @@ class AiBusinessSliceTests {
     }
 
     @Test
+    void hotelQuestionKeepsTheRequestedTopicInOfflineReply() {
+        AiChatMapper chatMapper = mock(AiChatMapper.class);
+        when(chatMapper.selectList(any())).thenReturn(java.util.List.of());
+        AiPlanChatService service = new AiPlanChatService(
+                mock(AiPlanMapper.class), chatMapper, new ObjectMapper());
+        AiChatDTO dto = new AiChatDTO();
+        dto.setSessionId("hotel-topic");
+        dto.setMessage("酒店怎么选");
+
+        assertTrue(service.chat(dto, 7L).getContent().contains("酒店"));
+    }
+
+    @Test
     void outsiderCannotReadAnotherUsersPlan() {
         AiPlanMapper mapper = mock(AiPlanMapper.class);
         AiPlan plan = new AiPlan(); plan.setId(4L); plan.setUserId(8L);
