@@ -58,7 +58,7 @@ foreach ($match in $markedSeedMatches) {
 }
 
 $services = [ordered]@{
-    identity = @('tm_user', 'tm_passenger', 'tm_follow')
+    identity = @('tm_user', 'auth_refresh_session', 'tm_passenger', 'tm_follow')
     traffic  = @('tm_flight', 'tm_train', 'tm_traffic_order', 'tm_train_waitlist', 'tm_price_history', 'tm_traffic_outbox_event')
     local    = @(
         'tm_hotel', 'tm_hotel_room', 'tm_hotel_order',

@@ -2067,6 +2067,23 @@
         ]
       }
     },
+    "POST /user/logout": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "UserController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "tests": {
+        "normal": [
+          "IdentityPublicApiTests#refreshRotatesSessionAndLogoutRevokesIt"
+        ],
+        "auth": [
+          "IdentityPublicApiTests#refreshRotatesSessionAndLogoutRevokesIt"
+        ],
+        "validation": [
+          "IdentityPublicApiTests#refreshRotatesSessionAndLogoutRevokesIt"
+        ]
+      }
+    },
     "POST /user/login": {
       "service": "identity-service",
       "visibility": "public",
@@ -2098,6 +2115,23 @@
         ],
         "validation": [
           "IdentityPublicApiTests#accountEndpointsRejectMissingOrMalformedParameters"
+        ]
+      }
+    },
+    "POST /user/refresh": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "UserController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/backend/controller/UserController.java",
+      "tests": {
+        "normal": [
+          "IdentityPublicApiTests#refreshRotatesSessionAndLogoutRevokesIt"
+        ],
+        "auth": [
+          "IdentityPublicApiTests#refreshWithoutCookieReturnsExpiredSessionContract"
+        ],
+        "validation": [
+          "IdentityPublicApiTests#refreshWithoutCookieReturnsExpiredSessionContract"
         ]
       }
     },

@@ -16,12 +16,17 @@ import java.io.IOException;
 import java.util.List;
 
 import com.travelmate.common.AuthenticatedUser;
+import com.travelmate.backend.entity.User;
+import com.travelmate.backend.mapper.UserMapper;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -36,10 +41,26 @@ public class JwtFilter extends OncePerRequestFilter {
             try {
                 AuthenticatedUser principal = jwtUtil.extractPrincipal(token);
                 if (principal.userId() != null && principal.username() != null && !principal.username().isBlank()) {
-                    List<SimpleGrantedAuthority> authorities = principal.isAdmin()
+                    User currentUser = userMapper.selectById(principal.userId());
+                    int currentTokenVersion = currentUser == null || currentUser.getTokenVersion() == null
+                            ? 0
+                            : currentUser.getTokenVersion();
+                    boolean active = currentUser != null
+                            && Integer.valueOf(1).equals(currentUser.getStatus())
+                            && !Integer.valueOf(1).equals(currentUser.getDeleted())
+                            && principal.username().equals(currentUser.getUsername())
+                            && currentTokenVersion == jwtUtil.extractTokenVersion(token);
+                    if (!active) {
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+
+                    AuthenticatedUser currentPrincipal = new AuthenticatedUser(
+                            currentUser.getId(), currentUser.getUsername(), currentUser.getRole());
+                    List<SimpleGrantedAuthority> authorities = currentPrincipal.isAdmin()
                             ? List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
                             : List.of();
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(principal, null,
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(currentPrincipal, null,
                             authorities);
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }

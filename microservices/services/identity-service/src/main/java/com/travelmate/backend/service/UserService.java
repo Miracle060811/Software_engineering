@@ -33,6 +33,7 @@ public class UserService {
         user.setUsername(normalizedUsername);
         user.setPassword(encodedPassword);
         user.setRole(Integer.valueOf(1).equals(role) ? 1 : 0);
+        user.setTokenVersion(0);
         userMapper.insert(user);
         return true;
     }
@@ -47,7 +48,7 @@ public class UserService {
                 .eq("status", 1)
                 .eq("deleted", 0));
         if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-            return jwtUtil.generateToken(user.getId(), normalizedUsername, user.getRole());
+            return jwtUtil.generateToken(user.getId(), normalizedUsername, user.getRole(), tokenVersion(user));
         }
         return null;
     }
@@ -64,6 +65,7 @@ public class UserService {
         if (user == null) return false;
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) return false;
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setTokenVersion(tokenVersion(user) + 1);
         userMapper.updateById(user);
         return true;
     }
@@ -80,6 +82,7 @@ public class UserService {
         if (user == null) return false;
         if (Integer.valueOf(1).equals(user.getRole())) return false;
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setTokenVersion(tokenVersion(user) + 1);
         userMapper.updateById(user);
         return true;
     }
@@ -99,8 +102,13 @@ public class UserService {
         user.setRole(0);
         user.setStatus(0);
         user.setDeleted(1);
+        user.setTokenVersion(tokenVersion(user) + 1);
         userMapper.updateById(user);
         return true;
+    }
+
+    private int tokenVersion(User user) {
+        return user.getTokenVersion() == null ? 0 : user.getTokenVersion();
     }
 
 }

@@ -4,14 +4,14 @@
 
 | 服务 | 默认端口 | 数据所有权 | 当前跨服务调用 |
 | --- | ---: | --- | --- |
-| `identity-service` | 8081 | 用户、关注、常用旅客 | 提供旅客归属与必要快照内部接口 |
+| `identity-service` | 8081 | 用户、登录刷新会话、关注、常用旅客 | 提供登录/刷新/退出以及旅客归属与必要快照内部接口 |
 | `traffic-service` | 8082 | 航班、火车、候补、交通订单、价格历史、交通 Outbox | HTTP 调用身份服务校验旅客；HTTP 调用本地生活服务核销优惠券 |
 | `local-service` | 8083 | 酒店、景点、目的地、评价、优惠券、本地游、本地生活 Outbox | 提供优惠券核销内部接口 |
 | `ai-service` | 8084 | AI 行程、AI 对话、通知、私信、事件消费记录 | 幂等消费交通与本地生活服务的通知事件；提供通知查询与状态操作 |
 | `community-service` | 8085 | 帖子、评论、点赞/收藏 | 调用身份服务读取必要用户快照；调用运营服务执行敏感内容检查 |
 | `ops-service` | 8086 | 敏感词、操作日志 | 通过各业务服务内部接口聚合管理列表并下发审核、退款等命令 |
 
-内部接口使用 `X-Internal-Token`，六个服务必须配置同一个 `INTERNAL_SERVICE_TOKEN`。`/internal/**` 不参与面向浏览器的 CSRF 校验，但仍由各内部控制器校验服务 Token。JWT 密钥也必须一致，且 `JWT_SECRET` 为解码后至少 32 字节的 Base64 文本。
+内部接口使用 `X-Internal-Token`，六个服务必须配置同一个 `INTERNAL_SERVICE_TOKEN`。`/internal/**` 不参与面向浏览器的 CSRF 校验，但仍由各内部控制器校验服务 Token。JWT 密钥也必须一致，且 `JWT_SECRET` 为解码后至少 32 字节的 Base64 文本。身份服务签发 30 分钟 access token 和 14 天 refresh cookie；refresh token 仅以 SHA-256 指纹保存在 `auth_refresh_session`，刷新时轮换、退出时撤销，页面重载后前端通过 `/user/refresh` 恢复内存中的 access token。
 
 `traffic-service` 调用 IDENTITY 和 LOCAL 默认均使用 1 秒连接超时和 2 秒读取超时。可分别通过 `IDENTITY_CONNECT_TIMEOUT_MS`、`IDENTITY_READ_TIMEOUT_MS`、`LOCAL_CONNECT_TIMEOUT_MS`、`LOCAL_READ_TIMEOUT_MS` 调整。网络失败、读取超时、无法解析响应或依赖服务 5xx 会统一返回 HTTP 503；依赖服务返回的业务 4xx 保持原状态。IDENTITY 失败时订单事务不会进入库存扣减阶段，LOCAL 核销失败时本地订单事务回滚且不会写入订单。
 

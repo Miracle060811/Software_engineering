@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS `tm_user` (
   `bio` VARCHAR(200) DEFAULT NULL COMMENT '个人简介',
   `level` INT DEFAULT '1' COMMENT '用户等级',
   `role` TINYINT(1) DEFAULT '0' COMMENT '角色: 0-普通用户, 1-超级管理员',
+  `token_version` INT NOT NULL DEFAULT '0' COMMENT '登录令牌版本，账号安全状态变化时递增',
   `status` TINYINT(1) DEFAULT '1' COMMENT '状态: 0-禁用, 1-正常',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -24,6 +25,30 @@ CREATE TABLE IF NOT EXISTS `tm_user` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+-- 兼容已初始化过的旧库：补充登录令牌版本
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `tm_user` ADD COLUMN `token_version` INT NOT NULL DEFAULT 0 COMMENT ''登录令牌版本，账号安全状态变化时递增'' AFTER `role`', 'SELECT 1') FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tm_user' AND COLUMN_NAME = 'token_version');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 登录刷新会话表：数据库只保存 refresh token 的 SHA-256 指纹
+CREATE TABLE IF NOT EXISTS `auth_refresh_session` (
+  `id` CHAR(36) NOT NULL,
+  `user_id` BIGINT NOT NULL,
+  `token_hash` CHAR(64) NOT NULL,
+  `token_version` INT NOT NULL,
+  `expires_at` DATETIME NOT NULL,
+  `revoked_at` DATETIME NULL,
+  `source_ip` VARCHAR(64) NULL,
+  `user_agent` VARCHAR(255) NULL,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_used_at` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_refresh_token_hash` (`token_hash`),
+  KEY `idx_refresh_session_user` (`user_id`, `revoked_at`, `expires_at`),
+  CONSTRAINT `fk_refresh_session_user`
+    FOREIGN KEY (`user_id`) REFERENCES `tm_user` (`id`)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 2. 航班信息模拟表 (Flight)
 CREATE TABLE IF NOT EXISTS `tm_flight` (

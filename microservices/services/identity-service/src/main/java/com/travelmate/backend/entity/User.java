@@ -19,6 +19,7 @@ public class User {
     private String phone;
     private String bio;
     private Integer role;
+    private Integer tokenVersion;
     private Integer level;
     private Integer status;
     private Integer deleted;

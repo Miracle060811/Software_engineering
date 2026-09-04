@@ -65,10 +65,11 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 .requestMatchers(
                                                                 "/user/register", "/user/login",
+                                                                "/user/refresh", "/user/logout",
                                                                 "/user/admin-register",
-                                                "/user/reset-password",
-                                                "/internal/**",
-                                                "/actuator/health",
+                                                                "/user/reset-password",
+                                                                "/internal/**",
+                                                                "/actuator/health",
                                                                 "/actuator/health/**",
                                                                 "/favicon.ico",
                                                                 "/assets/**",

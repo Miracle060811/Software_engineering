@@ -40,6 +40,10 @@ spec:
                   mysql --host=travelmate-mysql --user=root < "/schemas/${service}-seed.sql"
                 fi
               done
+              token_version_exists="$(mysql --host=travelmate-mysql --user=root --batch --skip-column-names --execute="SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'travelmate_identity' AND TABLE_NAME = 'tm_user' AND COLUMN_NAME = 'token_version'")"
+              if [ "${token_version_exists}" = "0" ]; then
+                mysql --host=travelmate-mysql --user=root --execute="ALTER TABLE travelmate_identity.tm_user ADD COLUMN token_version INT NOT NULL DEFAULT 0 COMMENT '登录令牌版本，账号安全状态变化时递增' AFTER role"
+              fi
               mysql --host=travelmate-mysql --user=root <<SQL
               CREATE USER IF NOT EXISTS 'travelmate_identity_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';
               CREATE USER IF NOT EXISTS 'travelmate_traffic_app'@'%' IDENTIFIED BY '${SERVICE_DB_PASSWORD}';

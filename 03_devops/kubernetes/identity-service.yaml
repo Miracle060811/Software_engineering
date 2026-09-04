@@ -85,6 +85,18 @@ spec:
                 secretKeyRef:
                   name: travelmate-secrets
                   key: jwt-secret
+            - name: JWT_ACCESS_TOKEN_MINUTES
+              value: "30"
+            - name: REFRESH_TOKEN_DAYS
+              valueFrom:
+                configMapKeyRef:
+                  name: travelmate-config
+                  key: REFRESH_TOKEN_DAYS
+            - name: REFRESH_COOKIE_SECURE
+              valueFrom:
+                configMapKeyRef:
+                  name: travelmate-config
+                  key: REFRESH_COOKIE_SECURE
             - name: ADMIN_REGISTER_SECRET
               valueFrom:
                 secretKeyRef:

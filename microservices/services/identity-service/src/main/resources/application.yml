@@ -17,6 +17,9 @@ app:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
   security:
     jwt-secret: ${JWT_SECRET:}
+    jwt-access-token-minutes: ${JWT_ACCESS_TOKEN_MINUTES:30}
+    refresh-token-days: ${REFRESH_TOKEN_DAYS:14}
+    refresh-cookie-secure: ${REFRESH_COOKIE_SECURE:false}
     admin-register-secret: ${ADMIN_REGISTER_SECRET:}
 management:
   endpoints.web.exposure.include: health,info

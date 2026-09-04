@@ -13,7 +13,7 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 | 管理后台 | RBAC、用户/资源/订单/优惠券管理、CSV 导入、内容与评价审核、系统日志和轻量运行指标 |
 | 工程质量 | 后端 JUnit/MockMvc、前端 ESLint/构建、Mock 与真实后端 Playwright E2E、JaCoCo、SpotBugs、依赖/密钥扫描及 CodeQL |
 
-系统核心主链路可运行，课程验收证据已按源码、文档、DevOps、测试、管理和答辩六类归档。UC01—UC19 的证据基线由 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json) 与 [`docs/ci/test-quality-policy.json`](docs/ci/test-quality-policy.json) 管理；六微服务的 119 个 HTTP 端点（100 个公开、19 个内部）测试映射由 [`docs/ci/microservice-api-coverage.json`](docs/ci/microservice-api-coverage.json) 管理，不能把“代码已存在”直接视为“场景已被完整自动化覆盖”。
+系统核心主链路可运行，课程验收证据已按源码、文档、DevOps、测试、管理和答辩六类归档。UC01—UC19 的证据基线由 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json) 与 [`docs/ci/test-quality-policy.json`](docs/ci/test-quality-policy.json) 管理；六微服务的 207 个 HTTP 端点（147 个公开、60 个内部）测试映射由 [`docs/ci/microservice-api-coverage.json`](docs/ci/microservice-api-coverage.json) 管理，不能把“代码已存在”直接视为“场景已被完整自动化覆盖”。
 
 ## 微服务迁移状态
 
@@ -268,7 +268,7 @@ docker compose ps
 - 普通用户可直接在登录页注册，后端始终按普通用户角色创建账号。
 - 管理员初始化默认关闭。只有 `ADMIN_REGISTER_ENABLED=true`、`ADMIN_REGISTER_EXPIRES_AT` 处于有效期内、系统中不存在有效管理员且密钥正确时，初始化入口才允许创建首个管理员。密钥只保存指纹、成功后只能使用一次，所有尝试都会写入审计表；完成后应立即关闭入口。
 - 管理端 `/admin` 同时受前端路由守卫与后端 `/api/admin/**` 的 `ROLE_ADMIN` 校验保护。
-- access token 默认有效 30 分钟，并携带 token 版本；改密、注销或管理员禁用账号后旧 token 失效，后端以数据库当前角色为准。
+- 正式 Kubernetes 前端使用 `identity-service` 完成登录、刷新和退出。access token 默认有效 30 分钟，并携带 token 版本；身份服务在每次鉴权时核对数据库中的账号状态、当前角色与 token 版本，改密、注销或管理员禁用账号后旧 token 不能再访问身份服务。
 - refresh token 默认有效 14 天，只通过 `HttpOnly`、`SameSite=Lax`、`Path=/user` Cookie 传输，数据库仅保存 SHA-256 指纹；每次刷新都会轮换，旧值重放和退出登录后的值都会失效。服务器 HTTPS 环境必须设置 `REFRESH_COOKIE_SECURE=true`，刷新和退出接口继续受 CSRF 校验保护。
 - 前端 access token 只保存在页面运行内存中，不写入 `localStorage`；页面刷新后由 refresh cookie 静默恢复，并重新从 `/user/me` 获取角色与账号状态。
 - 无身份核验的自助密码重置已关闭；用户仍可在登录后通过旧密码修改自己的密码。
