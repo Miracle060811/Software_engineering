@@ -87,6 +87,33 @@ ON DUPLICATE KEY UPDATE
   `source_url` = VALUES(`source_url`),
   `data_checked_date` = VALUES(`data_checked_date`);
 
+-- Keep the same verified hotel-cover mapping as the monolith seed data.
+UPDATE `tm_hotel`
+SET `cover_img` = CASE `id`
+  WHEN 1 THEN 'https://dimg04.c-ctrip.com/images//200l1g000001hgwwk8DB1_R_550_412.jpg'
+  WHEN 2 THEN 'https://ak-d.tripcdn.com/images/1mc3d12000rs1ln328F37.jpg'
+  WHEN 3 THEN 'https://ak-d.tripcdn.com/images/1mc6f12000hrejeww92B0.jpg'
+  WHEN 4 THEN 'https://dimg04.c-ctrip.com/images/220i1b000001aohx93B7F_R_960_660_R5_D.jpg'
+  WHEN 5 THEN 'https://ak-d.tripcdn.com/images/200w13000000vir8yDBA5_R_960_660_R5_D.jpg'
+  WHEN 6 THEN 'https://ak-d.tripcdn.com/images/200q050000000ghm177AC.jpg'
+  WHEN 7 THEN 'https://ak-d.tripcdn.com/images/1mc0f12000iw62mfx8BDD.jpg'
+  WHEN 8 THEN 'https://ak-d.tripcdn.com/images/fd/hotel/g4/M08/FC/23/CggYHlX__YOAVc9JAAP-iECj334734_R_960_660_R5_D.jpg'
+  WHEN 9 THEN 'https://ak-d.tripcdn.com/images/0220t12000plokdzi4C79_R_960_660_R5_D.jpg'
+  WHEN 10 THEN 'https://ak-d.tripcdn.com/images/200v14000000w7mnt5A2C.jpg'
+  WHEN 11 THEN 'https://ak-d.tripcdn.com/images/hotel/452000/451368/00f6bba719044a4394311d9aaf47eeb7.jpg'
+  WHEN 12 THEN 'https://ak-d.tripcdn.com/images/1mc1f12000b9nz5c03B02_R_960_660_R5_D.jpg'
+  WHEN 13 THEN 'https://ak-d.tripcdn.com/images/1mc0m12000aq6mt0h4457.jpg'
+  WHEN 14 THEN 'https://ak-d.tripcdn.com/images/200m0800000034723792B_R_960_660_R5_D.jpg'
+  WHEN 15 THEN 'https://ak-d.tripcdn.com/images/1mc4r12000repen2v8026.jpg'
+  WHEN 16 THEN 'https://ak-d.tripcdn.com/images/20060v000000jo62xE3EB.jpg'
+  WHEN 17 THEN 'https://ak-d.tripcdn.com/images/200m1e000001fvyd2AB3D_R_960_660_R5_D.jpg'
+  WHEN 18 THEN 'https://ak-d.tripcdn.com/images/1mc1712000epu78z56B04_R_960_660_R5_D.jpg'
+  WHEN 19 THEN 'https://ak-d.tripcdn.com/images/02064120008bk81fz92B1_R_960_660_R5_D.jpg'
+  WHEN 20 THEN 'https://ak-d.tripcdn.com/images/1mc6o12000br4n333F7C1_R_960_660_R5_D.jpg'
+  ELSE `cover_img`
+END
+WHERE `id` BETWEEN 1 AND 20;
+
 INSERT IGNORE INTO `tm_hotel_room` (`hotel_id`, `room_type`, `bed_type`, `area`, `price`, `total_rooms`, `available_rooms`, `facilities`) VALUES
 (1, '豪华大床房', '1.8m大床', 45, 1280.00, 20, 15, 'WiFi,空调,浴缸,迷你吧,城市景观'),
 (1, '豪华双床房', '2×1.2m双床', 45, 1380.00, 15, 10, 'WiFi,空调,淋浴,迷你吧,城市景观'),
@@ -475,3 +502,25 @@ INSERT IGNORE INTO `tm_coupon` (`name`, `description`, `category`, `discount_typ
 ('机票满减券', '机票订单满500减30', 'flight', 0, 30.00, 500.00, '2026-12-31 23:59:59', 150, 0),
 ('酒店9折券', '酒店订单享9折优惠', 'hotel', 1, 0.90, 0.00, '2026-12-31 23:59:59', 100, 0),
 ('火车票85折', '火车票订单享85折', 'train', 1, 0.85, 100.00, '2026-12-31 23:59:59', 80, 0);
+-- Public destination catalogue owned by local-service.  These rows mirror the
+-- curated destination catalogue that the monolith exposed to the frontend.
+INSERT INTO `tm_destination`
+  (`slug`, `name`, `country`, `tag`, `keywords`, `img`, `desc`, `intro`, `highlights`, `culture`, `best_season`, `transport`, `source_name`, `source_url`, `sort_order`, `status`)
+VALUES
+('beijing', '北京', '中国', '文化古都', '故宫,长城,胡同', 'https://upload.wikimedia.org/wikipedia/commons/e/ef/The_Forbidden_City_-_View_from_Coal_Hill.jpg', '古都风韵与现代繁华交融，适合用几天时间慢慢读懂中轴线、皇家建筑和胡同生活。', '北京是中国历史文化名城，故宫、长城、颐和园、天坛与北京中轴线共同构成厚重的古都印象。', '故宫与景山|长城开放段|什刹海与鼓楼', '围绕中轴线、皇家园林、胡同生活和博物馆组织路线。', '春秋季气温舒适，夏季注意防晒与雷雨。', '市内优先使用地铁，热门景区建议提前预约。', '北京市人民政府、北京市文化和旅游局公开资料', 'https://www.beijing.gov.cn/', 1, 1),
+('shanghai', '上海', '中国', '魔都风情', '外滩,迪士尼,田子坊', 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Shanghai_Bund-20150516-RM-173803.jpg', '海派建筑、城市天际线和潮流街区并存，适合城市漫步与夜景旅行。', '上海兼具海派建筑风貌与现代都市节奏，外滩、陆家嘴和衡复风貌区适合慢走。', '外滩夜景|上海迪士尼|衡复风貌区', '历史建筑和现代商业并置，适合用公共交通串联江景、街区和展馆。', '春秋季适合城市步行。', '市内地铁网络密集，外滩周边建议步行或地铁进入。', '上海市文化和旅游局官方旅游网站', 'https://www.meet-in-shanghai.net/', 2, 1),
+('sanya', '三亚', '中国', '海岛度假', '海滩,潜水,海鲜', 'https://upload.wikimedia.org/wikipedia/commons/4/44/Yalong_Bay_01.jpg', '热带海湾、潜水体验和滨海度假资源集中，适合放松型海岛旅行。', '三亚以亚龙湾、三亚湾、海棠湾等海湾度假资源闻名。', '亚龙湾|三亚湾|南山文化旅游区', '适合把海湾、离岛、雨林和本地海鲜拆成不同半日或一日行程。', '11月至次年3月气候较舒适。', '跨海湾游玩建议按区域分天安排。', '三亚市旅游发展局', 'https://www.visitsanya.com/destinations', 3, 1),
+('chengdu', '成都', '中国', '美食天堂', '熊猫,火锅,茶馆', 'https://upload.wikimedia.org/wikipedia/commons/2/20/Chengdu_skyline_June_2017.jpg', '烟火气、美食、茶馆和历史人文交织，是适合慢游的西南城市。', '成都的旅行体验兼具悠闲生活与历史文化，大熊猫、川菜火锅和茶馆构成典型印象。', '杜甫草堂|锦里|熊猫基地', '上午看展或熊猫，下午喝茶，晚上吃火锅或逛夜市。', '春秋季最舒适。', '市内地铁覆盖主要城区，热门景点建议错峰。', '成都文化旅游公开资料', 'https://www.cdjinli.com/about/', 4, 1),
+('hangzhou', '杭州', '中国', '江南水乡', '西湖,灵隐寺,龙井', 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Leifeng_Pagoda_and_West_Lake,_Hangzhou_120529_2.jpg', '西湖山水、人文古迹与茶文化共同构成江南旅行的经典样本。', '杭州以西湖文化景观最具代表性，湖山、园林、寺院、堤桥和茶村共同形成诗意体验。', '西湖|灵隐寺与飞来峰|龙井茶村', '把西湖、寺院、茶山和城市街区拆开慢游。', '春季适合赏花采茶，秋季适合赏桂。', '西湖周边建议公交、地铁加步行。', '杭州西湖风景名胜区管委会', 'https://westlake.hangzhou.gov.cn/', 5, 1),
+('xian', '西安', '中国', '历史名城', '兵马俑,古城墙,回民街', 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Xi-an_city_wall_side.jpg', '十三朝古都气质鲜明，适合围绕秦汉唐历史和夜游街区安排行程。', '兵马俑、古城墙、大雁塔和大唐不夜城把文物遗产、城市生活和夜间文旅串联起来。', '兵马俑|西安城墙|大雁塔', '适合以历史时间线组织行程。', '春秋季适合户外古迹游。', '市内地铁覆盖多数核心区域，兵马俑需预留郊区通勤时间。', '西安市文化和旅游局公开资料', 'https://wlj.xa.gov.cn/', 6, 1),
+('nanjing', '南京', '中国', '金陵古韵', '中山陵,夫子庙,秦淮河', 'https://upload.wikimedia.org/wikipedia/commons/0/06/China-Nanjing_%282024%29_Mausoleum_of_Sun_Yat_Sen_%E4%B8%AD%E5%B1%B1%E9%99%B5_-_img_08.jpg', '六朝古都的历史厚度和秦淮河夜色并存，适合历史文化与城市漫步结合。', '中山陵、明孝陵、南京城墙和夫子庙串联起南京的历史与生活场景。', '中山陵与明孝陵|夫子庙秦淮河|南京博物院', '以山水城林、六朝古都和秦淮夜色为主线分区游览。', '春秋季适合步行。', '市内地铁覆盖核心景区。', '南京市文化和旅游局公开资料', 'https://zschina.nanjing.gov.cn/', 7, 1),
+('chongqing', '重庆', '中国', '山城夜景', '洪崖洞,火锅,轻轨', 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Hongyadong_night_lights_Chongqing.jpg', '立体交通、江岸夜景和麻辣烟火气鲜明，适合城市探索和夜游。', '重庆依山临江，洪崖洞、长江索道和李子坝轻轨构成典型山城体验。', '洪崖洞|长江索道|山城步道', '白天走街巷和交通节点，晚上看江岸灯火。', '春秋季步行舒适。', '轨道交通发达，但步行爬坡较多。', '重庆市文化和旅游发展委员会公开资料', 'https://whlyw.cq.gov.cn/', 8, 1),
+('guilin', '桂林', '中国', '山水画卷', '漓江,象鼻山,阳朔', 'https://upload.wikimedia.org/wikipedia/commons/9/92/1_li_jiang_guilin_yangshuo_2011.jpg', '喀斯特峰林、漓江水路和田园骑行构成经典山水旅行体验。', '漓江、象鼻山、两江四湖和阳朔共同构成桂林山水旅行印象。', '漓江|象鼻山|阳朔遇龙河', '把行程拆成市区山水、漓江水路和阳朔田园三部分。', '4月至10月水量和植被状态较好。', '前往阳朔可选择高铁、汽车或漓江游船。', '桂林市文化广电和旅游局公开资料', 'https://wglj.guilin.gov.cn/', 9, 1),
+('qingdao', '青岛', '中国', '海滨德韵', '栈桥,八大关,啤酒', 'https://upload.wikimedia.org/wikipedia/commons/8/89/Zhanqiao_pier_with_Little_Qingdao_Isle.jpg', '红瓦绿树、海湾栈桥和啤酒文化鲜明，适合海滨城市慢游。', '栈桥、八大关、信号山和奥帆中心展现青岛海岸线与城市风貌。', '栈桥|八大关|啤酒博物馆', '沿海岸线组织路线，兼顾老城建筑和现代海湾景观。', '5月至10月适合海滨游。', '老城和海边景点建议地铁、公交加步行。', '青岛市文化和旅游局公开资料', 'https://whlyj.qingdao.gov.cn/', 10, 1)
+ON DUPLICATE KEY UPDATE
+  `name` = VALUES(`name`), `country` = VALUES(`country`), `tag` = VALUES(`tag`),
+  `keywords` = VALUES(`keywords`), `img` = VALUES(`img`), `desc` = VALUES(`desc`),
+  `intro` = VALUES(`intro`), `highlights` = VALUES(`highlights`), `culture` = VALUES(`culture`),
+  `best_season` = VALUES(`best_season`), `transport` = VALUES(`transport`),
+  `source_name` = VALUES(`source_name`), `source_url` = VALUES(`source_url`),
+  `sort_order` = VALUES(`sort_order`), `status` = VALUES(`status`);

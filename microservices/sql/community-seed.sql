@@ -105,3 +105,27 @@ ON DUPLICATE KEY UPDATE
   `view_count`        = VALUES(`view_count`),
   `status`            = VALUES(`status`),
   `data_checked_date` = VALUES(`data_checked_date`);
+
+-- Keep the microservice presentation data aligned with the monolith: replace
+-- legacy seed SVG placeholders with the verified photo mapping used there.
+UPDATE `tm_post`
+SET `images` = CASE `id`
+  WHEN 1 THEN '/images/real/posts/beijing-forbidden-city.jpg'
+  WHEN 2 THEN '/images/real/posts/shanghai-bund.jpg'
+  WHEN 3 THEN 'https://upload.wikimedia.org/wikipedia/commons/1/19/Wuzhizhou_Island_-_01.jpg,https://upload.wikimedia.org/wikipedia/commons/4/44/Yalong_Bay_01.jpg,https://upload.wikimedia.org/wikipedia/commons/6/6e/Beach_of_Tianya-Haijiao_near_Tianya_Rock_%2820230325134441%29.jpg'
+  WHEN 4 THEN 'https://upload.wikimedia.org/wikipedia/commons/a/a7/Dujiang_Weir.jpg'
+  WHEN 5 THEN 'https://upload.wikimedia.org/wikipedia/commons/7/74/1_lijiang_old_town_night.jpg'
+  WHEN 6 THEN 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Hongyadong_night_lights_Chongqing.jpg'
+  WHEN 7 THEN 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Hongyadong_night_lights_Chongqing.jpg'
+  WHEN 8 THEN 'https://upload.wikimedia.org/wikipedia/commons/b/b6/Gulangyu_Island_from_Zhongshan_Road%2C_Xiamen.jpg'
+  WHEN 9 THEN '/images/real/posts/jiangnan-west-lake.jpg'
+  WHEN 10 THEN '/images/real/posts/beijing-forbidden-city.jpg'
+  WHEN 11 THEN '/images/real/attractions/taishan.jpg'
+  WHEN 12 THEN '/images/real/posts/wuhan-yangtze-bridge.jpg'
+  WHEN 13 THEN '/images/real/attractions/zhouzhuang.jpg'
+  WHEN 14 THEN 'https://upload.wikimedia.org/wikipedia/commons/8/89/Zhanqiao_pier_with_Little_Qingdao_Isle.jpg'
+  WHEN 15 THEN 'https://upload.wikimedia.org/wikipedia/commons/0/06/China-Nanjing_%282024%29_Mausoleum_of_Sun_Yat_Sen_%E4%B8%AD%E5%B1%B1%E9%99%B5_-_img_08.jpg'
+  ELSE `images`
+END
+WHERE `id` BETWEEN 1 AND 15
+  AND `images` LIKE '%/images/seed/%';

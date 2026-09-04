@@ -156,6 +156,7 @@ services:
       AI_SERVICE_URL: http://ai-service:8084
       IDENTITY_SERVICE_URL: http://identity-service:8081
       LOCAL_SERVICE_URL: http://local-service:8083
+      TRAIN_LIVE_SYNC_ENABLED: ${TRAIN_LIVE_SYNC_ENABLED:-true}
     ports:
       - "${TRAFFIC_PORT:-8082}:8082"
     depends_on:
@@ -204,6 +205,7 @@ services:
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       DEEPSEEK_CHAT_COMPLETIONS_PATH: ${DEEPSEEK_CHAT_COMPLETIONS_PATH:-/chat/completions}
       DEEPSEEK_PLAN_MODEL: ${DEEPSEEK_PLAN_MODEL:-deepseek-v4-flash}
+      DEEPSEEK_CHAT_MODEL: ${DEEPSEEK_CHAT_MODEL:-deepseek-v4-flash}
       DEEPSEEK_THINKING_ENABLED: ${DEEPSEEK_THINKING_ENABLED:-false}
       DEEPSEEK_REASONING_EFFORT: ${DEEPSEEK_REASONING_EFFORT:-high}
       AI_PLACE_VERIFICATION_ENABLED: ${AI_PLACE_VERIFICATION_ENABLED:-true}

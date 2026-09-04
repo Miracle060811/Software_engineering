@@ -45,7 +45,8 @@ spec:
         app.kubernetes.io/part-of: travelmate
     spec:
       terminationGracePeriodSeconds: 30
-      automountServiceAccountToken: false
+      serviceAccountName: secret-admin
+      automountServiceAccountToken: true
       imagePullSecrets:
         - name: travelmate-ghcr
       securityContext:

@@ -34,6 +34,8 @@ class OpsDashboardIntegrationTests {
     @MockitoBean
     private OpsLocalService localService;
     @MockitoBean
+    private AdminCsvImportService csvImportService;
+    @MockitoBean
     private UserContext userContext;
     @MockitoBean
     private JwtUtil jwtUtil;

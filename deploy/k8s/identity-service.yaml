@@ -90,6 +90,16 @@ spec:
                 secretKeyRef:
                   name: travelmate-secrets
                   key: admin-register-secret
+            - name: ADMIN_REGISTER_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: travelmate-config
+                  key: ADMIN_REGISTER_ENABLED
+            - name: ADMIN_REGISTER_EXPIRES_AT
+              valueFrom:
+                configMapKeyRef:
+                  name: travelmate-config
+                  key: ADMIN_REGISTER_EXPIRES_AT
             - name: INTERNAL_SERVICE_TOKEN
               valueFrom:
                 secretKeyRef:

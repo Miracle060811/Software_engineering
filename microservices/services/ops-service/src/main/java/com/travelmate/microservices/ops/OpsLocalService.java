@@ -48,6 +48,22 @@ public class OpsLocalService {
         return entity;
     }
 
+    public void updateSensitiveWord(Long id, String rawWord, Integer level, Long adminId) {
+        SysSensitiveWord entity = sensitiveWordMapper.selectById(id);
+        if (entity == null) throw new RuntimeException("敏感词不存在");
+        String word = rawWord == null ? "" : rawWord.trim();
+        if (word.isEmpty()) throw new RuntimeException("敏感词不能为空");
+        if (word.length() > 100) throw new RuntimeException("敏感词不能超过100个字符");
+        if (sensitiveWordMapper.selectCount(new LambdaQueryWrapper<SysSensitiveWord>()
+                .eq(SysSensitiveWord::getWord, word).ne(SysSensitiveWord::getId, id)) > 0) {
+            throw new RuntimeException("敏感词已存在");
+        }
+        entity.setWord(word);
+        entity.setLevel(level == null ? entity.getLevel() : Math.max(1, Math.min(level, 3)));
+        sensitiveWordMapper.updateById(entity);
+        log(adminId, "修改敏感词: " + id, 1, null);
+    }
+
     public void deleteSensitiveWord(Long id, Long adminId) {
         if (sensitiveWordMapper.deleteById(id) == 0) throw new RuntimeException("敏感词不存在");
         log(adminId, "删除敏感词: " + id, 1, null);
