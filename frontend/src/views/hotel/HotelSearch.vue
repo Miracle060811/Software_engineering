@@ -91,6 +91,7 @@
           >
             <SafeImage
               :src="resolveHotelCover(hotel)"
+              :fallback="getHotelImageFallback(hotel)"
               image-class="hotel-img"
               :alt="hotel.name"
               :loading="index < 3 ? 'eager' : 'lazy'"
@@ -129,20 +130,11 @@ import PageHeader from "@/components/PageHeader.vue";
 import SkeletonBox from "@/components/SkeletonBox.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import SafeImage from "@/components/SafeImage.vue";
+import { getHotelImageFallback, resolveHotelCover } from "@/utils/hotelImage";
 
 const route = useRoute();
 const hotels = ref([]);
 const loading = ref(false);
-
-const hotelCoverOverrides = {
-  32: "/images/real/hotels/shanghai-treasury.webp",
-  "上海人民广场南京东路珍宝酒店": "/images/real/hotels/shanghai-treasury.webp",
-};
-
-const resolveHotelCover = (hotel) => {
-  if (!hotel) return "";
-  return hotelCoverOverrides[hotel.id] || hotelCoverOverrides[hotel.name] || hotel.coverImg;
-};
 
 const searchForm = ref({
   city: route.query.city || "",

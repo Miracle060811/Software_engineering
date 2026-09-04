@@ -20,9 +20,6 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { FALLBACK_IMAGE, getResponsiveImageData, normalizeImageUrl } from "@/utils/image";
 
-const TRANSPARENT_PIXEL =
-  "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-
 const props = defineProps({
   src: {
     type: String,
@@ -76,7 +73,12 @@ const activated = ref(props.loading === "eager");
 const settled = ref(false);
 const triedWithoutSrcset = ref(false);
 const triedOriginal = ref(false);
-const currentSrc = ref(activated.value ? imageData.value.src : TRANSPARENT_PIXEL);
+// 懒加载图片进入视口前先展示可见占位图，避免长列表出现透明空白卡片。
+const currentSrc = ref(
+  activated.value
+    ? imageData.value.src
+    : normalizeImageUrl(props.fallback, FALLBACK_IMAGE),
+);
 const currentSrcset = ref(activated.value ? imageData.value.srcset : "");
 let observer;
 let timeoutId;
@@ -111,7 +113,11 @@ const activate = () => {
 };
 
 watch(imageData, () => {
-  if (activated.value) applyImageData();
+  if (activated.value) {
+    applyImageData();
+  } else {
+    currentSrc.value = normalizeImageUrl(props.fallback, FALLBACK_IMAGE);
+  }
 });
 
 const useFallback = () => {

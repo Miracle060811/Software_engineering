@@ -7,6 +7,7 @@
           <el-col :span="10">
             <SafeImage
               :src="resolveHotelCover(hotel)"
+              :fallback="getHotelImageFallback(hotel)"
               image-class="hotel-cover"
               :alt="hotel.name"
             />
@@ -214,6 +215,7 @@ import SafeImage from "@/components/SafeImage.vue";
 import { FALLBACK_IMAGE, parseImageList } from "@/utils/image";
 import { optimizeImageForUpload } from "@/utils/imageUpload";
 import { addBrowseHistory } from "@/utils/browseHistory";
+import { getHotelImageFallback, resolveHotelCover } from "@/utils/hotelImage";
 
 const route = useRoute();
 const router = useRouter();
@@ -235,16 +237,6 @@ const reviewTagOptions = ["干净卫生", "性价比高", "服务好", "位置�
 const newReview = ref({ rating: 5, content: "", tags: [] });
 const uploadFiles = ref([]);
 const uploadedImageUrls = ref([]);
-
-const hotelCoverOverrides = {
-  32: "/images/real/hotels/shanghai-treasury.webp",
-  "上海人民广场南京东路珍宝酒店": "/images/real/hotels/shanghai-treasury.webp",
-};
-
-const resolveHotelCover = (hotelItem) => {
-  if (!hotelItem) return "";
-  return hotelCoverOverrides[hotelItem.id] || hotelCoverOverrides[hotelItem.name] || hotelItem.coverImg;
-};
 
 const uploadUrl = "/api/file/upload";
 const uploadHeaders = computed(buildUploadHeaders);

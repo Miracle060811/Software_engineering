@@ -7,6 +7,28 @@ const REMOTE_RESPONSIVE_WIDTHS = [500, 960, 1280];
 
 export const FALLBACK_IMAGE = seedAsset("fallback.svg");
 
+// 旧演示数据仍可能保存 seed SVG。页面展示时映射到随前端镜像发布的本地照片，
+// 不依赖外部图床，也不要求重建已有 Kubernetes 数据卷。
+const LEGACY_SEED_PHOTOS = Object.freeze({
+  "attraction.svg": "/images/editorial/guilin-cinematic-v82.jpg",
+  "beijing.svg": "/images/real/posts/beijing-forbidden-city.jpg",
+  "chengdu.svg": "/images/real/hotels/chengdu-orange-crystal.jpg",
+  "chongqing.svg": "/images/real/hotels/chongqing-hongyadong-manxin.jpg",
+  "coast.svg": "/images/real/hotels/qingdao-badaguan-seaview.jpg",
+  "garden.svg": "/images/real/attractions/zhouzhuang.jpg",
+  "guilin.svg": "/images/editorial/li-river-sunset-v82.jpg",
+  "hangzhou.svg": "/images/real/posts/jiangnan-west-lake.jpg",
+  "hotel.svg": "/images/editorial/coffee-card-v82.jpg",
+  "lake.svg": "/images/real/posts/jiangnan-west-lake.jpg",
+  "mountain.svg": "/images/real/attractions/taishan.jpg",
+  "nanjing.svg": "/images/editorial/street-card-v82.jpg",
+  "qingdao.svg": "/images/real/hotels/qingdao-atour-seaview.jpg",
+  "sanya.svg": "/images/real/hotels/sanya-haitang-resort.webp",
+  "shanghai.svg": "/images/real/posts/shanghai-bund.jpg",
+  "xian.svg": "/images/real/hotels/xian-atour.webp",
+  "zhangjiajie.svg": "/images/real/attractions/attraction-01.webp",
+});
+
 const stripWrappingQuotes = (value) => String(value || "").trim().replace(/^['"]|['"]$/g, "");
 
 const toWikimediaThumbnailUrl = (value, width = 960) => {
@@ -64,6 +86,9 @@ const toBackendAssetUrl = (path) => {
 export const normalizeImageUrl = (url, fallback = FALLBACK_IMAGE) => {
   const raw = stripWrappingQuotes(url).replace(/\\/g, "/");
   if (!raw) return fallback || FALLBACK_IMAGE;
+  const seedMatch = raw.match(/^\/?images\/seed\/([^/?#]+)(?:[?#].*)?$/i);
+  const localPhoto = seedMatch && LEGACY_SEED_PHOTOS[seedMatch[1].toLowerCase()];
+  if (localPhoto) return localPhoto;
   const wikimediaThumbnail = toWikimediaThumbnailUrl(raw);
   if (wikimediaThumbnail) return wikimediaThumbnail;
   if (/^(https?:)?\/\//i.test(raw) || /^(data|blob):/i.test(raw)) return raw;

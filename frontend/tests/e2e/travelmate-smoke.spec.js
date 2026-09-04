@@ -207,6 +207,13 @@ test("community covers use responsive generated images", async ({ page }) => {
   expect(imageRequests.some((url) => url.includes("/images/real/posts/beijing-forbidden-city.jpg"))).toBe(false);
 });
 
+test("hotel cards replace legacy seed artwork with a visible local photo", async ({ page }) => {
+  await page.goto("/hotel-search");
+  const cover = page.locator(".hotel-img").first();
+  await expect(cover).toHaveAttribute("src", "/images/editorial/coffee-card-v82.jpg");
+  await expect.poll(() => cover.evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
+});
+
 test("Wikimedia covers only request supported thumbnail sizes", async ({ page }) => {
   await page.route("https://upload.wikimedia.org/**", async (route) => {
     await route.fulfill({
