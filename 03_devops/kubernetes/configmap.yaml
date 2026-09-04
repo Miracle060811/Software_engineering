@@ -6,6 +6,9 @@ data:
   SERVER_PORT: "8080"
   SPRING_DATASOURCE_URL: jdbc:mysql://travelmate-mysql:3306/travelmate?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Shanghai
   SPRING_DATASOURCE_USERNAME: travelmate
+  # 7 组 Java 服务会同时连接同一个 MySQL；限制每个 Pod 的连接池，避免多副本耗尽 151 条连接。
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
   SPRING_DATA_REDIS_HOST: travelmate-redis
   SPRING_DATA_REDIS_PORT: "6379"
   UPLOAD_DIR: /app/uploads

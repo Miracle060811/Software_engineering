@@ -199,6 +199,19 @@ if (/^\s{2,}(?:[^#\n]*(?:PASSWORD|SECRET|TOKEN|API_KEY))\s*:/gim.test(configMap)
   fail("ConfigMap 中发现疑似敏感配置键，请改用 Kubernetes Secret")
 }
 
+const microservicesConfigMap = read("deploy/k8s/microservices-configmap.yaml")
+for (const [name, manifest] of [
+  ["travelmate-config", configMap],
+  ["travelmate-microservices-config", microservicesConfigMap],
+]) {
+  if (!/^\s{2}SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:\s*["']?3["']?\s*$/m.test(manifest)) {
+    fail(`${name} 必须将单 Pod Hikari 最大连接池限制为 3，避免 Kubernetes 多副本耗尽 MySQL 连接`)
+  }
+  if (!/^\s{2}SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:\s*["']?1["']?\s*$/m.test(manifest)) {
+    fail(`${name} 必须将单 Pod Hikari 最小空闲连接限制为 1`)
+  }
+}
+
 for (const directory of [k8sDir, microserviceK8sDir].filter((candidate) => fs.existsSync(candidate))) {
   for (const file of fs.readdirSync(directory).filter((name) => name.endsWith(".yaml"))) {
     const manifest = fs.readFileSync(path.join(directory, file), "utf8")

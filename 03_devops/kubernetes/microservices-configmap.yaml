@@ -17,6 +17,9 @@ data:
   OUTBOX_DISPATCHER_ENABLED: "true"
   MYBATIS_LOG_IMPL: org.apache.ibatis.logging.nologging.NoLoggingImpl
   JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70.0 -XX:+ExitOnOutOfMemoryError
+  # HPA 扩容时所有微服务共享同一个 MySQL，必须为连接数预留容量。
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
   IDENTITY_DATASOURCE_URL: jdbc:mysql://travelmate-mysql:3306/travelmate_identity?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
   IDENTITY_DATASOURCE_USERNAME: travelmate_identity_app
   TRAFFIC_DATASOURCE_URL: jdbc:mysql://travelmate-mysql:3306/travelmate_traffic?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
