@@ -200,6 +200,12 @@ if (/^\s{2,}(?:[^#\n]*(?:PASSWORD|SECRET|TOKEN|API_KEY))\s*:/gim.test(configMap)
 }
 
 const microservicesConfigMap = read("deploy/k8s/microservices-configmap.yaml")
+for (const [service, port] of microserviceK8sFiles) {
+  const key = `${service.replace(/-/g, "_").toUpperCase()}_URL`
+  if (!new RegExp(`^\\s{2}${key}:\\s*http://${service}:${port}\\s*$`, "m").test(microservicesConfigMap)) {
+    fail(`travelmate-microservices-config 缺少集群内服务地址 ${key}=http://${service}:${port}`)
+  }
+}
 for (const [name, manifest] of [
   ["travelmate-config", configMap],
   ["travelmate-microservices-config", microservicesConfigMap],

@@ -515,6 +515,7 @@ kubectl --context docker-desktop get --raw `
 | `CrashLoopBackOff` | 应用配置、数据库连接或启动过程失败 | 使用 `kubectl logs` 和 `kubectl describe pod` 查看原因 |
 | Deployment 长时间未 Ready | readiness probe、镜像、数据库或资源不足 | 查看 rollout、Pod events 和容器日志 |
 | 后台多个资源页同时提示不可用，日志出现 `Too many connections` | 多个 Java Pod 的默认 Hikari 连接池耗尽 MySQL 连接 | 正式清单已将每个 Pod 的最大连接数限制为 3、最小空闲连接数限制为 1；应用 ConfigMap 后依次重启后端 Deployment |
+| 航班、火车和订单流水同时提示业务服务不可用 | `ops-service` 缺少 `TRAFFIC_SERVICE_URL`，错误访问 Pod 内的 `127.0.0.1:8082` | 在 `travelmate-microservices-config` 配置 `http://traffic-service:8082`，然后滚动重启 `ops-service` |
 | Docker 镜像构建失败 | Dockerfile、依赖或构建上下文错误 | 先使用本地 `docker build` 复现 |
 | Trivy 阶段失败 | 基础镜像或应用依赖存在高危漏洞 | 升级基础镜像或依赖后重新提交 |
 | 文档提交没有执行部署 | 路径检测判定为纯文档变更 | 正常，无需处理 |

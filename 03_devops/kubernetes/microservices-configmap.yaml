@@ -10,6 +10,7 @@ data:
   REDIS_HOST: travelmate-redis
   REDIS_PORT: "6379"
   IDENTITY_SERVICE_URL: http://identity-service:8081
+  TRAFFIC_SERVICE_URL: http://traffic-service:8082
   LOCAL_SERVICE_URL: http://local-service:8083
   AI_SERVICE_URL: http://ai-service:8084
   COMMUNITY_SERVICE_URL: http://community-service:8085
