@@ -19,8 +19,6 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 
 `identity-service`、`traffic-service`、`local-service`、`ai-service`、`community-service`、`ops-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。跨域读取改用内部 HTTP 接口，AI 服务覆盖通知、行程、对话和私信；单体 `backend` 继续保留，便于迁移期间做功能回归。
 
-`ai-service` 的行程生成现已接入与单体一致的 DeepSeek JSON 规划、城市核验、逐日活动/费用校验及完整本地降级方案；通过 HTTP 读取 LOCAL 景点目录，行程与生成通知在同一事务保存。正式部署从 `travelmate-secrets/deepseek-api-key` 注入密钥。缺少密钥或模型异常时，页面明确显示本地参考行程。配置、验证及范围见 [微服务 AI 行程规划说明](microservices/README.md#ai-行程规划)。
-
 六服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移验收均已形成证据；Kubernetes 部署统一使用 [`deploy/k8s`](deploy/k8s)，六服务接入同一 `travelmate` 命名空间，HPA 清单与扩缩容实验也以该环境为准。`microservices/k8s` 保存六套独立 MySQL/PVC 的物理隔离实验方案。本课程交付边界是 Docker Desktop Kubernetes 单集群部署，不采用 API Gateway、注册中心或生产多集群编排；中期设计历史基线见 [`02_docs/TravelMate中期验收基线.md`](02_docs/TravelMate中期验收基线.md)。
 
 ## 技术栈
@@ -37,8 +35,6 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 ## 运行与验收速览（正式部署：Kubernetes）
 
 > 项目的正式演示与持续部署环境是 **Docker Desktop Kubernetes**：context 为 `docker-desktop`，namespace 为 `travelmate`，资源清单统一使用 [`deploy/k8s`](deploy/k8s) 及其 overlay。根目录 `compose.yml` 和 `microservices/compose.yml` 仅用于本地联调，不是正式部署方式。
-
-正式前端通过 Nginx 按业务路径直接反向代理到六个 Kubernetes 微服务：身份与用户关系、交通订单、本地生活、AI 与消息、社区内容、运营后台分别进入 `identity-service`、`traffic-service`、`local-service`、`ai-service`、`community-service` 和 `ops-service`。`travelmate-backend` 仅保留为改造前单体兼容与回归基线，不再承接正式前端业务请求；未登记的 API 路径直接返回 404，不允许静默回落到单体实现。
 
 ### 环境版本
 
@@ -90,8 +86,6 @@ kubectl -n travelmate get deploy,pod,hpa,pvc
 | Kubernetes 六微服务 | 将下面命令中的 `<service>` 与 `<port>` 分别替换为 `identity-service:8081`、`traffic-service:8082`、`local-service:8083`、`ai-service:8084`、`community-service:8085` 或 `ops-service:8086`：`kubectl get --raw "/api/v1/namespaces/travelmate/services/http:<service>:<port>/proxy/actuator/health"` |
 
 健康响应应为前端 `ok`、后端及六微服务 `{"status":"UP"}`。本地开发模式的单体后端健康地址为 <http://localhost:8080/actuator/health>。
-
-前端业务请求的生产路由以 [`frontend/nginx.conf`](frontend/nginx.conf) 为事实源；开发态 `VITE_BACKEND_MODE=microservices` 的路由以 [`frontend/vite.config.js`](frontend/vite.config.js) 为事实源。`npm run check:microservice-e2e` 会同时校验生产 Nginx、Vite、Playwright 与 CI 门禁接线，防止正式入口重新退回单体后端。
 
 ### 测试账号与初始数据
 
@@ -327,7 +321,6 @@ kubectl kustomize deploy/k8s-overlays/server | Out-Null
 - 所有提交都执行仓库清洁度、UC01—UC19 追溯、Flyway 迁移规则、Kubernetes 清单和部署脚本校验；
 - Pull Request 按 backend、frontend、microservices 变更范围选择性执行构建与 E2E；合并到 `main` 后仍执行完整发布验收；
 - 六个微服务使用一次 Maven reactor 完成测试与打包，避免在矩阵 Job 中重复构建共享 contract；PR 验证 Dockerfile，main 直接构建并发布最终镜像；
-- `Real microservice E2E` 使用同一提交中已经测试的六个 JAR、六个 Schema 和真实 MySQL/Redis，构建正式前端镜像并穿过生产 Nginx 路由运行 UC01—UC19 浏览器回归；该作业是 `CI quality gate` 与 `CI/CD delivery gate` 的强制依赖；
 - 后端 CI 从空的 `travelmate` 数据库启动，由 Flyway 自动执行全部迁移，并核对迁移历史表的最新版本；
 - 功能分支不再同时触发 push 与 Pull Request 两套重复流水线；手动运行仍执行完整验证；
 - `main` 的代码 push 在质量与安全门禁成功后，继续制作镜像、部署 Kubernetes、执行健康检查并上传证据；
@@ -343,7 +336,7 @@ kubectl kustomize deploy/k8s-overlays/server | Out-Null
 
 ## 持续部署
 
-合并到 `main` 的代码在同一个 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) 中完成构建、测试、镜像制作、Kubernetes 部署和部署后健康检查。流水线使用 CI 已测试的 JAR 与前端 `dist` 构建镜像；单体回归 E2E 与六服务真实 E2E 均通过后，镜像才发布为不可变的 `sha-<完整 commit>`。通过 Trivy 高危/严重漏洞扫描后，自托管 Windows Runner 按仓库 digest 更新前端、兼容单体后端和六个微服务 Deployment，等待 rollout，并检查前端、后端及六服务健康状态。失败时部署脚本恢复更新前镜像，流水线保留 E2E、镜像扫描、digest、Kubernetes 状态和健康检查证据。
+合并到 `main` 的代码在同一个 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) 中完成构建、测试、镜像制作、Kubernetes 部署和部署后健康检查。流水线使用 CI 已测试的 JAR 与前端 `dist` 构建镜像；镜像先发布为不可变的 `sha-<完整 commit>`，通过 Trivy 高危/严重漏洞扫描后，才推进 `main` 与 `deploy` 通道。自托管 Windows Runner 随后校验前后端 OCI commit 一致性，按仓库 digest 更新 Deployment，等待 rollout，并检查前端 `/healthz` 与后端 `/actuator/health/readiness`。失败时部署脚本恢复更新前镜像，流水线保留镜像扫描、digest、Kubernetes 状态和健康检查证据。
 
 演示机使用 Docker Desktop Kubernetes，并运行带有 `self-hosted`、`Windows`、`X64`、`travelmate-deploy` 标签的 GitHub Actions Runner。正式资源清单（包括六个 HPA）统一位于 [`deploy/k8s`](deploy/k8s)，本机部署脚本说明位于 [`scripts/cd/README.md`](scripts/cd/README.md)。首次启用：
 

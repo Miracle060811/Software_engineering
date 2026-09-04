@@ -90,12 +90,6 @@ spec:
                 secretKeyRef:
                   name: travelmate-secrets
                   key: internal-service-token
-            - name: DEEPSEEK_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: travelmate-secrets
-                  key: deepseek-api-key
-                  optional: true
           startupProbe:
             httpGet:
               path: /actuator/health/liveness

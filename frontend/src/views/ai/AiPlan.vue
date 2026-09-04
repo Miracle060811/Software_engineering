@@ -262,9 +262,6 @@
                 </el-button>
               </div>
             </div>
-            <el-alert v-if="currentPlan.generationSource === 'local-fallback'"
-              title="当前为本地参考行程，未使用在线 AI 生成；请在出发前核对预约、交通和开放信息。"
-              type="warning" :closable="false" show-icon />
             <p class="plan-summary">{{ currentPlan.summary }}</p>
             <div class="summary-tags">
               <el-tag v-if="currentPlan.origin && currentPlan.destination" effect="plain">

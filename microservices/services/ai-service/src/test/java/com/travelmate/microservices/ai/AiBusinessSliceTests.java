@@ -34,12 +34,6 @@ class AiBusinessSliceTests {
         dto.setBudget(new BigDecimal("3000")); dto.setPeopleCount(2);
         dto.setStartDate(LocalDate.now().plusDays(7).toString());
 
-        AiItineraryService itinerary = new AiItineraryService();
-        org.springframework.test.util.ReflectionTestUtils.setField(itinerary, "aiPlanMapper", planMapper);
-        org.springframework.test.util.ReflectionTestUtils.setField(itinerary, "notificationMapper", mock(com.travelmate.mapper.NotificationMapper.class));
-        org.springframework.test.util.ReflectionTestUtils.setField(itinerary, "travelPlaceService", new TravelPlaceService());
-        org.springframework.test.util.ReflectionTestUtils.setField(service, "itineraryService", itinerary);
-        org.springframework.test.util.ReflectionTestUtils.setField(itinerary, "travelContextGateway", mock(AiTravelContextGateway.class));
         AiPlan plan = service.generate(dto, 7L);
         assertEquals(31L, plan.getId());
         assertEquals(7L, plan.getUserId());
