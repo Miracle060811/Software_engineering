@@ -12,7 +12,23 @@ app:
   security.jwt-secret: ${JWT_SECRET:}
   integration.mode: http
   internal-service-token: ${INTERNAL_SERVICE_TOKEN}
+  services.local-url: ${LOCAL_SERVICE_URL:http://127.0.0.1:8083}
   services.identity-url: ${IDENTITY_SERVICE_URL:http://127.0.0.1:8081}
 management:
   endpoints.web.exposure.include: health,info
   endpoint.health.probes.enabled: true
+
+ai:
+  place-verification:
+    enabled: ${AI_PLACE_VERIFICATION_ENABLED:true}
+    base-url: ${AI_PLACE_VERIFICATION_BASE_URL:https://nominatim.openstreetmap.org/search}
+    cache-hours: ${AI_PLACE_VERIFICATION_CACHE_HOURS:168}
+    user-agent: "${AI_PLACE_VERIFICATION_USER_AGENT:TravelMate/1.0 (https://github.com/Miracle060811/Software_engineering)}"
+  deepseek:
+    api-key: ${DEEPSEEK_API_KEY:}
+    base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+    chat-completions-path: ${DEEPSEEK_CHAT_COMPLETIONS_PATH:/chat/completions}
+    plan-model: ${DEEPSEEK_PLAN_MODEL:deepseek-v4-flash}
+    chat-model: ${DEEPSEEK_CHAT_MODEL:deepseek-v4-flash}
+    thinking-enabled: ${DEEPSEEK_THINKING_ENABLED:false}
+    reasoning-effort: ${DEEPSEEK_REASONING_EFFORT:high}

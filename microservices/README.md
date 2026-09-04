@@ -146,3 +146,31 @@ Compose 会创建六套独立 MySQL 数据卷、六个独立应用账号和一�
 - 不落盘真实密钥的本地实验部署脚本。
 
 独立数据环境说明见 `microservices/k8s/README.md`；正式 HPA 压测说明见 `04_tests/stress/README.md`。
+
+## AI 行程规划
+
+`POST /api/ai/plan/generate` 已从占位内容迁入单体的行程规划流程：
+
+- 核验出发地和目的地（内置城市目录 + 可配置 Nominatim），拒绝无法核验的地点和同城路线。
+- 调用 LOCAL 的公开景点搜索 HTTP 接口补充参考，不读取其他服务数据库。目录超时或异常时明确告知模型参考不可用。
+- 将日期、人数、整团预算、节奏、必去/避开项、交通及住宿偏好传给 DeepSeek；校验 JSON 日期连续性、活动时间顺序、非负费用及清单/备选方案，重新汇总费用。
+- 无密钥、模型请求失败或结构无效时生成完整本地参考行程，保存 `generationSource=local-fallback`；成功模型结果标记 `deepseek`。共用前端在生成和历史详情中显示降级提醒。
+- 行程和 `ai_plan` 通知在同一事务内保存，通知链接定位 `/ai-plan?planId=...`；列表及详情继续按当前用户隔离。
+
+配置与启动：
+
+1. 正式 `deploy/k8s` 从现有 `travelmate-secrets` 的 `deepseek-api-key` 读取密钥，模型/地址配置在 `deploy/k8s/microservices-configmap.yaml`。物理隔离实验清单 `microservices/k8s` 使用自己的同名密钥字段。
+2. 本地 Compose 在未提交的 `microservices/.env` 中设置 `DEEPSEEK_API_KEY`，可选 `DEEPSEEK_BASE_URL`、`DEEPSEEK_CHAT_COMPLETIONS_PATH`、`DEEPSEEK_PLAN_MODEL`、`DEEPSEEK_THINKING_ENABLED` 和 `DEEPSEEK_REASONING_EFFORT`；参照 `.env.example`，不要提交真实密钥。
+3. 独立 JAR 使用相同环境变量，另可设置 `LOCAL_SERVICE_URL`。地点服务由 `AI_PLACE_VERIFICATION_ENABLED`、`AI_PLACE_VERIFICATION_BASE_URL` 等配置；离线时只接受内置目录中的城市。
+4. 重建 AI 服务和前端镜像，再按当前环境的部署流程更新；前端 AI 反向代理等待时间已设为 120 秒，以覆盖地点核验及模型的 60 秒请求时限。
+
+验证命令（仓库根目录）：
+
+```powershell
+mvn -f microservices/pom.xml -pl services/ai-service -am test
+npm --prefix frontend run build
+npm run check:microservice-boundaries
+npm run check:deployment
+```
+
+本次 AI 服务测试共 30 项，0 失败、0 错误、0 跳过。模型和 LOCAL 调用使用本地 HTTP server 验证；数据库 Mapper 使用 mock，未把这些测试视为真实数据库或在线 DeepSeek 验收。前端生产构建通过（已有大包体积提示）。当前迁移范围为行程规划；跨服务个人订单参考尚未接入，提示词明确禁止编造已订班次/酒店；AI 客服仍保留原有微服务实现。

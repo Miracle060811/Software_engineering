@@ -19,6 +19,8 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 
 `identity-service`、`traffic-service`、`local-service`、`ai-service`、`community-service`、`ops-service` 已在 [`microservices`](microservices/README.md) 下建立独立 Maven 模块、配置、健康检查和 Dockerfile。跨域读取改用内部 HTTP 接口，AI 服务覆盖通知、行程、对话和私信；单体 `backend` 继续保留，便于迁移期间做功能回归。
 
+`ai-service` 的行程生成现已接入与单体一致的 DeepSeek JSON 规划、城市核验、逐日活动/费用校验及完整本地降级方案；通过 HTTP 读取 LOCAL 景点目录，行程与生成通知在同一事务保存。正式部署从 `travelmate-secrets/deepseek-api-key` 注入密钥。缺少密钥或模型异常时，页面明确显示本地参考行程。配置、验证及范围见 [微服务 AI 行程规划说明](microservices/README.md#ai-行程规划)。
+
 六服务分库 DDL、本地 Compose、事务 Outbox 写入/重试投递、AI 通知幂等消费和历史数据迁移验收均已形成证据；Kubernetes 部署统一使用 [`deploy/k8s`](deploy/k8s)，六服务接入同一 `travelmate` 命名空间，HPA 清单与扩缩容实验也以该环境为准。`microservices/k8s` 保存六套独立 MySQL/PVC 的物理隔离实验方案。本课程交付边界是 Docker Desktop Kubernetes 单集群部署，不采用 API Gateway、注册中心或生产多集群编排；中期设计历史基线见 [`02_docs/TravelMate中期验收基线.md`](02_docs/TravelMate中期验收基线.md)。
 
 ## 技术栈

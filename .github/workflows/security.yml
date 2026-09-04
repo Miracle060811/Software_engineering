@@ -85,12 +85,14 @@ jobs:
             package-lock.json
             frontend/package-lock.json
 
+      - name: Test audit retry and failure handling
+        run: node --test scripts/ci/audit-npm.test.mjs
+
       - name: Audit root tooling dependencies
-        run: npm audit --package-lock-only --omit=dev --audit-level=high
+        run: node scripts/ci/audit-npm.mjs .
 
       - name: Audit frontend production dependencies
-        working-directory: frontend
-        run: npm audit --package-lock-only --omit=dev --audit-level=high
+        run: node scripts/ci/audit-npm.mjs frontend
 
   dependency-review:
     name: Review dependency changes

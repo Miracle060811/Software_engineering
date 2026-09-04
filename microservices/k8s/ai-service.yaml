@@ -64,6 +64,12 @@ spec:
                 secretKeyRef:
                   name: travelmate-microservices-secrets
                   key: internal-service-token
+            - name: DEEPSEEK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: travelmate-microservices-secrets
+                  key: deepseek-api-key
+                  optional: true
             - name: JAVA_TOOL_OPTIONS
               value: -XX:MaxRAMPercentage=75.0
           startupProbe: &aiProbe

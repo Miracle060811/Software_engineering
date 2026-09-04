@@ -29,3 +29,9 @@ data:
   COMMUNITY_DATASOURCE_USERNAME: travelmate_community_app
   OPS_DATASOURCE_URL: jdbc:mysql://travelmate-mysql:3306/travelmate_ops?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
   OPS_DATASOURCE_USERNAME: travelmate_ops_app
+  DEEPSEEK_BASE_URL: https://api.deepseek.com
+  DEEPSEEK_CHAT_COMPLETIONS_PATH: /chat/completions
+  DEEPSEEK_PLAN_MODEL: deepseek-v4-flash
+  DEEPSEEK_THINKING_ENABLED: "false"
+  DEEPSEEK_REASONING_EFFORT: high
+  AI_PLACE_VERIFICATION_ENABLED: "true"
