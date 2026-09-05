@@ -1165,6 +1165,23 @@
         ]
       }
     },
+    "GET /api/user/profile/{username}/posts": {
+      "service": "identity-service",
+      "visibility": "public",
+      "controller": "IdentityUserProfileController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/microservices/identity/IdentityUserProfileController.java",
+      "tests": {
+        "normal": [
+          "IdentityDomainApiTests#passengerFollowAndProfileEndpointsExposeNormalContracts"
+        ],
+        "auth": [
+          "IdentityDomainApiTests#identityDomainEndpointsEnforceAuthenticationBoundaries"
+        ],
+        "validation": [
+          "IdentityDomainApiTests#identityDomainEndpointsRejectMalformedInput"
+        ]
+      }
+    },
     "GET /internal/community/admin/pending-post-count": {
       "service": "community-service",
       "visibility": "internal",
@@ -1196,6 +1213,23 @@
         ],
         "validation": [
           "InternalAdminCommunityControllerTests#adminCommunityEndpointsRejectMalformedRequests"
+        ]
+      }
+    },
+    "GET /internal/community/users/{userId}/posts": {
+      "service": "community-service",
+      "visibility": "internal",
+      "controller": "InternalUserPostController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/microservices/community/InternalUserPostController.java",
+      "tests": {
+        "normal": [
+          "InternalUserPostControllerTests#returnsPublishedPostsForUser"
+        ],
+        "auth": [
+          "InternalUserPostControllerTests#rejectsInvalidInternalToken"
+        ],
+        "validation": [
+          "InternalUserPostControllerTests#rejectsMalformedUserId"
         ]
       }
     },

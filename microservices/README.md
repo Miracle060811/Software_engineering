@@ -4,7 +4,7 @@
 
 | 服务 | 默认端口 | 数据所有权 | 当前跨服务调用 |
 | --- | ---: | --- | --- |
-| `identity-service` | 8081 | 用户、登录刷新会话、关注、常用旅客 | 提供登录/刷新/退出以及旅客归属与必要快照内部接口 |
+| `identity-service` | 8081 | 用户、登录刷新会话、关注、常用旅客 | 提供登录/刷新/退出、个人主页，以及旅客归属与必要快照内部接口 |
 | `traffic-service` | 8082 | 航班、火车、候补、交通订单、价格历史、交通 Outbox | HTTP 调用身份服务校验旅客；HTTP 调用本地生活服务核销优惠券 |
 | `local-service` | 8083 | 酒店、景点、目的地、评价、优惠券、本地游、本地生活 Outbox | 提供优惠券核销内部接口 |
 | `ai-service` | 8084 | AI 行程、AI 对话、通知、私信、事件消费记录 | 幂等消费通知事件；提供游记 AI 审核、私信联系人和用户搜索 |
@@ -23,6 +23,7 @@
 | TRAFFIC | LOCAL | `POST /internal/local/coupons/redeem` | 连接、超时或 5xx 转 503；交通订单事务回滚 |
 | TRAFFIC、LOCAL | AI | `POST /internal/notifications/events`，`Idempotency-Key=eventId` | Outbox 保留并指数退避；达到上限进入死信 |
 | AI、COMMUNITY | IDENTITY | `/internal/identity/community/users*`、`/search` | 连接、超时或 5xx 转 503；不直接读取 IDENTITY 数据库 |
+| IDENTITY | COMMUNITY | `GET /internal/community/users/{userId}/posts` | 个人主页只返回目标用户已发布游记；社区服务不可用时返回 503，不回退跨库 |
 | COMMUNITY | AI | `POST /internal/ai/post-audit`、`POST /internal/notifications/events` | 审核失败时稿件保留在队列，下轮重试；通知按事件 ID 幂等 |
 | AI | OPS | `POST /internal/ops/content/audit` | DeepSeek 不可用时按敏感词最高等级执行与单体一致的降级决策 |
 | OPS | IDENTITY、TRAFFIC、LOCAL、COMMUNITY | `/internal/admin/**` 管理查询与命令 | 连接、超时或 5xx 转 503；OPS 不直接访问业务服务数据库 |
@@ -41,7 +42,7 @@
 
 ## API 与 UC01—UC19 测试
 
-六个服务的 213 个 Controller 端点（150 个公开端点、63 个内部端点）均登记了正常、鉴权和参数边界 MockMvc 测试锚点；有跨服务依赖的端点另登记 503 失败测试。清单由代码自动发现并与测试源码互相校验，新增或删除路由后未同步测试会使门禁失败：
+六个服务的 215 个 Controller 端点（151 个公开端点、64 个内部端点）均登记了正常、鉴权和参数边界 MockMvc 测试锚点；有跨服务依赖的端点另登记 503 失败测试。清单由代码自动发现并与测试源码互相校验，新增或删除路由后未同步测试会使门禁失败：
 
 ```powershell
 npm run check:microservice-api

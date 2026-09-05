@@ -13,7 +13,7 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 | 管理后台 | RBAC、用户/资源/订单/优惠券管理、CSV 导入、内容与评价审核、系统日志和轻量运行指标 |
 | 工程质量 | 后端 JUnit/MockMvc、前端 ESLint/构建、Mock 与真实后端 Playwright E2E、JaCoCo、SpotBugs、依赖/密钥扫描及 CodeQL |
 
-系统核心主链路可运行，课程验收证据已按源码、文档、DevOps、测试、管理和答辩六类归档。UC01—UC19 的证据基线由 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json) 与 [`docs/ci/test-quality-policy.json`](docs/ci/test-quality-policy.json) 管理；六微服务的 213 个 HTTP 端点（150 个公开、63 个内部）测试映射由 [`docs/ci/microservice-api-coverage.json`](docs/ci/microservice-api-coverage.json) 管理，不能把“代码已存在”直接视为“场景已被完整自动化覆盖”。
+系统核心主链路可运行，课程验收证据已按源码、文档、DevOps、测试、管理和答辩六类归档。UC01—UC19 的证据基线由 [`docs/ci/use-case-test-matrix.json`](docs/ci/use-case-test-matrix.json) 与 [`docs/ci/test-quality-policy.json`](docs/ci/test-quality-policy.json) 管理；六微服务的 215 个 HTTP 端点（151 个公开、64 个内部）测试映射由 [`docs/ci/microservice-api-coverage.json`](docs/ci/microservice-api-coverage.json) 管理，不能把“代码已存在”直接视为“场景已被完整自动化覆盖”。
 
 ## 微服务迁移状态
 
@@ -41,6 +41,8 @@ TravelMate 是 Miracle 小组的软件工程课程项目，围绕“行前规划
 正式前端通过 Nginx 按业务路径直接反向代理到六个 Kubernetes 微服务：身份与用户关系、交通订单、本地生活、AI 与消息、社区内容、运营后台分别进入 `identity-service`、`traffic-service`、`local-service`、`ai-service`、`community-service` 和 `ops-service`。`travelmate-backend` 仅保留为改造前单体兼容与回归基线，不再承接正式前端业务请求；未登记的 API 路径直接返回 404，不允许静默回落到单体实现。
 
 社区链路已与单体行为对齐：普通游记先进入审核队列，`community-service` 每分钟最多处理 50 篇并调用 `ai-service` 做 DeepSeek 审核；模型或密钥不可用时由 `ops-service` 按敏感词等级降级，审核结果写回后产生站内通知。游记图片由 `community-service` 的 `/api/file/upload` 接收并写入共享 `travelmate-uploads` PVC，`/uploads/**` 仍由同一服务提供；无图片游记按纯文本卡片显示，不生成占位封面。私信联系人和用户搜索分别使用 `/api/private-message/contacts` 与 `/api/private-message/users`，用户资料通过 IDENTITY 内部接口读取。
+
+个人主页保留单体接口 `/api/user/profile/{username}/posts`：`identity-service` 先校验目标用户，再通过 `/internal/community/users/{userId}/posts` 向 `community-service` 获取该用户已发布游记。因此从“关注”或“粉丝”列表进入他人主页时，不会跨库读取社区表，也不会再落入静态资源 404。
 
 ### 环境版本
 

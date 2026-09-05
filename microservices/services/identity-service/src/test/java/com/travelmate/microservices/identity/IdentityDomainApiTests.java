@@ -15,8 +15,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -32,6 +35,7 @@ class IdentityDomainApiTests {
     private FollowService followService;
     private UserMapper userMapper;
     private FollowMapper followMapper;
+    private CommunityProfileGateway communityGateway;
     private UserContext userContext;
     private MockMvc mockMvc;
 
@@ -41,6 +45,7 @@ class IdentityDomainApiTests {
         followService = mock(FollowService.class);
         userMapper = mock(UserMapper.class);
         followMapper = mock(FollowMapper.class);
+        communityGateway = mock(CommunityProfileGateway.class);
         userContext = mock(UserContext.class);
 
         PassengerController passengerController = new PassengerController();
@@ -51,7 +56,7 @@ class IdentityDomainApiTests {
         ReflectionTestUtils.setField(followController, "userContext", userContext);
 
         mockMvc = MockMvcBuilders.standaloneSetup(passengerController, followController,
-                        new IdentityUserProfileController(userMapper, followMapper))
+                        new IdentityUserProfileController(userMapper, followMapper, communityGateway))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
@@ -71,6 +76,7 @@ class IdentityDomainApiTests {
         when(followService.followStatus(7L, 8L)).thenReturn(1);
         when(userMapper.selectOne(any())).thenReturn(user);
         when(followMapper.selectCount(any())).thenReturn(1L);
+        when(communityGateway.publishedPosts(8L)).thenReturn(List.of(Map.of("id", 9L, "title", "已发布游记")));
 
         mockMvc.perform(get("/api/passenger/list")).andExpect(status().isOk()).andExpect(jsonPath("$.code").value(200));
         mockMvc.perform(post("/api/passenger/add").contentType("application/json")
@@ -82,6 +88,8 @@ class IdentityDomainApiTests {
         mockMvc.perform(get("/api/follow/following/8")).andExpect(status().isOk()).andExpect(jsonPath("$.code").value(200));
         mockMvc.perform(get("/api/follow/status/8")).andExpect(status().isOk()).andExpect(jsonPath("$.data").value(true));
         mockMvc.perform(get("/api/user/profile/target")).andExpect(status().isOk()).andExpect(jsonPath("$.data.username").value("target"));
+        mockMvc.perform(get("/api/user/profile/target/posts")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].id").value(9));
     }
 
     @Test
@@ -104,6 +112,7 @@ class IdentityDomainApiTests {
         mockMvc.perform(get("/api/follow/fans/8")).andExpect(status().isOk());
         mockMvc.perform(get("/api/follow/following/8")).andExpect(status().isOk());
         mockMvc.perform(get("/api/user/profile/target")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/user/profile/target/posts")).andExpect(status().isOk());
     }
 
     @Test
@@ -119,7 +128,21 @@ class IdentityDomainApiTests {
         mockMvc.perform(get("/api/follow/following/not-a-number")).andExpect(status().isBadRequest());
         mockMvc.perform(get("/api/follow/status/not-a-number")).andExpect(status().isBadRequest());
         mockMvc.perform(get("/api/user/profile/missing")).andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
+        mockMvc.perform(get("/api/user/profile/missing/posts")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(500));
         mockMvc.perform(get("/api/passenger/list").param("unexpected", "ignored"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void communityOutageReturnsServiceUnavailableForProfilePosts() throws Exception {
+        User user = new User(); user.setId(8L); user.setUsername("target");
+        when(userMapper.selectOne(any())).thenReturn(user);
+        when(communityGateway.publishedPosts(8L))
+                .thenThrow(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "社区服务暂不可用"));
+
+        mockMvc.perform(get("/api/user/profile/target/posts"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value(503));
     }
 }

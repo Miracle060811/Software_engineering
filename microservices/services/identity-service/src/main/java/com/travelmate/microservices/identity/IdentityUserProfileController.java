@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -19,10 +20,13 @@ import java.util.Map;
 public class IdentityUserProfileController {
     private final UserMapper userMapper;
     private final FollowMapper followMapper;
+    private final CommunityProfileGateway communityGateway;
 
-    public IdentityUserProfileController(UserMapper userMapper, FollowMapper followMapper) {
+    public IdentityUserProfileController(UserMapper userMapper, FollowMapper followMapper,
+                                         CommunityProfileGateway communityGateway) {
         this.userMapper = userMapper;
         this.followMapper = followMapper;
+        this.communityGateway = communityGateway;
     }
 
     @GetMapping("/profile/{username}")
@@ -40,5 +44,13 @@ public class IdentityUserProfileController {
         result.put("followingCount", followMapper.selectCount(new LambdaQueryWrapper<Follow>()
                 .eq(Follow::getFollowerId, user.getId())));
         return Result.success(result);
+    }
+
+    @GetMapping("/profile/{username}/posts")
+    public Result<List<Map<String, Object>>> publishedPosts(@PathVariable String username) {
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, username).eq(User::getDeleted, 0));
+        if (user == null) throw new RuntimeException("用户不存在");
+        return Result.success(communityGateway.publishedPosts(user.getId()));
     }
 }

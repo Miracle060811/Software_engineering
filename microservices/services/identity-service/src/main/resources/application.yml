@@ -12,6 +12,8 @@ spring:
 app:
   integration:
     mode: http
+  services:
+    community-url: ${COMMUNITY_SERVICE_URL:http://127.0.0.1:8085}
   internal-service-token: ${INTERNAL_SERVICE_TOKEN}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
