@@ -154,7 +154,7 @@
             <template #header>
               <div class="card-header">
                 <span>异常预警与运营待办</span>
-                <el-tag type="info" size="small">{{ alerts.length }} 条</el-tag>
+                <el-tag type="info" size="small">{{ actionableAlertCount }} 条</el-tag>
               </div>
             </template>
             <div class="alert-list">
@@ -2247,6 +2247,9 @@ const latestQps = computed(() => latestMetricValue("qpsTrend"));
 const latestLatency = computed(() => latestMetricValue("latencyTrend"));
 const alerts = computed(() =>
   Array.isArray(dashboardData.value.alerts) ? dashboardData.value.alerts : [],
+);
+const actionableAlertCount = computed(
+  () => alerts.value.filter((alert) => alert?.level !== "success").length,
 );
 
 const setChartOption = (dom, option) => {
