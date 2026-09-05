@@ -139,7 +139,7 @@ request.interceptors.response.use(
         ElMessage.error(
           timedOut
             ? timeoutMessage
-            : "无法连接后端服务，请确认前后端都已启动",
+            : "暂时无法连接服务，请稍后重试",
         );
       }
       return Promise.reject(error);

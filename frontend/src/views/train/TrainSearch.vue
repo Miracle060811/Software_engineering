@@ -309,7 +309,7 @@ const syncStatusText = computed(() => {
 const syncSourceLabel = computed(() => {
   const source = syncStatus.value?.dataSource;
   if (source === "12306_PAGE") return "12306 实时读取";
-  if (source === "LOCAL_DEMO_CACHE") return "本地演示缓存";
+  if (source === "LOCAL_DEMO_CACHE") return "近期查询缓存";
   return "本地数据库";
 });
 

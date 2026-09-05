@@ -923,7 +923,7 @@
                       type="primary"
                       :loading="savingDeepseek"
                       @click="saveDeepseekKey"
-                    >保存并重启后端</el-button>
+                    >保存并应用</el-button>
                   </el-form-item>
                 </el-form>
               </el-card>
@@ -961,7 +961,7 @@
                       type="primary"
                       :loading="savingAdminRegister"
                       @click="saveAdminRegisterConfig"
-                    >保存并重启后端</el-button>
+                    >保存并应用</el-button>
                     <el-button
                       :loading="resettingAdminRegister"
                       @click="resetAdminRegisterSecret"
@@ -2406,7 +2406,7 @@ const renderCharts = () => {
 
   setChartOption(latencyChartRef.value, {
     title: {
-      text: "接口平均延迟监控",
+      text: "平均响应耗时",
       left: "center",
       textStyle: { fontSize: 14 },
     },
@@ -3492,7 +3492,7 @@ const saveDeepseekKey = async () => {
     await request.put("/api/admin/secrets/deepseek", {
       apiKey: secretsForm.value.deepseekApiKey,
     });
-    ElMessage.success("DeepSeek API Key 已更新，后端正在滚动重启");
+    ElMessage.success("DeepSeek API Key 已更新，服务正在应用新配置");
     secretsForm.value.deepseekApiKey = "";
     await fetchSecrets();
   } catch (e) {
@@ -3509,7 +3509,7 @@ const saveAdminRegisterConfig = async () => {
       enabled: secretsForm.value.adminRegisterEnabled,
       expiresAt: secretsForm.value.adminRegisterExpiresAt,
     });
-    ElMessage.success("管理员注册配置已更新，后端正在滚动重启");
+    ElMessage.success("管理员注册配置已更新，服务正在应用新配置");
     await fetchSecrets();
   } catch (e) {
     // error handled in request.js
@@ -3531,7 +3531,7 @@ const resetAdminRegisterSecret = async () => {
   resettingAdminRegister.value = true;
   try {
     await request.post("/api/admin/secrets/admin-register/reset");
-    ElMessage.success("管理员注册密钥已重置，后端正在滚动重启");
+    ElMessage.success("管理员注册密钥已重置，服务正在应用新配置");
     await fetchSecrets();
   } catch (e) {
     // error handled in request.js

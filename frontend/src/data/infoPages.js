@@ -2,7 +2,7 @@ export const infoPages = {
   about: {
     title: "关于 TravelMate",
     subtitle: "把旅行规划、预订和分享放进同一份清晰路书。",
-    badge: "课程项目",
+    badge: "关于我们",
     sections: [
       {
         title: "我们在解决什么",
@@ -23,7 +23,7 @@ export const infoPages = {
   },
   terms: {
     title: "用户协议",
-    subtitle: "项目展示版协议，用于说明平台基础使用规则。",
+    subtitle: "说明平台的基础使用规则与服务边界。",
     badge: "使用规则",
     sections: [
       {
@@ -34,7 +34,7 @@ export const infoPages = {
       {
         title: "订单与服务",
         body:
-          "机票、火车票、酒店、景点等服务以页面展示和实际库存为准。课程项目环境中的订单数据主要用于功能演示，不构成真实商业履约承诺。",
+          "机票、火车票、酒店、景点等服务以页面展示和实际库存为准。页面提供的行程与价格信息仅供出行参考，最终结果以订单确认信息为准。",
       },
       {
         title: "内容发布",
@@ -45,7 +45,7 @@ export const infoPages = {
   },
   privacy: {
     title: "隐私政策",
-    subtitle: "说明 TravelMate 在项目功能中如何使用必要信息。",
+    subtitle: "说明 TravelMate 如何使用和保护必要信息。",
     badge: "隐私说明",
     sections: [
       {
@@ -61,7 +61,7 @@ export const infoPages = {
       {
         title: "数据保护",
         body:
-          "密码由后端加密存储，接口通过登录态校验限制私有资源访问。项目不会主动收集与旅行服务无关的敏感个人信息。",
+          "密码会经过加密处理，私有内容仅允许已登录用户访问。平台不会主动收集与旅行服务无关的敏感个人信息。",
       },
     ],
   },
