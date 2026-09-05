@@ -7,7 +7,7 @@ param(
     [string]$KubeContext = "docker-desktop",
     [string]$EvidenceDirectory = "",
     [int]$DatabaseBootstrapTimeoutSeconds = 180,
-    [int]$RolloutTimeoutSeconds = 300,
+    [int]$RolloutTimeoutSeconds = 900,
     [string]$Service = ""
 )
 
