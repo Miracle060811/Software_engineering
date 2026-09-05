@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -53,6 +54,8 @@ class AiEndpointContractTests {
         when(privateMessageService.send(org.mockito.ArgumentMatchers.eq(7L), any())).thenReturn(message);
         when(privateMessageService.conversation(7L, 8L)).thenReturn(List.of(message));
         when(privateMessageService.unreadCount(7L)).thenReturn(1);
+        when(privateMessageService.contacts(7L)).thenReturn(List.of(Map.of("userId", 8L)));
+        when(privateMessageService.searchUsers(7L, "member")).thenReturn(List.of(Map.of("userId", 8L)));
 
         mockMvc.perform(post("/api/ai/plan/generate").contentType("application/json")
                         .content("{\"origin\":\"上海\",\"destination\":\"北京\",\"days\":3,\"peopleCount\":1}"))
@@ -68,6 +71,10 @@ class AiEndpointContractTests {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data[0].id").value(3));
         mockMvc.perform(get("/api/private-message/unread-count"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data").value(1));
+        mockMvc.perform(get("/api/private-message/contacts"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data[0].userId").value(8));
+        mockMvc.perform(get("/api/private-message/users").param("keyword", "member"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data[0].userId").value(8));
     }
 
     @Test
@@ -85,6 +92,10 @@ class AiEndpointContractTests {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
         mockMvc.perform(get("/api/private-message/unread-count"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
+        mockMvc.perform(get("/api/private-message/contacts"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
+        mockMvc.perform(get("/api/private-message/users").param("keyword", "member"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(500));
     }
 
     @Test
@@ -99,6 +110,8 @@ class AiEndpointContractTests {
         mockMvc.perform(get("/api/private-message/conversation/not-a-number")).andExpect(status().isBadRequest());
         mockMvc.perform(get("/api/ai/plan/list").param("unexpected", "ignored")).andExpect(status().isOk());
         mockMvc.perform(get("/api/private-message/unread-count").param("unexpected", "ignored")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/private-message/contacts").param("unexpected", "ignored")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/private-message/users")).andExpect(status().isBadRequest());
     }
 
     @Test

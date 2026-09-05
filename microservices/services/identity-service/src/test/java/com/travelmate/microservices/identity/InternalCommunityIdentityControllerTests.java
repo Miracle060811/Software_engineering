@@ -45,6 +45,9 @@ class InternalCommunityIdentityControllerTests {
         mockMvc.perform(get("/internal/identity/community/users").param("ids", "1")
                         .header("X-Internal-Token", "shared-token"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(1));
+        mockMvc.perform(get("/internal/identity/community/search").param("keyword", "mem")
+                        .param("excludeUserId", "7").header("X-Internal-Token", "shared-token"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(1));
         mockMvc.perform(get("/internal/identity/community/follows/status")
                         .param("followerId", "1").param("followeeId", "2")
                         .header("X-Internal-Token", "shared-token"))
@@ -61,6 +64,9 @@ class InternalCommunityIdentityControllerTests {
         mockMvc.perform(get("/internal/identity/community/users").param("ids", "1")
                         .header("X-Internal-Token", "wrong-token"))
                 .andExpect(status().isForbidden());
+        mockMvc.perform(get("/internal/identity/community/search").param("keyword", "mem")
+                        .param("excludeUserId", "7").header("X-Internal-Token", "wrong-token"))
+                .andExpect(status().isForbidden());
         mockMvc.perform(get("/internal/identity/community/follows/status")
                         .param("followerId", "1").param("followeeId", "2")
                         .header("X-Internal-Token", "wrong-token"))
@@ -76,6 +82,9 @@ class InternalCommunityIdentityControllerTests {
                         .header("X-Internal-Token", "shared-token"))
                 .andExpect(status().isBadRequest());
         mockMvc.perform(get("/internal/identity/community/users").header("X-Internal-Token", "shared-token"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/internal/identity/community/search").param("keyword", "mem")
+                        .header("X-Internal-Token", "shared-token"))
                 .andExpect(status().isBadRequest());
         mockMvc.perform(get("/internal/identity/community/follows/status")
                         .param("followerId", "1").header("X-Internal-Token", "shared-token"))

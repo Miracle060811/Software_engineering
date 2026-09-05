@@ -2188,6 +2188,72 @@
           "CommunityEndpointContractTests#opsOutageReturnsServiceUnavailableForPostMutations"
         ]
       }
+    },
+    "GET /api/private-message/contacts": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "AiPrivateMessageController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/AiPrivateMessageController.java",
+      "tests": {
+        "normal": ["AiEndpointContractTests#aiPlanChatAndMessageEndpointsExposeNormalContracts"],
+        "auth": ["AiEndpointContractTests#aiPlanChatAndMessageEndpointsRequireAuthentication"],
+        "validation": ["AiEndpointContractTests#aiPlanChatAndMessageEndpointsRejectMalformedInput"]
+      }
+    },
+    "GET /api/private-message/users": {
+      "service": "ai-service",
+      "visibility": "public",
+      "controller": "AiPrivateMessageController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/AiPrivateMessageController.java",
+      "tests": {
+        "normal": ["AiEndpointContractTests#aiPlanChatAndMessageEndpointsExposeNormalContracts"],
+        "auth": ["AiEndpointContractTests#aiPlanChatAndMessageEndpointsRequireAuthentication"],
+        "validation": ["AiEndpointContractTests#aiPlanChatAndMessageEndpointsRejectMalformedInput"]
+      }
+    },
+    "GET /internal/identity/community/search": {
+      "service": "identity-service",
+      "visibility": "internal",
+      "controller": "InternalCommunityIdentityController",
+      "source": "microservices/services/identity-service/src/main/java/com/travelmate/microservices/identity/InternalCommunityIdentityController.java",
+      "tests": {
+        "normal": ["InternalCommunityIdentityControllerTests#communityIdentityEndpointsReturnOwnedData"],
+        "auth": ["InternalCommunityIdentityControllerTests#communityIdentityEndpointsRejectInvalidInternalToken"],
+        "validation": ["InternalCommunityIdentityControllerTests#communityIdentityEndpointsRejectMalformedParameters"]
+      }
+    },
+    "POST /api/file/upload": {
+      "service": "community-service",
+      "visibility": "public",
+      "controller": "FileController",
+      "source": "microservices/services/community-service/src/main/java/com/travelmate/controller/FileController.java",
+      "tests": {
+        "normal": ["CommunityFileControllerTests#fileUploadReturnsNestedUrlContract"],
+        "auth": ["CommunityFileControllerTests#fileUploadReturnsNestedUrlContract"],
+        "validation": ["CommunityFileControllerTests#fileUploadRejectsInvalidFiles"]
+      }
+    },
+    "POST /internal/ops/content/audit": {
+      "service": "ops-service",
+      "visibility": "internal",
+      "controller": "InternalContentSafetyController",
+      "source": "microservices/services/ops-service/src/main/java/com/travelmate/microservices/ops/InternalContentSafetyController.java",
+      "tests": {
+        "normal": ["InternalContentSafetyControllerTests#internalTokenAndSensitiveResultAreEnforced"],
+        "auth": ["InternalContentSafetyControllerTests#internalTokenAndSensitiveResultAreEnforced"],
+        "validation": ["InternalContentSafetyControllerTests#malformedContentSafetyRequestIsRejected"]
+      }
+    },
+    "POST /internal/ai/post-audit": {
+      "service": "ai-service",
+      "visibility": "internal",
+      "controller": "InternalPostAuditController",
+      "source": "microservices/services/ai-service/src/main/java/com/travelmate/microservices/ai/InternalPostAuditController.java",
+      "tests": {
+        "normal": ["InternalPostAuditControllerTests#internalPostAuditReturnsDecisionAndEnforcesToken"],
+        "auth": ["InternalPostAuditControllerTests#internalPostAuditReturnsDecisionAndEnforcesToken"],
+        "validation": ["InternalPostAuditControllerTests#malformedInternalPostAuditRequestIsRejected"]
+      }
     }
   }
 }

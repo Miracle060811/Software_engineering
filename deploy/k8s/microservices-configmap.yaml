@@ -15,6 +15,7 @@ data:
   AI_SERVICE_URL: http://ai-service:8084
   COMMUNITY_SERVICE_URL: http://community-service:8085
   OPS_SERVICE_URL: http://ops-service:8086
+  UPLOAD_DIR: /app/uploads
   TRAIN_LIVE_SYNC_ENABLED: "true"
   OUTBOX_DISPATCHER_ENABLED: "true"
   MYBATIS_LOG_IMPL: org.apache.ibatis.logging.nologging.NoLoggingImpl

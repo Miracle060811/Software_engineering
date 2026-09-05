@@ -7,7 +7,6 @@ import com.travelmate.entity.Post;
 import com.travelmate.mapper.PostMapper;
 import com.travelmate.microservices.community.IdentityCommunityGateway;
 import com.travelmate.microservices.community.IdentityCommunityGateway.UserSummary;
-import com.travelmate.microservices.community.OpsContentModerationGateway;
 import com.travelmate.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,9 +24,6 @@ public class PostServiceImpl implements PostService {
 
     @Autowired
     private IdentityCommunityGateway identityGateway;
-
-    @Autowired
-    private OpsContentModerationGateway contentModerationGateway;
 
     @Override
     public List<Map<String, Object>> listPosts(int page, int size, String keyword) {
@@ -90,7 +86,6 @@ public class PostServiceImpl implements PostService {
         String images = limitString(body.get("images"), 2000, "图片地址过长");
         String destination = limitString(body.get("destination"), 100, "目的地不能超过100个字符");
         String tags = limitString(body.get("tags"), 500, "标签不能超过500个字符");
-        validateContentSafety(draft, title, content);
 
         Post post = new Post();
         post.setUserId(userId);
@@ -133,7 +128,6 @@ public class PostServiceImpl implements PostService {
         String images = limitString(body.get("images"), 2000, "图片地址过长");
         String destination = limitString(body.get("destination"), 100, "目的地不能超过100个字符");
         String tags = limitString(body.get("tags"), 500, "标签不能超过500个字符");
-        validateContentSafety(draft, title, content);
 
         post.setTitle(title);
         post.setContent(content);
@@ -206,12 +200,6 @@ public class PostServiceImpl implements PostService {
             return null;
         }
         return "%" + keyword.trim() + "%";
-    }
-
-    private void validateContentSafety(boolean draft, String title, String content) {
-        if (!draft && contentModerationGateway.containsSensitiveWord(title + "\n" + content)) {
-            throw new RuntimeException("游记包含敏感词，请修改后发布");
-        }
     }
 
     private String limitString(Object value, int maxLength, String errorMessage) {

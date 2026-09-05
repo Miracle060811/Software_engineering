@@ -28,6 +28,13 @@ public class InternalContentSafetyController {
         return new ContentCheck(localService.containsSensitiveWord(request.content()));
     }
 
+    @PostMapping("/audit")
+    public OpsLocalService.ContentAudit audit(@RequestBody ContentRequest request,
+                                              @RequestHeader("X-Internal-Token") String suppliedToken) {
+        if (!token.equals(suppliedToken)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "内部服务凭证无效");
+        return localService.auditContent(request.content());
+    }
+
     public record ContentRequest(String content) {}
     public record ContentCheck(boolean sensitive) {}
 }

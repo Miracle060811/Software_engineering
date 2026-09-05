@@ -49,6 +49,22 @@ public class InternalCommunityIdentityController {
                 .stream().map(this::summary).toList();
     }
 
+    @GetMapping("/search")
+    public List<UserSummary> search(@RequestParam String keyword,
+                                    @RequestParam Long excludeUserId,
+                                    @RequestHeader("X-Internal-Token") String token) {
+        verify(token);
+        String normalized = keyword == null ? "" : keyword.trim();
+        if (normalized.isEmpty()) return List.of();
+        return userMapper.selectList(new LambdaQueryWrapper<User>()
+                        .ne(User::getId, excludeUserId)
+                        .eq(User::getStatus, 1)
+                        .and(query -> query.eq(User::getDeleted, 0).or().isNull(User::getDeleted))
+                        .and(query -> query.like(User::getUsername, normalized).or().like(User::getNickname, normalized))
+                        .last("LIMIT 20"))
+                .stream().map(this::summary).toList();
+    }
+
     @GetMapping("/follows/status")
     public boolean follows(@RequestParam Long followerId, @RequestParam Long followeeId,
                            @RequestHeader("X-Internal-Token") String token) {
@@ -66,12 +82,12 @@ public class InternalCommunityIdentityController {
     }
 
     private UserSummary summary(User user) {
-        return new UserSummary(user.getId(), user.getUsername(), user.getNickname(), user.getAvatar());
+        return new UserSummary(user.getId(), user.getUsername(), user.getNickname(), user.getAvatar(), user.getBio());
     }
 
     private void verify(String token) {
         if (!serviceToken.equals(token)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "内部服务凭证无效");
     }
 
-    public record UserSummary(Long id, String username, String nickname, String avatar) {}
+    public record UserSummary(Long id, String username, String nickname, String avatar, String bio) {}
 }

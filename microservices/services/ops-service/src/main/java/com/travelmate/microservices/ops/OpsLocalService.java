@@ -76,6 +76,22 @@ public class OpsLocalService {
                 .anyMatch(content::contains);
     }
 
+    public ContentAudit auditContent(String content) {
+        if (content == null || content.isBlank()) return new ContentAudit(true, null);
+        int maxLevel = sensitiveWordMapper.selectList(null).stream()
+                .filter(word -> word.getWord() != null && !word.getWord().isBlank())
+                .filter(word -> content.contains(word.getWord()))
+                .map(SysSensitiveWord::getLevel)
+                .filter(Objects::nonNull)
+                .max(Integer::compareTo)
+                .orElse(0);
+        return maxLevel >= 3
+                ? new ContentAudit(false, "命中高风险敏感词")
+                : new ContentAudit(true, null);
+    }
+
+    public record ContentAudit(boolean approved, String reason) {}
+
     public Map<String, Object> logs(int page, int size) {
         int normalizedPage = Math.max(page, 1);
         int normalizedSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));

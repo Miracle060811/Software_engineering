@@ -19,12 +19,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class InternalAdminCommunityControllerTests {
     private PostMapper mapper;
+    private CommunityPostAuditGateway auditGateway;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         mapper = mock(PostMapper.class);
-        mockMvc = MockMvcBuilders.standaloneSetup(new InternalAdminCommunityController(mapper, "shared-token")).build();
+        auditGateway = mock(CommunityPostAuditGateway.class);
+        mockMvc = MockMvcBuilders.standaloneSetup(
+                new InternalAdminCommunityController(mapper, auditGateway, "shared-token")).build();
     }
 
     @Test

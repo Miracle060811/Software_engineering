@@ -7,8 +7,8 @@
 | `identity-service` | 8081 | 用户、登录刷新会话、关注、常用旅客 | 提供登录/刷新/退出以及旅客归属与必要快照内部接口 |
 | `traffic-service` | 8082 | 航班、火车、候补、交通订单、价格历史、交通 Outbox | HTTP 调用身份服务校验旅客；HTTP 调用本地生活服务核销优惠券 |
 | `local-service` | 8083 | 酒店、景点、目的地、评价、优惠券、本地游、本地生活 Outbox | 提供优惠券核销内部接口 |
-| `ai-service` | 8084 | AI 行程、AI 对话、通知、私信、事件消费记录 | 幂等消费交通与本地生活服务的通知事件；提供通知查询与状态操作 |
-| `community-service` | 8085 | 帖子、评论、点赞/收藏 | 调用身份服务读取必要用户快照；调用运营服务执行敏感内容检查 |
+| `ai-service` | 8084 | AI 行程、AI 对话、通知、私信、事件消费记录 | 幂等消费通知事件；提供游记 AI 审核、私信联系人和用户搜索 |
+| `community-service` | 8085 | 帖子、评论、点赞/收藏、游记图片文件 | 调用身份服务读取用户快照；通过 AI 与运营服务处理审核队列 |
 | `ops-service` | 8086 | 敏感词、操作日志 | 通过各业务服务内部接口聚合管理列表并下发审核、退款等命令 |
 
 内部接口使用 `X-Internal-Token`，六个服务必须配置同一个 `INTERNAL_SERVICE_TOKEN`。`/internal/**` 不参与面向浏览器的 CSRF 校验，但仍由各内部控制器校验服务 Token。JWT 密钥也必须一致，且 `JWT_SECRET` 为解码后至少 32 字节的 Base64 文本。身份服务签发 30 分钟 access token 和 14 天 refresh cookie；refresh token 仅以 SHA-256 指纹保存在 `auth_refresh_session`，刷新时轮换、退出时撤销，页面重载后前端通过 `/user/refresh` 恢复内存中的 access token。
@@ -22,11 +22,12 @@
 | TRAFFIC | IDENTITY | `GET /internal/identity/passengers/{id}/ownership` | 连接、超时或 5xx 转 503；不扣交通库存 |
 | TRAFFIC | LOCAL | `POST /internal/local/coupons/redeem` | 连接、超时或 5xx 转 503；交通订单事务回滚 |
 | TRAFFIC、LOCAL | AI | `POST /internal/notifications/events`，`Idempotency-Key=eventId` | Outbox 保留并指数退避；达到上限进入死信 |
-| COMMUNITY | IDENTITY | `GET /internal/identity/users/{id}/summary` | 连接、超时或 5xx 转 503；不直接读取 IDENTITY 数据库 |
-| COMMUNITY | OPS | `POST /internal/ops/content/check` | OPS 不可用时拒绝发布或修改，不绕过敏感内容检查 |
+| AI、COMMUNITY | IDENTITY | `/internal/identity/community/users*`、`/search` | 连接、超时或 5xx 转 503；不直接读取 IDENTITY 数据库 |
+| COMMUNITY | AI | `POST /internal/ai/post-audit`、`POST /internal/notifications/events` | 审核失败时稿件保留在队列，下轮重试；通知按事件 ID 幂等 |
+| AI | OPS | `POST /internal/ops/content/audit` | DeepSeek 不可用时按敏感词最高等级执行与单体一致的降级决策 |
 | OPS | IDENTITY、TRAFFIC、LOCAL、COMMUNITY | `/internal/admin/**` 管理查询与命令 | 连接、超时或 5xx 转 503；OPS 不直接访问业务服务数据库 |
 
-表归属保持唯一：IDENTITY 管理 `tm_user`、`tm_passenger`、`tm_follow`；TRAFFIC 管理航班、火车、交通订单、候补、价格历史和交通 Outbox 共 6 张表；LOCAL 管理酒店、景点、目的地、评价、举报、优惠券、本地游和本地 Outbox 共 14 张表；AI 管理行程、对话、通知、私信及消费去重共 6 张表；COMMUNITY 管理 `tm_post`、`tm_comment`、`tm_like`；OPS 管理 `sys_sensitive_word`、`sys_log`。完整表名以 `sql/*-schema.sql` 为准，六服务门禁应识别 35 张表中的 34 张；`tm_media_asset` 暂留单体文件域，待独立文件服务阶段处理。
+表归属保持唯一：IDENTITY 管理 `tm_user`、`tm_passenger`、`tm_follow`；TRAFFIC 管理航班、火车、交通订单、候补、价格历史和交通 Outbox 共 6 张表；LOCAL 管理酒店、景点、目的地、评价、举报、优惠券、本地游和本地 Outbox 共 14 张表；AI 管理行程、对话、通知、私信及消费去重共 6 张表；COMMUNITY 管理 `tm_post`、`tm_comment`、`tm_like`；OPS 管理 `sys_sensitive_word`、`sys_log`。完整表名以 `sql/*-schema.sql` 为准，六服务门禁识别 37 张唯一归属表；图片二进制不入业务库，正式 Kubernetes 部署写入共享 `travelmate-uploads` PVC。
 
 ## 构建
 
@@ -40,7 +41,7 @@
 
 ## API 与 UC01—UC19 测试
 
-六个服务的 113 个 Controller 端点（94 个公开端点、19 个内部端点）均登记了正常、鉴权和参数边界 MockMvc 测试锚点；有跨服务依赖的端点另登记 503 失败测试。清单由代码自动发现并与测试源码互相校验，新增或删除路由后未同步测试会使门禁失败：
+六个服务的 213 个 Controller 端点（150 个公开端点、63 个内部端点）均登记了正常、鉴权和参数边界 MockMvc 测试锚点；有跨服务依赖的端点另登记 503 失败测试。清单由代码自动发现并与测试源码互相校验，新增或删除路由后未同步测试会使门禁失败：
 
 ```powershell
 npm run check:microservice-api

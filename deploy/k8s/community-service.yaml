@@ -128,9 +128,14 @@ spec:
               drop:
                 - ALL
           volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
             - name: tmp
               mountPath: /tmp
       volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: travelmate-uploads
         - name: tmp
           emptyDir: {}
 

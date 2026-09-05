@@ -15,6 +15,8 @@ class InternalContentSafetyControllerTests {
     void internalTokenAndSensitiveResultAreEnforced() throws Exception {
         OpsLocalService local = mock(OpsLocalService.class);
         when(local.containsSensitiveWord("风险词内容")).thenReturn(true);
+        when(local.auditContent("风险词内容"))
+                .thenReturn(new OpsLocalService.ContentAudit(false, "命中高风险敏感词"));
         MockMvc mvc = MockMvcBuilders.standaloneSetup(
                 new InternalContentSafetyController(local, "shared-token")).build();
 
@@ -24,6 +26,12 @@ class InternalContentSafetyControllerTests {
         mvc.perform(post("/internal/ops/content/check").header("X-Internal-Token", "shared-token")
                         .contentType("application/json").content("{\"content\":\"风险词内容\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.sensitive").value(true));
+        mvc.perform(post("/internal/ops/content/audit").header("X-Internal-Token", "wrong")
+                        .contentType("application/json").content("{\"content\":\"风险词内容\"}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/internal/ops/content/audit").header("X-Internal-Token", "shared-token")
+                        .contentType("application/json").content("{\"content\":\"风险词内容\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.approved").value(false));
     }
 
     @Test
@@ -33,6 +41,8 @@ class InternalContentSafetyControllerTests {
         mvc.perform(post("/internal/ops/content/check").header("X-Internal-Token", "shared-token"))
                 .andExpect(status().isBadRequest());
         mvc.perform(post("/internal/ops/content/check").contentType("application/json").content("{}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/internal/ops/content/audit").header("X-Internal-Token", "shared-token"))
                 .andExpect(status().isBadRequest());
     }
 }

@@ -96,9 +96,13 @@ spec:
             capabilities:
               drop: ["ALL"]
           volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
             - name: tmp
               mountPath: /tmp
       volumes:
+        - name: uploads
+          emptyDir: {}
         - name: tmp
           emptyDir: {}
 

@@ -14,6 +14,7 @@ app:
   internal-service-token: ${INTERNAL_SERVICE_TOKEN}
   services.local-url: ${LOCAL_SERVICE_URL:http://127.0.0.1:8083}
   services.identity-url: ${IDENTITY_SERVICE_URL:http://127.0.0.1:8081}
+  services.ops-url: ${OPS_SERVICE_URL:http://127.0.0.1:8086}
 management:
   endpoints.web.exposure.include: health,info
   endpoint.health.probes.enabled: true

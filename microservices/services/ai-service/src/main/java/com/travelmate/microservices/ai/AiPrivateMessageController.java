@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/private-message")
@@ -22,6 +24,16 @@ public class AiPrivateMessageController {
     public AiPrivateMessageController(AiPrivateMessageService service, UserContext userContext) {
         this.service = service;
         this.userContext = userContext;
+    }
+
+    @GetMapping("/contacts")
+    public Result<List<Map<String, Object>>> contacts() {
+        return Result.success(service.contacts(userContext.getCurrentUserId()));
+    }
+
+    @GetMapping("/users")
+    public Result<List<Map<String, Object>>> searchUsers(@RequestParam String keyword) {
+        return Result.success(service.searchUsers(userContext.getCurrentUserId(), keyword));
     }
 
     @PostMapping("/send")

@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,11 +24,15 @@ import java.util.Map;
 @RestController
 @RequestMapping("/internal/community/admin")
 public class InternalAdminCommunityController {
+    private static final Logger log = LoggerFactory.getLogger(InternalAdminCommunityController.class);
     private final PostMapper mapper;
+    private final CommunityPostAuditGateway auditGateway;
     private final String token;
 
-    public InternalAdminCommunityController(PostMapper mapper, @Value("${app.internal-service-token}") String token) {
+    public InternalAdminCommunityController(PostMapper mapper, CommunityPostAuditGateway auditGateway,
+                                            @Value("${app.internal-service-token}") String token) {
         this.mapper = mapper;
+        this.auditGateway = auditGateway;
         this.token = token;
     }
 
@@ -46,6 +52,7 @@ public class InternalAdminCommunityController {
         if (post == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "游记不存在");
         post.setStatus(1); post.setRejectReason(null); post.setUpdateTime(LocalDateTime.now());
         mapper.updateById(post);
+        notifyAudit(post, true, null);
         return post;
     }
 
@@ -59,6 +66,7 @@ public class InternalAdminCommunityController {
         if (reason.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "拒绝原因不能为空");
         post.setStatus(2); post.setRejectReason(reason); post.setUpdateTime(LocalDateTime.now());
         mapper.updateById(post);
+        notifyAudit(post, false, reason);
         return post;
     }
 
@@ -88,6 +96,20 @@ public class InternalAdminCommunityController {
         Post post = mapper.selectById(id);
         if (post == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "游记不存在");
         return post;
+    }
+
+    private void notifyAudit(Post post, boolean approved, String reason) {
+        try {
+            String state = approved ? "approved" : "rejected";
+            auditGateway.notify("community-post-manual-audit-" + post.getId() + "-" + state,
+                    post.getUserId(), approved ? "游记审核通过" : "游记审核未通过",
+                    approved
+                            ? "《" + post.getTitle() + "》已通过人工审核并发布。"
+                            : "《" + post.getTitle() + "》未通过人工审核，原因：" + reason,
+                    "/post/" + post.getId());
+        } catch (Exception exception) {
+            log.warn("人工审核结果已写入，但通知发送失败。postId={}, error={}", post.getId(), exception.getMessage());
+        }
     }
 
     private int nonNegative(Object value, String name) {

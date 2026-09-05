@@ -82,11 +82,11 @@
         <el-card
           v-for="(post, index) in posts"
           :key="post.id"
-          :class="['post-card', { 'my-post-card': activeTab === 'mine' }]"
+          :class="['post-card', { 'my-post-card': activeTab === 'mine', 'text-only-card': !hasPostImage(post) }]"
           :body-style="{ padding: 0 }"
           @click="openPost(post)"
         >
-          <div class="post-img-wrap">
+          <div v-if="hasPostImage(post)" class="post-img-wrap">
             <SafeImage
               :src="getFirstImage(post)"
               :fallback="getPostFallbackImage(post)"
@@ -289,6 +289,8 @@ const clearTagFilter = () => {
 const getPostFallbackImage = () => {
   return FALLBACK_IMAGE;
 };
+
+const hasPostImage = (post) => splitImages(post?.images).some((item) => String(item || "").trim());
 
 const getFirstImage = (post) => {
   const first = splitImages(post?.images)
