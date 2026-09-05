@@ -1364,7 +1364,7 @@ jobs:
 
     steps:
       - name: Checkout released commit over HTTPS
-        timeout-minutes: 5
+        timeout-minutes: 10
         shell: powershell
         env:
           RELEASE_SHA: ${{ github.sha }}
@@ -1379,14 +1379,19 @@ jobs:
           git -C $sourceDirectory remote add origin "https://github.com/Miracle060811/Software_engineering.git"
           if ($LASTEXITCODE -ne 0) { throw "Unable to configure the deployment repository" }
 
+          git -C $sourceDirectory sparse-checkout init --cone
+          if ($LASTEXITCODE -ne 0) { throw "Unable to initialize sparse checkout" }
+          git -C $sourceDirectory sparse-checkout set deploy scripts microservices/sql
+          if ($LASTEXITCODE -ne 0) { throw "Unable to configure deployment source paths" }
+
           $fetched = $false
           for ($attempt = 1; $attempt -le 3; $attempt++) {
             Write-Output "Fetching released commit over HTTPS: attempt $attempt/3"
             git -C $sourceDirectory `
               -c http.version=HTTP/1.1 `
-              -c http.lowSpeedLimit=1024 `
-              -c http.lowSpeedTime=30 `
-              fetch --depth=1 origin $env:RELEASE_SHA
+              -c http.lowSpeedLimit=1 `
+              -c http.lowSpeedTime=300 `
+              fetch --depth=1 --filter=blob:none origin $env:RELEASE_SHA
             if ($LASTEXITCODE -eq 0) {
               $fetched = $true
               break
