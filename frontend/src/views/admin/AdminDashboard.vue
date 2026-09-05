@@ -90,13 +90,13 @@
             <el-col :span="3"
               ><el-card class="stat-card"
                 ><div class="stat-value">{{ latestQps }}</div>
-                <div class="stat-label">近分钟请求量</div></el-card
+                <div class="stat-label">近 15 分钟请求量</div></el-card
               ></el-col
             >
             <el-col :span="3"
               ><el-card class="stat-card"
                 ><div class="stat-value">{{ latestLatency }}ms</div>
-                <div class="stat-label">近分钟平均延迟</div></el-card
+                <div class="stat-label">近 15 分钟平均延迟</div></el-card
               ></el-col
             >
             <el-col :span="3"

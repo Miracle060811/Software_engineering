@@ -21,9 +21,6 @@ import java.util.stream.Collectors;
 @Service
 public class AdminDashboardService {
     private static final DateTimeFormatter DAY_LABEL = DateTimeFormatter.ofPattern("MM-dd");
-    private static final List<String> LOCAL_ORDER_FIELDS = List.of(
-            "totalOrders", "todayOrders", "todayGmv", "dailyTrend", "hotDestinations", "orderTypeDist");
-
     private final OpsAggregationGateway gateway;
     private final OpsLocalService localService;
 
@@ -39,22 +36,24 @@ public class AdminDashboardService {
 
         List<Map<String, Object>> users = fetch("identity-service", List.of("totalUsers", "userGrowth"),
                 gateway::users, List.of(), sourceStatus, degradedSources);
-        List<Map<String, Object>> orders = fetch("traffic-service",
+        List<Map<String, Object>> trafficOrders = fetch("traffic-service",
                 List.of("totalOrders", "todayOrders", "todayGmv", "dailyTrend", "hotDestinations", "orderTypeDist"),
                 gateway::orders, List.of(), sourceStatus, degradedSources);
+        List<Map<String, Object>> localOrders = fetch("local-service",
+                List.of("totalOrders", "todayOrders", "todayGmv", "dailyTrend", "hotDestinations", "orderTypeDist"),
+                gateway::localOrders, List.of(), sourceStatus, degradedSources);
         Long pendingPosts = fetch("community-service", List.of("pendingPosts", "alerts"),
                 gateway::pendingPostCount, null, sourceStatus, degradedSources);
         Map<String, Object> observation = fetch("ops-service",
                 List.of("onlineUsers", "qpsTrend", "latencyTrend", "recentErrors", "alerts"),
                 localService::dashboardMetrics, Map.of(), sourceStatus, degradedSources);
 
-        sourceStatus.put("local-service", "unsupported");
-        addDegradation(degradedSources, "local-service", LOCAL_ORDER_FIELDS,
-                "本地生活服务尚未提供受保护的仪表盘订单统计接口，订单类字段当前仅覆盖交通订单");
-
         boolean usersAvailable = "available".equals(sourceStatus.get("identity-service"));
-        boolean ordersAvailable = "available".equals(sourceStatus.get("traffic-service"));
+        boolean ordersAvailable = "available".equals(sourceStatus.get("traffic-service"))
+                && "available".equals(sourceStatus.get("local-service"));
         boolean observationAvailable = "available".equals(sourceStatus.get("ops-service"));
+        List<Map<String, Object>> orders = new ArrayList<>(trafficOrders);
+        orders.addAll(localOrders);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("totalUsers", usersAvailable ? (long) users.size() : null);
@@ -78,7 +77,7 @@ public class AdminDashboardService {
                 "totalUsers", List.of("identity-service"),
                 "userGrowth", List.of("identity-service"),
                 "pendingPosts", List.of("community-service"),
-                "orders", List.of("traffic-service"),
+                "orders", List.of("traffic-service", "local-service"),
                 "observability", List.of("ops-service")));
         return data;
     }
@@ -113,10 +112,7 @@ public class AdminDashboardService {
     private BigDecimal countTodayGmv(List<Map<String, Object>> orders, LocalDate today) {
         return orders.stream()
                 .filter(order -> today.equals(dateValue(order.get("createTime"))))
-                .filter(order -> {
-                    Integer status = integerValue(order.get("status"));
-                    return Objects.equals(status, 1) || Objects.equals(status, 2);
-                })
+                .filter(order -> List.of(1, 2, 3).contains(integerValue(order.get("status"))))
                 .map(order -> decimalValue(order.get("amount")))
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -153,10 +149,15 @@ public class AdminDashboardService {
     private List<Map<String, Object>> buildOrderTypeDist(List<Map<String, Object>> orders) {
         long flight = orders.stream().filter(order -> Objects.equals(integerValue(order.get("orderType")), 0)).count();
         long train = orders.stream().filter(order -> Objects.equals(integerValue(order.get("orderType")), 1)).count();
+        long hotel = orders.stream().filter(order -> "hotel".equals(textValue(order.get("category")))).count();
+        long attraction = orders.stream().filter(order -> "attraction".equals(textValue(order.get("category")))).count();
+        long tour = orders.stream().filter(order -> "tour".equals(textValue(order.get("category")))).count();
         List<Map<String, Object>> result = new ArrayList<>();
         result.add(Map.of("name", "机票", "value", flight));
         result.add(Map.of("name", "火车票", "value", train));
-        result.add(nullableValue("酒店", null));
+        result.add(Map.of("name", "酒店", "value", hotel));
+        result.add(Map.of("name", "景点门票", "value", attraction));
+        result.add(Map.of("name", "跟团游", "value", tour));
         return result;
     }
 
@@ -175,9 +176,12 @@ public class AdminDashboardService {
         Map<String, Long> counts = new HashMap<>();
         for (Map<String, Object> order : orders) {
             Integer type = integerValue(order.get("orderType"));
-            String destination = Objects.equals(type, 0)
-                    ? textValue(order.get("arrivalCity"))
-                    : Objects.equals(type, 1) ? textValue(order.get("arrivalStation")) : null;
+            String destination = textValue(order.get("destination"));
+            if (destination == null) {
+                destination = Objects.equals(type, 0)
+                        ? textValue(order.get("arrivalCity"))
+                        : Objects.equals(type, 1) ? textValue(order.get("arrivalStation")) : null;
+            }
             if (destination != null) {
                 counts.merge(destination, 1L, Long::sum);
             }
@@ -204,10 +208,8 @@ public class AdminDashboardService {
                     "message", "待审核游记还有 " + pendingPosts + " 篇。"));
         }
         if (!degradedSources.isEmpty()) {
-            String sources = degradedSources.stream().map(item -> item.get("source").toString())
-                    .distinct().collect(Collectors.joining("、"));
-            alerts.add(Map.of("level", "warning", "title", "仪表盘数据部分降级",
-                    "message", sources + " 的部分指标当前不可用；已返回可确认的数据，并在 degradedSources 中列明范围。"));
+            alerts.add(Map.of("level", "warning", "title", "部分统计暂不可用",
+                    "message", "部分统计暂未完成更新，请稍后刷新。"));
         }
         if (alerts.isEmpty()) {
             alerts.add(Map.of("level", "success", "title", "系统运行稳定", "message", "当前未发现高优先级异常。"));

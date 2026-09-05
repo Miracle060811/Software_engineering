@@ -434,7 +434,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <span>&copy; 2026 TravelMate 伴游 — 软件工程课程项目 CI/CD 流水线测试</span>
+          <span>&copy; 2026 TravelMate 伴游</span>
           <span class="footer-credit">TravelMate Team</span>
         </div>
       </div>

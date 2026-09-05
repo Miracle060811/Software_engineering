@@ -59,6 +59,7 @@ class OpsDashboardIntegrationTests {
 
         when(gateway.users()).thenReturn(List.of(Map.of("id", 7L, "createTime", "2026-09-04T08:00:00")));
         when(gateway.orders()).thenThrow(new RuntimeException("traffic-service unavailable"));
+        when(gateway.localOrders()).thenReturn(List.of());
         when(gateway.pendingPostCount()).thenReturn(2L);
         when(localService.dashboardMetrics()).thenReturn(Map.of(
                 "onlineUsers", 1L,
@@ -79,5 +80,33 @@ class OpsDashboardIntegrationTests {
                 .andExpect(jsonPath("$.data.sourceStatus.identity-service").value("available"))
                 .andExpect(jsonPath("$.data.degradedSources[?(@.source == 'traffic-service')]").isNotEmpty())
                 .andExpect(jsonPath("$.data.alerts").isArray());
+    }
+
+    @Test
+    void dashboardCombinesTrafficAndLocalOrdersWithoutAFalseDegradation() throws Exception {
+        when(jwtUtil.extractPrincipal("admin-token"))
+                .thenReturn(new AuthenticatedUser(1L, "admin", 1));
+        when(gateway.users()).thenReturn(List.of());
+        when(gateway.orders()).thenReturn(List.of(Map.of(
+                "orderType", 0, "status", 2, "amount", 500,
+                "createTime", "2026-09-05T08:00:00", "arrivalCity", "上海")));
+        when(gateway.localOrders()).thenReturn(List.of(Map.of(
+                "category", "hotel", "status", 3, "amount", 800,
+                "createTime", "2026-09-05T09:00:00", "destination", "杭州")));
+        when(gateway.pendingPostCount()).thenReturn(0L);
+        when(localService.dashboardMetrics()).thenReturn(Map.of(
+                "onlineUsers", 1L, "qpsTrend", List.of(), "latencyTrend", List.of(),
+                "recentErrors", List.of(), "errorLogsToday", 0L));
+
+        mockMvc.perform(get("/api/admin/dashboard/data")
+                        .header("Authorization", "Bearer admin-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.partial").value(false))
+                .andExpect(jsonPath("$.data.totalOrders").value(2))
+                .andExpect(jsonPath("$.data.todayOrders").value(2))
+                .andExpect(jsonPath("$.data.todayGmv").value(1300))
+                .andExpect(jsonPath("$.data.sourceStatus.local-service").value("available"))
+                .andExpect(jsonPath("$.data.degradedSources").isEmpty())
+                .andExpect(jsonPath("$.data.orderTypeDist[?(@.name == '酒店')].value").value(1));
     }
 }

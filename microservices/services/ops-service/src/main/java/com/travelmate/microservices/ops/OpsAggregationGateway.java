@@ -40,6 +40,7 @@ public class OpsAggregationGateway {
     public void disableUser(Long id, Long adminId) { postText(identity, "/internal/identity/admin/users/" + id + "/disable?adminId=" + adminId, Map.of()); }
     public void enableUser(Long id) { postText(identity, "/internal/identity/admin/users/" + id + "/enable", Map.of()); }
     public List<Map<String, Object>> orders() { return list(traffic, "/internal/traffic/admin/orders"); }
+    public List<Map<String, Object>> localOrders() { return list(local, "/internal/local/admin/dashboard-orders"); }
     public List<Map<String, Object>> flights() { return list(traffic, "/internal/traffic/admin/flights"); }
     public Map<String, Object> addFlight(Map<String, Object> body) { return post(traffic, "/internal/traffic/admin/flights", body); }
     public void updateFlight(Long id, Map<String, Object> body) { put(traffic, "/internal/traffic/admin/flights/" + id, body); }
