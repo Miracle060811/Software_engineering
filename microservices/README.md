@@ -26,7 +26,7 @@
 | IDENTITY | COMMUNITY | `GET /internal/community/users/{userId}/posts` | 个人主页只返回目标用户已发布游记；社区服务不可用时返回 503，不回退跨库 |
 | COMMUNITY | AI | `POST /internal/ai/post-audit`、`POST /internal/notifications/events` | 审核失败时稿件保留在队列，下轮重试；通知按事件 ID 幂等 |
 | AI | OPS | `POST /internal/ops/content/audit` | DeepSeek 不可用时按敏感词最高等级执行与单体一致的降级决策 |
-| OPS | IDENTITY、TRAFFIC、LOCAL、COMMUNITY | `/internal/admin/**` 管理查询与命令 | 连接、超时或 5xx 转 503；OPS 不直接访问业务服务数据库 |
+| OPS | IDENTITY、TRAFFIC、LOCAL、COMMUNITY | `/internal/admin/**` 管理查询与命令 | 连接、超时或 5xx 转 503；下游 400/404/409/422 保留状态与业务提示；OPS 不直接访问业务服务数据库 |
 
 表归属保持唯一：IDENTITY 管理 `tm_user`、`tm_passenger`、`tm_follow`；TRAFFIC 管理航班、火车、交通订单、候补、价格历史和交通 Outbox 共 6 张表；LOCAL 管理酒店、景点、目的地、评价、举报、优惠券、本地游和本地 Outbox 共 14 张表；AI 管理行程、对话、通知、私信及消费去重共 6 张表；COMMUNITY 管理 `tm_post`、`tm_comment`、`tm_like`；OPS 管理 `sys_sensitive_word`、`sys_log`。完整表名以 `sql/*-schema.sql` 为准，六服务门禁识别 37 张唯一归属表；图片二进制不入业务库，正式 Kubernetes 部署写入共享 `travelmate-uploads` PVC。
 

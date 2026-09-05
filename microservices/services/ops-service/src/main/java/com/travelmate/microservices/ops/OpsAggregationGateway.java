@@ -1,5 +1,7 @@
 package com.travelmate.microservices.ops;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
@@ -7,6 +9,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.LinkedHashMap;
@@ -20,8 +23,10 @@ public class OpsAggregationGateway {
     private final RestClient local;
     private final RestClient community;
     private final String token;
+    private final ObjectMapper objectMapper;
 
     public OpsAggregationGateway(RestClient.Builder builder,
+                                 ObjectMapper objectMapper,
                                  @Value("${app.services.identity-url}") String identityUrl,
                                  @Value("${app.services.traffic-url}") String trafficUrl,
                                  @Value("${app.services.local-url}") String localUrl,
@@ -34,6 +39,7 @@ public class OpsAggregationGateway {
         this.local = buildClient(builder, localUrl, connectTimeoutMs, readTimeoutMs);
         this.community = buildClient(builder, communityUrl, connectTimeoutMs, readTimeoutMs);
         this.token = token;
+        this.objectMapper = objectMapper;
     }
 
     public List<Map<String, Object>> users() { return list(identity, "/internal/identity/admin/users"); }
@@ -159,7 +165,7 @@ public class OpsAggregationGateway {
                     .retrieve().body(new ParameterizedTypeReference<>() {});
             return body == null ? List.of() : body;
         } catch (RestClientException e) {
-            throw unavailable(e);
+            throw translateFailure(e);
         }
     }
 
@@ -169,7 +175,7 @@ public class OpsAggregationGateway {
                     .retrieve().body(new ParameterizedTypeReference<>() {});
             return result == null ? Map.of() : result;
         } catch (RestClientException e) {
-            throw unavailable(e);
+            throw translateFailure(e);
         }
     }
 
@@ -179,7 +185,7 @@ public class OpsAggregationGateway {
                     .retrieve().body(String.class);
             return result == null ? "" : result;
         } catch (RestClientException e) {
-            throw unavailable(e);
+            throw translateFailure(e);
         }
     }
 
@@ -187,7 +193,7 @@ public class OpsAggregationGateway {
         try {
             client.put().uri(path).header("X-Internal-Token", token).body(body).retrieve().toBodilessEntity();
         } catch (RestClientException e) {
-            throw unavailable(e);
+            throw translateFailure(e);
         }
     }
 
@@ -195,7 +201,7 @@ public class OpsAggregationGateway {
         try {
             client.delete().uri(path).header("X-Internal-Token", token).retrieve().toBodilessEntity();
         } catch (RestClientException e) {
-            throw unavailable(e);
+            throw translateFailure(e);
         }
     }
 
@@ -204,8 +210,29 @@ public class OpsAggregationGateway {
             Number result = client.get().uri(path).header("X-Internal-Token", token).retrieve().body(Number.class);
             return result == null ? 0 : result.longValue();
         } catch (RestClientException e) {
-            throw unavailable(e);
+            throw translateFailure(e);
         }
+    }
+
+    ResponseStatusException translateFailure(RestClientException cause) {
+        if (cause instanceof RestClientResponseException response) {
+            int status = response.getStatusCode().value();
+            if (status >= 400 && status < 500 && status != 401 && status != 403) {
+                return new ResponseStatusException(response.getStatusCode(), responseMessage(response), cause);
+            }
+        }
+        return unavailable(cause);
+    }
+
+    private String responseMessage(RestClientResponseException response) {
+        try {
+            JsonNode body = objectMapper.readTree(response.getResponseBodyAsByteArray());
+            String message = body == null ? null : body.path("msg").asText(null);
+            if (message != null && !message.isBlank()) return message;
+        } catch (Exception ignored) {
+            // 下游返回非标准响应时，仍保留对应的 4xx 状态并使用通用提示。
+        }
+        return "提交内容不符合要求，请检查后重试";
     }
 
     private ResponseStatusException unavailable(RestClientException cause) {

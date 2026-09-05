@@ -909,6 +909,21 @@ test("[E2E-TC-118][E2E-TC-119] UC18 and UC19 enforce admin RBAC and complete aud
     expect(statsBody.data).toHaveProperty("totalOrders");
     expect(statsBody.data).toHaveProperty("pendingPosts");
 
+    const invalidCouponBody = await (await request.post("/api/admin/coupons", {
+      headers: adminHeaders,
+      data: {
+        name: "缺少有效期的优惠券",
+        category: "all",
+        discountType: 0,
+        discountValue: 20,
+        minAmount: 0,
+        stock: 100,
+        status: 0,
+      },
+    })).json();
+    expect(invalidCouponBody.code).not.toBe(200);
+    expect(invalidCouponBody.msg).toBe("有效期不能为空");
+
     const word = `ci-${randomUUID()}`;
     const createWordBody = await (await request.post("/api/admin/sensitive-words", {
       headers: adminHeaders,

@@ -1109,23 +1109,23 @@
       <el-form :model="flightForm" label-width="100px" class="entity-form">
         <el-row :gutter="16">
           <el-col :span="12"
-            ><el-form-item label="航班号"
+            ><el-form-item label="航班号" required
               ><el-input v-model="flightForm.flightNo" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="航司"
+            ><el-form-item label="航司" required
               ><el-input v-model="flightForm.airline" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="出发城市"
+            ><el-form-item label="出发城市" required
               ><el-input v-model="flightForm.departureCity" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="到达城市"
+            ><el-form-item label="到达城市" required
               ><el-input v-model="flightForm.arrivalCity" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="出发时间"
+            ><el-form-item label="出发时间" required
               ><el-date-picker
                 v-model="flightForm.departureTime"
                 type="datetime"
@@ -1133,7 +1133,7 @@
                 style="width: 100%" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="到达时间"
+            ><el-form-item label="到达时间" required
               ><el-date-picker
                 v-model="flightForm.arrivalTime"
                 type="datetime"
@@ -1193,23 +1193,23 @@
       <el-form :model="trainForm" label-width="100px" class="entity-form">
         <el-row :gutter="16">
           <el-col :span="12"
-            ><el-form-item label="车次"
+            ><el-form-item label="车次" required
               ><el-input v-model="trainForm.trainNo" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="车型"
+            ><el-form-item label="车型" required
               ><el-input v-model="trainForm.trainType" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="出发站"
+            ><el-form-item label="出发站" required
               ><el-input v-model="trainForm.departureStation" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="到达站"
+            ><el-form-item label="到达站" required
               ><el-input v-model="trainForm.arrivalStation" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="出发时间"
+            ><el-form-item label="出发时间" required
               ><el-date-picker
                 v-model="trainForm.departureTime"
                 type="datetime"
@@ -1217,7 +1217,7 @@
                 style="width: 100%" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="到达时间"
+            ><el-form-item label="到达时间" required
               ><el-date-picker
                 v-model="trainForm.arrivalTime"
                 type="datetime"
@@ -1277,11 +1277,11 @@
       <el-form :model="hotelForm" label-width="100px" class="entity-form">
         <el-row :gutter="16">
           <el-col :span="12"
-            ><el-form-item label="酒店名称"
+            ><el-form-item label="酒店名称" required
               ><el-input v-model="hotelForm.name" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="城市"
+            ><el-form-item label="城市" required
               ><el-input v-model="hotelForm.city" /></el-form-item
           ></el-col>
           <el-col :span="12"
@@ -1318,7 +1318,7 @@
                   :value="0" /></el-select></el-form-item
           ></el-col>
           <el-col :span="24"
-            ><el-form-item label="地址"
+            ><el-form-item label="地址" required
               ><el-input v-model="hotelForm.address" /></el-form-item
           ></el-col>
           <el-col :span="24"
@@ -1428,11 +1428,11 @@
       <el-form :model="roomForm" label-width="100px" class="entity-form">
         <el-row :gutter="16">
           <el-col :span="12"
-            ><el-form-item label="房型"
+            ><el-form-item label="房型" required
               ><el-input v-model="roomForm.roomType" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="床型"
+            ><el-form-item label="床型" required
               ><el-input v-model="roomForm.bedType" /></el-form-item
           ></el-col>
           <el-col :span="12"
@@ -1487,15 +1487,15 @@
       <el-form :model="attractionForm" label-width="110px" class="entity-form">
         <el-row :gutter="16">
           <el-col :span="12"
-            ><el-form-item label="景点名称"
+            ><el-form-item label="景点名称" required
               ><el-input v-model="attractionForm.name" /></el-form-item
           ></el-col>
           <el-col :span="12"
-            ><el-form-item label="城市"
+            ><el-form-item label="城市" required
               ><el-input v-model="attractionForm.city" /></el-form-item
           ></el-col>
           <el-col :span="24"
-            ><el-form-item label="地址"
+            ><el-form-item label="地址" required
               ><el-input v-model="attractionForm.address" /></el-form-item
           ></el-col>
           <el-col :span="12"
@@ -1596,7 +1596,7 @@
       <el-form :model="couponForm" label-width="100px" class="entity-form">
         <el-row :gutter="16">
           <el-col :span="12"
-            ><el-form-item label="名称"
+            ><el-form-item label="名称" required
               ><el-input v-model="couponForm.name" /></el-form-item
           ></el-col>
           <el-col :span="12"
@@ -1648,7 +1648,7 @@
                   :value="1" /></el-select></el-form-item
           ></el-col>
           <el-col :span="24"
-            ><el-form-item label="到期时间"
+            ><el-form-item label="到期时间" required
               ><el-date-picker
                 v-model="couponForm.expireDate"
                 type="datetime"
@@ -1676,7 +1676,7 @@
       width="520px"
     >
       <el-form :model="sensitiveForm" label-width="90px" class="entity-form">
-        <el-form-item label="敏感词"
+        <el-form-item label="敏感词" required
           ><el-input v-model="sensitiveForm.word"
         /></el-form-item>
         <el-form-item label="等级"
@@ -2145,6 +2145,28 @@ const roomForm = ref(createRoomForm());
 const attractionForm = ref(createAttractionForm());
 const couponForm = ref(createCouponForm());
 const sensitiveForm = ref(createSensitiveForm());
+
+const validateRequiredFields = (form, fields) => {
+  const missing = fields.find(({ key }) => {
+    const value = form[key];
+    return value === null || value === undefined || String(value).trim() === "";
+  });
+  if (!missing) return true;
+  ElMessage.warning(`请填写${missing.label}`);
+  return false;
+};
+
+const validateEndAfterStart = (start, end, endLabel) => {
+  if (new Date(end).getTime() > new Date(start).getTime()) return true;
+  ElMessage.warning(`${endLabel}必须晚于出发时间`);
+  return false;
+};
+
+const validateAvailableAmount = (available, total, availableLabel, totalLabel) => {
+  if (Number(available) <= Number(total)) return true;
+  ElMessage.warning(`${availableLabel}不能大于${totalLabel}`);
+  return false;
+};
 
 const parseNumberish = (value, fallback = 0) => {
   if (value === null || value === undefined || value === "") {
@@ -2705,6 +2727,20 @@ const openFlightDialog = (row = null) => {
 
 const saveFlight = async () => {
   const payload = { ...flightForm.value };
+  if (!validateRequiredFields(payload, [
+    { key: "flightNo", label: "航班号" },
+    { key: "airline", label: "航司" },
+    { key: "departureCity", label: "出发城市" },
+    { key: "arrivalCity", label: "到达城市" },
+    { key: "departureTime", label: "出发时间" },
+    { key: "arrivalTime", label: "到达时间" },
+    { key: "economyPrice", label: "经济舱价格" },
+    { key: "businessPrice", label: "公务舱价格" },
+    { key: "totalSeats", label: "总座位数" },
+    { key: "availableSeats", label: "可售座位数" },
+  ])) return;
+  if (!validateEndAfterStart(payload.departureTime, payload.arrivalTime, "到达时间")) return;
+  if (!validateAvailableAmount(payload.availableSeats, payload.totalSeats, "可售座位数", "总座位数")) return;
   try {
     if (payload.id) {
       await request.put(`/api/admin/flights/${payload.id}`, payload);
@@ -2738,6 +2774,19 @@ const openTrainDialog = (row = null) => {
 
 const saveTrain = async () => {
   const payload = { ...trainForm.value };
+  if (!validateRequiredFields(payload, [
+    { key: "trainNo", label: "车次" },
+    { key: "trainType", label: "车型" },
+    { key: "departureStation", label: "出发站" },
+    { key: "arrivalStation", label: "到达站" },
+    { key: "departureTime", label: "出发时间" },
+    { key: "arrivalTime", label: "到达时间" },
+    { key: "firstClassPrice", label: "一等座价格" },
+    { key: "secondClassPrice", label: "二等座价格" },
+    { key: "firstClassSeats", label: "一等座余票" },
+    { key: "secondClassSeats", label: "二等座余票" },
+  ])) return;
+  if (!validateEndAfterStart(payload.departureTime, payload.arrivalTime, "到达时间")) return;
   try {
     if (payload.id) {
       await request.put(`/api/admin/trains/${payload.id}`, payload);
@@ -2771,6 +2820,13 @@ const openHotelDialog = (row = null) => {
 
 const saveHotel = async () => {
   const payload = { ...hotelForm.value };
+  if (!validateRequiredFields(payload, [
+    { key: "name", label: "酒店名称" },
+    { key: "city", label: "城市" },
+    { key: "address", label: "地址" },
+    { key: "avgPrice", label: "均价" },
+    { key: "starRating", label: "星级" },
+  ])) return;
   try {
     if (payload.id) {
       await request.put(`/api/admin/hotels/${payload.id}`, payload);
@@ -2810,9 +2866,18 @@ const openRoomDialog = (row = null) => {
 
 const saveRoom = async () => {
   if (!activeHotel.value) {
+    ElMessage.warning("请先选择酒店");
     return;
   }
   const payload = { ...roomForm.value, hotelId: activeHotel.value.id };
+  if (!validateRequiredFields(payload, [
+    { key: "roomType", label: "房型" },
+    { key: "bedType", label: "床型" },
+    { key: "price", label: "房型价格" },
+    { key: "totalRooms", label: "总房量" },
+    { key: "availableRooms", label: "可售房量" },
+  ])) return;
+  if (!validateAvailableAmount(payload.availableRooms, payload.totalRooms, "可售房量", "总房量")) return;
   try {
     if (payload.id) {
       await request.put(`/api/admin/hotel-rooms/${payload.id}`, payload);
@@ -2849,6 +2914,16 @@ const openAttractionDialog = (row = null) => {
 
 const saveAttraction = async () => {
   const payload = { ...attractionForm.value };
+  if (!validateRequiredFields(payload, [
+    { key: "name", label: "景点名称" },
+    { key: "city", label: "城市" },
+    { key: "address", label: "地址" },
+    { key: "adultPrice", label: "成人票价" },
+    { key: "childPrice", label: "儿童票价" },
+    { key: "totalTickets", label: "总票数" },
+    { key: "availableTickets", label: "可售票数" },
+  ])) return;
+  if (!validateAvailableAmount(payload.availableTickets, payload.totalTickets, "可售票数", "总票数")) return;
   try {
     if (payload.id) {
       await request.put(`/api/admin/attractions/${payload.id}`, payload);
@@ -3082,6 +3157,17 @@ const openCouponClaims = async (row) => {
 
 const saveCoupon = async () => {
   const payload = { ...couponForm.value };
+  if (!validateRequiredFields(payload, [
+    { key: "name", label: "优惠券名称" },
+    { key: "discountValue", label: "优惠值" },
+    { key: "minAmount", label: "最低消费" },
+    { key: "stock", label: "库存" },
+    { key: "expireDate", label: "到期时间" },
+  ])) return;
+  if (payload.discountType === 1 && Number(payload.discountValue) <= 0) {
+    ElMessage.warning("折扣比例必须大于 0");
+    return;
+  }
   try {
     if (payload.id) {
       await request.put(`/api/admin/coupons/${payload.id}`, payload);
@@ -3112,6 +3198,9 @@ const couponClaimStatusLabel = (status) =>
   ({ 0: "未使用", 1: "已使用", 2: "已过期" }[status] || `状态${status}`);
 
 const saveSensitiveWord = async () => {
+  if (!validateRequiredFields(sensitiveForm.value, [
+    { key: "word", label: "敏感词" },
+  ])) return;
   try {
     if (sensitiveForm.value.id) {
       await request.put(
@@ -3285,6 +3374,9 @@ const openReplyDrawer = async (row) => {
 
 const saveReply = async () => {
   if (!activeReport.value?.reviewId) return;
+  if (!validateRequiredFields({ content: replyContent.value }, [
+    { key: "content", label: "回复内容" },
+  ])) return;
   try {
     await request.post(
       `/api/admin/reviews/${activeReport.value.reviewId}/replies`,
